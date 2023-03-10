@@ -1,3 +1,11 @@
+PUA(Powerful Ultimate Architecture)mips.
+
+we use codeup to manage our project.
+
+[commit message](https://gitee.com/help/articles/4231#article-header3)
+
+
+
 ### 3 分钟了解如何进入开发
 
 欢迎使用 Codeup，通过阅读以下内容，你可以快速熟悉 Codeup ，并立即开始今天的工作。
