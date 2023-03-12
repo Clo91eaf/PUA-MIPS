@@ -1,0 +1,23 @@
+[
+  {
+    "class":"firrtl.annotations.LoadMemoryAnnotation",
+    "target":"Inst_rom.Inst_rom.inst_mem",
+    "fileName":"inst_rom.data",
+    "hexOrBinary":"h",
+    "originalMemoryNameOpt":"inst_mem"
+  },
+  {
+    "class":"firrtl.EmitCircuitAnnotation",
+    "emitter":"firrtl.VerilogEmitter"
+  },
+  {
+    "class":"firrtl.transforms.BlackBoxTargetDirAnno",
+    "targetDir":"generated/ex"
+  },
+  {
+    "class":"firrtl.transforms.BlackBoxInlineAnno",
+    "target":"Inst_rom.Inst_rom",
+    "name":"Inst_rom.Inst_rom.inst_mem.v",
+    "text":"module BindsTo_0_Inst_rom(\n  input         clock,\n  input         reset,\n  input         io_ce,\n  input  [31:0] io_addr,\n  output [31:0] io_inst\n);\n\ninitial begin\n  $readmemh(\"inst_rom.data\", Inst_rom.inst_mem);\nend\n                      endmodule\n\nbind Inst_rom BindsTo_0_Inst_rom BindsTo_0_Inst_rom_Inst(.*);"
+  }
+]
