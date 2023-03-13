@@ -3,6 +3,7 @@
 .bloop/
 project/
 target/
+generated/
 
 
 ### Project Specific stuff
