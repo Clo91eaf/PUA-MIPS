@@ -3,6 +3,7 @@ package cpu.openmips
 import chisel3._
 import chisel3.util._
 import cpu.openmips.Constants._
+import scala.annotation.switch
 
 class Ex extends Module {
   val io = IO(new Bundle {
@@ -38,21 +39,19 @@ class Ex extends Module {
   when(reset.asBool === RstEnable) {
     logicout := ZeroWord
   }.otherwise {
-    io.aluop_i match {
-      case EXE_OR_OP => {
+    logicout := ZeroWord // default
+    switch(io.aluop_i) {
+      is(EXE_OR_OP) {
         logicout := io.reg1_i | io.reg2_i
       }
-      case EXE_AND_OP => {
+      is(EXE_AND_OP) {
         logicout := io.reg1_i & io.reg2_i
       }
-      case EXE_NOR_OP => {
+      is(EXE_NOR_OP) {
         logicout := ~(io.reg1_i | io.reg2_i)
       }
-      case EXE_XOR_OP => {
+      is(EXE_XOR_OP) {
         logicout := io.reg1_i ^ io.reg2_i
-      }
-      case _ => {
-        logicout := ZeroWord
       }
     }
   }
@@ -61,18 +60,16 @@ class Ex extends Module {
   when(reset.asBool === RstEnable) {
     shiftres := ZeroWord
   }.otherwise {
-    io.aluop_i match {
-      case EXE_SLL_OP => {
+    shiftres := ZeroWord // default
+    switch(io.aluop_i) {
+      is(EXE_SLL_OP) {
         shiftres := io.reg2_i << io.reg1_i(4, 0)
       }
-      case EXE_SRL_OP => {
+      is(EXE_SRL_OP) {
         shiftres := io.reg2_i >> io.reg1_i(4, 0)
       }
-      case EXE_SRA_OP => {
-        shiftres := io.reg2_i.asSInt >> io.reg1_i(4, 0)
-      }
-      case _ => {
-        shiftres := ZeroWord
+      is(EXE_SRA_OP) {
+        shiftres := (io.reg2_i.asSInt >> io.reg1_i(4, 0)).asUInt
       }
     }
   }
@@ -80,10 +77,10 @@ class Ex extends Module {
   wd_or := io.wd_i
   wreg_or := io.wreg_i
 
-  io.alusel_i match {
-    case EXE_RES_LOGIC => wdata_or := logicout
-    case EXE_RES_SHIFT => wdata_or := shiftres
-    case _             => wdata_or := ZeroWord
+  wdata_or := ZeroWord // default
+  switch(io.alusel_i) {
+    is(EXE_RES_LOGIC) { wdata_or := logicout }
+    is(EXE_RES_SHIFT) { wdata_or := shiftres }
   }
 
 }

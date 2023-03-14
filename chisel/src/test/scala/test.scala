@@ -1,9 +1,12 @@
 package cpu.openmips
-import chisel3._
-import chisel3.stage.{ChiselStage,ChiselGeneratorAnnotation,ChiselMain}
 
-object demotest extends App {
-    (new ChiselStage).emitVerilog(new Sopc)
-    ChiselMain.main(Array("-X","verilog","-e","verilog","--module","cpu.openmips.Sopc"))
-    new ChiselStage().execute(Array.empty, Seq(ChiselGeneratorAnnotation(() => new Sopc)))
+import chisel3.stage.ChiselGeneratorAnnotation
+
+object test extends App {
+  val path = "generated/test"
+  val s = "--target-dir"
+  (new chisel3.stage.ChiselStage).execute(
+    Array(s, path),
+    Seq(ChiselGeneratorAnnotation(() => new OpenMips))
+  )
 }
