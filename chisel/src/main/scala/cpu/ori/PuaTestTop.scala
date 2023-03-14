@@ -4,7 +4,12 @@ import chisel3._
 import chisel3.util._
 import cpu.ori.Constants._
 
-class Sopc extends Module {
+class PuaTestTop extends Module {
+  val io = IO(new Bundle() {
+    val success = Output(Bool())
+  })
+  
+  io.success := true.B
 
   val inst_addr = Wire(InstAddrBus)
   val inst = Wire(InstBus)
