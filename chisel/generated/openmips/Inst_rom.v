@@ -14,26 +14,26 @@ module Inst_rom(
 `ifdef RANDOMIZE_REG_INIT
   reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
-  reg [31:0] inst_mem [0:131070]; // @[Inst_rom.scala 18:21]
-  wire  inst_mem_instr_MPORT_en; // @[Inst_rom.scala 18:21]
-  wire [16:0] inst_mem_instr_MPORT_addr; // @[Inst_rom.scala 18:21]
-  wire [31:0] inst_mem_instr_MPORT_data; // @[Inst_rom.scala 18:21]
-  reg [31:0] instr; // @[Inst_rom.scala 15:18]
-  wire  _T = ~io_ce; // @[Inst_rom.scala 22:14]
+  reg [31:0] inst_mem [0:131070]; // @[Inst_rom.scala 17:21]
+  wire  inst_mem_instr_MPORT_en; // @[Inst_rom.scala 17:21]
+  wire [16:0] inst_mem_instr_MPORT_addr; // @[Inst_rom.scala 17:21]
+  wire [31:0] inst_mem_instr_MPORT_data; // @[Inst_rom.scala 17:21]
+  reg [31:0] instr; // @[Inst_rom.scala 14:18]
+  wire  _T = ~io_ce; // @[Inst_rom.scala 21:14]
   assign inst_mem_instr_MPORT_en = _T ? 1'h0 : 1'h1;
   assign inst_mem_instr_MPORT_addr = io_addr[18:2];
   `ifndef RANDOMIZE_GARBAGE_ASSIGN
-  assign inst_mem_instr_MPORT_data = inst_mem[inst_mem_instr_MPORT_addr]; // @[Inst_rom.scala 18:21]
+  assign inst_mem_instr_MPORT_data = inst_mem[inst_mem_instr_MPORT_addr]; // @[Inst_rom.scala 17:21]
   `else
   assign inst_mem_instr_MPORT_data = inst_mem_instr_MPORT_addr >= 17'h1ffff ? _RAND_1[31:0] :
-    inst_mem[inst_mem_instr_MPORT_addr]; // @[Inst_rom.scala 18:21]
+    inst_mem[inst_mem_instr_MPORT_addr]; // @[Inst_rom.scala 17:21]
   `endif // RANDOMIZE_GARBAGE_ASSIGN
-  assign io_inst = instr; // @[Inst_rom.scala 16:11]
+  assign io_inst = instr; // @[Inst_rom.scala 15:11]
   always @(posedge clock) begin
-    if (~io_ce) begin // @[Inst_rom.scala 22:31]
-      instr <= 32'h0; // @[Inst_rom.scala 23:11]
+    if (~io_ce) begin // @[Inst_rom.scala 21:31]
+      instr <= 32'h0; // @[Inst_rom.scala 22:11]
     end else begin
-      instr <= inst_mem_instr_MPORT_data; // @[Inst_rom.scala 25:11]
+      instr <= inst_mem_instr_MPORT_data; // @[Inst_rom.scala 24:11]
     end
   end
 // Register and memory initialization

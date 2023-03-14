@@ -5,6 +5,10 @@ import chisel3.util._
 import cpu.openmips.Constants._
 
 class Sopc extends Module {
+  val io = IO(new Bundle() {
+    val success = Output(Bool())
+  })
+  io.success := DontCare
 
   val inst_addr = Wire(InstAddrBus)
   val inst = Wire(InstBus)

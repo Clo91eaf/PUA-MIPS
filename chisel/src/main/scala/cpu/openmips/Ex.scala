@@ -28,8 +28,13 @@ class Ex extends Module {
   io.wreg_o := wreg_or
   io.wdata_o := wdata_or
 
+//保存逻辑运算的结果
   val logicout = Reg(RegBus)
+  val shiftres = Reg(RegBus)
 
+// 根据aluop_i指示的运算子类型进行运算
+
+//LOGIC
   when(reset.asBool === RstEnable) {
     logicout := ZeroWord
   }.otherwise {
@@ -37,8 +42,37 @@ class Ex extends Module {
       case EXE_OR_OP => {
         logicout := io.reg1_i | io.reg2_i
       }
+      case EXE_AND_OP => {
+        logicout := io.reg1_i & io.reg2_i
+      }
+      case EXE_NOR_OP => {
+        logicout := ~(io.reg1_i | io.reg2_i)
+      }
+      case EXE_XOR_OP => {
+        logicout := io.reg1_i ^ io.reg2_i
+      }
       case _ => {
         logicout := ZeroWord
+      }
+    }
+  }
+
+// SHIFT
+  when(reset.asBool === RstEnable) {
+    shiftres := ZeroWord
+  }.otherwise {
+    io.aluop_i match {
+      case EXE_SLL_OP => {
+        shiftres := io.reg2_i << io.reg1_i(4, 0)
+      }
+      case EXE_SRL_OP => {
+        shiftres := io.reg2_i >> io.reg1_i(4, 0)
+      }
+      case EXE_SRA_OP => {
+        shiftres := io.reg2_i.asSInt >> io.reg1_i(4, 0)
+      }
+      case _ => {
+        shiftres := ZeroWord
       }
     }
   }
@@ -48,6 +82,7 @@ class Ex extends Module {
 
   io.alusel_i match {
     case EXE_RES_LOGIC => wdata_or := logicout
+    case EXE_RES_SHIFT => wdata_or := shiftres
     case _             => wdata_or := ZeroWord
   }
 

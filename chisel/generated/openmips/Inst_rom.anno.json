@@ -12,7 +12,7 @@
   },
   {
     "class":"firrtl.transforms.BlackBoxTargetDirAnno",
-    "targetDir":"generated/ex"
+    "targetDir":"generated/openmips"
   },
   {
     "class":"firrtl.transforms.BlackBoxInlineAnno",

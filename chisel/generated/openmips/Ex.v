@@ -21,8 +21,8 @@ module Ex(
   assign io_wreg_o = wreg_or; // @[Ex.scala 28:13]
   assign io_wdata_o = 32'h0; // @[Ex.scala 29:14]
   always @(posedge clock) begin
-    wd_or <= io_wd_i; // @[Ex.scala 46:9]
-    wreg_or <= io_wreg_i; // @[Ex.scala 47:11]
+    wd_or <= io_wd_i; // @[Ex.scala 80:9]
+    wreg_or <= io_wreg_i; // @[Ex.scala 81:11]
   end
 // Register and memory initialization
 `ifdef RANDOMIZE_GARBAGE_ASSIGN

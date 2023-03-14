@@ -80,18 +80,18 @@ module OpenMips(
   output [31:0] io_rom_addr_o,
   output        io_rom_ce_o
 );
-  wire  pc_reg0_clock; // @[Openmips.scala 37:23]
-  wire  pc_reg0_reset; // @[Openmips.scala 37:23]
-  wire [31:0] pc_reg0_io_pc; // @[Openmips.scala 37:23]
-  wire  pc_reg0_io_ce; // @[Openmips.scala 37:23]
-  PC_reg pc_reg0 ( // @[Openmips.scala 37:23]
+  wire  pc_reg0_clock; // @[OpenMips.scala 38:23]
+  wire  pc_reg0_reset; // @[OpenMips.scala 38:23]
+  wire [31:0] pc_reg0_io_pc; // @[OpenMips.scala 38:23]
+  wire  pc_reg0_io_ce; // @[OpenMips.scala 38:23]
+  PC_reg pc_reg0 ( // @[OpenMips.scala 38:23]
     .clock(pc_reg0_clock),
     .reset(pc_reg0_reset),
     .io_pc(pc_reg0_io_pc),
     .io_ce(pc_reg0_io_ce)
   );
-  assign io_rom_addr_o = pc_reg0_io_pc; // @[Openmips.scala 38:17]
-  assign io_rom_ce_o = pc_reg0_io_ce; // @[Openmips.scala 39:15]
+  assign io_rom_addr_o = pc_reg0_io_pc; // @[OpenMips.scala 39:17]
+  assign io_rom_ce_o = pc_reg0_io_ce; // @[OpenMips.scala 40:15]
   assign pc_reg0_clock = clock;
   assign pc_reg0_reset = reset;
 endmodule

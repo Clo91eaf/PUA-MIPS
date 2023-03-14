@@ -14,14 +14,22 @@ circuit Ex :
     io.wreg_o <= wreg_or @[Ex.scala 28:13]
     io.wdata_o <= wdata_or @[Ex.scala 29:14]
     reg logicout : UInt<32>, clock with :
-      reset => (UInt<1>("h0"), logicout) @[Ex.scala 31:21]
-    node _T = bits(reset, 0, 0) @[Ex.scala 33:14]
-    node _T_1 = eq(_T, UInt<1>("h1")) @[Ex.scala 33:21]
-    when _T_1 : @[Ex.scala 33:36]
-      logicout <= UInt<32>("h0") @[Ex.scala 34:14]
+      reset => (UInt<1>("h0"), logicout) @[Ex.scala 32:21]
+    reg shiftres : UInt<32>, clock with :
+      reset => (UInt<1>("h0"), shiftres) @[Ex.scala 33:21]
+    node _T = bits(reset, 0, 0) @[Ex.scala 38:14]
+    node _T_1 = eq(_T, UInt<1>("h1")) @[Ex.scala 38:21]
+    when _T_1 : @[Ex.scala 38:36]
+      logicout <= UInt<32>("h0") @[Ex.scala 39:14]
     else :
-      logicout <= UInt<32>("h0") @[Ex.scala 41:18]
-    wd_or <= io.wd_i @[Ex.scala 46:9]
-    wreg_or <= io.wreg_i @[Ex.scala 47:11]
-    wdata_or <= UInt<32>("h0") @[Ex.scala 51:36]
+      logicout <= UInt<32>("h0") @[Ex.scala 55:18]
+    node _T_2 = bits(reset, 0, 0) @[Ex.scala 61:14]
+    node _T_3 = eq(_T_2, UInt<1>("h1")) @[Ex.scala 61:21]
+    when _T_3 : @[Ex.scala 61:36]
+      shiftres <= UInt<32>("h0") @[Ex.scala 62:14]
+    else :
+      shiftres <= UInt<32>("h0") @[Ex.scala 75:18]
+    wd_or <= io.wd_i @[Ex.scala 80:9]
+    wreg_or <= io.wreg_i @[Ex.scala 81:11]
+    wdata_or <= UInt<32>("h0") @[Ex.scala 86:36]
 
