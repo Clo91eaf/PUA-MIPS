@@ -4,8 +4,7 @@ we use codeup to manage our project.
 
 generate verilog in one line(in the **/chisel**):
 
-`sbt "test:runMain cpu.ori.testMain"`
-
+`sbt clean compile "Test / runMain cpu.ori.testMain"`
 
 ## Some resources:
 

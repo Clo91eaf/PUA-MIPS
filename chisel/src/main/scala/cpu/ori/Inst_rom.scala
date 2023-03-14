@@ -18,10 +18,6 @@ class Inst_rom extends Module {
   val inst_mem = Mem(InstMemNum, InstBus)
 
   loadMemoryFromFile(inst_mem, "inst_rom.data")
-
-  when(io.ce === ChipDisable) {
-    instr := ZeroWord
-  }.otherwise {
-    instr := inst_mem(io.addr(InstMemNumLog2 + 1, 2))
-  }
+  
+  io.inst := Mux(io.ce === false.B, 0.U, inst_mem(io.addr >> 2))
 }
