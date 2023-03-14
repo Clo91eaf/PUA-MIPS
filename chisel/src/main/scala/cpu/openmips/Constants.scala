@@ -43,11 +43,9 @@ object Constants {
   val EXE_NOP_OP = "b00000000".U(8.W)
   val EXE_SPECIAL_INST = "b000000".U(6.W) // 指令 special 的指令码
   val EXE_AND_OP = "b00100100".U(8.W)
-  val EXE_OR_OP = "b00100101".U(8.W)
   val EXE_XOR_OP = "b00100110".U(8.W)
   val EXE_NOR_OP = "b00100111".U(8.W)
   val EXE_ANDI_OP = "b01011001".U(8.W)
-  val EXE_ORI_OP = "b01011010".U(8.W)
   val EXE_XORI_OP = "b01011011".U(8.W)
   val EXE_LUI_OP = "b01011100".U(8.W)
   val EXE_SLL_OP = "b01111100".U(8.W)
