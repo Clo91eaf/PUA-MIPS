@@ -1,7 +1,8 @@
-package cpu.ori
-import cpu.ori.Constants._
-import chisel3.util._
+package cpu.openmips
+
 import chisel3._
+import chisel3.util._
+import cpu.openmips.Constants._
 
 class OpenMips extends Module {
   val io = IO(new Bundle {
@@ -34,12 +35,12 @@ class OpenMips extends Module {
   val wb_wdata = Wire(RegBus)
 
   // pc_reg 实例化
-  val pc_reg0 = Module(new PC_reg())
+  val pc_reg0 = Module(new PC_reg)
   io.rom_addr_o := pc_reg0.io.pc
   io.rom_ce_o := pc_reg0.io.ce
 
   // ID 实例化
-  val id0 = Module(new Id())
+  val id0 = Module(new Id)
   id0.io.pc_i := io.rom_addr_o
   id0.io.inst_i := io.rom_data_i
   // 来自 Regfile 模块的输入
@@ -59,7 +60,7 @@ class OpenMips extends Module {
   id_wreg := id0.io.wreg_o
 
   // Regfile 实例化
-  val regfile1 = Module(new Regfile())
+  val regfile1 = Module(new Regfile)
   // 从 WB 模块传来信息
   regfile1.io.we := wb_wreg
   regfile1.io.waddr := wb_wd
@@ -71,7 +72,7 @@ class OpenMips extends Module {
   regfile1.io.raddr2 := reg2_addr
   reg2_data := regfile1.io.rdata2
 
-  val ex0 = Module(new Ex())
+  val ex0 = Module(new Ex)
   // input
   ex0.io.aluop_i := id_aluop
   ex0.io.alusel_i := id_alusel
@@ -84,7 +85,7 @@ class OpenMips extends Module {
   ex_wreg := ex0.io.wreg_o
   ex_wdata := ex0.io.wdata_o
 
-  val wb0 = Module(new Wb())
+  val wb0 = Module(new Wb)
   // input
   wb0.io.ex_wd := ex_wd
   wb0.io.ex_wreg := ex_wreg
