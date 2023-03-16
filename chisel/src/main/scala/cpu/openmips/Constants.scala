@@ -14,7 +14,7 @@ object Constants {
   val InstInvalid = true.B // 指令无效
   val ChipEnable = true.B // 芯片使能
   val ChipDisable = false.B // 芯片禁止
-  val ZeroWord = 0.U(32.W) // 32位数字0
+  val ZeroWord = 0.U // 32位数字0
   val AluOpBus = UInt(8.W) // 译码阶段输出操作子类型数据宽度
   val AluSelBus = UInt(3.W) // 译码阶段输出操作类型数据宽度
 
