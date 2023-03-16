@@ -25,15 +25,23 @@ class OpenMips extends Module {
   val reg2_data = Wire(RegBus)
   val reg1_addr = Wire(RegAddrBus)
   val reg2_addr = Wire(RegAddrBus)
+  val hi = Wire(RegBus)
+  val lo = Wire(RegBus)
   // 连接 EX 模块和 WB 模块
   val ex_wreg = Wire(Bool())
   val ex_wd = Wire(RegAddrBus)
   val ex_wdata = Wire(RegBus)
+  val ex_hi_o = Wire(RegBus)
+  val ex_lo_o = Wire(RegBus)
+  val ex_whilo_o = Wire(Bool())
   // 连接 WB 模块和 Regfile 模块
   val wb_wd = Wire(RegAddrBus)
   val wb_wreg = Wire(Bool())
   val wb_wdata = Wire(RegBus)
-
+//连接WB模块和hilo_reg模块
+  val wb_hi = Wire(RegBus)
+  val wb_lo = Wire(RegBus)
+  val wb_whilo = Wire(Bool())
   // pc_reg 实例化
   val pc_reg0 = Module(new PC_reg)
   io.rom_addr_o := pc_reg0.io.pc
@@ -73,25 +81,45 @@ class OpenMips extends Module {
   reg2_data := regfile1.io.rdata2
 
   val ex0 = Module(new Ex)
-  // input
+  // 从ID模块传来的信息
   ex0.io.aluop_i := id_aluop
   ex0.io.alusel_i := id_alusel
   ex0.io.reg1_i := id_reg1
   ex0.io.reg2_i := id_reg2
   ex0.io.wd_i := id_wd
   ex0.io.wreg_i := id_wreg
-  // output
+  // 从hilo_reg模块传来的信息
+  ex0.io.hi_i := hi
+  ex0.io.lo_i := lo
+  // 送到WB模块的信息
   ex_wd := ex0.io.wd_o
   ex_wreg := ex0.io.wreg_o
   ex_wdata := ex0.io.wdata_o
-
+  ex_hi_o := ex0.io.hi_o
+  ex_lo_o := ex0.io.lo_o
+  ex_whilo_o := ex0.io.whilo_o
   val wb0 = Module(new Wb)
   // input
   wb0.io.ex_wd := ex_wd
   wb0.io.ex_wreg := ex_wreg
   wb0.io.ex_wdata := ex_wdata
+  wb0.io.ex_hi := ex_hi_o
+  wb0.io.ex_lo := ex_lo_o
+  wb0.io.ex_whilo := ex_whilo_o
   // ouput
   wb_wd := wb0.io.wb_wd
   wb_wreg := wb0.io.wb_wreg
   wb_wdata := wb0.io.wb_wdata
+  wb_hi := wb0.io.wb_hi
+  wb_lo := wb0.io.wb_lo
+  wb_whilo := wb0.io.wb_whilo
+  
+  val hilo_reg0 = Module(new HILO_reg)
+  // input
+  hilo_reg0.io.we := wb_whilo
+  hilo_reg0.io.hi_i := wb_hi
+  hilo_reg0.io.lo_i := wb_lo
+  // output
+  hi := hilo_reg0.io.hi_o
+  lo := hilo_reg0.io.lo_o
 }
