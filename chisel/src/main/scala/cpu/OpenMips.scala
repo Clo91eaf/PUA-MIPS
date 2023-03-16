@@ -71,7 +71,7 @@ class OpenMips extends Module {
   id_wreg := id0.io.wreg_o
 
   // Regfile 实例化
-  val regfile1 = Module(new Regfile)
+  val regfile1 = Module(new Regfile())
   // 从 WB 模块传来信息
   regfile1.io.we := wb_wreg
   regfile1.io.waddr := wb_wd

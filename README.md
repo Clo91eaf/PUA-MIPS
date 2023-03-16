@@ -2,10 +2,6 @@
 
 we use codeup to manage our project.
 
-generate verilog in one line(in the **/chisel**):
-
-`sbt 'runMain cpu.elaborateCPU --target-dir generated'`
-
 or you can(in the **/pua-mips**):
 
 `make verilog`
