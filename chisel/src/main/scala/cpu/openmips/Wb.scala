@@ -1,8 +1,8 @@
-package cpu.ori
+package cpu.openmips
 
 import chisel3._
 import chisel3.util._
-import cpu.ori.Constants._
+import cpu.openmips.Constants._
 
 class Wb extends Module {
   val io = IO(new Bundle {

@@ -1,9 +1,8 @@
-package cpu.ori
-
-import cpu.ori.Constants._
+package cpu.openmips
 
 import chisel3._
 import chisel3.util._
+import cpu.openmips.Constants._
 import chisel3.util.experimental.loadMemoryFromFile
 
 class Inst_rom extends Module {
@@ -18,6 +17,10 @@ class Inst_rom extends Module {
   val inst_mem = Mem(InstMemNum, InstBus)
 
   loadMemoryFromFile(inst_mem, "inst_rom.data")
-  
-  io.inst := Mux(io.ce === false.B, 0.U, inst_mem(io.addr >> 2))
+
+  when(io.ce === ChipDisable) {
+    instr := ZeroWord
+  }.otherwise {
+    instr := inst_mem(io.addr(InstMemNumLog2 + 1, 2))
+  }
 }
