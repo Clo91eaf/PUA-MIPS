@@ -2,20 +2,20 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips._
-import cpu.openmips.Constants._
+import cpu.puamips._
+import cpu.puamips.Const._
 
 class CPUTop extends Module {
   val inst_addr = Wire(InstAddrBus)
   val inst = Wire(InstBus)
   val rom_ce = Wire(Bool())
 
-  val openmips0 = Module(new OpenMips)
-  inst_addr := openmips0.io.rom_addr_o
-  openmips0.io.rom_data_i := inst
-  rom_ce := openmips0.io.rom_ce_o
+  val puamips0 = Module(new PuaMips)
+  inst_addr := puamips0.io.rom_addr_o
+  puamips0.io.rom_data_i := inst
+  rom_ce := puamips0.io.rom_ce_o
 
-  val inst_rom0 = Module(new Inst_rom)
+  val inst_rom0 = Module(new InstMemory)
   inst_rom0.io.ce := rom_ce
   inst_rom0.io.addr := inst_addr
   inst := inst_rom0.io.inst

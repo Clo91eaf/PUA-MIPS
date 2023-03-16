@@ -3,11 +3,11 @@ package cpu
 import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
-import cpu.openmips._
-import cpu.openmips.Constants._
+import cpu.puamips._
+import cpu.puamips.Const._
 import firrtl.options.TargetDirAnnotation
 
-class OpenMips extends Module {
+class PuaMips extends Module {
   val io = IO(new Bundle {
     val rom_data_i = Input(RegBus)
     val rom_addr_o = Output(RegBus)
@@ -51,7 +51,7 @@ class OpenMips extends Module {
   io.rom_ce_o := pc_reg0.io.ce
 
   // ID 实例化
-  val id0 = Module(new Id)
+  val id0 = Module(new Decoder)
   id0.io.pc_i := io.rom_addr_o
   id0.io.inst_i := io.rom_data_i
   // 来自 Regfile 模块的输入
@@ -83,7 +83,7 @@ class OpenMips extends Module {
   regfile1.io.raddr2 := reg2_addr
   reg2_data := regfile1.io.rdata2
 
-  val ex0 = Module(new Ex)
+  val ex0 = Module(new Execute)
   // 从ID模块传来的信息
   ex0.io.aluop_i := id_aluop
   ex0.io.alusel_i := id_alusel
@@ -101,7 +101,7 @@ class OpenMips extends Module {
   ex_hi_o := ex0.io.hi_o
   ex_lo_o := ex0.io.lo_o
   ex_whilo_o := ex0.io.whilo_o
-  val wb0 = Module(new Wb)
+  val wb0 = Module(new WriteBack)
   // input
   wb0.io.ex_wd := ex_wd
   wb0.io.ex_wreg := ex_wreg

@@ -1,11 +1,11 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips.Constants._
+import cpu.puamips.Const._
 import scala.annotation.switch
 
-class Id extends Module {
+class Decoder extends Module {
   val io = IO(new Bundle {
     val pc_i = Input(InstAddrBus)
     val inst_i = Input(InstBus)

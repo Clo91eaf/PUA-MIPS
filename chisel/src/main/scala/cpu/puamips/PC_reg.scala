@@ -1,8 +1,8 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips.Constants._
+import cpu.puamips.Const._
 
 class PC_reg extends Module {
   val io = IO(new Bundle {

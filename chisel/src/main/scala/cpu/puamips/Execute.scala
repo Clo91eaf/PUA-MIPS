@@ -1,11 +1,11 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips.Constants._
+import cpu.puamips.Const._
 import scala.annotation.switch
 
-class Ex extends Module {
+class Execute extends Module {
   val io = IO(new Bundle {
     // 译码模块传来的信息
     val aluop_i = Input(AluOpBus)

@@ -1,10 +1,10 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips.Constants._
+import cpu.puamips.Const._
 
-class Wb extends Module {
+class WriteBack extends Module {
   val io = IO(new Bundle {
     // 来自EX的信息
     val ex_wd = Input(RegAddrBus)

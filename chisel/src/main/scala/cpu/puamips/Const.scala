@@ -1,9 +1,9 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
 
-object Constants {
+object Const {
   val RstEnable = true.B // 复位使能
   val RstDisable = false.B // 复位除能
   val WriteEnable = true.B // 写使能

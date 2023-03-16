@@ -80,7 +80,7 @@ local.properties
 # Eclipse Core
 .project
 
-# External tool builders
+# Executeternal tool builders
 .externalToolBuilders/
 
 # Locally stored "Eclipse launch configurations"
@@ -126,7 +126,7 @@ local.properties
 *.so.*
 *.dylib
 
-# Executables
+# Executeecutables
 *.exe
 *.out
 *.app
@@ -211,7 +211,7 @@ Session.vim
 # .idea/gradle.xml
 # .idea/libraries
 
-# Mongo Explorer plugin:
+# Mongo Executeplorer plugin:
 # .idea/mongoSettings.xml
 
 ## File-based project format:
@@ -258,7 +258,7 @@ crashlytics-build.properties
 *.a
 *.lib
 
-# Executables
+# Executeecutables
 *.exe
 *.out
 *.app

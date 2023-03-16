@@ -1,11 +1,11 @@
-package cpu.openmips
+package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.openmips.Constants._
+import cpu.puamips.Const._
 import chisel3.util.experimental.loadMemoryFromFile
 
-class Inst_rom extends Module {
+class InstMemory extends Module {
   val io = IO(new Bundle {
     val ce = Input(Bool())
     val addr = Input(InstAddrBus)
