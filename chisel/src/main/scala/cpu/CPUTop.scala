@@ -1,11 +1,11 @@
-package cpu.openmips
+package cpu
 
 import chisel3._
 import chisel3.util._
+import cpu.openmips._
 import cpu.openmips.Constants._
 
-class Sopc extends Module {
-
+class CPUTop extends Module {
   val inst_addr = Wire(InstAddrBus)
   val inst = Wire(InstBus)
   val rom_ce = Wire(Bool())

@@ -1,8 +1,11 @@
-package cpu.openmips
+package cpu
 
 import chisel3._
+import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
+import cpu.openmips._
 import cpu.openmips.Constants._
+import firrtl.options.TargetDirAnnotation
 
 class OpenMips extends Module {
   val io = IO(new Bundle {
@@ -123,3 +126,4 @@ class OpenMips extends Module {
   hi := hilo_reg0.io.hi_o
   lo := hilo_reg0.io.lo_o
 }
+

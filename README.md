@@ -4,7 +4,11 @@ we use codeup to manage our project.
 
 generate verilog in one line(in the **/chisel**):
 
-`sbt clean compile "Test / runMain cpu.ori.testMain"`
+`sbt 'runMain cpu.elaborateCPU --target-dir generated'`
+
+or you can(in the **/pua-mips**):
+
+`make verilog`
 
 ## Some resources:
 
