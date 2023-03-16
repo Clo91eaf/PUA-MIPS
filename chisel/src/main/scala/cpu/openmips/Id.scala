@@ -29,13 +29,11 @@ class Id extends Module {
     val wreg_o = Output(Bool())
   })
 
-  // 输出到Regfile的信息
+  // Output为寄存器类型
   val reg1_read_or = Reg(Bool())
   val reg2_read_or = Reg(Bool())
   val reg1_addr_or = Reg(RegAddrBus)
   val reg2_addr_or = Reg(RegAddrBus)
-
-  // 输出到执行阶段
   val aluop_or = Reg(AluOpBus)
   val alusel_or = Reg(AluSelBus)
   val reg1_or = Reg(RegBus)
@@ -56,9 +54,9 @@ class Id extends Module {
 
   // 取得的指令码功能码
   val op = Wire(UInt(6.W))
-  val op2 = Wire(UInt(6.W))
+  val op2 = Wire(UInt(5.W))
   val op3 = Wire(UInt(6.W))
-  val op4 = Wire(UInt(6.W))
+  val op4 = Wire(UInt(5.W))
   op := io.inst_i(31, 26)
   op2 := io.inst_i(10, 6)
   op3 := io.inst_i(5, 0)
@@ -77,19 +75,19 @@ class Id extends Module {
     wd_or := NOPRegAddr
     wreg_or := WriteDisable
     instvalid := InstInvalid
-    reg1_read_or := "b0".U
-    reg2_read_or := "b0".U
+    reg1_read_or := 0.U
+    reg2_read_or := 0.U
     reg1_addr_or := NOPRegAddr
     reg2_addr_or := NOPRegAddr
-    imm := "h0".U
+    imm := 0.U
   }.otherwise {
     aluop_or := EXE_NOP_OP
     alusel_or := EXE_RES_NOP
     wd_or := io.inst_i(15, 11)
     wreg_or := WriteDisable
     instvalid := InstInvalid
-    reg1_read_or := "b0".U
-    reg2_read_or := "b0".U
+    reg1_read_or := 0.U
+    reg2_read_or := 0.U
     reg1_addr_or := io.inst_i(25, 21) // 默认第一个操作数寄存器为端口1读取的寄存器
     reg2_addr_or := io.inst_i(20, 16) // 默认第二个操作寄存器为端口2读取的寄存器
     imm := ZeroWord
@@ -163,6 +161,62 @@ class Id extends Module {
                 reg2_read_or := 1.U
                 instvalid := InstValid
               }
+              is(EXE_MFHI) {
+                wreg_or := WriteEnable
+                aluop_or := EXE_MFHI_OP
+                alusel_or := EXE_RES_MOVE
+                reg1_read_or := 0.U
+                reg2_read_or := 0.U
+                instvalid := InstValid
+              }
+              is(EXE_MFLO) {
+                wreg_or := WriteEnable
+                aluop_or := EXE_MFLO_OP
+                alusel_or := EXE_RES_MOVE
+                reg1_read_or := 0.U
+                reg2_read_or := 0.U
+                instvalid := InstValid
+              }
+              is(EXE_MTHI) {
+                wreg_or := WriteDisable
+                aluop_or := EXE_MTHI_OP
+                reg1_read_or := 1.U
+                reg2_read_or := 0.U
+                instvalid := InstValid
+              }
+              is(EXE_MTLO) {
+                wreg_or := WriteDisable
+                aluop_or := EXE_MTLO_OP
+                reg1_read_or := 1.U
+                reg2_read_or := 0.U
+                instvalid := InstValid
+              }
+              is(EXE_MOVN) {
+                aluop_or := EXE_MOVN_OP
+                alusel_or := EXE_RES_MOVE
+                reg1_read_or := 1.U
+                reg2_read_or := 1.U
+                instvalid := InstValid
+                when(reg2_or === ZeroWord) {
+                  // reg2_o的值为rt通用寄存器的值
+                  wreg_or := WriteEnable
+                }.otherwise {
+                  wreg_or := WriteDisable
+                }
+              }
+              is(EXE_MOVZ) {
+                aluop_or := EXE_MOVZ_OP
+                alusel_or := EXE_RES_MOVE
+                reg1_read_or := 1.U
+                reg2_read_or := 1.U
+                instvalid := InstValid
+                when(reg2_or === ZeroWord) {
+                  // reg2_o的值为rt通用寄存器的值
+                  wreg_or := WriteEnable
+                }.otherwise {
+                  wreg_or := WriteDisable
+                }
+              }
             } // op3
           } // 0.U(5.W)
         }
@@ -174,11 +228,11 @@ class Id extends Module {
         // 运算类型是逻辑运算
         alusel_or := EXE_RES_LOGIC
         // 需要通过Regfile的读端口1读寄存器
-        reg1_read_or := "b1".U
+        reg1_read_or := 1.U
         // 需要通过Regfile的读端口2读寄存器
-        reg2_read_or := "b0".U
+        reg2_read_or := 0.U
         // 指令执行需要的立即数
-        imm := Cat("h0".U(16.W), io.inst_i(15, 0))
+        imm := Cat(0.U(16.W), io.inst_i(15, 0))
         // 指令执行要写的目的寄存器
         wd_or := io.inst_i(20, 16)
         // ori指令有效
@@ -190,7 +244,7 @@ class Id extends Module {
         alusel_or := EXE_RES_LOGIC
         reg1_read_or := 1.U
         reg2_read_or := 0.U
-        imm := Cat("h0".U(16.W), io.inst_i(15, 0))
+        imm := Cat(0.U(16.W), io.inst_i(15, 0))
         wd_or := io.inst_i(20, 16)
         instvalid := InstValid
       }
@@ -200,7 +254,7 @@ class Id extends Module {
         alusel_or := EXE_RES_LOGIC
         reg1_read_or := 1.U
         reg2_read_or := 0.U
-        imm := Cat("h0".U(16.W), io.inst_i(15, 0))
+        imm := Cat(0.U(16.W), io.inst_i(15, 0))
         wd_or := io.inst_i(20, 16)
         instvalid := InstValid
       }
@@ -210,7 +264,7 @@ class Id extends Module {
         alusel_or := EXE_RES_LOGIC
         reg1_read_or := 1.U
         reg2_read_or := 0.U
-        imm := Cat(io.inst_i(15, 0), "h0".U(16.W))
+        imm := Cat(io.inst_i(15, 0), 0.U(16.W))
         wd_or := io.inst_i(20, 16)
         instvalid := InstValid
       }
@@ -223,13 +277,13 @@ class Id extends Module {
         instvalid := InstValid
       }
     }
-    when(io.inst_i(31, 21) === "b00000000000".U) {
+    when(io.inst_i(31, 21) === 0.U) {
       when(op3 === EXE_SLL) {
         wreg_or := WriteEnable;
         aluop_or := EXE_SLL_OP;
         alusel_or := EXE_RES_SHIFT;
-        reg1_read_or := "b0".U;
-        reg2_read_or := "b1".U;
+        reg1_read_or := 0.U;
+        reg2_read_or := 1.U;
         imm := io.inst_i(10, 6);
         wd_or := io.inst_i(15, 11);
         instvalid := InstValid;
@@ -237,8 +291,8 @@ class Id extends Module {
         wreg_or := WriteEnable;
         aluop_or := EXE_SRL_OP;
         alusel_or := EXE_RES_SHIFT;
-        reg1_read_or := "b0".U;
-        reg2_read_or := "b1".U;
+        reg1_read_or := 0.U;
+        reg2_read_or := 1.U;
         imm := io.inst_i(10, 6);
         wd_or := io.inst_i(15, 11);
         instvalid := InstValid;
@@ -246,8 +300,8 @@ class Id extends Module {
         wreg_or := WriteEnable;
         aluop_or := EXE_SRA_OP;
         alusel_or := EXE_RES_SHIFT;
-        reg1_read_or := "b0".U;
-        reg2_read_or := "b1".U;
+        reg1_read_or := 0.U;
+        reg2_read_or := 1.U;
         imm := io.inst_i(10, 6);
         wd_or := io.inst_i(15, 11);
         instvalid := InstValid;
@@ -258,9 +312,9 @@ class Id extends Module {
 //确定运算源操作数1
   when(reset.asBool === RstEnable) {
     reg1_or := ZeroWord
-  }.elsewhen(reg1_read_or === "b1".U) {
+  }.elsewhen(reg1_read_or === 1.U) {
     reg1_or := io.reg1_data_i
-  }.elsewhen(reg1_read_or === "b0".U) {
+  }.elsewhen(reg1_read_or === 0.U) {
     reg1_or := imm
   }.otherwise {
     reg1_or := ZeroWord
@@ -269,9 +323,9 @@ class Id extends Module {
 //确定运算源操作数2
   when(reset.asBool === RstEnable) {
     reg2_or := ZeroWord
-  }.elsewhen(reg2_read_or === "b1".U) {
+  }.elsewhen(reg2_read_or === 1.U) {
     reg2_or := io.reg2_data_i
-  }.elsewhen(reg2_read_or === "b0".U) {
+  }.elsewhen(reg2_read_or === 0.U) {
     reg2_or := imm
   }.otherwise {
     reg2_or := ZeroWord

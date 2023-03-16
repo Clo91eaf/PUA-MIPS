@@ -7,6 +7,6 @@ object test extends App {
   val s = "--target-dir"
   (new chisel3.stage.ChiselStage).execute(
     Array(s, path),
-    Seq(ChiselGeneratorAnnotation(() => new HILO_reg))
+    Seq(ChiselGeneratorAnnotation(() => new Id))
   )
 }
