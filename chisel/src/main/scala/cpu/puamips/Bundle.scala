@@ -1,134 +1,90 @@
-// package cpu.puamips
+package cpu.puamips
 
-// import chisel3._
-// import Const._
+import chisel3._
 
-// class IF_ID extends Bundle {
-//   val pc       = Output(UInt(WORD_LEN.W))
-//   val pc_plus4 = Output(UInt(WORD_LEN.W))
-// }
+class Fetch_Decoder extends Bundle {
+  val pc       = Output(RegBus)
+}
 
-// class ID_EX extends Bundle {
-//   val pc          = Output(UInt(WORD_LEN.W))
-//   val pc_plus4    = Output(UInt(WORD_LEN.W))
-//   val inst        = Output(UInt(INST_LEN.W))
-//   val rs1_data    = Output(UInt(WORD_LEN.W))
-//   val rs2_data    = Output(UInt(WORD_LEN.W))
-//   val rs1_addr    = Output(UInt(RF_ADDR_LEN.W))
-//   val rs2_addr    = Output(UInt(RF_ADDR_LEN.W))
-//   val rd_addr     = Output(UInt(WORD_LEN.W))
-//   val exe_signal  = Output(UInt(ALU_LEN.W))
-//   val op1_data    = Output(UInt(WORD_LEN.W))
-//   val op2_data    = Output(UInt(WORD_LEN.W))
-//   val read_signal = Output(UInt(RS_LEN.W))
-//   val wb_signal   = Output(UInt(WS_LEN.W))
-//   val imm_i       = Output(UInt(WORD_LEN.W))
-//   val imm_i_sext  = Output(UInt(WORD_LEN.W))
-//   val imm_j       = Output(UInt(WORD_LEN.W))
-//   val imm_j_sext  = Output(UInt(WORD_LEN.W))
-//   val imm_u       = Output(UInt(WORD_LEN.W))
-//   val imm_u_sext  = Output(UInt(WORD_LEN.W))
-// }
+class Fetch_InstMemory extends Bundle {
+  val pc = Output(RegBus)
+  val ce = Output(Bool())
+}
 
-// class RD_RF extends Bundle {
-//   val addr = Output(UInt(RF_ADDR_LEN.W))
-//   val data = Input(UInt(WORD_LEN.W))
-// }
+class InstMemory_Decoder extends Bundle {
+  val inst = Output(RegBus)
+}
 
-// class RD_RF2 extends Bundle {
-//   val rd1 = new RD_RF()
-//   val rd2 = new RD_RF()
-// }
+class Decoder_Execute extends Bundle {
+  val aluop = Output(AluOpBus)
+  val alusel = Output(AluSelBus)
+  val reg1 = Output(RegBus)
+  val reg2 = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-// class WR_RF extends Bundle {
-//   val addr = Output(UInt(RF_ADDR_LEN.W))
-//   val data = Output(UInt(WORD_LEN.W))
-// }
+class Decoder_RegFile extends Bundle {
+  val reg1_addr = Output(RegAddrBus)
+  val reg1_read = Output(Bool())
+  val reg2_addr = Output(RegAddrBus)
+  val reg2_read = Output(Bool())
+}
 
-// class EX_MEM extends Bundle {
-//   val wb_data = Output(UInt(WORD_LEN.W))
+class RegFile_Decoder extends Bundle {
+  val rdata1 = Output(RegBus)
+  val rdata2 = Output(RegBus)
+}
 
-//   val pc       = Output(UInt(WORD_LEN.W))
-//   val pc_plus4 = Output(UInt(WORD_LEN.W))
-//   val inst     = Output(UInt(INST_LEN.W))
+class Execute_Decoder extends Bundle {
+  val wdata = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-//   val rs1_data = Output(UInt(WORD_LEN.W))
-//   val rs2_data = Output(UInt(WORD_LEN.W))
-//   val rd_addr  = Output(UInt(WORD_LEN.W))
+class Execute_Memory extends Bundle {
+  val wdata = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-//   val exe_signal  = Output(UInt(ALU_LEN.W))
-//   val op1_data    = Output(UInt(WORD_LEN.W))
-//   val op2_data    = Output(UInt(WORD_LEN.W))
-//   val read_signal = Output(UInt(RS_LEN.W))
-//   val wb_signal   = Output(UInt(WS_LEN.W))
+class Memory_Decoder extends Bundle {
+  val wdata = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-//   val imm_i      = Output(UInt(WORD_LEN.W))
-//   val imm_i_sext = Output(UInt(WORD_LEN.W))
-//   val imm_j      = Output(UInt(WORD_LEN.W))
-//   val imm_j_sext = Output(UInt(WORD_LEN.W))
-//   val imm_u      = Output(UInt(WORD_LEN.W))
-//   val imm_u_sext = Output(UInt(WORD_LEN.W))
-// }
+class Memory_Execute extends Bundle {
+  val whilo = Output(Bool())
+  val hi = Output(RegBus)
+  val lo = Output(RegBus)
+}
 
-// class MEM_WB extends Bundle {
-//   val wb_data = Output(UInt(WORD_LEN.W))
+class Memory_WriteBack extends Bundle {
+  val wdata = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-//   val pc       = Output(UInt(WORD_LEN.W))
-//   val pc_plus4 = Output(UInt(WORD_LEN.W))
-//   val inst     = Output(UInt(INST_LEN.W))
+class WriteBack_Execute extends Bundle {
+  val whilo = Output(Bool())
+  val hi = Output(RegBus)
+  val lo = Output(RegBus)
+}
 
-//   val rs1_data = Output(UInt(WORD_LEN.W))
-//   val rs2_data = Output(UInt(WORD_LEN.W))
-//   val rd_addr  = Output(UInt(WORD_LEN.W))
+class WriteBack_RegFile extends Bundle {
+  val wdata = Output(RegBus)
+  val wd = Output(RegAddrBus)
+  val wreg = Output(Bool())
+}
 
-//   val exe_signal  = Output(UInt(ALU_LEN.W))
-//   val op1_data    = Output(UInt(WORD_LEN.W))
-//   val op2_data    = Output(UInt(WORD_LEN.W))
-//   val read_signal = Output(UInt(RS_LEN.W))
-//   val wb_signal   = Output(UInt(WS_LEN.W))
+class WriteBack_HILO extends Bundle {
+  val we = Output(Bool())
+  val hi = Output(RegBus)
+  val lo = Output(RegBus)
+}
 
-//   val imm_i      = Output(UInt(WORD_LEN.W))
-//   val imm_i_sext = Output(UInt(WORD_LEN.W))
-//   val imm_j      = Output(UInt(WORD_LEN.W))
-//   val imm_j_sext = Output(UInt(WORD_LEN.W))
-//   val imm_u      = Output(UInt(WORD_LEN.W))
-//   val imm_u_sext = Output(UInt(WORD_LEN.W))
-// }
-// class EX_Ctrl extends Bundle {
-//   val jump_addr   = Output(UInt(WORD_LEN.W))
-//   val jump_flag   = Output(UInt(INST_LEN.W))
-//   val flush       = Output(Bool())
-//   val rs1_addr = Output(UInt(RF_ADDR_LEN.W))
-//   val rs2_addr = Output(UInt(RF_ADDR_LEN.W))
-// }
-
-// class MEM_Ctrl extends Bundle {
-//   val rd_addr = Output(UInt(RF_ADDR_LEN.W))
-// }
-
-// class MEM_EX extends Bundle {
-//   val wb_data = Output(UInt(WORD_LEN.W))
-// }
-
-// class WB_Ctrl extends Bundle {
-//   val rd_addr = Output(UInt(RF_ADDR_LEN.W))
-// }
-
-// class WB_EX extends Bundle {
-//   val wb_data = Output(UInt(WORD_LEN.W))
-// }
-
-// class Ctrl_IF extends Bundle {
-//   val jump_flag = Output(Bool())
-//   val jump_addr = Output(UInt(WORD_LEN.W))
-// }
-
-// class Ctrl_ID extends Bundle {
-//   val flush       = Output(Bool())
-// }
-
-// class Ctrl_EX extends Bundle {
-//   val flush = Output(Bool())
-//   val forward1 = Output(UInt(FORWARD_LEN.W))
-//   val forward2 = Output(UInt(FORWARD_LEN.W))
-// }
+class HILO_WriteBack extends Bundle {
+  val hi = Output(RegBus)
+  val lo = Output(RegBus)
+}

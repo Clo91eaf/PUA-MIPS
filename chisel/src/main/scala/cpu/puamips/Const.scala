@@ -16,7 +16,9 @@ object Const {
   val ChipDisable = false.B // 芯片禁止
   val ZeroWord = 0.U // 32位数字0
   val AluOpBus = UInt(8.W) // 译码阶段输出操作子类型数据宽度
+  val ALU_OP_BUS_INIT = 0.U(8.W)
   val AluSelBus = UInt(3.W) // 译码阶段输出操作类型数据宽度
+  val ALU_SEL_BUS_INIT = 0.U(3.W) // 译码阶段输出操作类型数据宽度
 
   // 指令
   val EXE_AND = "b100100".U(6.W) // 指令 and 的功能码
@@ -88,9 +90,12 @@ object Const {
   val InstMemNum = (1 << InstMemNumLog2) - 1
 
   val RegAddrBus = UInt(5.W)
+  val RegAddrBusInit = 0.U(5.W)
   val RegBus = UInt(32.W)
   val RegBusInit = 0.U(32.W)
   val NOPRegAddr = "b00000".U(5.W)
   val RegNum = 32
   val RegNumLog2 = 5
+
+  
 }
