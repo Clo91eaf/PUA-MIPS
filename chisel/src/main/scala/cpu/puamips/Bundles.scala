@@ -1,6 +1,7 @@
 package cpu.puamips
 
 import chisel3._
+import cpu.puamips.Const._
 
 class Fetch_Decoder extends Bundle {
   val pc       = Output(RegBus)
@@ -64,6 +65,9 @@ class Memory_WriteBack extends Bundle {
   val wdata = Output(RegBus)
   val wd = Output(RegAddrBus)
   val wreg = Output(Bool())
+  val whilo = Output(Bool())
+  val hi = Output(RegBus)
+  val lo = Output(RegBus)
 }
 
 class WriteBack_Execute extends Bundle {

@@ -1,13 +1,13 @@
 package cpu.puamips
 
 import chisel3._
-import chisel3.util._
 import cpu.puamips.Const._
 
 class WriteBack extends Module {
   val io = IO(new Bundle {
     val memory = Flipped(new Memory_WriteBack())
     val regfile = new WriteBack_RegFile() 
+    val execute = new WriteBack_Execute()
 })
   // input-memory 
   val wd    = RegInit(RegAddrBusInit)
@@ -23,11 +23,13 @@ class WriteBack extends Module {
   lo    := io.memory.lo    
   whilo := io.memory.whilo 
 
+  // output-execute
+  io.execute.whilo := whilo
+  io.execute.hi := hi
+  io.execute.lo := lo
+
   // output-regfile
   io.regfile.wd    := wd    
   io.regfile.wreg  := wreg  
   io.regfile.wdata := wdata 
-  io.regfile.hi    := hi    
-  io.regfile.lo    := lo    
-  io.regfile.whilo := whilo 
 }

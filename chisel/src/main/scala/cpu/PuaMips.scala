@@ -1,11 +1,9 @@
 package cpu
 
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
 import cpu.puamips._
 import cpu.puamips.Const._
-import firrtl.options.TargetDirAnnotation
 
 class PuaMips extends Module {
   val io = IO(new Bundle {

@@ -1,6 +1,7 @@
 package cpu.puamips 
 
 import chisel3._
+import cpu.puamips.Const._
 
 class Fetch extends Module {
   val io = IO(new Bundle {

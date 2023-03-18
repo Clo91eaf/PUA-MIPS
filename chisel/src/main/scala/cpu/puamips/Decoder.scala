@@ -96,17 +96,17 @@ class Decoder extends Module {
   }.otherwise {
     aluop := EXE_NOP_OP
     alusel := EXE_RES_NOP
-    wd := io.inst(15, 11)
+    wd := inst(15, 11)
     wreg := WriteDisable
     instvalid := InstInvalid
     reg1_read := 0.U
     reg2_read := 0.U
-    reg1_addr := io.inst(25, 21) // 默认第一个操作数寄存器为端口1读取的寄存器
-    reg2_addr := io.inst(20, 16) // 默认第二个操作寄存器为端口2读取的寄存器
+    reg1_addr := inst(25, 21) // 默认第一个操作数寄存器为端口1读取的寄存器
+    reg2_addr := inst(20, 16) // 默认第二个操作寄存器为端口2读取的寄存器
     imm := ZeroWord
 
     switch(op) {
-      is(EXE_SPECIALNST) {
+      is(EXE_SPECIAL_INST) {
         switch(op2) {
           is(0.U(5.W)) {
             switch(op3) {
@@ -245,9 +245,9 @@ class Decoder extends Module {
         // 需要通过Regfile的读端口2读寄存器
         reg2_read := 0.U
         // 指令执行需要的立即数
-        imm := Cat(0.U(16.W), io.inst(15, 0))
+        imm := Cat(0.U(16.W), inst(15, 0))
         // 指令执行要写的目的寄存器
-        wd := io.inst(20, 16)
+        wd := inst(20, 16)
         // ori指令有效
         instvalid := InstValid
       } // EXEI
@@ -257,8 +257,8 @@ class Decoder extends Module {
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
         reg2_read := 0.U
-        imm := Cat(0.U(16.W), io.inst(15, 0))
-        wd := io.inst(20, 16)
+        imm := Cat(0.U(16.W), inst(15, 0))
+        wd := inst(20, 16)
         instvalid := InstValid
       }
       is(EXE_XORI) {
@@ -267,8 +267,8 @@ class Decoder extends Module {
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
         reg2_read := 0.U
-        imm := Cat(0.U(16.W), io.inst(15, 0))
-        wd := io.inst(20, 16)
+        imm := Cat(0.U(16.W), inst(15, 0))
+        wd := inst(20, 16)
         instvalid := InstValid
       }
       is(EXE_LUI) {
@@ -277,8 +277,8 @@ class Decoder extends Module {
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
         reg2_read := 0.U
-        imm := Cat(io.inst(15, 0), 0.U(16.W))
-        wd := io.inst(20, 16)
+        imm := Cat(inst(15, 0), 0.U(16.W))
+        wd := inst(20, 16)
         instvalid := InstValid
       }
       is(EXE_PREF) {
@@ -290,15 +290,15 @@ class Decoder extends Module {
         instvalid := InstValid
       }
     }
-    when(io.inst(31, 21) === 0.U) {
+    when(inst(31, 21) === 0.U) {
       when(op3 === EXE_SLL) {
         wreg := WriteEnable;
         aluop := EXE_SLL_OP;
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;
         reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
+        imm := inst(10, 6);
+        wd := inst(15, 11);
         instvalid := InstValid;
       }.elsewhen(op3 === EXE_SRL) {
         wreg := WriteEnable;
@@ -306,8 +306,8 @@ class Decoder extends Module {
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;
         reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
+        imm := inst(10, 6);
+        wd := inst(15, 11);
         instvalid := InstValid;
       }.elsewhen(op3 === EXE_SRA) {
         wreg := WriteEnable;
@@ -315,8 +315,8 @@ class Decoder extends Module {
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;
         reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
+        imm := inst(10, 6);
+        wd := inst(15, 11);
         instvalid := InstValid;
       }
     }

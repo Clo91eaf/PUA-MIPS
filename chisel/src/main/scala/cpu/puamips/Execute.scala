@@ -8,6 +8,7 @@ import scala.annotation.switch
 class Execute extends Module {
   val io = IO(new Bundle {
     val decoder = Flipped(new Decoder_Execute())
+    val writeBack = Flipped(new WriteBack_Execute())
     val memory = new Execute_Memory()
 
     // // 译码模块传来的信息
@@ -33,19 +34,21 @@ class Execute extends Module {
   wd    := io.decoder.wd   
   wreg   := io.decoder.wreg   
 
+  // input-write back
+  val hi = Reg(RegBus)
+  val lo = Reg(RegBus)
+  val whilo = Reg(Bool())
+  hi := io.writeBack.hi
+  lo := io.writeBack.lo
+  whilo := io.writeBack.whilo
+
   // output-memory
   val wdata = RegInit(RegBusInit)
   io.memory.wd := wd
   io.memory.wreg := wreg
   io.memory.wdata := wdata
 
-  val hi = Reg(RegBus)
-  val lo = Reg(RegBus)
-  val whilo = Reg(Bool())
 
-  io.hi := hi
-  io.lo := lo
-  io.whilo := whilo
 
 //保存逻辑运算的结果
   val logicout = Reg(RegBus)
@@ -61,18 +64,18 @@ class Execute extends Module {
     logicout := ZeroWord
   }.otherwise {
     logicout := ZeroWord // default
-    switch(io.aluop) {
+    switch(aluop) {
       is(EXE_OR_OP) {
-        logicout := io.reg1 | io.reg2
+        logicout := reg1 | reg2
       }
       is(EXE_AND_OP) {
-        logicout := io.reg1 & io.reg2
+        logicout := reg1 & reg2
       }
       is(EXE_NOR_OP) {
-        logicout := ~(io.reg1 | io.reg2)
+        logicout := ~(reg1 | reg2)
       }
       is(EXE_XOR_OP) {
-        logicout := io.reg1 ^ io.reg2
+        logicout := reg1 ^ reg2
       }
     }
   }
@@ -82,15 +85,15 @@ class Execute extends Module {
     shiftres := ZeroWord
   }.otherwise {
     shiftres := ZeroWord // default
-    switch(io.aluop) {
+    switch(aluop) {
       is(EXE_SLL_OP) {
-        shiftres := io.reg2 << io.reg1(4, 0)
+        shiftres := reg2 << reg1(4, 0)
       }
       is(EXE_SRL_OP) {
-        shiftres := io.reg2 >> io.reg1(4, 0)
+        shiftres := reg2 >> reg1(4, 0)
       }
       is(EXE_SRA_OP) {
-        shiftres := (io.reg2.asSInt >> io.reg1(4, 0)).asUInt
+        shiftres := (reg2.asSInt >> reg1(4, 0)).asUInt
       }
     }
   }
@@ -100,8 +103,8 @@ class Execute extends Module {
     HI := ZeroWord
     LO := ZeroWord
   }.otherwise {
-    HI := io.hi
-    LO := io.lo
+    HI := hi
+    LO := lo
   }
 
 //MFHI、MFLO、MOVN、MOVZ指令
@@ -109,7 +112,7 @@ class Execute extends Module {
     moveres := ZeroWord
   }.otherwise {
     moveres := ZeroWord
-    switch(io.aluop) {
+    switch(aluop) {
       is(EXE_MFHI_OP) {
         moveres := HI
       }
@@ -117,19 +120,19 @@ class Execute extends Module {
         moveres := LO
       }
       is(EXE_MOVZ_OP) {
-        moveres := io.reg1
+        moveres := reg1
       }
       is(EXE_MOVN_OP) {
-        moveres := io.reg1
+        moveres := reg1
       }
     }
   }
 
 //根据alusel指示的运算类型，选择一个运算结果作为最终结果
-  wd := io.wd
-  wreg := io.wreg
+  wd := wd
+  wreg := wreg
   wdata := ZeroWord // default
-  switch(io.alusel) {
+  switch(alusel) {
     is(EXE_RES_LOGIC) { wdata := logicout }
     is(EXE_RES_SHIFT) { wdata := shiftres }
     is(EXE_RES_MOVE) { wdata := moveres }
@@ -140,14 +143,14 @@ class Execute extends Module {
     whilo := WriteDisable
     hi := ZeroWord
     lo := ZeroWord
-  }.elsewhen(io.aluop === EXE_MTHI_OP) {
+  }.elsewhen(aluop === EXE_MTHI_OP) {
     whilo := WriteEnable
-    hi := io.reg1
+    hi := reg1
     lo := LO
-  }.elsewhen(io.aluop === EXE_MTLO_OP) {
+  }.elsewhen(aluop === EXE_MTLO_OP) {
     whilo := WriteEnable
     hi := HI
-    lo := io.reg1
+    lo := reg1
   }.otherwise {
     whilo := WriteDisable
     hi := ZeroWord

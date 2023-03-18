@@ -7,51 +7,58 @@ import cpu.puamips.Const._
 class Regfile extends Module {
   val io = IO(new Bundle {
     val fromDecoder = Flipped(new Decoder_RegFile())
+    val writeBack = Flipped(new WriteBack_RegFile())
     val decoder = new RegFile_Decoder()
- })
-  // 输入端口
-  val we = RegInit(false.B)
-  val waddr = RegInit(RegAddrBusInit)
-  val wdata = RegInit(RegBusInit)
+  })
+  // input-decoder
   val re1 = RegInit(false.B)
   val raddr1 = RegInit(RegAddrBusInit)
   val re2 = RegInit(false.B)
   val raddr2 = RegInit(RegAddrBusInit)
-  // 输出端口
+  re1 := io.fromDecoder.reg1_read
+  re2 := io.fromDecoder.reg2_read
+  raddr1 := io.fromDecoder.reg1_addr
+  raddr1 := io.fromDecoder.reg2_addr
+
+  // input-write back
+  val we = RegInit(false.B)
+  val waddr = RegInit(RegAddrBusInit)
+  val wdata = RegInit(RegBusInit)
+  we := io.writeBack.wreg
+  wdata := io.writeBack.wdata
+  waddr := io.writeBack.wd
+
+  // output-decoder
   val rdata1 = RegInit(RegBusInit)
   val rdata2 = RegInit(RegBusInit)
- 
-  val rdata1r = RegInit(RegBusInit)
-  val rdata2r = RegInit(RegBusInit)
-
-  io.rdata1 := rdata1r
-  io.rdata2 := rdata2r
+  io.decoder.rdata1 := rdata1
+  io.decoder.rdata2 := rdata2
 
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(RegNum)(RegBusInit)))
 
   when(reset.asBool === RstDisable) {
-    when(io.we === WriteEnable && io.waddr =/= 0.U) {
-      regs(io.waddr) := io.wdata
+    when(we === WriteEnable && waddr =/= 0.U) {
+      regs(waddr) := wdata
     }
   }
   when(reset.asBool === RstDisable) {
-    rdata1r := ZeroWord
-  }.elsewhen(io.raddr1 === 0.U) {
-    rdata1r := ZeroWord
-  }.elsewhen(io.re1 === ReadEnable) {
-    rdata1r := regs(io.raddr1)
+    rdata1 := ZeroWord
+  }.elsewhen(raddr1 === 0.U) {
+    rdata1 := ZeroWord
+  }.elsewhen(re1 === ReadEnable) {
+    rdata1 := regs(raddr1)
   }.otherwise {
-    rdata1r := ZeroWord
+    rdata1 := ZeroWord
   }
 
   when(reset.asBool === RstEnable) {
-    rdata2r := ZeroWord
-  }.elsewhen(io.raddr2 === 0.U) {
-    rdata2r := ZeroWord
-  }.elsewhen(io.re2 === ReadEnable) {
-    rdata2r := regs(io.raddr2)
+    rdata2 := ZeroWord
+  }.elsewhen(raddr2 === 0.U) {
+    rdata2 := ZeroWord
+  }.elsewhen(re2 === ReadEnable) {
+    rdata2 := regs(raddr2)
   }.otherwise {
-    rdata2r := ZeroWord
+    rdata2 := ZeroWord
   }
 }
