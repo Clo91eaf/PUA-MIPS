@@ -1,3 +1,4 @@
 chisel/project/
 .metals/
 .vscode/
+chisel/.bloop/
