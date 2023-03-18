@@ -8,8 +8,8 @@ import scala.annotation.switch
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
-    val fetch = Flipped(new Fetch_Decoder())
-    val instMemory = Flipped(new InstMemory_Decoder())
+    val fromFetch = Flipped(new Fetch_Decoder())
+    val fromInstMemory = Flipped(new InstMemory_Decoder())
     val fromRegfile = Flipped(new RegFile_Decoder())
     val fromExecute = Flipped(new Execute_Decoder())
     val fromMemory = Flipped(new Memory_Decoder())
@@ -19,11 +19,11 @@ class Decoder extends Module {
   })
   // input-fetch
   val pc = RegInit(RegBusInit)
-  pc := io.fetch.pc
+  pc := io.fromFetch.pc
 
   // input-inst memory
   val inst = RegInit(RegBusInit)
-  inst := io.instMemory.inst
+  inst := io.fromInstMemory.inst
 
   // input-regfile 
   val reg1_data = RegInit(RegBusInit)
@@ -35,11 +35,17 @@ class Decoder extends Module {
   val exWdata = RegInit(RegBusInit)
   val exWd = RegInit(RegAddrBusInit)
   val exWreg = RegInit(false.B)
+  exWdata := io.fromExecute.wdata
+  exWd := io.fromExecute.wd
+  exWreg := io.fromExecute.wreg
 
   // input-memory
   val memWdata = RegInit(RegBusInit)
   val memWd = RegInit(RegAddrBusInit)
   val memWreg = RegInit(false.B)
+  memWdata := io.fromMemory.wdata
+  memWd := io.fromMemory.wd
+  memWreg := io.fromMemory.wreg
 
   // Output-regfile
   val reg1_read = RegInit(false.B)

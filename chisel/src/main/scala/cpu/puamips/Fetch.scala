@@ -9,20 +9,13 @@ class Fetch extends Module {
     val decoder = new Fetch_Decoder()
   })
   val pc = RegInit(RegBusInit)
-  val ce = Reg(Bool())
-
-  when(reset.asBool() === RstEnable) {
-    ce := ChipDisable
-  }.otherwise {
-    ce := ChipEnable
-  }
+  val ce = RegInit(ChipEnable)
 
   when(ce === ChipDisable) {
     pc := RegBusInit
   }.otherwise{
     pc := pc + 4.U(RegNum.W)
   }
-
   io.instMemory.pc := pc
   io.instMemory.ce := ce
   io.decoder.pc := pc

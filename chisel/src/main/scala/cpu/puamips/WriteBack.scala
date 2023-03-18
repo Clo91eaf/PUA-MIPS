@@ -5,7 +5,9 @@ import cpu.puamips.Const._
 
 class WriteBack extends Module {
   val io = IO(new Bundle {
-    val memory = Flipped(new Memory_WriteBack())
+    val fromMemory = Flipped(new Memory_WriteBack())
+    val fromHilo = Flipped(new HILO_WriteBack())
+    val hilo = new WriteBack_HILO()
     val regfile = new WriteBack_RegFile() 
     val execute = new WriteBack_Execute()
 })
@@ -16,12 +18,18 @@ class WriteBack extends Module {
   val hi    = RegInit(RegBusInit)
   val lo    = RegInit(RegBusInit)
   val whilo = RegInit(false.B)
-  wd    := io.memory.wd    
-  wreg  := io.memory.wreg  
-  wdata := io.memory.wdata 
-  hi    := io.memory.hi    
-  lo    := io.memory.lo    
-  whilo := io.memory.whilo 
+  wd    := io.fromMemory.wd    
+  wreg  := io.fromMemory.wreg  
+  wdata := io.fromMemory.wdata 
+  hi    := io.fromMemory.hi    
+  lo    := io.fromMemory.lo    
+  whilo := io.fromMemory.whilo 
+
+  // input-hilo
+  val we = RegInit(false.B)
+  we := io.hilo.we
+  hi := io.hilo.hi
+  lo := io.hilo.lo
 
   // output-execute
   io.execute.whilo := whilo
@@ -32,4 +40,8 @@ class WriteBack extends Module {
   io.regfile.wd    := wd    
   io.regfile.wreg  := wreg  
   io.regfile.wdata := wdata 
+
+  // output-hilo
+  io.hilo.hi := hi
+  io.hilo.lo := lo
 }

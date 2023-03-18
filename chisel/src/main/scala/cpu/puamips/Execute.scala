@@ -4,21 +4,15 @@ import chisel3._
 import chisel3.util._
 import cpu.puamips.Const._
 import scala.annotation.switch
+import firrtl.FirrtlProtos.Firrtl.Statement.Memory
 
 class Execute extends Module {
   val io = IO(new Bundle {
-    val decoder = Flipped(new Decoder_Execute())
-    val writeBack = Flipped(new WriteBack_Execute())
+    val fromDecoder = Flipped(new Decoder_Execute())
+    val fromMemory = Flipped(new Memory_Execute())
+    val fromWriteBack = Flipped(new WriteBack_Execute())
+    val decoder = new Execute_Decoder()
     val memory = new Execute_Memory()
-
-    // // 译码模块传来的信息
-    // val hi = Input(RegBus)
-    // val lo = Input(RegBus)
-
-    // // 运算完毕后
-    // val hi_o = Output(RegBus)
-    // val lo_o = Output(RegBus)
-    // val whilo_o = Output(Bool())
   })
   // input-decoder
   val aluop = RegInit(ALU_OP_BUS_INIT)
@@ -27,28 +21,36 @@ class Execute extends Module {
   val reg2 = RegInit(RegBusInit)
   val wd = RegInit(RegAddrBusInit)
   val wreg = RegInit(false.B)
-  aluop  := io.decoder.aluop  
-  alusel := io.decoder.alusel 
-  reg1   := io.decoder.reg1   
-  reg2   := io.decoder.reg2   
-  wd    := io.decoder.wd   
-  wreg   := io.decoder.wreg   
+  aluop := io.fromDecoder.aluop
+  alusel := io.fromDecoder.alusel
+  reg1 := io.fromDecoder.reg1
+  reg2 := io.fromDecoder.reg2
+  wd := io.fromDecoder.wd
+  wreg := io.fromDecoder.wreg
+
+  // input-memory
+  val whilo = RegInit(false.B)
+  val hi = RegInit(RegBusInit)
+  val lo = RegInit(RegBusInit)
+  whilo := io.fromMemory.whilo
+  hi := io.fromMemory.hi
+  lo := io.fromMemory.lo
 
   // input-write back
-  val hi = Reg(RegBus)
-  val lo = Reg(RegBus)
-  val whilo = Reg(Bool())
-  hi := io.writeBack.hi
-  lo := io.writeBack.lo
-  whilo := io.writeBack.whilo
+  hi := io.fromWriteBack.hi
+  lo := io.fromWriteBack.lo
+  whilo := io.fromWriteBack.whilo
+
+  // output-decoder
+  val wdata = Output(RegBus)
+  io.decoder.wdata := wdata
+  io.decoder.wd := wd
+  io.decoder.wreg := wreg
 
   // output-memory
-  val wdata = RegInit(RegBusInit)
   io.memory.wd := wd
   io.memory.wreg := wreg
   io.memory.wdata := wdata
-
-
 
 //保存逻辑运算的结果
   val logicout = Reg(RegBus)
