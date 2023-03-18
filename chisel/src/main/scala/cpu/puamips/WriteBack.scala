@@ -8,22 +8,22 @@ class WriteBack extends Module {
     val fromMemory = Flipped(new Memory_WriteBack())
     val fromHilo = Flipped(new HILO_WriteBack())
     val hilo = new WriteBack_HILO()
-    val regfile = new WriteBack_RegFile() 
+    val regfile = new WriteBack_RegFile()
     val execute = new WriteBack_Execute()
-})
-  // input-memory 
-  val wd    = RegInit(RegAddrBusInit)
-  val wreg  = RegInit(false.B)
-  val wdata = RegInit(RegBusInit)
-  val hi    = RegInit(RegBusInit)
-  val lo    = RegInit(RegBusInit)
+  })
+  // input-memory
+  val wd = RegInit(REG_ADDR_BUS_INIT)
+  val wreg = RegInit(false.B)
+  val wdata = RegInit(REG_BUS_INIT)
+  val hi = RegInit(REG_BUS_INIT)
+  val lo = RegInit(REG_BUS_INIT)
   val whilo = RegInit(false.B)
-  wd    := io.fromMemory.wd    
-  wreg  := io.fromMemory.wreg  
-  wdata := io.fromMemory.wdata 
-  hi    := io.fromMemory.hi    
-  lo    := io.fromMemory.lo    
-  whilo := io.fromMemory.whilo 
+  wd := io.fromMemory.wd
+  wreg := io.fromMemory.wreg
+  wdata := io.fromMemory.wdata
+  hi := io.fromMemory.hi
+  lo := io.fromMemory.lo
+  whilo := io.fromMemory.whilo
 
   // input-hilo
   val we = RegInit(false.B)
@@ -37,9 +37,9 @@ class WriteBack extends Module {
   io.execute.lo := lo
 
   // output-regfile
-  io.regfile.wd    := wd    
-  io.regfile.wreg  := wreg  
-  io.regfile.wdata := wdata 
+  io.regfile.wd := wd
+  io.regfile.wreg := wreg
+  io.regfile.wdata := wdata
 
   // output-hilo
   io.hilo.hi := hi

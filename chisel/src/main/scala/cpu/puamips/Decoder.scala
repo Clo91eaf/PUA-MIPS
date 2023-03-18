@@ -18,30 +18,30 @@ class Decoder extends Module {
     val execute = new Decoder_Execute()
   })
   // input-fetch
-  val pc = RegInit(RegBusInit)
+  val pc = RegInit(REG_BUS_INIT)
   pc := io.fromFetch.pc
 
   // input-inst memory
-  val inst = RegInit(RegBusInit)
+  val inst = RegInit(REG_BUS_INIT)
   inst := io.fromInstMemory.inst
 
-  // input-regfile 
-  val reg1_data = RegInit(RegBusInit)
-  val reg2_data = RegInit(RegBusInit)
+  // input-regfile
+  val reg1_data = RegInit(REG_BUS_INIT)
+  val reg2_data = RegInit(REG_BUS_INIT)
   reg1_data := io.fromRegfile.rdata1
   reg2_data := io.fromRegfile.rdata2
 
   // input-execute
-  val exWdata = RegInit(RegBusInit)
-  val exWd = RegInit(RegAddrBusInit)
+  val exWdata = RegInit(REG_BUS_INIT)
+  val exWd = RegInit(REG_ADDR_BUS_INIT)
   val exWreg = RegInit(false.B)
   exWdata := io.fromExecute.wdata
   exWd := io.fromExecute.wd
   exWreg := io.fromExecute.wreg
 
   // input-memory
-  val memWdata = RegInit(RegBusInit)
-  val memWd = RegInit(RegAddrBusInit)
+  val memWdata = RegInit(REG_BUS_INIT)
+  val memWd = RegInit(REG_ADDR_BUS_INIT)
   val memWreg = RegInit(false.B)
   memWdata := io.fromMemory.wdata
   memWd := io.fromMemory.wd
@@ -50,22 +50,22 @@ class Decoder extends Module {
   // Output-regfile
   val reg1_read = RegInit(false.B)
   val reg2_read = RegInit(false.B)
-  val reg1_addr = RegInit(RegAddrBusInit)
-  val reg2_addr = RegInit(RegAddrBusInit)
+  val reg1_addr = RegInit(REG_ADDR_BUS_INIT)
+  val reg2_addr = RegInit(REG_ADDR_BUS_INIT)
   io.regfile.reg1_read := reg1_read
   io.regfile.reg2_read := reg2_read
   io.regfile.reg1_addr := reg1_addr
-  io.regfile.reg2_addr := reg2_addr 
-  
+  io.regfile.reg2_addr := reg2_addr
+
   // Output-execute
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
-  val reg1 = RegInit(RegBusInit)
-  val reg2 = RegInit(RegBusInit)
-  val wd = RegInit(RegAddrBusInit)
+  val reg1 = RegInit(REG_BUS_INIT)
+  val reg2 = RegInit(REG_BUS_INIT)
+  val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
   io.execute.aluop := aluop
-  io.execute.alusel := alusel 
+  io.execute.alusel := alusel
   io.execute.reg1 := reg1
   io.execute.reg2 := reg2
   io.execute.wd := wd
@@ -82,7 +82,7 @@ class Decoder extends Module {
   op4 := inst(20, 16)
 
   // 保存指令执行需要的立即数
-  val imm = Reg(RegBus)
+  val imm = Reg(REG_BUS)
 
   // 指示指令是否有效
   val instvalid = RegInit(false.B)
@@ -91,20 +91,20 @@ class Decoder extends Module {
   when(reset.asBool === RstEnable) {
     aluop := EXE_NOP_OP
     alusel := EXE_RES_NOP
-    wd := NOPRegAddr
+    wd := NOP_REG_ADDR
     wreg := WriteDisable
-    instvalid := InstInvalid
+    instvalid := INST_INVALID
     reg1_read := 0.U
     reg2_read := 0.U
-    reg1_addr := NOPRegAddr
-    reg2_addr := NOPRegAddr
+    reg1_addr := NOP_REG_ADDR
+    reg2_addr := NOP_REG_ADDR
     imm := 0.U
   }.otherwise {
     aluop := EXE_NOP_OP
     alusel := EXE_RES_NOP
     wd := inst(15, 11)
     wreg := WriteDisable
-    instvalid := InstInvalid
+    instvalid := INST_INVALID
     reg1_read := 0.U
     reg2_read := 0.U
     reg1_addr := inst(25, 21) // 默认第一个操作数寄存器为端口1读取的寄存器
@@ -117,7 +117,7 @@ class Decoder extends Module {
           is(0.U(5.W)) {
             switch(op3) {
               is(EXE) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_OP
                 alusel := EXE_RES_LOGIC
                 reg1_read := 1.U
@@ -125,7 +125,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_AND) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_AND_OP
                 alusel := EXE_RES_LOGIC
                 reg1_read := 1.U
@@ -133,7 +133,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_XOR) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_XOR_OP
                 alusel := EXE_RES_LOGIC
                 reg1_read := 1.U
@@ -141,7 +141,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_NOR) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_NOR_OP
                 alusel := EXE_RES_LOGIC
                 reg1_read := 1.U
@@ -149,7 +149,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_SLLV) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_SLL_OP
                 alusel := EXE_RES_SHIFT
                 reg1_read := 1.U
@@ -157,7 +157,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_SRLV) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_SRL_OP
                 alusel := EXE_RES_SHIFT
                 reg1_read := 1.U
@@ -165,7 +165,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_SRAV) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_SRA_OP
                 alusel := EXE_RES_SHIFT
                 reg1_read := 1.U
@@ -181,7 +181,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_MFHI) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_MFHI_OP
                 alusel := EXE_RES_MOVE
                 reg1_read := 0.U
@@ -189,7 +189,7 @@ class Decoder extends Module {
                 instvalid := InstValid
               }
               is(EXE_MFLO) {
-                wreg := WriteEnable
+                wreg := WRITE_ENABLE
                 aluop := EXE_MFLO_OP
                 alusel := EXE_RES_MOVE
                 reg1_read := 0.U
@@ -218,7 +218,7 @@ class Decoder extends Module {
                 instvalid := InstValid
                 when(reg2 === ZeroWord) {
                   // reg2_o的值为rt通用寄存器的值
-                  wreg := WriteEnable
+                  wreg := WRITE_ENABLE
                 }.otherwise {
                   wreg := WriteDisable
                 }
@@ -231,7 +231,7 @@ class Decoder extends Module {
                 instvalid := InstValid
                 when(reg2 === ZeroWord) {
                   // reg2_o的值为rt通用寄存器的值
-                  wreg := WriteEnable
+                  wreg := WRITE_ENABLE
                 }.otherwise {
                   wreg := WriteDisable
                 }
@@ -241,7 +241,7 @@ class Decoder extends Module {
         }
       } // EXE_SPECIALNST
       is(EXEI) {
-        wreg := WriteEnable
+        wreg := WRITE_ENABLE
         // 运算的子类型是逻辑“或”运算
         aluop := EXE_OP
         // 运算类型是逻辑运算
@@ -258,7 +258,7 @@ class Decoder extends Module {
         instvalid := InstValid
       } // EXEI
       is(EXE_ANDI) {
-        wreg := WriteEnable
+        wreg := WRITE_ENABLE
         aluop := EXE_AND_OP
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
@@ -268,7 +268,7 @@ class Decoder extends Module {
         instvalid := InstValid
       }
       is(EXE_XORI) {
-        wreg := WriteEnable
+        wreg := WRITE_ENABLE
         aluop := EXE_XOR_OP
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
@@ -278,7 +278,7 @@ class Decoder extends Module {
         instvalid := InstValid
       }
       is(EXE_LUI) {
-        wreg := WriteEnable
+        wreg := WRITE_ENABLE
         aluop := EXE_OP
         alusel := EXE_RES_LOGIC
         reg1_read := 1.U
@@ -288,7 +288,7 @@ class Decoder extends Module {
         instvalid := InstValid
       }
       is(EXE_PREF) {
-        wreg := WriteEnable
+        wreg := WRITE_ENABLE
         aluop := EXE_NOP_OP
         alusel := EXE_RES_NOP
         reg1_read := 0.U
@@ -298,7 +298,7 @@ class Decoder extends Module {
     }
     when(inst(31, 21) === 0.U) {
       when(op3 === EXE_SLL) {
-        wreg := WriteEnable;
+        wreg := WRITE_ENABLE;
         aluop := EXE_SLL_OP;
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;
@@ -307,7 +307,7 @@ class Decoder extends Module {
         wd := inst(15, 11);
         instvalid := InstValid;
       }.elsewhen(op3 === EXE_SRL) {
-        wreg := WriteEnable;
+        wreg := WRITE_ENABLE;
         aluop := EXE_SRL_OP;
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;
@@ -316,7 +316,7 @@ class Decoder extends Module {
         wd := inst(15, 11);
         instvalid := InstValid;
       }.elsewhen(op3 === EXE_SRA) {
-        wreg := WriteEnable;
+        wreg := WRITE_ENABLE;
         aluop := EXE_SRA_OP;
         alusel := EXE_RES_SHIFT;
         reg1_read := 0.U;

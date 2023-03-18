@@ -6,8 +6,8 @@ import cpu.puamips.Const._
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
-    val rom_data_i = Input(RegBus)
-    val rom_addr_o = Output(RegBus)
+    val rom_data_i = Input(REG_BUS)
+    val rom_addr_o = Output(REG_BUS)
     val rom_ce_o = Output(Bool())
   })
   val fetch = Module(new Fetch())
@@ -22,7 +22,7 @@ class PuaMips extends Module {
   // fetch
   fetch.io.decoder <> decoder.io.fromFetch
   fetch.io.instMemory <> instMemory.io.fetch
-  
+
   // inst memory
   instMemory.io.decoder <> decoder.io.fromInstMemory
 

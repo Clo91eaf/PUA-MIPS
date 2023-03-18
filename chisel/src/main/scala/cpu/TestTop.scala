@@ -6,8 +6,8 @@ import cpu.puamips._
 import cpu.puamips.Const._
 
 class CPUTop extends Module {
-  val inst_addr = Wire(InstAddrBus)
-  val inst = Wire(InstBus)
+  val inst_addr = Wire(INST_ADDR_BUS)
+  val inst = Wire(INST_BUS)
   val rom_ce = Wire(Bool())
 
   val puamips0 = Module(new PuaMips)

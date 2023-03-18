@@ -17,9 +17,9 @@ class Execute extends Module {
   // input-decoder
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
-  val reg1 = RegInit(RegBusInit)
-  val reg2 = RegInit(RegBusInit)
-  val wd = RegInit(RegAddrBusInit)
+  val reg1 = RegInit(REG_BUS_INIT)
+  val reg2 = RegInit(REG_BUS_INIT)
+  val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
   aluop := io.fromDecoder.aluop
   alusel := io.fromDecoder.alusel
@@ -30,8 +30,8 @@ class Execute extends Module {
 
   // input-memory
   val whilo = RegInit(false.B)
-  val hi = RegInit(RegBusInit)
-  val lo = RegInit(RegBusInit)
+  val hi = RegInit(REG_BUS_INIT)
+  val lo = RegInit(REG_BUS_INIT)
   whilo := io.fromMemory.whilo
   hi := io.fromMemory.hi
   lo := io.fromMemory.lo
@@ -42,7 +42,7 @@ class Execute extends Module {
   whilo := io.fromWriteBack.whilo
 
   // output-decoder
-  val wdata = Output(RegBus)
+  val wdata = Output(REG_BUS)
   io.decoder.wdata := wdata
   io.decoder.wd := wd
   io.decoder.wreg := wreg
@@ -53,19 +53,19 @@ class Execute extends Module {
   io.memory.wdata := wdata
 
 //保存逻辑运算的结果
-  val logicout = Reg(RegBus)
-  val shiftres = Reg(RegBus)
-  val moveres = Reg(RegBus)
-  val HI = Reg(RegBus)
-  val LO = Reg(RegBus)
+  val logicout = Reg(REG_BUS)
+  val shiftres = Reg(REG_BUS)
+  val moveres = Reg(REG_BUS)
+  val HI = Reg(REG_BUS)
+  val LO = Reg(REG_BUS)
 
 // 根据aluop指示的运算子类型进行运算
 
 //LOGIC
-  when(reset.asBool === RstEnable) {
-    logicout := ZeroWord
+  when(reset.asBool === RST_ENABLE) {
+    logicout := ZERO_WORD
   }.otherwise {
-    logicout := ZeroWord // default
+    logicout := ZERO_WORD // default
     switch(aluop) {
       is(EXE_OR_OP) {
         logicout := reg1 | reg2
@@ -83,10 +83,10 @@ class Execute extends Module {
   }
 
 // SHIFT
-  when(reset.asBool === RstEnable) {
-    shiftres := ZeroWord
+  when(reset.asBool === RST_ENABLE) {
+    shiftres := ZERO_WORD
   }.otherwise {
-    shiftres := ZeroWord // default
+    shiftres := ZERO_WORD // default
     switch(aluop) {
       is(EXE_SLL_OP) {
         shiftres := reg2 << reg1(4, 0)
@@ -101,19 +101,19 @@ class Execute extends Module {
   }
 
   // 得到最新的HI、LO寄存器的值，此处要解决指令数据相关问题
-  when(reset.asBool === RstEnable) {
-    HI := ZeroWord
-    LO := ZeroWord
+  when(reset.asBool === RST_ENABLE) {
+    HI := ZERO_WORD
+    LO := ZERO_WORD
   }.otherwise {
     HI := hi
     LO := lo
   }
 
 //MFHI、MFLO、MOVN、MOVZ指令
-  when(reset.asBool === RstEnable) {
-    moveres := ZeroWord
+  when(reset.asBool === RST_ENABLE) {
+    moveres := ZERO_WORD
   }.otherwise {
-    moveres := ZeroWord
+    moveres := ZERO_WORD
     switch(aluop) {
       is(EXE_MFHI_OP) {
         moveres := HI
@@ -133,7 +133,7 @@ class Execute extends Module {
 //根据alusel指示的运算类型，选择一个运算结果作为最终结果
   wd := wd
   wreg := wreg
-  wdata := ZeroWord // default
+  wdata := ZERO_WORD // default
   switch(alusel) {
     is(EXE_RES_LOGIC) { wdata := logicout }
     is(EXE_RES_SHIFT) { wdata := shiftres }
@@ -141,21 +141,21 @@ class Execute extends Module {
   }
 
 //MTHI和MTLO指令
-  when(reset.asBool === RstEnable) {
-    whilo := WriteDisable
-    hi := ZeroWord
-    lo := ZeroWord
+  when(reset.asBool === RST_ENABLE) {
+    whilo := WRITE_DISABLE
+    hi := ZERO_WORD
+    lo := ZERO_WORD
   }.elsewhen(aluop === EXE_MTHI_OP) {
-    whilo := WriteEnable
+    whilo := WRITE_ENABLE
     hi := reg1
     lo := LO
   }.elsewhen(aluop === EXE_MTLO_OP) {
-    whilo := WriteEnable
+    whilo := WRITE_ENABLE
     hi := HI
     lo := reg1
   }.otherwise {
-    whilo := WriteDisable
-    hi := ZeroWord
-    lo := ZeroWord
+    whilo := WRITE_DISABLE
+    hi := ZERO_WORD
+    lo := ZERO_WORD
   }
 }

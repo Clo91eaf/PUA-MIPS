@@ -4,20 +4,20 @@ import chisel3._
 import chisel3.util._
 
 object Const {
-  val RstEnable = true.B // 复位使能
-  val RstDisable = false.B // 复位除能
-  val WriteEnable = true.B // 写使能
-  val WriteDisable = false.B // 写除能
-  val ReadEnable = true.B // 读使能
-  val ReadDisable = false.B // 读除能
-  val InstValid = false.B // 指令有效
-  val InstInvalid = true.B // 指令无效
-  val ChipEnable = true.B // 芯片使能
-  val ChipDisable = false.B // 芯片禁止
-  val ZeroWord = 0.U // 32位数字0
-  val AluOpBus = UInt(8.W) // 译码阶段输出操作子类型数据宽度
+  val RST_ENABLE = true.B // 复位使能
+  val RST_DISABLE = false.B // 复位除能
+  val WRITE_ENABLE = true.B // 写使能
+  val WRITE_DISABLE = false.B // 写除能
+  val READ_ENABLE = true.B // 读使能
+  val READ_DISABLE = false.B // 读除能
+  val INST_VALID = false.B // 指令有效
+  val INST_INVALID = true.B // 指令无效
+  val CHIP_ENABLE = true.B // 芯片使能
+  val CHIP_DISABLE = false.B // 芯片禁止
+  val ZERO_WORD = 0.U // 32位数字0
+  val ALU_OP_BUS = UInt(8.W) // 译码阶段输出操作子类型数据宽度
   val ALU_OP_BUS_INIT = 0.U(8.W)
-  val AluSelBus = UInt(3.W) // 译码阶段输出操作类型数据宽度
+  val ALU_SEL_BUS = UInt(3.W) // 译码阶段输出操作类型数据宽度
   val ALU_SEL_BUS_INIT = 0.U(3.W) // 译码阶段输出操作类型数据宽度
 
   // 指令
@@ -84,18 +84,17 @@ object Const {
   val EXE_RES_NOP = "b000".U(3.W)
   val EXE_RES_MOVE = "b011".U(3.W)
 
-  val InstAddrBus = UInt(32.W)
-  val InstBus = UInt(32.W)
-  val InstMemNumLog2 = 17
-  val InstMemNum = (1 << InstMemNumLog2) - 1
+  val INST_ADDR_BUS = UInt(32.W)
+  val INST_BUS = UInt(32.W)
+  val INST_MEM_NUM_LOG2 = 17
+  val INST_MEM_NUM = (1 << INST_MEM_NUM_LOG2) - 1
 
-  val RegAddrBus = UInt(5.W)
-  val RegAddrBusInit = 0.U(5.W)
-  val RegBus = UInt(32.W)
-  val RegBusInit = 0.U(32.W)
-  val NOPRegAddr = "b00000".U(5.W)
-  val RegNum = 32
-  val RegNumLog2 = 5
+  val REG_ADDR_BUS = UInt(5.W)
+  val REG_ADDR_BUS_INIT = 0.U(5.W)
+  val REG_BUS = UInt(32.W)
+  val REG_BUS_INIT = 0.U(32.W)
+  val NOP_REG_ADDR = "b00000".U(5.W)
+  val REG_NUM = 32
+  val REG_NUM_LOG2 = 5
 
-  
 }
