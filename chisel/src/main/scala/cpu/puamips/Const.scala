@@ -96,5 +96,4 @@ object Const {
   val NOP_REG_ADDR = "b00000".U(5.W)
   val REG_NUM = 32
   val REG_NUM_LOG2 = 5
-
 }

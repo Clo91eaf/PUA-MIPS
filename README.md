@@ -13,3 +13,5 @@ or you can(in the **/pua-mips**):
 2. Chisel was initialized using [Chisel-template](https://github.com/freechipsproject/chisel-template).
 
 3. [Online Assembler](https://godbolt.org/) 
+
+4. [MIPS Converter](https://www.eg.bucknell.edu/~csci320/mips_web/)
