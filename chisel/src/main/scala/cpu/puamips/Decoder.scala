@@ -9,7 +9,7 @@ class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
     val fromFetch = Flipped(new Fetch_Decoder())
-    val fromInstMemory = Flipped(new InstMemory_Decoder())
+    val fromTop = Flipped(new Top_Decoder())
     val fromRegfile = Flipped(new RegFile_Decoder())
     val fromExecute = Flipped(new Execute_Decoder())
     val fromMemory = Flipped(new Memory_Decoder())
@@ -23,7 +23,7 @@ class Decoder extends Module {
 
   // input-inst memory
   val inst = RegInit(REG_BUS_INIT)
-  inst := io.fromInstMemory.inst
+  inst := io.fromTop.inst
 
   // input-regfile
   val reg1_data = RegInit(REG_BUS_INIT)

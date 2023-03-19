@@ -35,4 +35,7 @@ class Memory extends Module {
   io.writeBack.wdata := wdata
   io.writeBack.wd := wd
   io.writeBack.wreg := wreg
+  io.writeBack.whilo := whilo
+  io.writeBack.hi := hi
+  io.writeBack.lo := lo
 }

@@ -7,29 +7,26 @@ import chisel3.util.experimental.loadMemoryFromFile
 
 class InstMemory extends Module {
   val io = IO(new Bundle {
-    val fetch = Flipped(new Fetch_InstMemory())
-    val decoder = new InstMemory_Decoder()
-
-    val ce = Input(Bool())
-    val addr = Input(INST_ADDR_BUS)
-    val inst = Output(INST_BUS)
+    val fromTop = new Top_InstMemory()
+    val top = new InstMemory_Top()
   })
-  // input-fetch
+  // input-top
   val ce = RegInit(false.B)
   val pc = RegInit(REG_BUS_INIT)
-  ce := io.fetch.ce
-  pc := io.fetch.pc
+  ce := io.fromTop.ce
+  pc := io.fromTop.pc
 
-  // output-decoder
+  // output-top
   val inst = RegInit(REG_BUS_INIT)
-  io.decoder.inst := inst
+  io.top.inst := inst
 
   val inst_mem = Mem(INST_MEM_NUM, INST_BUS)
   loadMemoryFromFile(inst_mem, "inst_rom.data")
+  val addr = pc
 
-  when(io.ce === CHIP_DISABLE) {
+  when(ce === CHIP_DISABLE) {
     inst := ZERO_WORD
   }.otherwise {
-    inst := inst_mem(io.addr(INST_MEM_NUM_LOG2 + 1, 2))
+    inst := inst_mem(addr(INST_MEM_NUM_LOG2 + 1, 2))
   }
 }
