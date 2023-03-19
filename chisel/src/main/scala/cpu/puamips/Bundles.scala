@@ -7,12 +7,21 @@ class Fetch_Decoder extends Bundle {
   val pc = Output(REG_BUS)
 }
 
-class Fetch_InstMemory extends Bundle {
+class Fetch_Top extends Bundle {
   val pc = Output(REG_BUS)
   val ce = Output(Bool())
 }
 
-class InstMemory_Decoder extends Bundle {
+class Top_InstMemory extends Bundle {
+  val pc = Output(REG_BUS)
+  val ce = Output(Bool())
+}
+
+class InstMemory_Top extends Bundle {
+  val inst = Output(REG_BUS)
+}
+
+class Top_Decoder extends Bundle {
   val inst = Output(REG_BUS)
 }
 

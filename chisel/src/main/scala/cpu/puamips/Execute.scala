@@ -42,7 +42,7 @@ class Execute extends Module {
   whilo := io.fromWriteBack.whilo
 
   // output-decoder
-  val wdata = Output(REG_BUS)
+  val wdata = RegInit(REG_BUS_INIT)
   io.decoder.wdata := wdata
   io.decoder.wd := wd
   io.decoder.wreg := wreg
@@ -53,11 +53,11 @@ class Execute extends Module {
   io.memory.wdata := wdata
 
 //保存逻辑运算的结果
-  val logicout = Reg(REG_BUS)
-  val shiftres = Reg(REG_BUS)
-  val moveres = Reg(REG_BUS)
-  val HI = Reg(REG_BUS)
-  val LO = Reg(REG_BUS)
+  val logicout = RegInit(REG_BUS_INIT)
+  val shiftres = RegInit(REG_BUS_INIT)
+  val moveres = RegInit(REG_BUS_INIT)
+  val HI = RegInit(REG_BUS_INIT)
+  val LO = RegInit(REG_BUS_INIT)
 
 // 根据aluop指示的运算子类型进行运算
 

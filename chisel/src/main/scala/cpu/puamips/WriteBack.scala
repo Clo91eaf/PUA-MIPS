@@ -10,6 +10,7 @@ class WriteBack extends Module {
     val hilo = new WriteBack_HILO()
     val regfile = new WriteBack_RegFile()
     val execute = new WriteBack_Execute()
+    // val success = Output(Bool())
   })
   // input-memory
   val wd = RegInit(REG_ADDR_BUS_INIT)
@@ -42,6 +43,9 @@ class WriteBack extends Module {
   io.regfile.wdata := wdata
 
   // output-hilo
+  io.hilo.we := we 
   io.hilo.hi := hi
   io.hilo.lo := lo
+
+  // io.success := true.B
 }

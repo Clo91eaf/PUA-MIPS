@@ -5,7 +5,7 @@ import cpu.puamips.Const._
 
 class Fetch extends Module {
   val io = IO(new Bundle {
-    val instMemory = new Fetch_InstMemory()
+    val top = new Fetch_Top()
     val decoder = new Fetch_Decoder()
   })
   val pc = RegInit(REG_BUS_INIT)
@@ -16,7 +16,7 @@ class Fetch extends Module {
   }.otherwise {
     pc := pc + 4.U(REG_NUM.W)
   }
-  io.instMemory.pc := pc
-  io.instMemory.ce := ce
+  io.top.pc := pc
+  io.top.ce := ce
   io.decoder.pc := pc
 }
