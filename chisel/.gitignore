@@ -1,6 +1,10 @@
 project/
 target/
 generated/
+.bloop/
+.bsp/
+.metals/
+.vscode/
 
 
 ### Project Specific stuff

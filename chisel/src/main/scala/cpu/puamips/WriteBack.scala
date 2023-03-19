@@ -1,33 +1,47 @@
 package cpu.puamips
 
 import chisel3._
-import chisel3.util._
 import cpu.puamips.Const._
 
 class WriteBack extends Module {
   val io = IO(new Bundle {
-    val memory = Flipped(new Memory_WriteBack())
-    val regfile = new WriteBack_RegFile() 
-})
-  // input-memory 
-  val wd    = RegInit(RegAddrBusInit)
-  val wreg  = RegInit(false.B)
-  val wdata = RegInit(RegBusInit)
-  val hi    = RegInit(RegBusInit)
-  val lo    = RegInit(RegBusInit)
+    val fromMemory = Flipped(new Memory_WriteBack())
+    val fromHilo = Flipped(new HILO_WriteBack())
+    val hilo = new WriteBack_HILO()
+    val regfile = new WriteBack_RegFile()
+    val execute = new WriteBack_Execute()
+  })
+  // input-memory
+  val wd = RegInit(REG_ADDR_BUS_INIT)
+  val wreg = RegInit(false.B)
+  val wdata = RegInit(REG_BUS_INIT)
+  val hi = RegInit(REG_BUS_INIT)
+  val lo = RegInit(REG_BUS_INIT)
   val whilo = RegInit(false.B)
-  wd    := io.memory.wd    
-  wreg  := io.memory.wreg  
-  wdata := io.memory.wdata 
-  hi    := io.memory.hi    
-  lo    := io.memory.lo    
-  whilo := io.memory.whilo 
+  wd := io.fromMemory.wd
+  wreg := io.fromMemory.wreg
+  wdata := io.fromMemory.wdata
+  hi := io.fromMemory.hi
+  lo := io.fromMemory.lo
+  whilo := io.fromMemory.whilo
+
+  // input-hilo
+  val we = RegInit(false.B)
+  we := io.hilo.we
+  hi := io.hilo.hi
+  lo := io.hilo.lo
+
+  // output-execute
+  io.execute.whilo := whilo
+  io.execute.hi := hi
+  io.execute.lo := lo
 
   // output-regfile
-  io.regfile.wd    := wd    
-  io.regfile.wreg  := wreg  
-  io.regfile.wdata := wdata 
-  io.regfile.hi    := hi    
-  io.regfile.lo    := lo    
-  io.regfile.whilo := whilo 
+  io.regfile.wd := wd
+  io.regfile.wreg := wreg
+  io.regfile.wdata := wdata
+
+  // output-hilo
+  io.hilo.hi := hi
+  io.hilo.lo := lo
 }
