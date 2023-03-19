@@ -92,8 +92,3 @@ class HILO_WriteBack extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
 }
-
-class HILO_WriteBack extends Bundle {
-  val hi = Output(RegBus)
-  val lo = Output(RegBus)
-}
