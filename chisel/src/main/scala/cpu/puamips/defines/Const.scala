@@ -2,8 +2,9 @@ package cpu.puamips
 
 import chisel3._
 import chisel3.util._
+import cpu.puamips.defines.{Instructions, OptionConst}
 
-object Const {
+trait Constants {
   val RstEnable = true.B // 复位使能
   val RstDisable = false.B // 复位除能
   val WriteEnable = true.B // 写使能
@@ -97,5 +98,6 @@ object Const {
   val RegNum = 32
   val RegNumLog2 = 5
 
-  
 }
+
+object Const extends Constants with Instructions with OptionConst

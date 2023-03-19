@@ -1,9 +1,9 @@
 package cpu.puamips
 
+import Const._
 import chisel3._
 import chisel3.util._
-import cpu.puamips.Const._
-import scala.annotation.switch
+import UInt._
 
 class Decoder extends Module {
   val io = IO(new Bundle {
@@ -25,7 +25,7 @@ class Decoder extends Module {
   val inst = RegInit(RegBusInit)
   inst := io.instMemory.inst
 
-  // input-regfile 
+  // input-regfile
   val reg1_data = RegInit(RegBusInit)
   val reg2_data = RegInit(RegBusInit)
   reg1_data := io.fromRegfile.rdata1
@@ -49,8 +49,8 @@ class Decoder extends Module {
   io.regfile.reg1_read := reg1_read
   io.regfile.reg2_read := reg2_read
   io.regfile.reg1_addr := reg1_addr
-  io.regfile.reg2_addr := reg2_addr 
-  
+  io.regfile.reg2_addr := reg2_addr
+
   // Output-execute
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
@@ -59,7 +59,7 @@ class Decoder extends Module {
   val wd = RegInit(RegAddrBusInit)
   val wreg = RegInit(false.B)
   io.execute.aluop := aluop
-  io.execute.alusel := alusel 
+  io.execute.alusel := alusel
   io.execute.reg1 := reg1
   io.execute.reg2 := reg2
   io.execute.wd := wd
@@ -81,264 +81,223 @@ class Decoder extends Module {
   // 指示指令是否有效
   val instvalid = RegInit(false.B)
 
-  // 对指令进行译码
-  when(reset.asBool === RstEnable) {
-    aluop := EXE_NOP_OP
-    alusel := EXE_RES_NOP
-    wd := NOPRegAddr
-    wreg := WriteDisable
-    instvalid := InstInvalid
-    reg1_read := 0.U
-    reg2_read := 0.U
-    reg1_addr := NOPRegAddr
-    reg2_addr := NOPRegAddr
-    imm := 0.U
-  }.otherwise {
-    aluop := EXE_NOP_OP
-    alusel := EXE_RES_NOP
-    wd := io.inst(15, 11)
-    wreg := WriteDisable
-    instvalid := InstInvalid
-    reg1_read := 0.U
-    reg2_read := 0.U
-    reg1_addr := io.inst(25, 21) // 默认第一个操作数寄存器为端口1读取的寄存器
-    reg2_addr := io.inst(20, 16) // 默认第二个操作寄存器为端口2读取的寄存器
-    imm := ZeroWord
+  val rt = UInt(5.W)
+  val rd = UInt(5.W)
+  val sa = UInt(5.W)
+  val rs = UInt(5.W)
+  val imm16 = UInt(16.W)
 
-    switch(op) {
-      is(EXE_SPECIALNST) {
-        switch(op2) {
-          is(0.U(5.W)) {
-            switch(op3) {
-              is(EXE) {
-                wreg := WriteEnable
-                aluop := EXE_OP
-                alusel := EXE_RES_LOGIC
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_AND) {
-                wreg := WriteEnable
-                aluop := EXE_AND_OP
-                alusel := EXE_RES_LOGIC
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_XOR) {
-                wreg := WriteEnable
-                aluop := EXE_XOR_OP
-                alusel := EXE_RES_LOGIC
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_NOR) {
-                wreg := WriteEnable
-                aluop := EXE_NOR_OP
-                alusel := EXE_RES_LOGIC
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_SLLV) {
-                wreg := WriteEnable
-                aluop := EXE_SLL_OP
-                alusel := EXE_RES_SHIFT
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_SRLV) {
-                wreg := WriteEnable
-                aluop := EXE_SRL_OP
-                alusel := EXE_RES_SHIFT
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_SRAV) {
-                wreg := WriteEnable
-                aluop := EXE_SRA_OP
-                alusel := EXE_RES_SHIFT
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_SYNC) {
-                wreg := WriteDisable
-                aluop := EXE_SRL_OP
-                alusel := EXE_RES_NOP
-                reg1_read := 0.U
-                reg2_read := 1.U
-                instvalid := InstValid
-              }
-              is(EXE_MFHI) {
-                wreg := WriteEnable
-                aluop := EXE_MFHI_OP
-                alusel := EXE_RES_MOVE
-                reg1_read := 0.U
-                reg2_read := 0.U
-                instvalid := InstValid
-              }
-              is(EXE_MFLO) {
-                wreg := WriteEnable
-                aluop := EXE_MFLO_OP
-                alusel := EXE_RES_MOVE
-                reg1_read := 0.U
-                reg2_read := 0.U
-                instvalid := InstValid
-              }
-              is(EXE_MTHI) {
-                wreg := WriteDisable
-                aluop := EXE_MTHI_OP
-                reg1_read := 1.U
-                reg2_read := 0.U
-                instvalid := InstValid
-              }
-              is(EXE_MTLO) {
-                wreg := WriteDisable
-                aluop := EXE_MTLO_OP
-                reg1_read := 1.U
-                reg2_read := 0.U
-                instvalid := InstValid
-              }
-              is(EXE_MOVN) {
-                aluop := EXE_MOVN_OP
-                alusel := EXE_RES_MOVE
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-                when(reg2 === ZeroWord) {
-                  // reg2_o的值为rt通用寄存器的值
-                  wreg := WriteEnable
-                }.otherwise {
-                  wreg := WriteDisable
-                }
-              }
-              is(EXE_MOVZ) {
-                aluop := EXE_MOVZ_OP
-                alusel := EXE_RES_MOVE
-                reg1_read := 1.U
-                reg2_read := 1.U
-                instvalid := InstValid
-                when(reg2 === ZeroWord) {
-                  // reg2_o的值为rt通用寄存器的值
-                  wreg := WriteEnable
-                }.otherwise {
-                  wreg := WriteDisable
-                }
-              }
-            } // op3
-          } // 0.U(5.W)
-        }
-      } // EXE_SPECIALNST
-      is(EXEI) {
-        wreg := WriteEnable
-        // 运算的子类型是逻辑“或”运算
-        aluop := EXE_OP
-        // 运算类型是逻辑运算
-        alusel := EXE_RES_LOGIC
-        // 需要通过Regfile的读端口1读寄存器
-        reg1_read := 1.U
-        // 需要通过Regfile的读端口2读寄存器
-        reg2_read := 0.U
-        // 指令执行需要的立即数
-        imm := Cat(0.U(16.W), io.inst(15, 0))
-        // 指令执行要写的目的寄存器
-        wd := io.inst(20, 16)
-        // ori指令有效
-        instvalid := InstValid
-      } // EXEI
-      is(EXE_ANDI) {
-        wreg := WriteEnable
-        aluop := EXE_AND_OP
-        alusel := EXE_RES_LOGIC
-        reg1_read := 1.U
-        reg2_read := 0.U
-        imm := Cat(0.U(16.W), io.inst(15, 0))
-        wd := io.inst(20, 16)
-        instvalid := InstValid
-      }
-      is(EXE_XORI) {
-        wreg := WriteEnable
-        aluop := EXE_XOR_OP
-        alusel := EXE_RES_LOGIC
-        reg1_read := 1.U
-        reg2_read := 0.U
-        imm := Cat(0.U(16.W), io.inst(15, 0))
-        wd := io.inst(20, 16)
-        instvalid := InstValid
-      }
-      is(EXE_LUI) {
-        wreg := WriteEnable
-        aluop := EXE_OP
-        alusel := EXE_RES_LOGIC
-        reg1_read := 1.U
-        reg2_read := 0.U
-        imm := Cat(io.inst(15, 0), 0.U(16.W))
-        wd := io.inst(20, 16)
-        instvalid := InstValid
-      }
-      is(EXE_PREF) {
-        wreg := WriteEnable
-        aluop := EXE_NOP_OP
-        alusel := EXE_RES_NOP
-        reg1_read := 0.U
-        reg2_read := 0.U
-        instvalid := InstValid
-      }
-    }
-    when(io.inst(31, 21) === 0.U) {
-      when(op3 === EXE_SLL) {
-        wreg := WriteEnable;
-        aluop := EXE_SLL_OP;
-        alusel := EXE_RES_SHIFT;
-        reg1_read := 0.U;
-        reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
-        instvalid := InstValid;
-      }.elsewhen(op3 === EXE_SRL) {
-        wreg := WriteEnable;
-        aluop := EXE_SRL_OP;
-        alusel := EXE_RES_SHIFT;
-        reg1_read := 0.U;
-        reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
-        instvalid := InstValid;
-      }.elsewhen(op3 === EXE_SRA) {
-        wreg := WriteEnable;
-        aluop := EXE_SRA_OP;
-        alusel := EXE_RES_SHIFT;
-        reg1_read := 0.U;
-        reg2_read := 1.U;
-        imm := io.inst(10, 6);
-        wd := io.inst(15, 11);
-        instvalid := InstValid;
-      }
-    }
-  }
+  rt := inst(20, 16)
+  rd := inst(15, 11)
+  sa := inst(10, 6)
+  rs := inst(25, 21)
+  imm16 := inst(15, 0)
+
+  // 对指令进行译码
+  instvalid := InstInvalid
+  aluop := EXE_NOP_OP
+  alusel := EXE_RES_NOP
+  wd := rd // inst(15, 11)
+  wreg := WriteDisable
+  reg1_read := ReadDisable
+  reg2_read := ReadDisable
+  reg1_addr := rs // inst(25, 21)
+  reg2_addr := rt //inst(20, 16)
+  imm := ZeroWord
+
+  val signals: List[UInt] = ListLookup(
+    inst,
+  // @formatter:off
+    List(InstInvalid, ReadDisable, ReadDisable, EXE_RES_NOP, EXE_NOP_OP, WriteDisable, WRA_X, IMM_N),
+    Array(         /* val  | Op1    | Op2    | inst    |operation| Write | WReg   | Imm */
+                   /* inst | sel    | sel    | type    | type    | reg   | Target | type */
+      // 位操作
+      OR        -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_OR_OP  , WriteEnable   , WRA_T1 , IMM_N  ),
+      AND       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_AND_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      XOR       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_XOR_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      NOR       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_NOR_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      // 移位
+      SLLV      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_SHIFT, EXE_SLL_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      SRLV      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_SHIFT, EXE_SRL_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      SRAV      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_SHIFT, EXE_SRA_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      SLL       -> List(InstValid , ReadDisable, ReadEnable   , EXE_RES_SHIFT, EXE_SLL_OP , WriteEnable   , WRA_T1 , IMM_SHT),
+      SRL       -> List(InstValid , ReadDisable, ReadEnable   , EXE_RES_SHIFT, EXE_SRL_OP , WriteEnable   , WRA_T1 , IMM_SHT),
+      SRA       -> List(InstValid , ReadDisable, ReadEnable   , EXE_RES_SHIFT, EXE_SRA_OP , WriteEnable   , WRA_T1 , IMM_SHT),
+      // 立即数
+      ORI       -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_OR_OP  , WriteEnable   , WRA_T2 , IMM_LZE),
+      ANDI      -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_AND_OP , WriteEnable   , WRA_T2 , IMM_LZE),
+      XORI      -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_XOR_OP , WriteEnable   , WRA_T2 , IMM_LZE),
+      LUI       -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_OR_OP  , WriteEnable   , WRA_T2 , IMM_HZE),
+
+      // Move
+      MOVN      -> List(InstValid , ReadEnable   , ReadEnable   , INST_MV , EXE_MOVN_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      MOVZ      -> List(InstValid , ReadEnable   , ReadEnable   , INST_MV , EXE_MOVZ_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+
+      // HI，LO的Move指令
+      MFHI      -> List(InstValid , ReadDisable  , ReadDisable  , INST_MV , EXE_MFHI_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      MFLO      -> List(InstValid , ReadDisable  , ReadDisable  , INST_MV , EXE_MFLO_OP , WriteEnable   , WRA_T1 , IMM_N  ),
+      MTHI      -> List(InstValid , ReadEnable   , ReadDisable  , INST_WO , EXE_MTHI_OP , WriteDisable  , WRA_X  , IMM_N  ),
+      MTLO      -> List(InstValid , ReadEnable   , ReadDisable  , INST_WO , EXE_MTLO_OP , WriteDisable  , WRA_X  , IMM_N  ),
+      // // C0的Move指令
+      // MFC0      -> List(InstValid , ReadDisable  , ReadDisable  , INST_MV , EXE_MFC0 , WriteEnable   , WRA_T2 , IMM_N  ),
+      // MTC0      -> List(InstValid , ReadDisable  , ReadEnable   , INST_WO , EXE_MTC0 , WriteDisable  , WRA_X  , IMM_N  ),
+
+      // // 比较指令
+      // SLT       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_SLT , WriteEnable   , WRA_T1 , IMM_N  ),
+      // SLTU      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_SLTU, WriteEnable   , WRA_T1 , IMM_N  ),
+      // // 立即数
+      // SLTI      -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_SLT , WriteEnable   , WRA_T2 , IMM_LSE),
+      // SLTIU     -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_SLTU, WriteEnable   , WRA_T2 , IMM_LSE),
+
+      // // Trap
+      // TEQ       -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_EQ, WriteDisable  , WRA_X  , IMM_N  ),
+      // TEQI      -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_EQ, WriteDisable  , WRA_X  , IMM_LSE),
+      // TGE       -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_GE, WriteDisable  , WRA_X  , IMM_N  ),
+      // TGEI      -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_GE, WriteDisable  , WRA_X  , IMM_LSE),
+      // TGEIU     -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_GEU, WriteDisable , WRA_X  , IMM_LSE),
+      // TGEU      -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_GEU, WriteDisable , WRA_X  , IMM_N  ),
+      // TLT       -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_LT, WriteDisable  , WRA_X  , IMM_N  ),
+      // TLTI      -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_LT, WriteDisable  , WRA_X  , IMM_LSE),
+      // TLTIU     -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_LTU, WriteDisable , WRA_X  , IMM_LSE),
+      // TLTU      -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_LTU, WriteDisable , WRA_X  , IMM_N  ),
+      // TNE       -> List(InstValid , ReadEnable   , ReadEnable   , INST_TRAP, TRAP_NE, WriteDisable  , WRA_X  , IMM_N  ),
+      // TNEI      -> List(InstValid , ReadEnable   , ReadDisable, INST_TRAP, TRAP_NE, WriteDisable  , WRA_X  , IMM_LSE),
+
+      // // 算术指令
+      // ADD       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_ADD , WriteEnable   , WRA_T1 , IMM_N  ),
+      // ADDU      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_ADDU, WriteEnable   , WRA_T1 , IMM_N  ),
+      // SUB       -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_SUB , WriteEnable   , WRA_T1 , IMM_N  ),
+      // SUBU      -> List(InstValid , ReadEnable   , ReadEnable   , EXE_RES_LOGIC, EXE_SUBU, WriteEnable   , WRA_T1 , IMM_N  ),
+      // MUL       -> List(InstValid , ReadEnable   , ReadEnable  ,  EXE_RES_LOGIC, EXE_MUL , WriteEnable   , WRA_T1 , IMM_N  ),
+      // MULT      -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MULT , WriteDisable  , WRA_X  , IMM_N  ),
+      // MULTU     -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MULTU, WriteDisable  , WRA_X  , IMM_N  ),
+      // MADD      -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MADD , WriteDisable  , WRA_X  , IMM_N  ),
+      // MADDU     -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MADDU, WriteDisable  , WRA_X  , IMM_N  ),
+      // MSUB      -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MSUB , WriteDisable  , WRA_X  , IMM_N  ),
+      // MSUBU     -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_MSUBU, WriteDisable  , WRA_X  , IMM_N  ),
+      // DIV       -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_DIV  , WriteDisable  , WRA_X  , IMM_N  ),
+      // DIVU      -> List(InstValid , ReadEnable   , ReadEnable   , INST_WO , EXE_DIVU , WriteDisable  , WRA_X  , IMM_N  ),
+      // CLO       -> List(InstValid , ReadEnable   , ReadDisable  , EXE_RES_LOGIC, EXE_CLO , WriteEnable   , WRA_T1 , IMM_N  ),
+      // CLZ       -> List(InstValid , ReadEnable   , ReadDisable  , EXE_RES_LOGIC, EXE_CLZ , WriteEnable   , WRA_T1 , IMM_N  ),
+      // // 立即数
+      // ADDI      -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_ADD , WriteEnable   , WRA_T2 , IMM_LSE),
+      // ADDIU     -> List(InstValid , ReadEnable   , ReadDisable, EXE_RES_LOGIC, EXE_ADDU, WriteEnable   , WRA_T2 , IMM_LSE),
+
+
+      // // 跳转指令
+      // J         -> List(InstValid , ReadDisable  , ReadDisable  , INST_BR , BR_J    , WriteDisable  , WRA_X  , IMM_N  ),
+      // JAL       -> List(InstValid , ReadDisable  , ReadDisable  , INST_BR , BR_JAL  , WriteEnable   , WRA_T3 , IMM_N  ),
+      // JR        -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_JR   , WriteDisable  , WRA_X  , IMM_N  ),
+      // JALR      -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_JALR , WriteEnable   , WRA_T1 , IMM_N  ),
+      // BEQ       -> List(InstValid , ReadEnable   , ReadEnable   , INST_BR , BR_EQ   , WriteDisable  , WRA_X  , IMM_N  ),
+      // BNE       -> List(InstValid , ReadEnable   , ReadEnable   , INST_BR , BR_NE   , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGTZ      -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GTZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BLEZ      -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LEZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGEZ      -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GEZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGEZAL    -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GEZAL, WriteEnable   , WRA_T3 , IMM_N  ),
+      // BLTZ      -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LTZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BLTZAL    -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LTZAL, WriteEnable   , WRA_T3 , IMM_N  ),
+      // BEQL      -> List(InstValid , ReadEnable   , ReadEnable   , INST_BR , BR_EQ   , WriteDisable  , WRA_X  , IMM_N  ),
+      // BNEL      -> List(InstValid , ReadEnable   , ReadEnable   , INST_BR , BR_NE   , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGTZL     -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GTZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BLEZL     -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LEZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGEZL     -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GEZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BGEZALL   -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_GEZAL, WriteEnable   , WRA_T3 , IMM_N  ),
+      // BLTZL     -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LTZ  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BLTZALL   -> List(InstValid , ReadEnable   , ReadDisable  , INST_BR , BR_LTZAL, WriteEnable   , WRA_T3 , IMM_N  ),
+
+      // // TLB
+      // TLBP      -> List(InstValid , ReadDisable  , ReadDisable  , INST_TLB, TLB_P   , WriteDisable  , WRA_X  , IMM_N  ),
+      // TLBR      -> List(InstValid , ReadDisable  , ReadDisable  , INST_TLB, TLB_R   , WriteDisable  , WRA_X  , IMM_N  ),
+      // TLBWI     -> List(InstValid , ReadDisable  , ReadDisable  , INST_TLB, TLB_WI  , WriteDisable  , WRA_X  , IMM_N  ),
+      // TLBWR     -> List(InstValid , ReadDisable  , ReadDisable  , INST_TLB, TLB_WR  , WriteDisable  , WRA_X  , IMM_N  ),
+
+      // // 例外指令
+      // SYSCALL   -> List(InstValid , ReadDisable  , ReadDisable  , INST_EXC, EXC_SC  , WriteDisable  , WRA_X  , IMM_N  ),
+      // BREAK     -> List(InstValid , ReadDisable  , ReadDisable  , INST_EXC, EXC_BR  , WriteDisable  , WRA_X  , IMM_N  ),
+      // ERET      -> List(InstValid , ReadDisable  , ReadDisable  , INST_EXC, EXC_ER  , WriteDisable  , WRA_X  , IMM_N  ),
+      // WAIT      -> List(InstValid , ReadDisable  , ReadDisable  , INST_EXC, EXC_WAIT, WriteDisable  , WRA_X  , IMM_N  ),
+
+      // // 访存指令
+      // LB        -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LB  , WriteEnable   , WRA_T2 , IMM_N  ),
+      // LBU       -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LBU , WriteEnable   , WRA_T2 , IMM_N  ),
+      // LH        -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LH  , WriteEnable   , WRA_T2 , IMM_N  ),
+      // LHU       -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LHU , WriteEnable   , WRA_T2 , IMM_N  ),
+      // LW        -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LW  , WriteEnable   , WRA_T2 , IMM_N  ),
+      // SB        -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SB  , WriteDisable  , WRA_X  , IMM_N  ),
+      // SH        -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SH  , WriteDisable  , WRA_X  , IMM_N  ),
+      // SW        -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SW  , WriteDisable  , WRA_X  , IMM_N  ),
+      // LWL       -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_LWL , WriteEnable   , WRA_T2 , IMM_N  ),
+      // LWR       -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_LWR , WriteEnable   , WRA_T2 , IMM_N  ),
+      // SWL       -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SWL , WriteDisable  , WRA_X  , IMM_N  ),
+      // SWR       -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SWR , WriteDisable  , WRA_X  , IMM_N  ),
+      // LL        -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_LL  , WriteEnable   , WRA_T2 , IMM_N  ),
+      // SC        -> List(InstValid , ReadEnable   , ReadEnable   , INST_MEM, MEM_SC  , WriteEnable   , WRA_T2 , IMM_N  ),
+
+
+      SYNC      -> List(InstValid , ReadDisable  , ReadEnable     , EXE_RES_NOP  , EXE_SRL_OP    , WriteDisable  , WRA_X  , IMM_N  ),
+      PREF      -> List(InstValid , ReadDisable  , ReadDisable  , EXE_RES_NOP  , EXE_NOP_OP    , WriteEnable    , WRA_X  , IMM_N  ),
+      PREFX     -> List(InstValid , ReadDisable  , ReadDisable  , EXE_RES_NOP  , EXE_NOP_OP    , WriteDisable  , WRA_X  , IMM_N  ),
+
+      // // Cache
+      // CACHE     -> List(InstValid , ReadEnable   , ReadDisable  , INST_MEM, MEM_CAC , WriteDisable  , WRA_X  , IMM_N  ),
+    )
+  )
+  // @formatter:on
+
+
+  val (csInstValid: Bool) :: (op1_type: Bool) :: (op2_type: Bool) :: csInstType :: cs0 =
+    signals
+  val csOpType :: (csWReg: Bool) :: csWRType :: csIMMType :: Nil = cs0
+
+  val instValid = Bool()
+  // val wreg        = Bool() // write to register-file
+  val wraType = UInt(2.W) // write register request type
+  val immType = UInt(3.W)
+
+  instValid := csInstValid
+  wraType := csWRType
+  immType := csIMMType
+
+  reg1_read := op1_type
+  reg2_read := op2_type
+
+  imm := MuxLookup(
+    immType,
+    Util.zeroExtend(sa), // default IMM_SHT
+    Array(
+      IMM_LSE -> Util.signedExtend(imm16),
+      IMM_LZE -> Util.zeroExtend(imm16),
+      IMM_HZE -> Cat(imm16, Fill(16, 0.U))
+    )
+  )
+
+  wd := MuxLookup(
+    wraType,
+    "b11111".U(5.W), // 取"b11111", 即31号寄存器
+    Array(
+      WRA_T1 -> rd, // 取inst(15,11)
+      WRA_T2 -> rt // 取inst(20,16)
+    )
+  )
+
+  aluop := csOpType
+  alusel := csInstType
+  wreg:=csWReg
 
 //确定运算源操作数1
-  when(reset.asBool === RstEnable) {
-    reg1 := ZeroWord
-  }.elsewhen(reg1_read === 1.U) {
-    reg1 := io.reg1_data
-  }.elsewhen(reg1_read === 0.U) {
+  when(reg1_read === ReadEnable  ) {
+    reg1 := reg1_data
+  }.elsewhen(reg1_read === ReadDisable) {
     reg1 := imm
   }.otherwise {
     reg1 := ZeroWord
   }
 
 //确定运算源操作数2
-  when(reset.asBool === RstEnable) {
-    reg2 := ZeroWord
-  }.elsewhen(reg2_read === 1.U) {
-    reg2 := io.reg2_data
-  }.elsewhen(reg2_read === 0.U) {
+  when(reg2_read === ReadEnable  ) {
+    reg2 := reg2_data
+  }.elsewhen(reg2_read === ReadDisable) {
     reg2 := imm
   }.otherwise {
     reg2 := ZeroWord
