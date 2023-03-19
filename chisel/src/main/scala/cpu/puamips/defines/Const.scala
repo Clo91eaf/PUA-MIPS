@@ -14,13 +14,15 @@ trait Constants {
   val READ_DISABLE  = false.B // 读除能
   val INST_VALID    = false.B // 指令有效
   val INST_INVALID  = true.B  // 指令无效
+  val BRANCH        = true.B  // 发生转移
+  val BRANCH_NOT    = false.B // 不发生转移
   val CHIP_ENABLE   = true.B  // 芯片使能
   val CHIP_DISABLE  = false.B // 芯片禁止
   val ZERO_WORD     = 0.U     // 32位数字0
   val ALU_OP_BUS       = UInt(8.W) // 译码阶段输出操作子类型数据宽度
   val ALU_OP_BUS_INIT  = 0.U(8.W)
   val ALU_SEL_BUS      = UInt(3.W) // 译码阶段输出操作类型数据宽度
-  val ALU_SEL_BUS_INIT = 0.U(3.W)  // 译码阶段输出操作类型数据宽度
+  val ALU_SEL_BUS_INIT = 0.U(3.W) 
 
   // 指令
   val EXE_AND  = "b100100".U(6.W) // 指令 and 的功能码
@@ -65,11 +67,25 @@ trait Constants {
   val EXE_MULTU = "b011001".U(6.W) // 指令MULTU的功能码
   val EXE_MUL   = "b000010".U(6.W) // 指令MUL的功能码
 
-  val EXE_NOP   = "b000000".U(6.W) // 指令 nop 的功能码
+  val EXE_J      = "b000010".U(6.W) // 指令J的功能码
+  val EXE_JAL    = "b000011".U(6.W) // 指令JAL的功能码
+  val EXE_JALR   = "b001001".U(6.W) // 指令JALR的功能码
+  val EXE_JR     = "b001000".U(6.W) // 指令JR的功能码
+  val EXE_BEQ    = "b000100".U(6.W) // 指令BEQ的指令码
+  val EXE_BGEZ   = "b00001".U(5.W)  // 指令BGEZ第16~20bit
+  val EXE_BGEZAL = "b10001".U(5.W)  // 指令BGEZAL第16~20bit
+  val EXE_BGTZ   = "b000111".U(6.W) // 指令BGTZ的指令码
+  val EXE_BLEZ   = "b000110".U(6.W) // 指令BLEZ的指令码
+  val EXE_BLTZ   = "b00000".U(5.W)  // 指令BLTZ第16~20bit
+  val EXE_BLTZAL = "b10000".U(5.W)  // 指令BLTZAL第16~20bit
+  val EXE_BNE    = "b000101".U(6.W) // 指令BNE的指令码
+
+  val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
   val SSNOP     = "b0000_0000_0000_0000_0000_0000_0100_0000".U(32.W) // 指令 SSNOP
 
   val EXE_SPECIAL_INST  = "b000000".U(6.W) // special类的指令码
   val EXE_SPECIAL2_INST = "b011100".U(6.W) // special2类的指令码
+  val EXE_REGIMM_INST   = "b000001".U(6.W) // REGIMM类的指令码
 
   // AluOp
   val EXE_AND_OP   = "b00100100".U(8.W)
@@ -113,6 +129,19 @@ trait Constants {
   val EXE_MULTU_OP = "b00011001".U(8.W)
   val EXE_MUL_OP   = "b10101001".U(8.W)
 
+  val EXE_J_OP      = "b01001111".U(8.W)
+  val EXE_JAL_OP    = "b01010000".U(8.W)
+  val EXE_JALR_OP   = "b00001001".U(8.W)
+  val EXE_JR_OP     = "b00001000".U(8.W)
+  val EXE_BEQ_OP    = "b01010001".U(8.W)
+  val EXE_BGEZ_OP   = "b01000001".U(8.W)
+  val EXE_BGEZAL_OP = "b01001011".U(8.W)
+  val EXE_BGTZ_OP   = "b01010100".U(8.W)
+  val EXE_BLEZ_OP   = "b01010011".U(8.W)
+  val EXE_BLTZ_OP   = "b01000000".U(8.W)
+  val EXE_BLTZAL_OP = "b01001010".U(8.W)
+  val EXE_BNE_OP    = "b01010010".U(8.W)
+
   // AluSel
   val EXE_RES_LOGIC      = "b001".U(3.W)
 
@@ -121,6 +150,7 @@ trait Constants {
   val EXE_RES_MOVE       = "b011".U(3.W)
   val EXE_RES_ARITHMETIC = "b100".U(3.W)
   val EXE_RES_MUL        = "b101".U(3.W)
+  val EXE_RES_JUMP_BRANCH= "b110".U(3.W)
 
   val INST_ADDR_BUS     = UInt(32.W)
   val INST_BUS          = UInt(32.W)
