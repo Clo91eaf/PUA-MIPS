@@ -6,19 +6,21 @@ import cpu.puamips.Const._
 class WriteBack extends Module {
   val io = IO(new Bundle {
     val fromMemory = Flipped(new Memory_WriteBack())
-    val fromHilo = Flipped(new HILO_WriteBack())
+    val fromHILO = Flipped(new HILO_WriteBack())
     val hilo = new WriteBack_HILO()
     val regfile = new WriteBack_RegFile()
     val execute = new WriteBack_Execute()
-    // val success = Output(Bool())
+    val debug = new DEBUG()
   })
   // input-memory
+  val pc = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
   val wdata = RegInit(REG_BUS_INIT)
   val hi = RegInit(REG_BUS_INIT)
   val lo = RegInit(REG_BUS_INIT)
   val whilo = RegInit(false.B)
+  pc := io.fromMemory.pc
   wd := io.fromMemory.wd
   wreg := io.fromMemory.wreg
   wdata := io.fromMemory.wdata
@@ -27,10 +29,8 @@ class WriteBack extends Module {
   whilo := io.fromMemory.whilo
 
   // input-hilo
-  val we = RegInit(false.B)
-  we := io.hilo.we
-  hi := io.hilo.hi
-  lo := io.hilo.lo
+  hi := io.fromHILO.hi
+  lo := io.fromHILO.lo
 
   // output-execute
   io.execute.whilo := whilo
@@ -43,9 +43,17 @@ class WriteBack extends Module {
   io.regfile.wdata := wdata
 
   // output-hilo
+  val we = RegInit(false.B)
   io.hilo.we := we 
   io.hilo.hi := hi
   io.hilo.lo := lo
 
-  // io.success := true.B
+  // output-debug
+  io.debug.pc := pc
+  io.debug.wd := wd
+  io.debug.wreg := wreg
+  io.debug.wdata := wdata
+
+  // debug
+  printf(p"write back :pc 0x${Hexadecimal(pc)}\n")
 }

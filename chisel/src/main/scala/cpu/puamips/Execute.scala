@@ -15,18 +15,21 @@ class Execute extends Module {
     val memory = new Execute_Memory()
   })
   // input-decoder
+  val pc = RegInit(REG_BUS_INIT)
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
   val reg1 = RegInit(REG_BUS_INIT)
   val reg2 = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
+  pc := io.fromDecoder.pc
   aluop := io.fromDecoder.aluop
   alusel := io.fromDecoder.alusel
   reg1 := io.fromDecoder.reg1
   reg2 := io.fromDecoder.reg2
   wd := io.fromDecoder.wd
   wreg := io.fromDecoder.wreg
+  
 
   // input-memory
   val whilo = RegInit(false.B)
@@ -48,6 +51,7 @@ class Execute extends Module {
   io.decoder.wreg := wreg
 
   // output-memory
+  io.memory.pc := pc
   io.memory.wd := wd
   io.memory.wreg := wreg
   io.memory.wdata := wdata
@@ -158,4 +162,7 @@ class Execute extends Module {
     hi := ZERO_WORD
     lo := ZERO_WORD
   }
+  
+  // debug
+  printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
 }

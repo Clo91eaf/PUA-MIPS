@@ -19,4 +19,6 @@ class HILO extends Module {
   // output-write back
   io.writeBack.hi := hi
   io.writeBack.lo := lo
+
+  printf(p"hilo :hi 0x${Hexadecimal(hi)}, lo 0x${Hexadecimal(lo)}\n")
 }

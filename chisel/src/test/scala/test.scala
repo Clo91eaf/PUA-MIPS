@@ -2,12 +2,11 @@
 package cpu.puamips
 
 import chisel3.stage.ChiselGeneratorAnnotation
-import cpu.PuaMips
 
-object testMain extends App {
-  (new chisel3.stage.ChiselStage).execute(
-    Array("--target-dir", "generated/get"),
-    Seq(ChiselGeneratorAnnotation(() => new PuaMips))
-  )
-}
+// object testMain extends App {
+//   (new chisel3.stage.ChiselStage).execute(
+//     Array("--target-dir", "generated/get"),
+    // Seq(ChiselGeneratorAnnotation(() => new PuaMips))
+//   )
+// }
 

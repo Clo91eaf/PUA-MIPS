@@ -19,4 +19,6 @@ class Fetch extends Module {
   io.top.pc := pc
   io.top.ce := ce
   io.decoder.pc := pc
+
+  printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }

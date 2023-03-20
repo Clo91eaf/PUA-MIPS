@@ -26,6 +26,7 @@ class Top_Decoder extends Bundle {
 }
 
 class Decoder_Execute extends Bundle {
+  val pc = Output(REG_BUS)
   val aluop = Output(ALU_OP_BUS)
   val alusel = Output(ALU_SEL_BUS)
   val reg1 = Output(REG_BUS)
@@ -53,6 +54,7 @@ class Execute_Decoder extends Bundle {
 }
 
 class Execute_Memory extends Bundle {
+  val pc = Output(REG_BUS)
   val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
@@ -71,6 +73,7 @@ class Memory_Execute extends Bundle {
 }
 
 class Memory_WriteBack extends Bundle {
+  val pc = Output(REG_BUS)
   val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
@@ -100,4 +103,11 @@ class WriteBack_HILO extends Bundle {
 class HILO_WriteBack extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+}
+
+class DEBUG extends Bundle {
+  val pc = Output(REG_BUS)
+  val wdata = Output(REG_BUS)
+  val wd = Output(REG_ADDR_BUS)
+  val wreg = Output(Bool())
 }

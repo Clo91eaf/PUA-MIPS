@@ -64,12 +64,14 @@ class Decoder extends Module {
   val reg2 = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
+  io.execute.pc := pc
   io.execute.aluop := aluop
   io.execute.alusel := alusel
   io.execute.reg1 := reg1
   io.execute.reg2 := reg2
   io.execute.wd := wd
   io.execute.wreg := wreg
+
 
   // 取得的指令码功能码
   val op = Wire(UInt(6.W))
@@ -306,4 +308,7 @@ class Decoder extends Module {
   }.otherwise {
     reg2 := ZERO_WORD
   }
+
+  // debug
+  printf(p"decoder :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }

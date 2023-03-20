@@ -11,9 +11,11 @@ class Memory extends Module {
     val writeBack = new Memory_WriteBack()
   })
   // input-execute
+  val pc = RegInit(REG_BUS_INIT)
   val wdata = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
+  pc := io.fromExecute.pc
   wdata := io.fromExecute.wdata
   wd := io.fromExecute.wd
   wreg := io.fromExecute.wreg
@@ -32,10 +34,13 @@ class Memory extends Module {
   io.execute.lo := lo
 
   // output-write back
+  io.writeBack.pc := pc
   io.writeBack.wdata := wdata
   io.writeBack.wd := wd
   io.writeBack.wreg := wreg
   io.writeBack.whilo := whilo
   io.writeBack.hi := hi
   io.writeBack.lo := lo
+
+  printf(p"memory :pc 0x${Hexadecimal(pc)}\n")
 }
