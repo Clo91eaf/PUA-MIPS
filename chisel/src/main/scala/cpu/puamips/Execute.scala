@@ -21,13 +21,14 @@ class Execute extends Module {
   val reg2 = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(WRITE_DISABLE)
+  val link_address = RegInit(REG_BUS_INIT)
   aluop := io.fromDecoder.aluop
   alusel := io.fromDecoder.alusel
   reg1 := io.fromDecoder.reg1
   reg2 := io.fromDecoder.reg2
   wd := io.fromDecoder.wd
   wreg := io.fromDecoder.wreg
-  
+  link_address := io.fromDecoder.link_addr
 
   // input-memory
   val whilo = RegInit(WRITE_DISABLE)
@@ -216,6 +217,7 @@ class Execute extends Module {
     is(EXE_RES_MOVE) { wdata := moveres } // 移动运算
     is(EXE_RES_ARITHMETIC) { wdata := arithmeticres } // 除乘法外简单算术操作指令
     is(EXE_RES_MUL) { wdata := mulres(31, 0) } // 乘法指令mul
+    is(EXE_RES_JUMP_BRANCH) { wdata := link_address }
   }
 
   // MTHI和MTLO指令 乘法运算结果保存
@@ -236,7 +238,7 @@ class Execute extends Module {
     hi := ZERO_WORD
     lo := ZERO_WORD
   }
-  
+
   // debug
   printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
 }
