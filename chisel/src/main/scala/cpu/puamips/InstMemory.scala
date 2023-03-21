@@ -7,18 +7,18 @@ import chisel3.util.experimental.loadMemoryFromFile
 
 class InstMemory extends Module {
   val io = IO(new Bundle {
-    val fromTop = new Top_InstMemory()
-    val top = new InstMemory_Top()
+    val fromFetch = Flipped(new Fetch_InstMemory())
+    val fetch = new InstMemory_Fetch()
   })
   // input-top
-  val ce = RegInit(false.B)
-  val pc = RegInit(REG_BUS_INIT)
-  ce := io.fromTop.ce
-  pc := io.fromTop.pc
+  val ce = Wire(Bool())
+  val pc = Wire(UInt(32.W))
+  ce := io.fromFetch.ce
+  pc := io.fromFetch.pc
 
   // output-top
-  val inst = RegInit(REG_BUS_INIT)
-  io.top.inst := inst
+  val inst = Wire(UInt(32.W))
+  io.fetch.inst := inst
 
   val inst_mem = Mem(INST_MEM_NUM, INST_BUS)
   loadMemoryFromFile(inst_mem, "inst_rom.data")

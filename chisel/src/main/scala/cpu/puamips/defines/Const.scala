@@ -160,6 +160,7 @@ trait Constants {
   val REG_ADDR_BUS        = UInt(5.W)
   val REG_ADDR_BUS_INIT   = 0.U(5.W)
   val REG_BUS             = UInt(32.W)
+  val WIRE_BUS            = UInt(32.W)
   val DOUBLE_REG_BUS      = UInt(64.W)
   val REG_BUS_INIT        = 0.U(32.W)
   val DOUBLE_REG_BUS_INIT = 0.U(64.W)

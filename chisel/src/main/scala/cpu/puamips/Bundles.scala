@@ -5,6 +5,7 @@ import cpu.puamips.Const._
 
 class Fetch_Decoder extends Bundle {
   val pc = Output(REG_BUS)
+  val inst = Output(REG_BUS)
 }
 
 class Decoder_Fetch extends Bundle {
@@ -12,21 +13,12 @@ class Decoder_Fetch extends Bundle {
   val branch_target_address = Output(REG_BUS) // 转移到的目标地址
 }
 
-class Fetch_Top extends Bundle {
+class Fetch_InstMemory extends Bundle {
   val pc = Output(REG_BUS)
   val ce = Output(Bool())
 }
 
-class Top_InstMemory extends Bundle {
-  val pc = Output(REG_BUS)
-  val ce = Output(Bool())
-}
-
-class InstMemory_Top extends Bundle {
-  val inst = Output(REG_BUS)
-}
-
-class Top_Decoder extends Bundle {
+class InstMemory_Fetch extends Bundle {
   val inst = Output(REG_BUS)
 }
 

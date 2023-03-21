@@ -5,14 +5,30 @@ import cpu.puamips.Const._
 
 class Fetch extends Module {
   val io = IO(new Bundle {
-    val top = new Fetch_Top()
-    val decoder = new Fetch_Decoder()
+    val fromInstMemory = Flipped(new InstMemory_Fetch())
     val fromDecoder = Flipped(new Decoder_Fetch())
+    val instMemory = new Fetch_InstMemory()
+    val decoder = new Fetch_Decoder()
   })
+  // input-inst memory
+  val inst = RegInit(REG_BUS_INIT) // 复位时指令存储器禁用
+  inst := io.fromInstMemory.inst
+  
+  // output-inst memory
   val pc = RegInit(REG_BUS_INIT)
   val ce = RegInit(CHIP_DISABLE) // 复位时指令存储器禁用
+  io.instMemory.pc := pc
+  io.instMemory.ce := ce
 
-  ce := CHIP_ENABLE // 复位结束使能指令存储器
+  // output-decoder
+  io.decoder.pc := pc
+  io.decoder.inst := inst
+
+  when(reset.asBool === RST_ENABLE) {
+    ce := CHIP_ENABLE // 复位结束使能指令存储器
+  }.otherwise {
+    ce := CHIP_DISABLE
+  }
 
   when(ce === CHIP_DISABLE) {
     pc := 0.U
@@ -22,8 +38,6 @@ class Fetch extends Module {
     pc := pc + 4.U(REG_NUM.W)
   }
   
-  io.top.pc := pc
-  io.top.ce := ce
   io.decoder.pc := pc
 
   printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")

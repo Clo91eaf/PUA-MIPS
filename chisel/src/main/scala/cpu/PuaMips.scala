@@ -4,12 +4,10 @@ import cpu.puamips.Const._
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
-    val pc = Output(REG_BUS)
-    val ce = Output(Bool())
-    val inst = Input(REG_BUS)
     val debug = new DEBUG()
   })
   val fetch = Module(new Fetch())
+  val instMemory = Module(new InstMemory())
   val decoder = Module(new Decoder())
   val regfile = Module(new Regfile())
   val execute = Module(new Execute())
@@ -17,13 +15,12 @@ class PuaMips extends Module {
   val writeBack = Module(new WriteBack())
   val hilo = Module(new HILO())
   // @formatter:off
-  // top
-  io.pc   <> fetch.io.top.pc
-  io.ce   <> fetch.io.top.ce
-  io.inst <> decoder.io.fromTop.inst
-
   // fetch
   fetch.io.decoder      <> decoder.io.fromFetch
+  fetch.io.instMemory   <> instMemory.io.fromFetch
+
+  // inst memory
+  instMemory.io.fetch   <> fetch.io.fromInstMemory
 
   // decoder
   decoder.io.execute    <> execute.io.fromDecoder

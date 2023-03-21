@@ -9,7 +9,6 @@ class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
     val fromFetch = Flipped(new Fetch_Decoder())
-    val fromTop = Flipped(new Top_Decoder())
     val fromRegfile = Flipped(new RegFile_Decoder())
     val fromExecute = Flipped(new Execute_Decoder())
     val fromMemory = Flipped(new Memory_Decoder())
@@ -20,11 +19,9 @@ class Decoder extends Module {
   })
   // input-fetch
   val pc = RegInit(REG_BUS_INIT)
-  pc := io.fromFetch.pc
-
-  // input-inst memory
   val inst = RegInit(REG_BUS_INIT)
-  inst := io.fromTop.inst
+  pc := io.fromFetch.pc
+  inst := io.fromFetch.inst
 
   // input-regfile
   val reg1_data = RegInit(REG_BUS_INIT)
@@ -288,7 +285,7 @@ class Decoder extends Module {
   imm := MuxLookup(
     immType,
     Util.zeroExtend(sa), // default IMM_SHT
-    Array(
+    Seq(
       IMM_LSE -> Util.signedExtend(imm16),
       IMM_LZE -> Util.zeroExtend(imm16),
       IMM_HZE -> Cat(imm16, Fill(16, 0.U))
@@ -298,7 +295,7 @@ class Decoder extends Module {
   wd := MuxLookup(
     wraType,
     "b11111".U(5.W), // 取"b11111", 即31号寄存器
-    Array(
+    Seq(
       WRA_T1 -> rd, // 取inst(15,11)
       WRA_T2 -> rt // 取inst(20,16)
     )
@@ -311,7 +308,7 @@ class Decoder extends Module {
   link_addr := MuxLookup(
     aluop,
     ZERO_WORD,
-    Array(
+    Seq(
       // @formatter:off
       EXE_JR_OP     -> ZERO_WORD,
       EXE_JALR_OP   -> pc_plus_4,
@@ -326,7 +323,7 @@ class Decoder extends Module {
   branch_flag := MuxLookup(
     aluop,
     NOT_BRANCH,
-    Array(
+    Seq(
       // @formatter:off
       EXE_JR_OP     -> BRANCH,
       EXE_JALR_OP   -> BRANCH,
@@ -347,7 +344,7 @@ class Decoder extends Module {
   branch_target_address := MuxLookup(
     aluop,
     BTarget,
-    Array(
+    Seq(
       // @formatter:off
       EXE_JR_OP   -> reg1,
       EXE_JALR_OP -> reg1,
