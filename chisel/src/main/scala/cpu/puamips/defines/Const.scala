@@ -15,7 +15,7 @@ trait Constants {
   val INST_VALID    = false.B // 指令有效
   val INST_INVALID  = true.B  // 指令无效
   val BRANCH        = true.B  // 发生转移
-  val BRANCH_NOT    = false.B // 不发生转移
+  val NOT_BRANCH    = false.B // 不发生转移
   val CHIP_ENABLE   = true.B  // 芯片使能
   val CHIP_DISABLE  = false.B // 芯片禁止
   val ZERO_WORD     = 0.U     // 32位数字0
