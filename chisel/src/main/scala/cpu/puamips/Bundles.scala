@@ -7,6 +7,11 @@ class Fetch_Decoder extends Bundle {
   val pc = Output(REG_BUS)
 }
 
+class Decoder_Fetch extends Bundle {
+  val branch_flag = Output(Bool()) // 是否发生转移
+  val branch_target_address = Output(REG_BUS) // 转移到的目标地址
+}
+
 class Fetch_Top extends Bundle {
   val pc = Output(REG_BUS)
   val ce = Output(Bool())
