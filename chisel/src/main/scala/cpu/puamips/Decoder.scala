@@ -14,6 +14,7 @@ class Decoder extends Module {
     val fromExecute = Flipped(new Execute_Decoder())
     val fromMemory = Flipped(new Memory_Decoder())
 
+    val fetch = new Decoder_Fetch()
     val regfile = new Decoder_RegFile()
     val execute = new Decoder_Execute()
   })
@@ -57,6 +58,12 @@ class Decoder extends Module {
   io.regfile.reg1_addr := reg1_addr
   io.regfile.reg2_addr := reg2_addr
 
+  // Output-fetch
+  val branch_flag = RegInit(NOT_BRANCH)
+  val branch_target_address = RegInit(REG_BUS_INIT)
+  io.fetch.branch_flag := branch_flag
+  io.fetch.branch_target_address := branch_target_address
+
   // Output-execute
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
@@ -64,6 +71,7 @@ class Decoder extends Module {
   val reg2 = RegInit(REG_BUS_INIT)
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(false.B)
+  val link_addr = RegInit(REG_BUS_INIT)
   io.execute.pc := pc
   io.execute.aluop := aluop
   io.execute.alusel := alusel
@@ -71,7 +79,19 @@ class Decoder extends Module {
   io.execute.reg2 := reg2
   io.execute.wd := wd
   io.execute.wreg := wreg
+  io.execute.link_addr := link_addr
 
+  val rt = Wire(UInt(5.W))
+  val rd = Wire(UInt(5.W))
+  val sa = Wire(UInt(5.W))
+  val rs = Wire(UInt(5.W))
+  val imm16 = Wire(UInt(16.W))
+
+  rt := inst(20, 16)
+  rd := inst(15, 11)
+  sa := inst(10, 6)
+  rs := inst(25, 21)
+  imm16 := inst(15, 0)
 
   // 取得的指令码功能码
   val op = Wire(UInt(6.W))
@@ -89,29 +109,27 @@ class Decoder extends Module {
   // 指示指令是否有效
   val instvalid = RegInit(false.B)
 
-  val rt = Wire(UInt(5.W))
-  val rd = Wire(UInt(5.W))
-  val sa = Wire(UInt(5.W))
-  val rs = Wire(UInt(5.W))
-  val imm16 = Wire(UInt(16.W))
-
-  rt := inst(20, 16)
-  rd := inst(15, 11)
-  sa := inst(10, 6)
-  rs := inst(25, 21)
-  imm16 := inst(15, 0)
+  val pc_plus_4 = Wire(REG_BUS)
+  val imm_sll2_signedext = Wire(REG_BUS)
+  pc_plus_4 := pc + 4.U
+  imm_sll2_signedext := Cat(Util.signedExtend(imm16, to = 30), 0.U(2.W))
+  val BTarget = pc_plus_4 + imm_sll2_signedext
+  val JTarget = Cat(pc_plus_4(31, 28), inst(25, 0), 0.U(2.W))
 
   // 对指令进行译码
-  instvalid := INST_INVALID
   aluop := EXE_NOP_OP
   alusel := EXE_RES_NOP
   wd := rd // inst(15, 11)
   wreg := WRITE_DISABLE
-  reg1_read := READ_DISABLE  
-  reg2_read := READ_DISABLE  
+  instvalid := INST_INVALID
+  reg1_read := READ_DISABLE
+  reg2_read := READ_DISABLE
   reg1_addr := rs // inst(25, 21)
   reg2_addr := rt // inst(20, 16)
   imm := ZERO_WORD
+  link_addr := ZERO_WORD
+  branch_target_address := ZERO_WORD
+  branch_flag := NOT_BRANCH
 
   val signals: List[UInt] = ListLookup(
     inst,
@@ -192,26 +210,26 @@ class Decoder extends Module {
 
 
       // // 跳转指令
-      // J         -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_BR , BR_J    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // JAL       -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_BR , BR_JAL  , WRITE_ENABLE   , WRA_T3 , IMM_N  ),
-      // JR        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_JR   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // JALR      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_JALR , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
-      // BEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_BR , BR_EQ   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_BR , BR_NE   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGTZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BLEZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGEZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGEZAL    -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GEZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
-      // BLTZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BLTZAL    -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LTZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
-      // BEQL      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_BR , BR_EQ   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BNEL      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_BR , BR_NE   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGTZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BLEZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGEZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BGEZALL   -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_GEZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
-      // BLTZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BLTZALL   -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_BR , BR_LTZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
+      J         -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_J_OP     , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      JAL       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JAL_OP   , WRITE_ENABLE   , WRA_T3 , IMM_N  ),
+      JR        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JR_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      JALR      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JALR_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
+      BEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_JUMP_BRANCH , EXE_BEQ_OP   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_JUMP_BRANCH , EXE_BNE_OP   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BGTZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BGTZ_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BLEZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BLEZ_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BGEZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BGEZ_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BGEZAL    -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BGEZAL_OP, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
+      BLTZ      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BLTZ_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      BLTZAL    -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_BLTZAL_OP, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
+      // BEQL      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_JUMP_BRANCH , EXE_EQ   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BNEL      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_JUMP_BRANCH , EXE_NE   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BGTZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_GTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BLEZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_LEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BGEZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_GEZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BGEZALL   -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_GEZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
+      // BLTZL     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_LTZ  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BLTZALL   -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_LTZAL, WRITE_ENABLE   , WRA_T3 , IMM_N  ),
 
       // // TLB
       // TLBP      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_P   , WRITE_DISABLE  , WRA_X  , IMM_N  ),
@@ -257,7 +275,7 @@ class Decoder extends Module {
   val csOpType :: (csWReg: Bool) :: csWRType :: csIMMType :: Nil = cs0
 
   val instValid = Wire(Bool())
-  val wraType = Wire(UInt(2.W)) 
+  val wraType = Wire(UInt(2.W))
   val immType = Wire(UInt(3.W))
 
   instValid := csInstValid
@@ -290,10 +308,59 @@ class Decoder extends Module {
   alusel := csInstType
   wreg := csWReg
 
+  link_addr := MuxLookup(
+    aluop,
+    ZERO_WORD,
+    Array(
+      // @formatter:off
+      EXE_JR_OP     -> ZERO_WORD,
+      EXE_JALR_OP   -> pc_plus_4,
+      EXE_J_OP      -> ZERO_WORD,
+      EXE_JAL_OP    -> pc_plus_4,
+      EXE_BGEZAL_OP -> pc_plus_4,
+      EXE_BLTZAL_OP -> pc_plus_4
+      // @formatter:on
+    )
+  )
+
+  branch_flag := MuxLookup(
+    aluop,
+    NOT_BRANCH,
+    Array(
+      // @formatter:off
+      EXE_JR_OP     -> BRANCH,
+      EXE_JALR_OP   -> BRANCH,
+      EXE_J_OP      -> BRANCH,
+      EXE_JAL_OP    -> BRANCH,
+      EXE_BEQ_OP    -> (reg1 === reg2),
+      EXE_BNE_OP    -> (reg1 =/= reg2),
+      EXE_BGTZ_OP   -> (!reg1(31) && (reg1 =/= 0.U)),
+      EXE_BGEZ_OP   -> (!reg1(31)),
+      EXE_BGEZAL_OP -> (!reg1(31)),
+      EXE_BLTZ_OP   -> reg1(31),
+      EXE_BLTZAL_OP -> reg1(31),
+      EXE_BLEZ_OP   -> (!(!reg1(31) && (reg1 =/= 0.U)))
+      // @formatter:on
+    )
+  )
+
+  branch_target_address := MuxLookup(
+    aluop,
+    BTarget,
+    Array(
+      // @formatter:off
+      EXE_JR_OP   -> reg1,
+      EXE_JALR_OP -> reg1,
+      EXE_J_OP    -> JTarget,
+      EXE_JAL_OP  -> JTarget
+      // @formatter:on
+    )
+  )
+
 //确定运算源操作数1
   when(reg1_read === READ_ENABLE) {
     reg1 := reg1_data
-  }.elsewhen(reg1_read === READ_DISABLE  ) {
+  }.elsewhen(reg1_read === READ_DISABLE) {
     reg1 := imm
   }.otherwise {
     reg1 := ZERO_WORD
@@ -302,7 +369,7 @@ class Decoder extends Module {
 //确定运算源操作数2
   when(reg2_read === READ_ENABLE) {
     reg2 := reg2_data
-  }.elsewhen(reg2_read === READ_DISABLE  ) {
+  }.elsewhen(reg2_read === READ_DISABLE) {
     reg2 := imm
   }.otherwise {
     reg2 := ZERO_WORD

@@ -38,6 +38,7 @@ class Decoder_Execute extends Bundle {
   val reg2 = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
+  val link_addr = Output(REG_BUS)
 }
 
 class Decoder_RegFile extends Bundle {
