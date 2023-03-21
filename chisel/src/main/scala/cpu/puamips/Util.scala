@@ -5,25 +5,11 @@ import chisel3.util._
 
 object Util {
 
-  /** Will auto calculate the end */
   def subwordModify(source: UInt, start: Int, md: UInt): UInt = {
     val ms = md.getWidth
     subwordModify(source, (start, start - ms + 1), md)
   }
 
-  /** Won't truly modify the source! Use the return value! <br/>
-    * @example
-    *   {{{ val bits: UInt = 0.U(20.W) bits := subwordModify(bits, (10, 5),
-    * 1.U(6.W)) // equals to `bits[10:5] = 6'b1;` in verilog }}}
-    * @param source
-    *   the data to be 'modified'
-    * @param tuple
-    *   (start, end)
-    * @param md
-    *   the data to 'modifying'
-    * @return
-    *   the data
-    */
   def subwordModify(source: UInt, tuple: (Int, Int), md: UInt): UInt = {
     val ws = source.getWidth
     val ms = md.getWidth

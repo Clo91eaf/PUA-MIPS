@@ -2,7 +2,7 @@ package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.puamips.defines.{Instructions, OptionConst}
+import cpu.puamips.defines.{Instructions}
 
   // @formatter:off
 trait Constants {
@@ -166,6 +166,22 @@ trait Constants {
   val NOP_REG_ADDR        = "b00000".U(5.W)
   val REG_NUM             = 32
   val REG_NUM_LOG2        = 5
+}
+trait OptionConst {
+
+  // 写寄存器目标 Write Register Address type
+  val WRA_T1    = 0.U(2.W)    // 取inst(15,11)
+  val WRA_T2    = 1.U(2.W)    // 取inst(20,16)
+  val WRA_T3    = 2.U(2.W)    // 取"b11111", 即31号寄存器
+  val WRA_X     = 0.U(2.W)    // not care
+
+  // 立即数类型
+  private val IL = 3
+  val IMM_N     = 0.U(IL.W)
+  val IMM_LSE   = 1.U(IL.W)   // 立即数取inst(15,0)作为低16位，符号扩展，适用于ADDI，ADDIU，SLTI，和SLTIU
+  val IMM_LZE   = 2.U(IL.W)   // 立即数取inst(15,0)作为低16位，零扩展，适用于位操作指令
+  val IMM_HZE   = 3.U(IL.W)   // 立即数取inst(15,0)作为高16位，零扩展，适用于LUI （是否有必要？）
+  val IMM_SHT   = 4.U(IL.W)   // 立即数取inst(10,6)作为低5位，不关心扩展，适用于SLL，SRL，SRA
 }
   // @formatter:on
 
