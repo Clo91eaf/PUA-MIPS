@@ -16,10 +16,10 @@ class PuaMips extends Module {
   val memory = Module(new Memory())
   val writeBack = Module(new WriteBack())
   val hilo = Module(new HILO())
-
+  // @formatter:off
   // top
-  io.pc <> fetch.io.top.pc
-  io.ce <> fetch.io.top.ce
+  io.pc   <> fetch.io.top.pc
+  io.ce   <> fetch.io.top.ce
   io.inst <> decoder.io.fromTop.inst
 
   // fetch
@@ -28,6 +28,7 @@ class PuaMips extends Module {
   // decoder
   decoder.io.execute    <> execute.io.fromDecoder
   decoder.io.regfile    <> regfile.io.fromDecoder
+  decoder.io.fetch      <> fetch.io.fromDecoder
 
   // execute
   execute.io.decoder    <> decoder.io.fromExecute
@@ -49,4 +50,6 @@ class PuaMips extends Module {
 
   // reg file
   regfile.io.decoder    <> decoder.io.fromRegfile
+
+  // @formatter:on
 }
