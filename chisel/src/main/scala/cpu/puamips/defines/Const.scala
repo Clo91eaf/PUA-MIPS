@@ -80,6 +80,15 @@ trait Constants {
   val EXE_BLTZAL = "b10000".U(5.W)  // 指令BLTZAL第16~20bit
   val EXE_BNE    = "b000101".U(6.W) // 指令BNE的指令码
 
+  val EXE_LB  = "b100000".U(6.W)  //指令LB的指令码
+  val EXE_LBU = "b100100".U(6.W)  //指令LBU的指令码
+  val EXE_LH  = "b100001".U(6.W)  //指令LH的指令码
+  val EXE_LHU = "b100101".U(6.W)  //指令LHU的指令码
+  val EXE_LW  = "b100011".U(6.W)  //指令LW的指令码
+  val EXE_SB  = "b101000".U(6.W)  //指令SB的指令码
+  val EXE_SH  = "b101001".U(6.W)  //指令SH的指令码
+  val EXE_SW  = "b101011".U(6.W)  //指令SW的指令码
+
   val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
   val SSNOP     = "b0000_0000_0000_0000_0000_0000_0100_0000".U(32.W) // 指令 SSNOP
 
@@ -142,20 +151,30 @@ trait Constants {
   val EXE_BLTZAL_OP = "b01001010".U(8.W)
   val EXE_BNE_OP    = "b01010010".U(8.W)
 
-  // AluSel
-  val EXE_RES_LOGIC      = "b001".U(3.W)
+  val EXE_LB_OP  = "b11100000".U(8.W)
+  val EXE_LBU_OP = "b11100100".U(8.W)
+  val EXE_LH_OP  = "b11100001".U(8.W)
+  val EXE_LHU_OP = "b11100101".U(8.W)
+  val EXE_LW_OP  = "b11100011".U(8.W)
+  val EXE_SB_OP  = "b11101000".U(8.W)
+  val EXE_SH_OP  = "b11101001".U(8.W)
+  val EXE_SW_OP  = "b11101011".U(8.W)
 
-  val EXE_RES_SHIFT      = "b010".U(3.W)
+  // AluSel
+
   val EXE_RES_NOP        = "b000".U(3.W)
+  val EXE_RES_LOGIC      = "b001".U(3.W)
+  val EXE_RES_SHIFT      = "b010".U(3.W)
   val EXE_RES_MOVE       = "b011".U(3.W)
   val EXE_RES_ARITHMETIC = "b100".U(3.W)
   val EXE_RES_MUL        = "b101".U(3.W)
   val EXE_RES_JUMP_BRANCH= "b110".U(3.W)
+  val EXE_RES_LOAD_STORE = "b111".U(3.W)
 
   val INST_ADDR_BUS     = UInt(32.W)
   val INST_BUS          = UInt(32.W)
   val INST_MEM_NUM_LOG2 = 17
-  val INST_MEM_NUM      = (1 << INST_MEM_NUM_LOG2) - 1
+  val INST_MEM_NUM      = 131071        // 2^17-1
 
   val REG_ADDR_BUS        = UInt(5.W)
   val REG_ADDR_BUS_INIT   = 0.U(5.W)
@@ -167,6 +186,13 @@ trait Constants {
   val NOP_REG_ADDR        = "b00000".U(5.W)
   val REG_NUM             = 32
   val REG_NUM_LOG2        = 5
+
+  // 数据存储器data_ram
+  val DATA_ADDR_BUS       = UInt(32.W)
+  val DATA_BUS            = UInt(32.W)
+  val DATA_MEM_NUM        = 131071
+  val DATA_MEM_NUM_LOG2   = 17          // 2^17-1
+  val BYTE_WIDTH          = UInt(7.W)
 }
 trait OptionConst {
 
