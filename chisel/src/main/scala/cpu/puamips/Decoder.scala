@@ -45,7 +45,7 @@ class Decoder extends Module {
   memWd := io.fromMemory.wd
   memWreg := io.fromMemory.wreg
 
-  // Output-regfile
+  // output-regfile
   val reg1_read = RegInit(false.B)
   val reg2_read = RegInit(false.B)
   val reg1_addr = RegInit(REG_ADDR_BUS_INIT)
@@ -55,13 +55,13 @@ class Decoder extends Module {
   io.regfile.reg1_addr := reg1_addr
   io.regfile.reg2_addr := reg2_addr
 
-  // Output-fetch
+  // output-fetch
   val branch_flag = RegInit(NOT_BRANCH)
   val branch_target_address = RegInit(REG_BUS_INIT)
   io.fetch.branch_flag := branch_flag
   io.fetch.branch_target_address := branch_target_address
 
-  // Output-execute
+  // output-execute
   val aluop = RegInit(ALU_OP_BUS_INIT)
   val alusel = RegInit(ALU_SEL_BUS_INIT)
   val reg1 = RegInit(REG_BUS_INIT)
@@ -77,6 +77,7 @@ class Decoder extends Module {
   io.execute.wd := wd
   io.execute.wreg := wreg
   io.execute.link_addr := link_addr
+  io.execute.inst := inst
 
   val rt = Wire(UInt(5.W))
   val rd = Wire(UInt(5.W))
@@ -240,21 +241,21 @@ class Decoder extends Module {
       // ERET      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_ER  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       // WAIT      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_WAIT, WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
-      // // 访存指令
-      // LB        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LB  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // LBU       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LBU , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // LH        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LH  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // LHU       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LHU , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // LW        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LW  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // SB        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SB  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // SH        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SH  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // SW        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SW  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // LWL       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_LWL , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // LWR       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_LWR , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // SWL       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SWL , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // SWR       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SWR , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // LL        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_LL  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // SC        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_MEM, MEM_SC  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      // 访存指令
+      LB        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LB_OP  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      LBU       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LBU_OP , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      LH        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LH_OP  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      LHU       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LHU_OP , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      LW        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LW_OP  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      SB        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SB_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      SH        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SH_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      SW        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SW_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // LWL       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOAD_STORE, EXE_LWL , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      // LWR       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOAD_STORE, EXE_LWR , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      // SWL       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOAD_STORE, EXE_SWL , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // SWR       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOAD_STORE, EXE_SWR , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // LL        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LL  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      // SC        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOAD_STORE, EXE_SC  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
 
 
       SYNC      -> List(INST_VALID , READ_DISABLE    , READ_ENABLE     , EXE_RES_NOP  , EXE_SRL_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
@@ -262,7 +263,7 @@ class Decoder extends Module {
       PREFX     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP  , EXE_NOP_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
       // // Cache
-      // CACHE     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , INST_MEM, MEM_CAC , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // CACHE     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_CAC , WRITE_DISABLE  , WRA_X  , IMM_N  ),
     )
   )
   // @formatter:on

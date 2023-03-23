@@ -22,6 +22,7 @@ class Execute extends Module {
   val wd = RegInit(REG_ADDR_BUS_INIT)
   val wreg = RegInit(WRITE_DISABLE)
   val link_address = RegInit(REG_BUS_INIT)
+  val inst = RegInit(REG_BUS_INIT)
   aluop := io.fromDecoder.aluop
   alusel := io.fromDecoder.alusel
   reg1 := io.fromDecoder.reg1
@@ -29,6 +30,7 @@ class Execute extends Module {
   wd := io.fromDecoder.wd
   wreg := io.fromDecoder.wreg
   link_address := io.fromDecoder.link_addr
+  inst := io.fromDecoder.inst
 
   // input-memory
   val whilo = RegInit(WRITE_DISABLE)
@@ -54,6 +56,12 @@ class Execute extends Module {
   io.memory.wd := wd
   io.memory.wreg := wreg
   io.memory.wdata := wdata
+  io.memory.aluop := aluop
+  io.memory.addr := reg1 + Util.signedExtend(inst(15, 0))
+  io.memory.reg2 := reg2
+  io.memory.hi := hi
+  io.memory.lo := lo
+  io.memory.whilo := whilo
 
   // 保存逻辑运算的结果
   val logicout = RegInit(REG_BUS_INIT) // 保存逻辑运算的结果

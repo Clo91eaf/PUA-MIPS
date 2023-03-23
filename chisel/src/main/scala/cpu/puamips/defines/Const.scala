@@ -188,11 +188,15 @@ trait Constants {
   val REG_NUM_LOG2        = 5
 
   // 数据存储器data_ram
-  val DATA_ADDR_BUS       = UInt(32.W)
-  val DATA_BUS            = UInt(32.W)
-  val DATA_MEM_NUM        = 131071
-  val DATA_MEM_NUM_LOG2   = 17          // 2^17-1
-  val BYTE_WIDTH          = UInt(7.W)
+  val DATA_ADDR_BUS            = UInt(32.W)
+  val DATA_ADDR_BUS_INIT       = 0.U(32.W)
+  val DATA_BUS                 = UInt(32.W)
+  val DATA_BUS_INIT            = 0.U(32.W)
+  val DATA_MEM_NUM             = 131071     // 2^17-1
+  val DATA_MEM_NUM_LOG2        = 17          
+  val BYTE_WIDTH               = UInt(8.W)
+  val DATA_MEMORY_SEL_BUS      = UInt(4.W)
+  val DATA_MEMORY_SEL_BUS_INIT = 0.U(4.W)
 }
 trait OptionConst {
 
