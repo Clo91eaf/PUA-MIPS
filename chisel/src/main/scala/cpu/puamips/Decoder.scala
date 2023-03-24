@@ -31,19 +31,19 @@ class Decoder extends Module {
 
   // input-execute
   val exWdata = RegInit(REG_BUS_INIT)
-  val exWd = RegInit(REG_ADDR_BUS_INIT)
-  val exWreg = RegInit(false.B)
+  val exWaddr = RegInit(REG_ADDR_BUS_INIT)
+  val exWen = RegInit(false.B)
   exWdata := io.fromExecute.wdata
-  exWd := io.fromExecute.wd
-  exWreg := io.fromExecute.wreg
+  exWaddr := io.fromExecute.waddr
+  exWen := io.fromExecute.wen
 
   // input-memory
   val memWdata = RegInit(REG_BUS_INIT)
-  val memWd = RegInit(REG_ADDR_BUS_INIT)
-  val memWreg = RegInit(false.B)
+  val memWaddr = RegInit(REG_ADDR_BUS_INIT)
+  val memWen = RegInit(false.B)
   memWdata := io.fromMemory.wdata
-  memWd := io.fromMemory.wd
-  memWreg := io.fromMemory.wreg
+  memWaddr := io.fromMemory.waddr
+  memWen := io.fromMemory.wen
 
   // Output-regfile
   val reg1_read = RegInit(false.B)
@@ -66,16 +66,16 @@ class Decoder extends Module {
   val alusel = RegInit(ALU_SEL_BUS_INIT)
   val reg1 = RegInit(REG_BUS_INIT)
   val reg2 = RegInit(REG_BUS_INIT)
-  val wd = RegInit(REG_ADDR_BUS_INIT)
-  val wreg = RegInit(false.B)
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val wen = RegInit(false.B)
   val link_addr = RegInit(REG_BUS_INIT)
   io.execute.pc := pc
   io.execute.aluop := aluop
   io.execute.alusel := alusel
   io.execute.reg1 := reg1
   io.execute.reg2 := reg2
-  io.execute.wd := wd
-  io.execute.wreg := wreg
+  io.execute.waddr := waddr
+  io.execute.wen := wen
   io.execute.link_addr := link_addr
 
   val rt = Wire(UInt(5.W))
@@ -116,8 +116,8 @@ class Decoder extends Module {
   // 对指令进行译码
   aluop := EXE_NOP_OP
   alusel := EXE_RES_NOP
-  wd := rd // inst(15, 11)
-  wreg := WRITE_DISABLE
+  waddr := rd // inst(15, 11)
+  wen := WRITE_DISABLE
   instvalid := INST_INVALID
   reg1_read := READ_DISABLE
   reg2_read := READ_DISABLE
@@ -132,7 +132,7 @@ class Decoder extends Module {
     inst,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   instvalid  | reg1_read     | reg2_read     | alusel       | aluop      | wreg           | wd     | immType */
+    Array(         /*   instvalid  | reg1_read     | reg2_read     | alusel       | aluop      | wen           | waddr     | immType */
       // 位操作
       OR        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_OR_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       AND       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_AND_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -292,7 +292,7 @@ class Decoder extends Module {
     )
   )
 
-  wd := MuxLookup(
+  waddr := MuxLookup(
     wraType,
     "b11111".U(5.W), // 取"b11111", 即31号寄存器
     Seq(
@@ -303,7 +303,7 @@ class Decoder extends Module {
 
   aluop := csOpType
   alusel := csInstType
-  wreg := csWReg
+  wen := csWReg
 
   link_addr := MuxLookup(
     aluop,

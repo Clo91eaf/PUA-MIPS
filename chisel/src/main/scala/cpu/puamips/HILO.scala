@@ -10,10 +10,10 @@ class HILO extends Module {
     val writeBack = new HILO_WriteBack()
   })
   // input-write back
-  val we = RegInit(false.B)
+  val whilo = RegInit(false.B)
   val hi = RegInit(REG_BUS_INIT)
   val lo = RegInit(REG_BUS_INIT)
-  we := io.fromWriteBack.we
+  whilo := io.fromWriteBack.whilo
   hi := io.fromWriteBack.hi
   lo := io.fromWriteBack.lo
   // output-write back

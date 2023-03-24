@@ -21,12 +21,12 @@ class Regfile extends Module {
   raddr1 := io.fromDecoder.reg2_addr
 
   // input-write back
-  val we = RegInit(false.B)
+  val wen = RegInit(false.B)
   val waddr = RegInit(REG_ADDR_BUS_INIT)
   val wdata = RegInit(REG_BUS_INIT)
-  we := io.fromWriteBack.wreg
+  wen := io.fromWriteBack.wen
   wdata := io.fromWriteBack.wdata
-  waddr := io.fromWriteBack.wd
+  waddr := io.fromWriteBack.waddr
 
   // output-decoder
   val rdata1 = RegInit(REG_BUS_INIT)
@@ -38,7 +38,7 @@ class Regfile extends Module {
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(REG_BUS_INIT)))
 
   when(reset.asBool === RST_DISABLE) {
-    when(we === WRITE_ENABLE && waddr =/= 0.U) {
+    when(wen === WRITE_ENABLE && waddr =/= 0.U) {
       regs(waddr) := wdata
     }
   }
@@ -63,11 +63,17 @@ class Regfile extends Module {
   }
 
   // debug
-  when(we === WRITE_ENABLE) {
-    printf(p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n")
+  when(wen === WRITE_ENABLE) {
+    printf(
+      p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n"
+    )
   }.otherwise {
-    printf(p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n")
-    printf(p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n")
+    printf(
+      p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n"
+    )
+    printf(
+      p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n"
+    )
   }
 
 }

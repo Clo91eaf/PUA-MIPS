@@ -28,8 +28,8 @@ class Decoder_Execute extends Bundle {
   val alusel = Output(ALU_SEL_BUS)
   val reg1 = Output(REG_BUS)
   val reg2 = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
   val link_addr = Output(REG_BUS)
 }
 
@@ -47,21 +47,21 @@ class RegFile_Decoder extends Bundle {
 
 class Execute_Decoder extends Bundle {
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
 }
 
 class Execute_Memory extends Bundle {
   val pc = Output(REG_BUS)
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
 }
 
 class Memory_Decoder extends Bundle {
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {
@@ -73,8 +73,8 @@ class Memory_Execute extends Bundle {
 class Memory_WriteBack extends Bundle {
   val pc = Output(REG_BUS)
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
@@ -88,12 +88,12 @@ class WriteBack_Execute extends Bundle {
 
 class WriteBack_RegFile extends Bundle {
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
 }
 
 class WriteBack_HILO extends Bundle {
-  val we = Output(Bool())
+  val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
 }
@@ -106,6 +106,6 @@ class HILO_WriteBack extends Bundle {
 class DEBUG extends Bundle {
   val pc = Output(REG_BUS)
   val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val wreg = Output(Bool())
+  val waddr = Output(REG_ADDR_BUS)
+  val wen = Output(Bool())
 }

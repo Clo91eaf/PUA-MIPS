@@ -19,15 +19,15 @@ class Execute extends Module {
   val alusel = RegInit(ALU_SEL_BUS_INIT)
   val reg1 = RegInit(REG_BUS_INIT)
   val reg2 = RegInit(REG_BUS_INIT)
-  val wd = RegInit(REG_ADDR_BUS_INIT)
-  val wreg = RegInit(WRITE_DISABLE)
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val wen = RegInit(WRITE_DISABLE)
   val link_address = RegInit(REG_BUS_INIT)
   aluop := io.fromDecoder.aluop
   alusel := io.fromDecoder.alusel
   reg1 := io.fromDecoder.reg1
   reg2 := io.fromDecoder.reg2
-  wd := io.fromDecoder.wd
-  wreg := io.fromDecoder.wreg
+  waddr := io.fromDecoder.waddr
+  wen := io.fromDecoder.wen
   link_address := io.fromDecoder.link_addr
 
   // input-memory
@@ -46,13 +46,13 @@ class Execute extends Module {
   // output-decoder
   val wdata = RegInit(REG_BUS_INIT)
   io.decoder.wdata := wdata
-  io.decoder.wd := wd
-  io.decoder.wreg := wreg
+  io.decoder.waddr := waddr
+  io.decoder.wen := wen
 
   // output-memory
   io.memory.pc := pc
-  io.memory.wd := wd
-  io.memory.wreg := wreg
+  io.memory.waddr := waddr
+  io.memory.wen := wen
   io.memory.wdata := wdata
 
   // 保存逻辑运算的结果
@@ -202,13 +202,13 @@ class Execute extends Module {
   }
 
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
-  wd := wd
+  waddr := waddr
   when(
     ((aluop === EXE_ADD_OP) || (aluop === EXE_ADDI_OP) || (aluop === EXE_SUB_OP)) && (ov_sum === 1.U)
   ) {
-    wreg := WRITE_DISABLE
+    wen := WRITE_DISABLE
   }.otherwise {
-    wreg := wreg
+    wen := wen
   }
   wdata := ZERO_WORD // default
   switch(alusel) {

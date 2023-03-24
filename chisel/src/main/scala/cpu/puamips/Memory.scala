@@ -13,17 +13,17 @@ class Memory extends Module {
   // input-execute
   val pc = RegInit(REG_BUS_INIT)
   val wdata = RegInit(REG_BUS_INIT)
-  val wd = RegInit(REG_ADDR_BUS_INIT)
-  val wreg = RegInit(false.B)
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val wen = RegInit(false.B)
   pc := io.fromExecute.pc
   wdata := io.fromExecute.wdata
-  wd := io.fromExecute.wd
-  wreg := io.fromExecute.wreg
+  waddr := io.fromExecute.waddr
+  wen := io.fromExecute.wen
 
   // output-decoder
   io.decoder.wdata := wdata
-  io.decoder.wd := wd
-  io.decoder.wreg := wreg
+  io.decoder.waddr := waddr
+  io.decoder.wen := wen
 
   // output-execute
   val whilo = RegInit(false.B)
@@ -36,8 +36,8 @@ class Memory extends Module {
   // output-write back
   io.writeBack.pc := pc
   io.writeBack.wdata := wdata
-  io.writeBack.wd := wd
-  io.writeBack.wreg := wreg
+  io.writeBack.waddr := waddr
+  io.writeBack.wen := wen
   io.writeBack.whilo := whilo
   io.writeBack.hi := hi
   io.writeBack.lo := lo
