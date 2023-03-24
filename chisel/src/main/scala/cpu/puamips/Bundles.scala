@@ -89,7 +89,7 @@ class Memory_WriteBack extends Bundle {
 
 class Memory_DataMemory extends Bundle {
   val addr = Output(REG_BUS)
-  val we = Output(Bool())
+  val wen = Output(Bool())
   val sel = Output(DATA_MEMORY_SEL_BUS)
   val data = Output(REG_BUS)
   val ce = Output(Bool())
