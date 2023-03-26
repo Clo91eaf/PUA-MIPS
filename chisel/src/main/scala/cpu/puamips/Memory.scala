@@ -16,18 +16,16 @@ class Memory extends Module {
   // input-execute
   val pc = RegInit(REG_BUS_INIT)
   val wdata = RegInit(REG_BUS_INIT)
-  val wd = RegInit(REG_ADDR_BUS_INIT)
+  val waddr= RegInit(REG_ADDR_BUS_INIT)
   val wen = RegInit(false.B)
   val aluop = Wire(ALU_OP_BUS)
   val reg2 = Wire(REG_BUS)
   pc := io.fromExecute.pc
   wdata := io.fromExecute.wdata
-  wd := io.fromExecute.wd
-  wen := io.fromExecute.wreg
+  waddr := io.fromExecute.waddr
+  wen := io.fromExecute.wen
   aluop := io.fromExecute.aluop
   reg2 := io.fromExecute.reg2
-
-  // input-dataMemory
 
   // output-dataMemory
   val mem_addr = RegInit(REG_BUS_INIT)
@@ -36,7 +34,7 @@ class Memory extends Module {
   val mem_ce = RegInit(CHIP_DISABLE)
   val mem_data = RegInit(REG_BUS_INIT)
   io.dataMemory.addr := mem_addr
-  io.dataMemory.wen := mem_we
+  io.dataMemory.wen := mem_wen
   io.dataMemory.sel := mem_sel
   io.dataMemory.data := mem_data
   io.dataMemory.ce := mem_ce

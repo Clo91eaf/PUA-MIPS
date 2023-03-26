@@ -16,7 +16,7 @@ class DataMemory extends Module {
   val sel = Wire(DATA_MEMORY_SEL_BUS)
   val data = RegInit(DATA_BUS_INIT)
   ce := io.fromMemory.ce
-  wen := io.fromMemory.we
+  wen := io.fromMemory.wen
   addr := io.fromMemory.addr
   sel := io.fromMemory.sel
   

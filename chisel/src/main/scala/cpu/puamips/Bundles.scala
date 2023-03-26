@@ -122,9 +122,25 @@ class HILO_WriteBack extends Bundle {
   val lo = Output(REG_BUS)
 }
 
+class INST_SRAM extends Bundle {
+  val en    = Output(Bool())
+  val wen   = Output(WEN_BUS)
+  val addr  = Output(REG_BUS)
+  val wdata = Output(REG_BUS)
+  val rdata = Input(REG_BUS)
+}
+
+class DATA_SRAM extends Bundle {
+  val en    = Output(Bool())
+  val wen   = Output(WEN_BUS)
+  val addr  = Output(REG_BUS)
+  val wdata = Output(REG_BUS)
+  val rdata = Input(REG_BUS)
+}
+
 class DEBUG extends Bundle {
   val pc = Output(REG_BUS)
-  val wdata = Output(REG_BUS)
+  val wen = Output(WEN_BUS)
   val waddr = Output(REG_ADDR_BUS)
-  val wen = Output(Bool())
+  val wdata = Output(REG_BUS)
 }
