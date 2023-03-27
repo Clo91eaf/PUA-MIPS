@@ -1,38 +1,41 @@
 package cpu.puamips
 
+import Const._
 import chisel3._
-import cpu.puamips.Const._
 
 class Fetch extends Module {
   val io = IO(new Bundle {
-    val fromInstMemory = Flipped(new InstMemory_Fetch())
+    val fromControl = Flipped(new Control_Fetch())
     val fromDecoder = Flipped(new Decoder_Fetch())
+    val decoderStage = new Fetch_DecoderStage()
     val instMemory = new Fetch_InstMemory()
-    val decoder = new Fetch_Decoder()
   })
-  // input-inst memory
-  val inst = Wire(WIRE_BUS) // 复位时指令存储器禁用
-  inst := io.fromInstMemory.inst
-  
-  // output-inst memory
+
+  // input
+  val stall = Wire(STALL_BUS)
+  stall := io.fromControl.stall
+  val branch_flag = Wire(Bool())
+  branch_flag := io.fromDecoder.branch_flag
+  val branch_target_address = Wire(REG_BUS)
+  branch_target_address := io.fromDecoder.branch_target_address
+  // output
   val pc = RegInit(PC_INIT)
-  val ce = RegInit(CHIP_DISABLE) // 复位时指令存储器禁用
+  io.decoderStage.pc := pc
   io.instMemory.pc := pc
+  val ce = RegInit(CHIP_DISABLE)
   io.instMemory.ce := ce
-
-  // output-decoder
-  io.decoder.pc := pc
-  io.decoder.inst := inst
-
-  ce := CHIP_ENABLE // 复位结束使能指令存储器
 
   when(ce === CHIP_DISABLE) {
     pc := PC_INIT
-  }.elsewhen(io.fromDecoder.branch_flag === BRANCH) {
-    pc := io.fromDecoder.branch_target_address
-  }.otherwise {
-    pc := pc + 4.U(REG_NUM.W)
+  }.elsewhen(stall(0) === NOT_STOP) {
+    when(branch_flag === BRANCH) {
+      pc := branch_target_address
+    }.otherwise {
+      pc := pc + 4.U
+    }
   }
-  
+
+  ce := CHIP_ENABLE // 复位结束,使能指令存储器
+
   printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }

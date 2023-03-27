@@ -142,13 +142,15 @@ trait Constants {
   
   val EXE_RES_NOP        = "b000".U(3.W)
   
-  //inst rom
+  // inst rom
   val INST_ADDR_BUS     = UInt(32.W)
+  val INST_ADDR_BUS_INIT= 0.U(32.W)
   val INST_BUS          = UInt(32.W)
+  val INST_BUS_INIT     = 0.U(32.W)
   val INST_MEM_NUM      = 131071        // 2^17-1
   val INST_MEM_NUM_LOG2 = 17
 
-  //data ram
+  // data ram
   val DATA_ADDR_BUS            = UInt(32.W)
   val DATA_ADDR_BUS_INIT       = 0.U(32.W)
   val DATA_BUS                 = UInt(32.W)
@@ -159,7 +161,7 @@ trait Constants {
   val DATA_MEMORY_SEL_BUS      = UInt(4.W)
   val DATA_MEMORY_SEL_BUS_INIT = 0.U(4.W)
 
-  //GPR RegFile
+  // GPR RegFile
   val REG_ADDR_BUS        = UInt(5.W)
   val REG_ADDR_BUS_INIT   = 0.U(5.W)
   val REG_BUS             = UInt(32.W)
@@ -175,6 +177,9 @@ trait Constants {
   val REG_NUM             = 32
   val REG_NUM_LOG2        = 5
   val NOP_REG_ADDR        = "b00000".U(5.W)
+
+  // other
+  val STALL_BUS           = UInt(6.W)
 
   // DIV Instructions
   val DIV_FREE             = 0.U(2.W)
