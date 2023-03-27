@@ -1,64 +1,40 @@
 package cpu.puamips
 
+import Const._
 import chisel3._
-import cpu.puamips.Const._
 
-class Control_Fetch extends Bundle {
-  val stall = Output(STALL_BUS)
-}
-class Decoder_Fetch extends Bundle {
-  val branch_flag = Output(Bool()) // 是否发生转移
-  val branch_target_address = Output(REG_BUS) // 转移到的目标地址
-}
+// fetch
 class Fetch_DecoderStage extends Bundle {
   val pc = Output(REG_BUS)
 }
+
 class Fetch_InstMemory extends Bundle {
   val pc = Output(REG_BUS)
   val ce = Output(Bool())
 }
 
-class InstMemory_DecoderStage extends Bundle {
-  val inst = Output(REG_BUS)
-}
-
-class Control_DecoderStage extends Bundle {
-  val stall = Output(STALL_BUS)
-}
-
+// decoderStage
 class DecoderStage_Decoder extends Bundle {
   val pc = Output(INST_ADDR_BUS)
   val inst = Output(INST_BUS)
 }
 
-class Execute_Decoder extends Bundle {
-  val aluop = Output(ALU_OP_BUS)
-  val wreg = Output(Bool())
-  val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-  val is_in_delayslot = Output(Bool())
+// decoder
+class Decoder_Fetch extends Bundle {
+  val branch_flag = Output(Bool()) // 是否发生转移
+  val branch_target_address = Output(REG_BUS) // 转移到的目标地址
 }
 
-class Memory_Decoder extends Bundle {
-  val wreg = Output(Bool())
-  val wdata = Output(REG_BUS)
-  val wd = Output(REG_ADDR_BUS)
-}
-
-class RegFile_Decoder extends Bundle {
-  val reg1_data = Output(REG_BUS)
-  val reg2_data = Output(REG_BUS)
-}
-
-class Decoder_Execute extends Bundle {
-  val pc = Output(REG_BUS)
+class Decoder_ExecuteStage extends Bundle {
   val aluop = Output(ALU_OP_BUS)
   val alusel = Output(ALU_SEL_BUS)
   val reg1 = Output(REG_BUS)
   val reg2 = Output(REG_BUS)
-  val waddr = Output(REG_ADDR_BUS)
-  val wen = Output(Bool())
+  val wd = Output(REG_ADDR_BUS)
+  val wreg = Output(Bool())
   val link_addr = Output(REG_BUS)
+  val is_in_delayslot = Output(Bool())
+  val next_inst_in_delayslot = Output(Bool())
   val inst = Output(REG_BUS)
 }
 
@@ -69,7 +45,20 @@ class Decoder_RegFile extends Bundle {
   val reg2_read = Output(Bool())
 }
 
+class Decoder_Control extends Bundle {
+  val stallreq = Output(Bool())
+}
 
+// executeStage
+
+// execute
+class Execute_Decoder extends Bundle {
+  val aluop = Output(ALU_OP_BUS)
+  val wreg = Output(Bool())
+  val wdata = Output(REG_BUS)
+  val wd = Output(REG_ADDR_BUS)
+  val is_in_delayslot = Output(Bool())
+}
 
 class Execute_Memory extends Bundle {
   val pc = Output(REG_BUS)
@@ -82,6 +71,19 @@ class Execute_Memory extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
   val whilo = Output(Bool())
+}
+
+class Execute_Control extends Bundle {
+  val stallreq = Output(Bool())
+}
+
+// memoryStage
+
+// memory
+class Memory_Decoder extends Bundle {
+  val wreg = Output(Bool())
+  val wdata = Output(REG_BUS)
+  val wd = Output(REG_ADDR_BUS)
 }
 
 class Memory_Execute extends Bundle {
@@ -108,10 +110,9 @@ class Memory_DataMemory extends Bundle {
   val ce = Output(Bool())
 }
 
-class DataMemory_Memory extends Bundle {
-  val data = Output(REG_BUS)
-}
+// writeBackStage
 
+// writeBack
 class WriteBack_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
@@ -130,11 +131,38 @@ class WriteBack_HILO extends Bundle {
   val lo = Output(REG_BUS)
 }
 
+// control
+class Control_Fetch extends Bundle {
+  val stall = Output(STALL_BUS)
+}
+
+class Control_DecoderStage extends Bundle {
+  val stall = Output(STALL_BUS)
+}
+
+// instMemory
+class InstMemory_DecoderStage extends Bundle {
+  val inst = Output(REG_BUS)
+}
+
+// dataMemory
+class DataMemory_Memory extends Bundle {
+  val data = Output(REG_BUS)
+}
+
+// regFile
+class RegFile_Decoder extends Bundle {
+  val reg1_data = Output(REG_BUS)
+  val reg2_data = Output(REG_BUS)
+}
+
+// HILO
 class HILO_WriteBack extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
 }
 
+// other
 class INST_SRAM extends Bundle {
   val en = Output(Bool())
   val wen = Output(WEN_BUS)
@@ -156,12 +184,4 @@ class DEBUG extends Bundle {
   val wen = Output(WEN_BUS)
   val waddr = Output(REG_ADDR_BUS)
   val wdata = Output(REG_BUS)
-}
-
-class Decoder_Control extends Bundle {
-  val stallreq = Output(Bool())
-}
-
-class Execute_Control extends Bundle {
-  val stallreq = Output(Bool())
 }
