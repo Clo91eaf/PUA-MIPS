@@ -24,11 +24,7 @@ class Fetch extends Module {
   io.decoder.pc := pc
   io.decoder.inst := inst
 
-  when(reset.asBool === RST_ENABLE) {
-    ce := CHIP_ENABLE // 复位结束使能指令存储器
-  }.otherwise {
-    ce := CHIP_DISABLE
-  }
+  ce := CHIP_ENABLE // 复位结束使能指令存储器
 
   when(ce === CHIP_DISABLE) {
     pc := 0.U

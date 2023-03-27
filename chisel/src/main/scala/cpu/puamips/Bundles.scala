@@ -34,6 +34,10 @@ class Decoder_Execute extends Bundle {
   val inst = Output(REG_BUS)
 }
 
+class Decoder_Control extends Bundle{
+  val stallreq = Output(Bool())
+}
+
 class Decoder_RegFile extends Bundle {
   val reg1_addr = Output(REG_ADDR_BUS)
   val reg1_read = Output(Bool())
