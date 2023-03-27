@@ -56,8 +56,6 @@ trait Constants {
   val EXE_MFLO_OP  = "b00010010".U(8.W)
   val EXE_MTLO_OP  = "b00010011".U(8.W)
 
-  val EXE_NOP_OP   = "b00000000".U(8.W)
-
   val EXE_SLT_OP   = "b00101010".U(8.W)
   val EXE_SLTU_OP  = "b00101011".U(8.W)
   val EXE_SLTI_OP  = "b01010111".U(8.W)
