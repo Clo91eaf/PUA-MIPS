@@ -1,4 +1,5 @@
 import chisel3._
+import chisel3.util._
 import cpu.puamips._
 import cpu.puamips.Const._
 
@@ -25,7 +26,7 @@ class PuaMips extends Module {
   fetch.io.fromInstMemory.inst := io.inst_sram.rdata 
 
   io.data_sram.en := memory.io.dataMemory.ce 
-  io.data_sram.wen := memory.io.dataMemory.wen 
+  io.data_sram.wen := memory.io.dataMemory.sel & Fill(4, memory.io.dataMemory.wen)
   io.data_sram.addr := memory.io.dataMemory.addr
   io.data_sram.wdata := memory.io.dataMemory.data
   memory.io.fromDataMemory.data := io.data_sram.rdata

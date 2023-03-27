@@ -1,6 +1,7 @@
 package cpu.puamips
 
 import chisel3._
+import chisel3.util._
 import cpu.puamips.Const._
 
 class WriteBack extends Module {
@@ -50,7 +51,7 @@ class WriteBack extends Module {
   // output-debug
   io.debug.pc := pc
   io.debug.waddr := waddr
-  io.debug.wen := wen
+  io.debug.wen := Fill(4, wen)
   io.debug.wdata := wdata
 
   // debug

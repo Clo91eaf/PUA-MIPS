@@ -176,12 +176,15 @@ trait Constants {
   val INST_MEM_NUM_LOG2 = 17
   val INST_MEM_NUM      = 131071        // 2^17-1
 
+  val PC_INIT             = "hbfc00000".U(32.W)
   val REG_ADDR_BUS        = UInt(5.W)
   val REG_ADDR_BUS_INIT   = 0.U(5.W)
+  val WEN_BUS             = UInt(4.W)
+  val WEN_BUS_INIT        = 0.U(4.W)
   val REG_BUS             = UInt(32.W)
+  val REG_BUS_INIT        = 0.U(32.W)
   val WIRE_BUS            = UInt(32.W)
   val DOUBLE_REG_BUS      = UInt(64.W)
-  val REG_BUS_INIT        = 0.U(32.W)
   val DOUBLE_REG_BUS_INIT = 0.U(64.W)
   val NOP_REG_ADDR        = "b00000".U(5.W)
   val REG_NUM             = 32

@@ -18,12 +18,12 @@ module mycpu_top (
   output [31:0] debug_wb_pc      ,
   output [3 :0] debug_wb_rf_wen  ,
   output [4 :0] debug_wb_rf_wnum ,
-  output [31:0] debug_wb_rf_wdata,
+  output [31:0] debug_wb_rf_wdata
 );
 
 PuaMips puamips(
   .clock              (clk),
-  .reset              (resetn),
+  .reset              (~resetn),
   .io_ext_int         (ext_int),
 
   .io_inst_sram_en    (inst_sram_en),
@@ -42,5 +42,5 @@ PuaMips puamips(
   .io_debug_wen       (debug_wb_rf_wen),
   .io_debug_waddr     (debug_wb_rf_wnum),
   .io_debug_wdata     (debug_wb_rf_wdata)
-)  
+); 
 endmodule
