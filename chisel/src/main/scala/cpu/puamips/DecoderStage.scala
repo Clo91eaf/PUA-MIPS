@@ -29,4 +29,7 @@ class DecoderStage extends Module {
     pc := io.fromFetch.pc
     inst := io.fromInstMemory.inst
   }
+
+  // debug
+  printf(p"decoderStage :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }
