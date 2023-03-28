@@ -28,14 +28,14 @@ class Decoder_Fetch extends Bundle {
 class Decoder_ExecuteStage extends Bundle {
   val aluop = Output(ALU_OP_BUS)
   val alusel = Output(ALU_SEL_BUS)
+  val inst = Output(REG_BUS)
+  val is_in_delayslot = Output(Bool())
+  val link_addr = Output(REG_BUS)
   val reg1 = Output(REG_BUS)
   val reg2 = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
-  val link_addr = Output(REG_BUS)
-  val is_in_delayslot = Output(Bool())
   val next_inst_in_delayslot = Output(Bool())
-  val inst = Output(REG_BUS)
 }
 
 class Decoder_RegFile extends Bundle {
@@ -50,14 +50,16 @@ class Decoder_Control extends Bundle {
 }
 
 // executeStage
+class ExecuteStage_Decoder extends Bundle {
+  val is_in_delayslot = Output(Bool())
+}
 
 // execute
 class Execute_Decoder extends Bundle {
   val aluop = Output(ALU_OP_BUS)
-  val wreg = Output(Bool())
-  val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
-  val is_in_delayslot = Output(Bool())
+  val wdata = Output(REG_BUS)
+  val wreg = Output(Bool())
 }
 
 class Execute_Memory extends Bundle {
@@ -81,9 +83,9 @@ class Execute_Control extends Bundle {
 
 // memory
 class Memory_Decoder extends Bundle {
-  val wreg = Output(Bool())
-  val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
+  val wdata = Output(REG_BUS)
+  val wreg = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {
