@@ -223,11 +223,6 @@ class RegFile_Decoder extends Bundle {
 }
 
 // HILO
-class HILO_WriteBack extends Bundle {
-  val hi = Output(REG_BUS)
-  val lo = Output(REG_BUS)
-}
-
 class HILO_Execute extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)

@@ -332,5 +332,6 @@ class Memory extends Module {
     )
   ) // LLbit_value
 
+  // debug
   printf(p"memory :pc 0x${Hexadecimal(pc)}\n")
 }

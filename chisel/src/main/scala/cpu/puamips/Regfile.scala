@@ -7,7 +7,7 @@ import cpu.puamips.Const._
 class Regfile extends Module {
   val io = IO(new Bundle {
     val fromDecoder = Flipped(new Decoder_RegFile())
-    val fromWriteBack = Flipped(new WriteBack_RegFile())
+    val fromWriteBackStage = Flipped(new WriteBackStage_RegFile())
     val decoder = new RegFile_Decoder()
   })
   // input-decoder
@@ -24,15 +24,15 @@ class Regfile extends Module {
   val wen = RegInit(false.B)
   val waddr = RegInit(REG_ADDR_BUS_INIT)
   val wdata = RegInit(REG_BUS_INIT)
-  wen := io.fromWriteBack.wen
-  wdata := io.fromWriteBack.wdata
-  waddr := io.fromWriteBack.waddr
+  wen := io.fromWriteBackStage.wreg
+  wdata := io.fromWriteBackStage.wdata
+  waddr := io.fromWriteBackStage.wd
 
   // output-decoder
   val rdata1 = RegInit(REG_BUS_INIT)
   val rdata2 = RegInit(REG_BUS_INIT)
-  io.decoder.rdata1 := rdata1
-  io.decoder.rdata2 := rdata2
+  io.decoder.reg1_data := rdata1
+  io.decoder.reg2_data := rdata2
 
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(REG_BUS_INIT)))
