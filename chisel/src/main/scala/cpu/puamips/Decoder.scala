@@ -37,6 +37,7 @@ class Decoder extends Module {
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
 
   // output
+  io.executeStage.pc := pc_i
   val reg1_read = RegInit(READ_DISABLE)
   io.regfile.reg1_read := reg1_read
   val reg2_read = RegInit(READ_DISABLE)
