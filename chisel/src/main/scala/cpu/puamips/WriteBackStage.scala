@@ -2,6 +2,7 @@ package cpu.puamips
 
 import Const._
 import chisel3._
+import chisel3.util._
 
 class WriteBackStage extends Module {
   val io = IO(new Bundle {
@@ -13,6 +14,7 @@ class WriteBackStage extends Module {
     val regFile = new WriteBackStage_RegFile()
     val execute = new WriteBackStage_Execute()
     val hilo = new WriteBackStage_HILO()
+    val debug = new DEBUG()
   })
   // input
   val stall = Wire(STALL_BUS)
@@ -41,6 +43,12 @@ class WriteBackStage extends Module {
   val LLbit_value = RegInit(false.B)
   io.llbitReg.LLbit_value := LLbit_value
   io.memory.LLbit_value := LLbit_value
+
+  // output-debug
+  io.debug.pc := pc
+  io.debug.waddr := wd
+  io.debug.we := Fill(4, wreg)
+  io.debug.wdata := wdata
 
   when(stall(4) === STOP && stall(5) === NOT_STOP) {
     wd := NOP_REG_ADDR
