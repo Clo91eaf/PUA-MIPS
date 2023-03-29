@@ -155,7 +155,18 @@ class Memory_DataMemory extends Bundle {
 }
 
 // writeBackStage
+class WriteBackStage_LLbitReg extends Bundle {
+  val LLbit_value = Output(Bool())
+  val LLbit_we = Output(Bool())
+}
+
 class WriteBackStage_Execute extends Bundle {
+  val whilo = Output(Bool())
+  val hi = Output(REG_BUS)
+  val lo = Output(REG_BUS)
+}
+
+class WriteBackStage_HILO extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
@@ -165,19 +176,14 @@ class WriteBackStage_Memory extends Bundle {
   val LLbit_value = Output(Bool())
   val LLbit_we = Output(Bool())
 }
-// writeBack
 
-class WriteBack_RegFile extends Bundle {
+class WriteBackStage_RegFile extends Bundle {
   val wdata = Output(REG_BUS)
-  val waddr = Output(REG_ADDR_BUS)
-  val we = Output(Bool())
+  val wd = Output(REG_ADDR_BUS)
+  val wreg = Output(Bool())
 }
 
-class WriteBack_HILO extends Bundle {
-  val whilo = Output(Bool())
-  val hi = Output(REG_BUS)
-  val lo = Output(REG_BUS)
-}
+// writeBack
 
 // control
 class Control_Fetch extends Bundle {
@@ -193,6 +199,10 @@ class Control_ExecuteStage extends Bundle {
 }
 
 class Control_MemoryStage extends Bundle {
+  val stall = Output(STALL_BUS)
+}
+
+class Control_WriteBackStage extends Bundle {
   val stall = Output(STALL_BUS)
 }
 
