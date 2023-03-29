@@ -76,24 +76,37 @@ class Execute_Decoder extends Bundle {
   val wreg = Output(Bool())
 }
 
-class Execute_Memory extends Bundle {
-  val pc = Output(REG_BUS)
-  val wdata = Output(REG_BUS)
-  val waddr = Output(REG_ADDR_BUS)
-  val wen = Output(Bool())
+class Execute_MemoryStage extends Bundle {
   val aluop = Output(ALU_OP_BUS)
+  val cnt = Output(CNT_BUS)
+  val hi = Output(REG_BUS)
+  val hilo = Output(DOUBLE_REG_BUS)
+  val lo = Output(REG_BUS)
   val addr = Output(REG_BUS)
   val reg2 = Output(REG_BUS)
-  val hi = Output(REG_BUS)
-  val lo = Output(REG_BUS)
+  val wd = Output(REG_ADDR_BUS)
+  val wdata = Output(REG_BUS)
   val whilo = Output(Bool())
+  val wreg = Output(Bool())
+  val pc = Output(REG_BUS)
 }
 
 class Execute_Control extends Bundle {
   val stallreq = Output(Bool())
 }
 
+class Execute_Divider extends Bundle {
+  val opdata1 = Output(REG_BUS)
+  val opdata2 = Output(REG_BUS)
+  val start = Output(Bool())
+  val signed_div = Output(Bool())
+}
+
 // memoryStage
+class MemoryStage_Execute extends Bundle {
+  val cnt = Output(CNT_BUS)
+  val hilo = Output(DOUBLE_REG_BUS)
+}
 
 // memory
 class Memory_Decoder extends Bundle {
@@ -127,13 +140,13 @@ class Memory_DataMemory extends Bundle {
 }
 
 // writeBackStage
-
-// writeBack
-class WriteBack_Execute extends Bundle {
+class WriteBackStage_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
 }
+// writeBack
+
 
 class WriteBack_RegFile extends Bundle {
   val wdata = Output(REG_BUS)
@@ -180,6 +193,17 @@ class RegFile_Decoder extends Bundle {
 class HILO_WriteBack extends Bundle {
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+}
+
+class HILO_Execute extends Bundle {
+  val hi = Output(REG_BUS)
+  val lo = Output(REG_BUS)
+}
+
+// divider
+class Divider_Execute extends Bundle {
+  val ready = Output(Bool())
+  val result = Output(DOUBLE_REG_BUS)
 }
 
 // other

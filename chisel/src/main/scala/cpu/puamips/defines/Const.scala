@@ -180,6 +180,9 @@ trait Constants {
 
   // other
   val STALL_BUS           = UInt(6.W)
+  val STALL_BUS_INIT           = 0.U(6.W)
+  val CNT_BUS             = UInt(2.W)
+  val CNT_BUS_INIT        = 0.U(2.W)
 
   // DIV Instructions
   val DIV_FREE             = 0.U(2.W)
@@ -190,6 +193,8 @@ trait Constants {
   val DIV_RESULT_NOT_READY = false.B
   val DIV_START            = true.B
   val DIV_STOP             = false.B
+  val SIGNED               = true.B
+  val NOT_SIGNED             = false.B
 
   // 指令
   val EXE_AND  = "b100100".U(6.W) // 指令 and 的功能码
