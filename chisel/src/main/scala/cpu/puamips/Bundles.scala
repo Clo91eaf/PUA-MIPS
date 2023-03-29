@@ -108,6 +108,19 @@ class MemoryStage_Execute extends Bundle {
   val hilo = Output(DOUBLE_REG_BUS)
 }
 
+class MemoryStage_Memory extends Bundle {
+  val aluop = Output(ALU_OP_BUS)
+  val hi = Output(REG_BUS)
+  val lo = Output(REG_BUS)
+  val whilo = Output(Bool())
+  val addr = Output(REG_BUS)
+  val reg2 = Output(REG_BUS)
+  val wd = Output(REG_ADDR_BUS)
+  val wreg = Output(Bool())
+  val wdata = Output(REG_BUS)
+  val pc = Output(REG_BUS)
+}
+
 // memory
 class Memory_Decoder extends Bundle {
   val wd = Output(REG_ADDR_BUS)
@@ -170,6 +183,10 @@ class Control_DecoderStage extends Bundle {
 }
 
 class Control_ExecuteStage extends Bundle {
+  val stall = Output(STALL_BUS)
+}
+
+class Control_MemoryStage extends Bundle {
   val stall = Output(STALL_BUS)
 }
 
