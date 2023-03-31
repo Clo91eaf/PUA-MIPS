@@ -102,6 +102,10 @@ class Execute_Divider extends Bundle {
   val signed_div = Output(Bool())
 }
 
+class Execute_CP0Reg extends Bundle {
+  val cp0_read_addr = Output(CP0_ADDR_BUS)
+}
+
 // memoryStage
 class MemoryStage_Execute extends Bundle {
   val cnt = Output(CNT_BUS)
@@ -183,6 +187,12 @@ class WriteBackStage_RegFile extends Bundle {
   val wreg = Output(Bool())
 }
 
+class writeBackStage_CP0Reg extends Bundle {
+  val cp0_data = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+}
+
 // writeBack
 
 // control
@@ -237,6 +247,21 @@ class Divider_Execute extends Bundle {
 // LLbitReg
 class LLbitReg_Memory extends Bundle {
   val LLbit = Output(Bool())
+}
+
+// CP0Reg
+class CP0Reg_Execute extends Bundle {
+  val data = Output(REG_BUS)
+}
+
+class CP0Reg_Output extends Bundle {
+  val count = Output(REG_BUS)
+  val compare = Output(REG_BUS)
+  val status = Output(REG_BUS)
+  val cause = Output(REG_BUS)
+  val epc = Output(REG_BUS)
+  val config = Output(REG_BUS)
+  val prid = Output(REG_BUS)
 }
 
 // other
