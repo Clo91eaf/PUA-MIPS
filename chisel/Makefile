@@ -1,3 +1,3 @@
 verilog:
-	if exist generated (rmdir /s /q generated)
-	sbt 'runMain cpu.elaborateCPU'
+	# if exist generated (rmdir /s /q generated)
+	sbt 'runMain Elaborate'
