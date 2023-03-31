@@ -2,25 +2,31 @@ package cpu.puamips
 
 import chisel3._
 import chisel3.util._
-import cpu.puamips.Const._
+import Const._
 import chisel3.util.experimental.loadMemoryFromFile
 
 class InstMemory extends Module {
   val io = IO(new Bundle {
-    val ce = Input(Bool())
-    val addr = Input(InstAddrBus)
-    val inst = Output(InstBus)
+    val fromFetch = Flipped(new Fetch_InstMemory())
+    val decoderStage = new InstMemory_DecoderStage()
   })
-  val instr = Reg(InstBus)
-  io.inst := instr
+  // input-top
+  val ce = Wire(Bool())
+  val pc = Wire(UInt(32.W))
+  ce := io.fromFetch.ce
+  pc := io.fromFetch.pc
 
-  val inst_mem = Mem(InstMemNum, InstBus)
+  // output-top
+  val inst = Wire(UInt(32.W))
+  io.decoderStage.inst := inst
 
+  val inst_mem = Mem(INST_MEM_NUM, INST_BUS)
   loadMemoryFromFile(inst_mem, "inst_rom.data")
+  val addr = pc
 
-  when(io.ce === ChipDisable) {
-    instr := ZeroWord
+  when(ce === CHIP_DISABLE) {
+    inst := ZERO_WORD
   }.otherwise {
-    instr := inst_mem(io.addr(InstMemNumLog2 + 1, 2))
+    inst := inst_mem(addr(INST_MEM_NUM_LOG2 + 1, 2))
   }
 }

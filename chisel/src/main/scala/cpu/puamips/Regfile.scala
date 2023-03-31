@@ -6,50 +6,74 @@ import cpu.puamips.Const._
 
 class Regfile extends Module {
   val io = IO(new Bundle {
-    // 输入端口
-    val we = Input(Bool())
-    val waddr = Input(RegAddrBus)
-    val wdata = Input(RegBus)
-    val re1 = Input(Bool())
-    val raddr1 = Input(RegAddrBus)
-    val re2 = Input(Bool())
-    val raddr2 = Input(RegAddrBus)
-    // 输出端口
-    val rdata1 = Output(RegBus)
-    val rdata2 = Output(RegBus)
+    val fromDecoder = Flipped(new Decoder_RegFile())
+    val fromWriteBackStage = Flipped(new WriteBackStage_RegFile())
+    val decoder = new RegFile_Decoder()
   })
+  // input-decoder
+  val re1 = RegInit(false.B)
+  val raddr1 = RegInit(REG_ADDR_BUS_INIT)
+  val re2 = RegInit(false.B)
+  val raddr2 = RegInit(REG_ADDR_BUS_INIT)
+  re1 := io.fromDecoder.reg1_read
+  re2 := io.fromDecoder.reg2_read
+  raddr1 := io.fromDecoder.reg1_addr
+  raddr1 := io.fromDecoder.reg2_addr
 
-  val rdata1r = Reg(RegBus)
-  val rdata2r = Reg(RegBus)
+  // input-write back
+  val wen = RegInit(false.B)
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val wdata = RegInit(REG_BUS_INIT)
+  wen := io.fromWriteBackStage.wreg
+  wdata := io.fromWriteBackStage.wdata
+  waddr := io.fromWriteBackStage.wd
 
-  io.rdata1 := rdata1r
-  io.rdata2 := rdata2r
+  // output-decoder
+  val rdata1 = RegInit(REG_BUS_INIT)
+  val rdata2 = RegInit(REG_BUS_INIT)
+  io.decoder.reg1_data := rdata1
+  io.decoder.reg2_data := rdata2
 
   // 定义32个32位寄存器
-  val regs = RegInit(VecInit(Seq.fill(RegNum)(RegBusInit)))
+  val regs = RegInit(VecInit(Seq.fill(REG_NUM)(REG_BUS_INIT)))
 
-  when(reset.asBool === RstDisable) {
-    when(io.we === WriteEnable && io.waddr =/= 0.U) {
-      regs(io.waddr) := io.wdata
+  when(reset.asBool === RST_DISABLE) {
+    when(wen === WRITE_ENABLE && waddr =/= 0.U) {
+      regs(waddr) := wdata
     }
   }
-  when(reset.asBool === RstDisable) {
-    rdata1r := ZeroWord
-  }.elsewhen(io.raddr1 === 0.U) {
-    rdata1r := ZeroWord
-  }.elsewhen(io.re1 === ReadEnable) {
-    rdata1r := regs(io.raddr1)
+  when(reset.asBool === RST_DISABLE) {
+    rdata1 := ZERO_WORD
+  }.elsewhen(raddr1 === 0.U) {
+    rdata1 := ZERO_WORD
+  }.elsewhen(re1 === READ_ENABLE) {
+    rdata1 := regs(raddr1)
   }.otherwise {
-    rdata1r := ZeroWord
+    rdata1 := ZERO_WORD
   }
 
-  when(reset.asBool === RstEnable) {
-    rdata2r := ZeroWord
-  }.elsewhen(io.raddr2 === 0.U) {
-    rdata2r := ZeroWord
-  }.elsewhen(io.re2 === ReadEnable) {
-    rdata2r := regs(io.raddr2)
+  when(reset.asBool === RST_ENABLE) {
+    rdata2 := ZERO_WORD
+  }.elsewhen(raddr2 === 0.U) {
+    rdata2 := ZERO_WORD
+  }.elsewhen(re2 === READ_ENABLE) {
+    rdata2 := regs(raddr2)
   }.otherwise {
-    rdata2r := ZeroWord
+    rdata2 := ZERO_WORD
   }
+
+  // debug
+  when(wen === WRITE_ENABLE) {
+    printf(
+      p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n"
+    )
+  }.otherwise {
+    printf(
+      p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n"
+    )
+    printf(
+      p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n"
+    )
+  }
+
 }
