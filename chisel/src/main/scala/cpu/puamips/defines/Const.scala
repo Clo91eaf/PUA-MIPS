@@ -6,6 +6,7 @@ import cpu.puamips.defines.{Instructions}
 
   // @formatter:off
 trait Constants {
+  // 全局
   val RST_ENABLE    = true.B  // 复位使能
   val RST_DISABLE   = false.B // 复位除能
   val ZERO_WORD     = 0.U     // 数字0
@@ -19,8 +20,6 @@ trait Constants {
   val ALU_SEL_BUS_INIT = 0.U(3.W)
   val INST_VALID    = false.B // 指令有效
   val INST_INVALID  = true.B  // 指令无效
-  val CHIP_ENABLE   = true.B  // 芯片使能
-  val CHIP_DISABLE  = false.B // 芯片禁止
   val STOP          = true.B
   val NOT_STOP      = false.B
   val IN_DELAY_SLOT     = true.B
@@ -31,6 +30,109 @@ trait Constants {
   val INTERRUPT_NOT_ASSERT = false.B
   val TRAP_ASSERT          = true.B
   val TRAP_NOT_ASSERT      = false.B
+  val CHIP_ENABLE   = true.B  // 芯片使能
+  val CHIP_DISABLE  = false.B // 芯片禁止
+
+  // 指令
+  val EXE_AND  = "b100100".U(6.W) // 指令 and 的功能码
+  val EXE_OR   = "b100101".U(6.W) // 指令 or 的功能码
+  val EXE_XOR  = "b100110".U(6.W) // 指令 xor 的功能码
+  val EXE_NOR  = "b100111".U(6.W) // 指令 nor 的功能码
+  val EXE_ANDI = "b001100".U(6.W) // 指令 andi 的指令码
+  val EXE_ORI  = "b001101".U(6.W) // 指令 ori 的功能码
+  val EXE_XORI = "b001110".U(6.W) // 指令 xori 的指令码
+  val EXE_LUI  = "b001111".U(6.W) // 指令 lui 的指令码
+
+  val EXE_SLL  = "b000000".U(6.W) // 指令 sll 的功能码
+  val EXE_SLLV = "b000100".U(6.W) // 指令 sllv 的功能码
+  val EXE_SRL  = "b000010".U(6.W) // 指令 srl 的功能码
+  val EXE_SRLV = "b000110".U(6.W) // 指令 srlv 的功能码
+  val EXE_SRA  = "b000011".U(6.W) // 指令 sra 的功能码
+  val EXE_SRAV = "b000111".U(6.W) // 指令 srav 的功能码
+  val EXE_SYNC = "b001111".U(6.W)
+  val EXE_PREF = "b110011".U(6.W)
+
+  val EXE_MOVZ = "b001010".U(6.W) // 指令MOVZ的功能码
+  val EXE_MOVN = "b001011".U(6.W) // 指令MOVN的功能码
+  val EXE_MFHI = "b010000".U(6.W) // 指令MFHI的功能码
+  val EXE_MTHI = "b010001".U(6.W) // 指令MTHI的功能码
+  val EXE_MFLO = "b010010".U(6.W) // 指令MFLO的功能码
+  val EXE_MTLO = "b010011".U(6.W) // 指令MTLO的功能码
+
+  val EXE_SLT   = "b101010".U(6.W) // 指令SLT的功能码
+  val EXE_SLTU  = "b101011".U(6.W) // 指令SLTU的功能码
+  val EXE_SLTI  = "b001010".U(6.W) // 指令SLTI的指令码
+  val EXE_SLTIU = "b001011".U(6.W) // 指令SLTIU的指令码
+  val EXE_ADD   = "b100000".U(6.W) // 指令ADD的功能码
+  val EXE_ADDU  = "b100001".U(6.W) // 指令ADDU的功能码
+  val EXE_SUB   = "b100010".U(6.W) // 指令SUB的功能码
+  val EXE_SUBU  = "b100011".U(6.W) // 指令SUBU的功能码
+  val EXE_ADDI  = "b001000".U(6.W) // 指令ADDI的指令码
+  val EXE_ADDIU = "b001001".U(6.W) // 指令ADDIU的指令码
+  val EXE_CLZ   = "b100000".U(6.W) // 指令CLZ的功能码
+  val EXE_CLO   = "b100001".U(6.W) // 指令CLO的功能码
+
+  val EXE_MULT  = "b011000".U(6.W) // 指令MULT的功能码
+  val EXE_MULTU = "b011001".U(6.W) // 指令MULTU的功能码
+  val EXE_MUL   = "b000010".U(6.W) // 指令MUL的功能码
+  val EXE_MADD  = "b000000".U(6.W)
+  val EXE_MADDU = "b000001".U(6.W)
+  val EXE_MSUB  = "b000100".U(6.W)
+  val EXE_MSUBU = "b000101".U(6.W)
+
+  val EXE_DIV   = "b011010".U(6.W)
+  val EXE_DIVU  = "b011011".U(6.W)
+
+  val EXE_J      = "b000010".U(6.W) // 指令J的功能码
+  val EXE_JAL    = "b000011".U(6.W) // 指令JAL的功能码
+  val EXE_JALR   = "b001001".U(6.W) // 指令JALR的功能码
+  val EXE_JR     = "b001000".U(6.W) // 指令JR的功能码
+  val EXE_BEQ    = "b000100".U(6.W) // 指令BEQ的指令码
+  val EXE_BGEZ   = "b00001".U(5.W)  // 指令BGEZ第16~20bit
+  val EXE_BGEZAL = "b10001".U(5.W)  // 指令BGEZAL第16~20bit
+  val EXE_BGTZ   = "b000111".U(6.W) // 指令BGTZ的指令码
+  val EXE_BLEZ   = "b000110".U(6.W) // 指令BLEZ的指令码
+  val EXE_BLTZ   = "b00000".U(5.W)  // 指令BLTZ第16~20bit
+  val EXE_BLTZAL = "b10000".U(5.W)  // 指令BLTZAL第16~20bit
+  val EXE_BNE    = "b000101".U(6.W) // 指令BNE的指令码
+
+  val EXE_LB  = "b100000".U(6.W)  //指令LB的指令码
+  val EXE_LBU = "b100100".U(6.W)  //指令LBU的指令码
+  val EXE_LH  = "b100001".U(6.W)  //指令LH的指令码
+  val EXE_LHU = "b100101".U(6.W)  //指令LHU的指令码
+  val EXE_LL   = "b110000".U(6.W)
+  val EXE_LW   = "b100011".U(6.W)
+  val EXE_LWL  = "b100010".U(6.W)
+  val EXE_LWR  = "b100110".U(6.W)
+  val EXE_SB   = "b101000".U(6.W)
+  val EXE_SC   = "b111000".U(6.W)
+  val EXE_SH   = "b101001".U(6.W)
+  val EXE_SW   = "b101011".U(6.W)
+  val EXE_SWL  = "b101010".U(6.W)
+  val EXE_SWR  = "b101110".U(6.W)
+
+  val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
+  val SSNOP     = "b00000000_00000000_00000000_01000000".U(32.W) // 指令 SSNOP
+
+  val EXE_SPECIAL_INST  = "b000000".U(6.W) // special类的指令码
+  val EXE_REGIMM_INST   = "b000001".U(6.W) // REGIMM类的指令码
+  val EXE_SPECIAL2_INST = "b011100".U(6.W) // special2类的指令码
+
+  // 未实现
+  val EXE_SYSCALL = "b001100".U(6.W)
+  val EXE_TEQ   = "b110100".U(6.W)
+  val EXE_TEQI  = "b01100".U(5.W)
+  val EXE_TGE   = "b110000".U(6.W)
+  val EXE_TGEI  = "b01000".U(5.W)
+  val EXE_TGEIU = "b01001".U(5.W)
+  val EXE_TGEU  = "b110001".U(6.W)
+  val EXE_TLT   = "b110010".U(6.W)
+  val EXE_TLTI  = "b01010".U(5.W)
+  val EXE_TLTIU = "b01011".U(5.W)
+  val EXE_TLTU  = "b110011".U(6.W)
+  val EXE_TNE   = "b110110".U(6.W)
+  val EXE_TNEI  = "b01110".U(5.W)
+  val EXE_ERET  = "b01000010_00000000_00000000_00011000".U(32.W)
 
   // AluOp
   val EXE_AND_OP   = "b00100100".U(8.W)
@@ -109,13 +211,14 @@ trait Constants {
   val EXE_SWL_OP  = "b11101010".U(8.W)
   val EXE_SWR_OP  = "b11101110".U(8.W)
   val EXE_SYNC_OP = "b00001111".U(8.W)
+
+  val EXE_MFC0_OP = "b01011101".U(8.W)
+  val EXE_MTC0_OP = "b01100000".U(8.W)
+
   val EXE_NOP_OP  = "b00000000".U(8.W)
 
-  val EXE_MFC0_OP    = "b01011101".U(8.W)
-  val EXE_MTC0_OP    = "b01100000".U(8.W)
-
+  // 未实现
   val EXE_SYSCALL_OP = "b00001100".U(8.W)
-
   val EXE_TEQ_OP     = "b00110100".U(8.W)
   val EXE_TEQI_OP    = "b01001000".U(8.W)
   val EXE_TGE_OP     = "b00110000".U(8.W)
@@ -128,7 +231,6 @@ trait Constants {
   val EXE_TLTU_OP    = "b00110011".U(8.W)
   val EXE_TNE_OP     = "b00110110".U(8.W)
   val EXE_TNEI_OP    = "b01001001".U(8.W)
-
   val EXE_ERET_OP    = "b01101011".U(8.W)
 
   // AluSel
@@ -196,115 +298,13 @@ trait Constants {
   val SIGNED               = true.B
   val NOT_SIGNED             = false.B
 
-  // 指令
-  val EXE_AND  = "b100100".U(6.W) // 指令 and 的功能码
-  val EXE_OR   = "b100101".U(6.W) // 指令 or 的功能码
-  val EXE_XOR  = "b100110".U(6.W) // 指令 xor 的功能码
-  val EXE_NOR  = "b100111".U(6.W) // 指令 nor 的功能码
-  val EXE_ANDI = "b001100".U(6.W) // 指令 andi 的指令码
-  val EXE_ORI  = "b001101".U(6.W) // 指令 ori 的功能码
-  val EXE_XORI = "b001110".U(6.W) // 指令 xori 的指令码
-  val EXE_LUI  = "b001111".U(6.W) // 指令 lui 的指令码
-
-  val EXE_SLL  = "b000000".U(6.W) // 指令 sll 的功能码
-  val EXE_SLLV = "b000100".U(6.W) // 指令 sllv 的功能码
-  val EXE_SRL  = "b000010".U(6.W) // 指令 srl 的功能码
-  val EXE_SRLV = "b000110".U(6.W) // 指令 srlv 的功能码
-  val EXE_SRA  = "b000011".U(6.W) // 指令 sra 的功能码
-  val EXE_SRAV = "b000111".U(6.W) // 指令 srav 的功能码
-
-  val EXE_MOVZ = "b001010".U(6.W) // 指令MOVZ的功能码
-  val EXE_MOVN = "b001011".U(6.W) // 指令MOVN的功能码
-  val EXE_MFHI = "b010000".U(6.W) // 指令MFHI的功能码
-  val EXE_MTHI = "b010001".U(6.W) // 指令MTHI的功能码
-  val EXE_MFLO = "b010010".U(6.W) // 指令MFLO的功能码
-  val EXE_MTLO = "b010011".U(6.W) // 指令MTLO的功能码
-
-  val EXE_SLT   = "b101010".U(6.W) // 指令SLT的功能码
-  val EXE_SLTU  = "b101011".U(6.W) // 指令SLTU的功能码
-  val EXE_SLTI  = "b001010".U(6.W) // 指令SLTI的指令码
-  val EXE_SLTIU = "b001011".U(6.W) // 指令SLTIU的指令码
-  val EXE_ADD   = "b100000".U(6.W) // 指令ADD的功能码
-  val EXE_ADDU  = "b100001".U(6.W) // 指令ADDU的功能码
-  val EXE_SUB   = "b100010".U(6.W) // 指令SUB的功能码
-  val EXE_SUBU  = "b100011".U(6.W) // 指令SUBU的功能码
-  val EXE_ADDI  = "b001000".U(6.W) // 指令ADDI的指令码
-  val EXE_ADDIU = "b001001".U(6.W) // 指令ADDIU的指令码
-  val EXE_CLZ   = "b100000".U(6.W) // 指令CLZ的功能码
-  val EXE_CLO   = "b100001".U(6.W) // 指令CLO的功能码
-
-  val EXE_MULT  = "b011000".U(6.W) // 指令MULT的功能码
-  val EXE_MULTU = "b011001".U(6.W) // 指令MULTU的功能码
-  val EXE_MUL   = "b000010".U(6.W) // 指令MUL的功能码
-  val EXE_MADD  = "b000000".U(6.W)
-  val EXE_MADDU = "b000001".U(6.W)
-  val EXE_MSUB  = "b000100".U(6.W)
-  val EXE_MSUBU = "b000101".U(6.W)
-
-  val EXE_J      = "b000010".U(6.W) // 指令J的功能码
-  val EXE_JAL    = "b000011".U(6.W) // 指令JAL的功能码
-  val EXE_JALR   = "b001001".U(6.W) // 指令JALR的功能码
-  val EXE_JR     = "b001000".U(6.W) // 指令JR的功能码
-  val EXE_BEQ    = "b000100".U(6.W) // 指令BEQ的指令码
-  val EXE_BGEZ   = "b00001".U(5.W)  // 指令BGEZ第16~20bit
-  val EXE_BGEZAL = "b10001".U(5.W)  // 指令BGEZAL第16~20bit
-  val EXE_BGTZ   = "b000111".U(6.W) // 指令BGTZ的指令码
-  val EXE_BLEZ   = "b000110".U(6.W) // 指令BLEZ的指令码
-  val EXE_BLTZ   = "b00000".U(5.W)  // 指令BLTZ第16~20bit
-  val EXE_BLTZAL = "b10000".U(5.W)  // 指令BLTZAL第16~20bit
-  val EXE_BNE    = "b000101".U(6.W) // 指令BNE的指令码
-
-  val EXE_DIV  = "b011010".U(6.W)
-  val EXE_DIVU = "b011011".U(6.W)
-
-  val EXE_LB  = "b100000".U(6.W)  //指令LB的指令码
-  val EXE_LBU = "b100100".U(6.W)  //指令LBU的指令码
-  val EXE_LH  = "b100001".U(6.W)  //指令LH的指令码
-  val EXE_LHU = "b100101".U(6.W)  //指令LHU的指令码
-  val EXE_LL   = "b110000".U(6.W)
-  val EXE_LW   = "b100011".U(6.W)
-  val EXE_LWL  = "b100010".U(6.W)
-  val EXE_LWR  = "b100110".U(6.W)
-  val EXE_SB   = "b101000".U(6.W)
-  val EXE_SC   = "b111000".U(6.W)
-  val EXE_SH   = "b101001".U(6.W)
-  val EXE_SW   = "b101011".U(6.W)
-  val EXE_SWL  = "b101010".U(6.W)
-  val EXE_SWR  = "b101110".U(6.W)
-
-  // 异常
-  val EXE_SYSCALL = "b001100".U(6.W)
-
-  val EXE_TEQ   = "b110100".U(6.W)
-  val EXE_TEQI  = "b01100".U(5.W)
-  val EXE_TGE   = "b110000".U(6.W)
-  val EXE_TGEI  = "b01000".U(5.W)
-  val EXE_TGEIU = "b01001".U(5.W)
-  val EXE_TGEU  = "b110001".U(6.W)
-  val EXE_TLT   = "b110010".U(6.W)
-  val EXE_TLTI  = "b01010".U(5.W)
-  val EXE_TLTIU = "b01011".U(5.W)
-  val EXE_TLTU  = "b110011".U(6.W)
-  val EXE_TNE   = "b110110".U(6.W)
-  val EXE_TNEI  = "b01110".U(5.W)
-
-  val EXE_SYNC = "b001111".U(6.W) // 指令 sync 的功能码
-  val EXE_PREF = "b110011".U(6.W) // 指令 pref 的功能码
-
-  val EXE_SPECIAL_INST  = "b000000".U(6.W) // special类的指令码
-  val EXE_REGIMM_INST   = "b000001".U(6.W) // REGIMM类的指令码
-  val EXE_SPECIAL2_INST = "b011100".U(6.W) // special2类的指令码
-  val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
-  val EXE_ERET  = "b01000010_00000000_00000000_00011000".U(32.W)
-  val SSNOP     = "b00000000_00000000_00000000_01000000".U(32.W) // 指令 SSNOP
-
   // CP0寄存器
   val CP0_REG_COUNT   = "b01001".U(5.W)
   val CP0_REG_COMPARE = "b01011".U(5.W)
   val CP0_REG_STATUS  = "b01100".U(5.W)
   val CP0_REG_CAUSE   = "b01101".U(5.W)
   val CP0_REG_EPC     = "b01110".U(5.W)
-  val CP0_REG_PRId    = "b01111".U(5.W)
+  val CP0_REG_PRID    = "b01111".U(5.W)
   val CP0_REG_CONFIG  = "b10000".U(5.W)
 }
 trait OptionConst {
