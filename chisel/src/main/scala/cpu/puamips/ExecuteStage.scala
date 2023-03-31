@@ -49,7 +49,7 @@ class ExecuteStage extends Module {
     link_addr := ZERO_WORD
     ex_is_in_delayslot := NOT_IN_DELAY_SLOT
     inst := ZERO_WORD
-    pc := ZERO_WORD
+    pc := pc
   }.elsewhen(stall(2) === NOT_STOP) {
     aluop := io.fromDecoder.aluop
     alusel := io.fromDecoder.alusel

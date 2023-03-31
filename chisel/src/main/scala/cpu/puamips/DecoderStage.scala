@@ -23,7 +23,7 @@ class DecoderStage extends Module {
   io.decoder.inst := inst
 
   when(stall(1) === STOP && stall(2) === NOT_STOP) {
-    pc := ZERO_WORD
+    pc := pc
     inst := ZERO_WORD
   }.elsewhen(stall(1) === NOT_STOP) {
     pc := io.fromFetch.pc

@@ -53,7 +53,7 @@ class MemoryStage extends Module {
     aluop := EXE_NOP_OP
     addr := ZERO_WORD
     reg2 := ZERO_WORD
-    pc := ZERO_WORD
+    pc := pc
   }.elsewhen(stall(3) === NOT_STOP) {
     wd := io.fromExecute.wd
     wreg := io.fromExecute.wreg

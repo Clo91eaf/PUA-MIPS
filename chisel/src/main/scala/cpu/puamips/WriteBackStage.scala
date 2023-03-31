@@ -59,7 +59,7 @@ class WriteBackStage extends Module {
     whilo := WRITE_DISABLE
     LLbit_we := false.B
     LLbit_value := false.B
-    pc := ZERO_WORD
+    pc := pc
   }.elsewhen(stall(4) === NOT_STOP) {
     wd := io.fromMemory.wd
     wreg := io.fromMemory.wreg
