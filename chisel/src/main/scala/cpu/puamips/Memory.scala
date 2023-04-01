@@ -25,7 +25,7 @@ class Memory extends Module {
   reg2_i := io.fromMemoryStage.reg2
 
   // output
-  val pc = RegInit(REG_BUS_INIT)
+  val pc = Wire(WIRE_BUS)
   pc := io.fromMemoryStage.pc
   io.writeBackStage.pc := pc
   val wd = RegInit(REG_ADDR_BUS_INIT)

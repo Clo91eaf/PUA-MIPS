@@ -22,10 +22,10 @@ class Fetch extends Module {
   val pc = RegInit(PC_INIT)
   io.decoderStage.pc := pc
   io.instMemory.pc := pc
-  val ce = RegInit(CHIP_DISABLE)
+  val ce = Wire(Bool())
   io.instMemory.ce := ce
 
-  when(ce === CHIP_DISABLE) {
+  when(ce === false.B) {
     pc := PC_INIT
   }.elsewhen(stall(0) === NOT_STOP) {
     when(branch_flag === BRANCH) {
@@ -35,7 +35,7 @@ class Fetch extends Module {
     }
   }
 
-  ce := CHIP_ENABLE // 复位结束,使能指令存储器
+  ce := ~reset.asBool() // 复位结束,使能指令存储器
 
   // printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }

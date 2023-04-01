@@ -67,7 +67,7 @@ class Execute extends Module {
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
 
   // output
-  val pc = RegInit(REG_BUS_INIT)
+  val pc = Wire(WIRE_BUS)
   pc := io.fromExecuteStage.pc
   io.memoryStage.pc := pc
   val wd = RegInit(REG_ADDR_BUS_INIT)
