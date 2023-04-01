@@ -142,6 +142,9 @@ class Memory_WriteBackStage extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
 }
 
 class Memory_Decoder extends Bundle {
