@@ -60,9 +60,14 @@ class CP0Reg extends Module {
       }
       is(CP0_REG_CAUSE) {
         // cause寄存器只有IP(1,0)、IV、WP字段是可写的
-        cause(9, 8) := io.fromWriteBackStage.cp0_data(9, 8)
-        cause(23) := io.fromWriteBackStage.cp0_data(23)
-        cause(22) := io.fromWriteBackStage.cp0_data(22)
+        cause := Cat(
+          cause(31, 24),
+          io.fromWriteBackStage.cp0_data(23),
+          io.fromWriteBackStage.cp0_data(22),
+          cause(21, 10),
+          io.fromWriteBackStage.cp0_data(9, 8),
+          cause(7, 0)
+        )
       }
     }
   }
