@@ -14,6 +14,7 @@ class WriteBackStage extends Module {
     val regFile = new WriteBackStage_RegFile()
     val execute = new WriteBackStage_Execute()
     val hilo = new WriteBackStage_HILO()
+    val cp0 = new WriteBackStage_CP0()
     val debug = new DEBUG()
   })
   // input
@@ -43,6 +44,15 @@ class WriteBackStage extends Module {
   val LLbit_value = RegInit(false.B)
   io.llbitReg.LLbit_value := LLbit_value
   io.memory.LLbit_value := LLbit_value
+  val cp0_we = RegInit(WRITE_DISABLE)
+  io.cp0.cp0_we := cp0_we
+  io.execute.cp0_we := cp0_we
+  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
+  io.cp0.cp0_write_addr := cp0_write_addr
+  io.execute.cp0_write_addr := cp0_write_addr
+  val cp0_data = RegInit(REG_BUS_INIT)
+  io.cp0.cp0_data := cp0_data
+  io.execute.cp0_data := cp0_data
 
   // output-debug
   io.debug.pc := pc
@@ -59,6 +69,9 @@ class WriteBackStage extends Module {
     whilo := WRITE_DISABLE
     LLbit_we := false.B
     LLbit_value := false.B
+    cp0_we := WRITE_DISABLE
+    cp0_write_addr := 0.U
+    cp0_data := ZERO_WORD
     pc := pc
   }.elsewhen(stall(4) === NOT_STOP) {
     wd := io.fromMemory.wd
@@ -69,6 +82,9 @@ class WriteBackStage extends Module {
     whilo := io.fromMemory.whilo
     LLbit_we := io.fromMemory.LLbit_we
     LLbit_value := io.fromMemory.LLbit_value
+    cp0_we := io.fromMemory.cp0_we
+    cp0_write_addr := io.fromMemory.cp0_write_addr
+    cp0_data := io.fromMemory.cp0_data
     pc := io.fromMemory.pc
   }
 
