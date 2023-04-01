@@ -125,6 +125,9 @@ class MemoryStage_Memory extends Bundle {
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
   val wdata = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
   val pc = Output(REG_BUS)
 }
 
