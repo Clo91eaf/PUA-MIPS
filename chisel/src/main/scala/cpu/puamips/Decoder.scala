@@ -8,6 +8,7 @@ import UInt._
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
+    val fromInstMemory = Flipped(new InstMemory_Decoder())
     val fromDecoderStage = Flipped(new DecoderStage_Decoder())
     val fromExecuteStage = Flipped(new ExecuteStage_Decoder())
     val fromExecute = Flipped(new Execute_Decoder())
@@ -28,7 +29,7 @@ class Decoder extends Module {
   val reg2_data_i = Wire(REG_BUS)
   val is_in_delayslot_i = Wire(Bool())
   pc_i := io.fromDecoderStage.pc
-  inst_i := io.fromDecoderStage.inst
+  inst_i := io.fromInstMemory.inst
   aluop_i := io.fromExecute.aluop
   wd_i := io.fromExecute.wd
   wd_i := io.fromMemory.wd

@@ -31,7 +31,7 @@ class PuaMips extends Module {
   io.inst_sram.wen:= WEN_BUS_INIT
   io.inst_sram.addr := fetch.io.instMemory.pc
   io.inst_sram.wdata := REG_BUS_INIT
-  decoderStage.io.fromInstMemory.inst := io.inst_sram.rdata
+  decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
   io.data_sram.en := memory.io.dataMemory.ce
   io.data_sram.wen:= memory.io.dataMemory.sel & Fill(4, memory.io.dataMemory.wen)

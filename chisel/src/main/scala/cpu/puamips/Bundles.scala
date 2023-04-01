@@ -16,7 +16,6 @@ class Fetch_InstMemory extends Bundle {
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
   val pc = Output(INST_ADDR_BUS)
-  val inst = Output(INST_BUS)
 }
 
 // decoder
@@ -232,7 +231,7 @@ class Control_WriteBackStage extends Bundle {
 }
 
 // instMemory
-class InstMemory_DecoderStage extends Bundle {
+class InstMemory_Decoder extends Bundle {
   val inst = Output(REG_BUS)
 }
 
