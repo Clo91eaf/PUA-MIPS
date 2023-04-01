@@ -144,6 +144,8 @@ class Decoder extends Module {
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
     Array(         /*   instvalid  | reg1_read     | reg2_read     | alusel       | aluop      | wreg           | wd     | immType */
+      // NOP
+      NOP       -> List(INST_INVALID, READ_DISABLE  , READ_DISABLE , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作
       OR        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_OR_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       AND       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_AND_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -216,9 +218,7 @@ class Decoder extends Module {
       // 立即数
       ADDI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
       ADDIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADDU_OP , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
-
-
-      // // 跳转指令
+      // 跳转指令
       J         -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_J_OP     , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       JAL       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JAL_OP   , WRITE_ENABLE   , WRA_T3 , IMM_N  ),
       JR        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JR_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
