@@ -60,6 +60,15 @@ class Memory extends Module {
   io.dataMemory.data := mem_data
   val mem_ce = RegInit(CHIP_DISABLE)
   io.dataMemory.ce := mem_ce
+  val cp0_we = RegInit(WRITE_DISABLE)
+  io.writeBackStage.cp0_we := cp0_we
+  io.execute.cp0_we := cp0_we
+  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
+  io.writeBackStage.cp0_write_addr := cp0_write_addr
+  io.execute.cp0_write_addr := cp0_write_addr
+  val cp0_data = RegInit(REG_BUS_INIT)
+  io.writeBackStage.cp0_data := cp0_data
+  io.execute.cp0_data := cp0_data
 
   val LLbit = RegInit(false.B)
   val zero32 = Wire(REG_BUS)
@@ -85,6 +94,9 @@ class Memory extends Module {
   mem_ce := CHIP_DISABLE
   LLbit_wen:= false.B
   LLbit_value := 0.U
+  cp0_we := io.fromMemoryStage.cp0_we
+  cp0_write_addr := io.fromMemoryStage.cp0_write_addr
+  cp0_data := io.fromMemoryStage.cp0_data
 
   mem_ce := MuxLookup(
     aluop,

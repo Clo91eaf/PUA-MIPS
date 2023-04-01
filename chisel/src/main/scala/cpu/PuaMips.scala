@@ -24,6 +24,7 @@ class PuaMips extends Module {
   val divider = Module(new Divider())
   val hilo = Module(new HILO())
   val control = Module(new Control())
+  val cp0 = Module(new CP0Reg())
 
   // func_test interfacter
   io.inst_sram.en := fetch.io.instMemory.ce
@@ -62,6 +63,7 @@ class PuaMips extends Module {
   execute.io.decoder     <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
   execute.io.divider     <> divider.io.fromExecute
+  execute.io.cp0         <> cp0.io.fromExecute
 
   // memoryStage
   memoryStage.io.execute <> execute.io.fromMemoryStage
@@ -79,6 +81,7 @@ class PuaMips extends Module {
   writeBackStage.io.hilo     <> hilo.io.fromWriteBackStage
   writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
   writeBackStage.io.memory   <> memory.io.fromWriteBackStage
+  writeBackStage.io.cp0      <> cp0.io.fromWriteBackStage
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO
@@ -100,6 +103,10 @@ class PuaMips extends Module {
   control.io.fetch          <> fetch.io.fromControl
   control.io.memoryStage    <> memoryStage.io.fromControl
   control.io.writeBackStage <> writeBackStage.io.fromControl
+
+  //cp0
+  cp0.io.execute  <> execute.io.fromCP0
+  cp0.io.int_i    := Cat(0.U(5.W), cp0.io.timer_int_o)
 
   // inst memory
   // instMemory.io.fetch   <> fetch.io.fromInstMemory

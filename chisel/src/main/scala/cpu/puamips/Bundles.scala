@@ -88,6 +88,9 @@ class Execute_MemoryStage extends Bundle {
   val wdata = Output(REG_BUS)
   val whilo = Output(Bool())
   val wreg = Output(Bool())
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
   val pc = Output(REG_BUS)
 }
 
@@ -100,6 +103,10 @@ class Execute_Divider extends Bundle {
   val opdata2 = Output(REG_BUS)
   val start = Output(Bool())
   val signed_div = Output(Bool())
+}
+
+class Execute_CP0 extends Bundle {
+  val cp0_read_addr = Output(CP0_ADDR_BUS)
 }
 
 // memoryStage
@@ -118,6 +125,9 @@ class MemoryStage_Memory extends Bundle {
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
   val wdata = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
   val pc = Output(REG_BUS)
 }
 
@@ -132,6 +142,9 @@ class Memory_WriteBackStage extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
 }
 
 class Memory_Decoder extends Bundle {
@@ -144,6 +157,9 @@ class Memory_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
 }
 
 class Memory_DataMemory extends Bundle {
@@ -164,6 +180,9 @@ class WriteBackStage_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi = Output(REG_BUS)
   val lo = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
+  val cp0_data = Output(REG_BUS)
 }
 
 class WriteBackStage_HILO extends Bundle {
@@ -181,6 +200,12 @@ class WriteBackStage_RegFile extends Bundle {
   val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
+}
+
+class WriteBackStage_CP0 extends Bundle {
+  val cp0_data = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
 }
 
 // writeBack
@@ -237,6 +262,21 @@ class Divider_Execute extends Bundle {
 // LLbitReg
 class LLbitReg_Memory extends Bundle {
   val LLbit = Output(Bool())
+}
+
+// CP0
+class CP0_Execute extends Bundle {
+  val cp0_data = Output(REG_BUS)
+}
+
+class CP0_Output extends Bundle {
+  val count = Output(REG_BUS)
+  val compare = Output(REG_BUS)
+  val status = Output(REG_BUS)
+  val cause = Output(REG_BUS)
+  val epc = Output(REG_BUS)
+  val config = Output(REG_BUS)
+  val prid = Output(REG_BUS)
 }
 
 // other

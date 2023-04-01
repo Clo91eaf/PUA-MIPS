@@ -306,6 +306,9 @@ trait Constants {
   val CP0_REG_EPC     = "b01110".U(5.W)
   val CP0_REG_PRID    = "b01111".U(5.W)
   val CP0_REG_CONFIG  = "b10000".U(5.W)
+
+  val CP0_ADDR_BUS      = UInt(5.W)
+  val CP0_ADDR_BUS_INIT = 0.U(5.W)
 }
 trait OptionConst {
 

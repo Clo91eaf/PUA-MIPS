@@ -40,6 +40,12 @@ class MemoryStage extends Module {
   io.execute.hilo := hilo
   val cnt = RegInit(CNT_BUS_INIT)
   io.execute.cnt := cnt
+  val cp0_we = RegInit(WRITE_DISABLE)
+  io.memory.cp0_we := cp0_we
+  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
+  io.memory.cp0_write_addr := cp0_write_addr
+  val cp0_data = RegInit(REG_BUS_INIT)
+  io.memory.cp0_data := cp0_data
 
   when(stall(3) === STOP && stall(4) === NOT_STOP) {
     wd := NOP_REG_ADDR
@@ -53,6 +59,9 @@ class MemoryStage extends Module {
     aluop := EXE_NOP_OP
     addr := ZERO_WORD
     reg2 := ZERO_WORD
+    cp0_we := WRITE_DISABLE
+    cp0_write_addr := 0.U
+    cp0_data := ZERO_WORD
     pc := pc
   }.elsewhen(stall(3) === NOT_STOP) {
     wd := io.fromExecute.wd
@@ -66,6 +75,9 @@ class MemoryStage extends Module {
     aluop := io.fromExecute.aluop
     addr := io.fromExecute.addr
     reg2 := io.fromExecute.reg2
+    cp0_we := io.fromExecute.cp0_we
+    cp0_write_addr := io.fromExecute.cp0_write_addr
+    cp0_data := io.fromExecute.cp0_data
     pc := io.fromExecute.pc
   }.otherwise {
     hilo := io.fromExecute.hilo

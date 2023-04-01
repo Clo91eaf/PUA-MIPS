@@ -170,9 +170,10 @@ class Decoder extends Module {
       MFLO      -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_MOVE , EXE_MFLO_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       MTHI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_NOP , EXE_MTHI_OP , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       MTLO      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_NOP , EXE_MTLO_OP , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // // C0的Move指令
-      // MFC0      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_MOVE , EXE_MFC0 , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      // MTC0      -> List(INST_VALID , READ_DISABLE    , READ_ENABLE   , EXE_RES_NOP , EXE_MTC0 , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      
+      // C0的Move指令
+      MFC0      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_MOVE , EXE_MFC0_OP , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      MTC0      -> List(INST_VALID , READ_DISABLE    , READ_ENABLE     , EXE_RES_NOP  , EXE_MTC0_OP , WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
       // 比较指令
       SLT       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_SLT_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),

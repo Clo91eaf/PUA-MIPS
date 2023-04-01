@@ -13,11 +13,13 @@ class Execute extends Module {
     val fromHILO = Flipped(new HILO_Execute())
     val fromMemory = Flipped(new Memory_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
+    val fromCP0 = Flipped(new CP0_Execute())
 
     val memoryStage = new Execute_MemoryStage()
     val decoder = new Execute_Decoder()
     val divider = new Execute_Divider()
     val control = new Execute_Control()
+    val cp0 = new Execute_CP0()
   })
 
   // input
@@ -104,6 +106,14 @@ class Execute extends Module {
   io.memoryStage.reg2 := reg2
   val stallreq = RegInit(NOT_STOP)
   io.control.stallreq := stallreq
+  val cp0_read_addr = RegInit(CP0_ADDR_BUS_INIT)
+  io.cp0.cp0_read_addr := cp0_read_addr
+  val cp0_we = RegInit(WRITE_DISABLE)
+  io.memoryStage.cp0_we := cp0_we
+  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
+  io.memoryStage.cp0_write_addr := cp0_write_addr
+  val cp0_data = RegInit(REG_BUS_INIT)
+  io.memoryStage.cp0_data := cp0_data
 
   // 保存逻辑运算的结果
   val logicout = RegInit(REG_BUS_INIT) // 保存逻辑运算的结果
@@ -354,6 +364,21 @@ class Execute extends Module {
     is(EXE_MOVN_OP) {
       moveres := reg1_i
     }
+    is(EXE_MFC0_OP) {
+      cp0_read_addr := inst_i(15, 11)
+      moveres := io.fromCP0.cp0_data
+      when(
+        io.fromMemory.cp0_we === WRITE_ENABLE &&
+          io.fromMemory.cp0_write_addr === inst_i(15, 11)
+      ) {
+        moveres := io.fromMemory.cp0_data
+      }.elsewhen(
+        io.fromWriteBackStage.cp0_we === WRITE_ENABLE &&
+          io.fromWriteBackStage.cp0_write_addr === inst_i(15, 11)
+      ) {
+        moveres := io.fromWriteBackStage.cp0_data
+      }
+    }
   }
 
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
@@ -404,6 +429,16 @@ class Execute extends Module {
     whilo := WRITE_DISABLE
     hi := ZERO_WORD
     lo := ZERO_WORD
+  }
+
+  when(aluop_i === EXE_MTC0_OP) {
+    cp0_write_addr := inst_i(15, 11)
+    cp0_we := WRITE_ENABLE
+    cp0_data := reg1_i
+  }.otherwise {
+    cp0_write_addr := 0.U
+    cp0_we := WRITE_DISABLE
+    cp0_data := ZERO_WORD
   }
 
   // debug
