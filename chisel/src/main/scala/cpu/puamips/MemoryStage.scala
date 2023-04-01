@@ -73,6 +73,6 @@ class MemoryStage extends Module {
   }
 
   // debug
-  printf(p"MemoryStage :pc 0x${Hexadecimal(pc)}\n")
+  // printf(p"MemoryStage :pc 0x${Hexadecimal(pc)}\n")
 
 }

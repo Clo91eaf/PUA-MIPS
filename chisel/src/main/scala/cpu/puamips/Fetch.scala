@@ -37,5 +37,5 @@ class Fetch extends Module {
 
   ce := CHIP_ENABLE // 复位结束,使能指令存储器
 
-  printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
+  // printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }

@@ -407,5 +407,5 @@ class Execute extends Module {
   }
 
   // debug
-  printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
+  // printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
 }

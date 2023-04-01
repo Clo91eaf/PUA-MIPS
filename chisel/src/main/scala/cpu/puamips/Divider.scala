@@ -111,7 +111,7 @@ class Divider extends Module {
   }
 
   // debug
-  printf(
-    p"divider :result 0x${Hexadecimal(result)}, ready 0x${Hexadecimal(ready)}\n"
-  )
+  // printf(
+  //   p"divider :result 0x${Hexadecimal(result)}, ready 0x${Hexadecimal(ready)}\n"
+  // )
 }

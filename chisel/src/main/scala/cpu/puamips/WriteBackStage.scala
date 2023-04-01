@@ -37,9 +37,9 @@ class WriteBackStage extends Module {
   val whilo = RegInit(WRITE_DISABLE)
   io.hilo.whilo := whilo
   io.execute.whilo := whilo
-  val LLbit_we = RegInit(false.B)
-  io.llbitReg.LLbit_we := LLbit_we
-  io.memory.LLbit_we := LLbit_we
+  val LLbit_wen= RegInit(false.B)
+  io.llbitReg.LLbit_wen:= LLbit_wen
+  io.memory.LLbit_wen:= LLbit_wen
   val LLbit_value = RegInit(false.B)
   io.llbitReg.LLbit_value := LLbit_value
   io.memory.LLbit_value := LLbit_value
@@ -47,7 +47,7 @@ class WriteBackStage extends Module {
   // output-debug
   io.debug.pc := pc
   io.debug.waddr := wd
-  io.debug.we := Fill(4, wreg)
+  io.debug.wen:= Fill(4, wreg)
   io.debug.wdata := wdata
 
   when(stall(4) === STOP && stall(5) === NOT_STOP) {
@@ -57,7 +57,7 @@ class WriteBackStage extends Module {
     hi := ZERO_WORD
     lo := ZERO_WORD
     whilo := WRITE_DISABLE
-    LLbit_we := false.B
+    LLbit_wen:= false.B
     LLbit_value := false.B
     pc := pc
   }.elsewhen(stall(4) === NOT_STOP) {
@@ -67,11 +67,11 @@ class WriteBackStage extends Module {
     hi := io.fromMemory.hi
     lo := io.fromMemory.lo
     whilo := io.fromMemory.whilo
-    LLbit_we := io.fromMemory.LLbit_we
+    LLbit_wen:= io.fromMemory.LLbit_wen
     LLbit_value := io.fromMemory.LLbit_value
     pc := io.fromMemory.pc
   }
 
   // debug
-  printf(p"writeBackStage :pc 0x${Hexadecimal(pc)}\n")
+  // printf(p"writeBackStage :pc 0x${Hexadecimal(pc)}\n")
 }

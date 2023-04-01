@@ -31,5 +31,5 @@ class Control extends Module {
   }
 
   // debug
-  printf(p"control :stall 0x${Hexadecimal(stall)}\n")
+  // printf(p"control :stall 0x${Hexadecimal(stall)}\n")
 }

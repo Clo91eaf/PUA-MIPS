@@ -20,5 +20,5 @@ class HILO extends Module {
     lo := io.fromWriteBackStage.lo
   }
 
-  printf(p"hilo :hi 0x${Hexadecimal(hi)}, lo 0x${Hexadecimal(lo)}\n")
+  // printf(p"hilo :hi 0x${Hexadecimal(hi)}, lo 0x${Hexadecimal(lo)}\n")
 }

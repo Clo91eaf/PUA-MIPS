@@ -65,5 +65,5 @@ class ExecuteStage extends Module {
   }
 
   // debug
-  printf(p"decoderStage :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
+  // printf(p"decoderStage :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }

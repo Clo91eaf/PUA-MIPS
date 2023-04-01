@@ -27,13 +27,13 @@ class PuaMips extends Module {
 
   // func_test interfacter
   io.inst_sram.en := fetch.io.instMemory.ce
-  io.inst_sram.we := WEN_BUS_INIT
+  io.inst_sram.wen:= WEN_BUS_INIT
   io.inst_sram.addr := fetch.io.instMemory.pc
   io.inst_sram.wdata := REG_BUS_INIT
   decoderStage.io.fromInstMemory.inst := io.inst_sram.rdata
 
   io.data_sram.en := memory.io.dataMemory.ce
-  io.data_sram.we := memory.io.dataMemory.sel & Fill(4, memory.io.dataMemory.we)
+  io.data_sram.wen:= memory.io.dataMemory.sel & Fill(4, memory.io.dataMemory.wen)
   io.data_sram.addr := memory.io.dataMemory.addr
   io.data_sram.wdata := memory.io.dataMemory.data
   memory.io.fromDataMemory.data := io.data_sram.rdata

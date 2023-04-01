@@ -18,11 +18,11 @@ class LLbitReg extends Module {
 
   when(io.flush) {
     LLbit := false.B
-  }.elsewhen(io.fromWriteBackStage.LLbit_we === WRITE_ENABLE) {
+  }.elsewhen(io.fromWriteBackStage.LLbit_wen=== WRITE_ENABLE) {
     LLbit := io.fromWriteBackStage.LLbit_value
   }
 
   // debug
-  printf(p"LLbitReg :LLbit 0x${Hexadecimal(LLbit)}\n")
+  // printf(p"LLbitReg :LLbit 0x${Hexadecimal(LLbit)}\n")
 
 }

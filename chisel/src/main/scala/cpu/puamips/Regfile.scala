@@ -63,17 +63,17 @@ class Regfile extends Module {
   }
 
   // debug
-  when(wen === WRITE_ENABLE) {
-    printf(
-      p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n"
-    )
-  }.otherwise {
-    printf(
-      p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n"
-    )
-    printf(
-      p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n"
-    )
-  }
+  // when(wen === WRITE_ENABLE) {
+  //   printf(
+  //     p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n"
+  //   )
+  // }.otherwise {
+  //   printf(
+  //     p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n"
+  //   )
+  //   printf(
+  //     p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n"
+  //   )
+  // }
 
 }

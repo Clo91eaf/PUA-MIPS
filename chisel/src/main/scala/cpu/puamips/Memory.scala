@@ -46,14 +46,14 @@ class Memory extends Module {
   val whilo = RegInit(WRITE_DISABLE)
   io.execute.whilo := whilo
   io.writeBackStage.whilo := whilo
-  val LLbit_we = RegInit(false.B)
-  io.writeBackStage.LLbit_we := LLbit_we
+  val LLbit_wen= RegInit(false.B)
+  io.writeBackStage.LLbit_wen:= LLbit_wen
   val LLbit_value = RegInit(false.B)
   io.writeBackStage.LLbit_value := LLbit_value
   val mem_addr = RegInit(REG_BUS_INIT)
   io.dataMemory.addr := mem_addr
-  val mem_we = RegInit(WRITE_DISABLE)
-  io.dataMemory.we := mem_we
+  val mem_wen= RegInit(WRITE_DISABLE)
+  io.dataMemory.wen:= mem_wen
   val mem_sel = RegInit(DATA_MEMORY_SEL_BUS_INIT)
   io.dataMemory.sel := mem_sel
   val mem_data = RegInit(REG_BUS_INIT)
@@ -66,7 +66,7 @@ class Memory extends Module {
   zero32 := 0.U(32.W)
 
   // 获取最新的LLbit的值
-  when(io.fromWriteBackStage.LLbit_we) {
+  when(io.fromWriteBackStage.LLbit_wen) {
     LLbit := io.fromWriteBackStage.LLbit_value
   }.otherwise {
     LLbit := io.fromLLbitReg.LLbit
@@ -78,12 +78,12 @@ class Memory extends Module {
   hi := io.fromMemoryStage.hi
   lo := io.fromMemoryStage.lo
   whilo := io.fromMemoryStage.whilo
-  mem_we := WRITE_DISABLE
+  mem_wen:= WRITE_DISABLE
 
   mem_addr := ZERO_WORD
   mem_sel := "b1111".U
   mem_ce := CHIP_DISABLE
-  LLbit_we := false.B
+  LLbit_wen:= false.B
   LLbit_value := 0.U
 
   mem_ce := MuxLookup(
@@ -314,14 +314,14 @@ class Memory extends Module {
     )
   ) // mem_data
 
-  LLbit_we := MuxLookup(
+  LLbit_wen:= MuxLookup(
     aluop,
     false.B,
     Seq(
       EXE_LL_OP -> true.B,
       EXE_SC_OP -> LLbit
     )
-  ) // LLbit_we
+  ) // LLbit_wen
 
   LLbit_value := MuxLookup(
     aluop,
@@ -333,5 +333,5 @@ class Memory extends Module {
   ) // LLbit_value
 
   // debug
-  printf(p"memory :pc 0x${Hexadecimal(pc)}\n")
+  // printf(p"memory :pc 0x${Hexadecimal(pc)}\n")
 }

@@ -439,5 +439,5 @@ class Decoder extends Module {
   is_in_delayslot := is_in_delayslot_i
 
   // debug
-  printf(p"decoder :pc 0x${Hexadecimal(pc_i)}, inst 0x${Hexadecimal(inst_i)}\n")
+  // printf(p"decoder :pc 0x${Hexadecimal(pc_i)}, inst 0x${Hexadecimal(inst_i)}\n")
 }
