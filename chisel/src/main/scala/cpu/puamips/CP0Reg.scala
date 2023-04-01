@@ -6,18 +6,18 @@ import chisel3.util._
 
 class CP0Reg extends Module {
   val io = IO(new Bundle {
-    val fromWriteBackStage = Flipped(new writeBackStage_CP0Reg())
-    val fromExecute = Flipped(new Execute_CP0Reg())
+    val fromWriteBackStage = Flipped(new WriteBackStage_CP0())
+    val fromExecute = Flipped(new Execute_CP0())
     val int_i = Input(UInt(6.W))
 
-    val execute = new CP0Reg_Execute()
+    val execute = new CP0_Execute()
     val timer_int_o = Output(Bool())
-    val out = new CP0Reg_Output
+    val out = new CP0_Output
   })
 
   // output
   val data = RegInit(REG_BUS_INIT)
-  io.execute.data := data
+  io.execute.cp0_data := data
   val count = RegInit(REG_BUS_INIT)
   io.out.count := count
   val compare = RegInit(REG_BUS_INIT)
