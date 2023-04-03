@@ -27,6 +27,8 @@ class Fetch extends Module {
 
   when(ce === false.B) {
     pc := PC_INIT
+  }.elsewhen(io.fromControl.flush) {
+    pc := io.fromControl.new_pc
   }.elsewhen(stall(0) === NOT_STOP) {
     when(branch_flag === BRANCH) {
       pc := branch_target_address

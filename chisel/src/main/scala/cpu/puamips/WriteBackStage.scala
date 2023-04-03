@@ -47,12 +47,15 @@ class WriteBackStage extends Module {
   val cp0_we = RegInit(WRITE_DISABLE)
   io.cp0.cp0_we := cp0_we
   io.execute.cp0_we := cp0_we
+  io.memory.cp0_we := cp0_we
   val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
   io.cp0.cp0_write_addr := cp0_write_addr
   io.execute.cp0_write_addr := cp0_write_addr
+  io.memory.cp0_write_addr := cp0_write_addr
   val cp0_data = RegInit(REG_BUS_INIT)
   io.cp0.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
+  io.memory.cp0_data := cp0_data
 
   // output-debug
   io.debug.pc := pc

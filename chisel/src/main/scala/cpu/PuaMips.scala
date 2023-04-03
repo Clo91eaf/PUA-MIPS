@@ -73,6 +73,8 @@ class PuaMips extends Module {
   memory.io.decoder        <> decoder.io.fromMemory
   memory.io.execute        <> execute.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
+  memory.io.control        <> control.io.fromMemory
+  memory.io.cp0            <> cp0.io.fromMemory
 //   memory.io.dataMemory  <> dataMemory.io.fromMemory
 
   // writeBackStage
@@ -106,6 +108,7 @@ class PuaMips extends Module {
 
   //cp0
   cp0.io.execute  <> execute.io.fromCP0
+  cp0.io.memory   <> memory.io.fromCP0
   cp0.io.int_i    := Cat(0.U(5.W), cp0.io.timer_int_o)
 
   // inst memory

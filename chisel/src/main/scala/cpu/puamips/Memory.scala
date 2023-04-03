@@ -428,12 +428,12 @@ class Memory extends Module {
       (io.fromWriteBackStage.cp0_write_addr === CP0_REG_CAUSE)
   ) {
     cp0_cause := Cat(
-      cp0_cause(31, 24),
+      io.fromCP0.cause(31, 24),
       io.fromWriteBackStage.cp0_data(23),
       io.fromWriteBackStage.cp0_data(22),
-      cp0_cause(21, 10),
+      io.fromCP0.cause(21, 10),
       io.fromWriteBackStage.cp0_data(9, 8),
-      cp0_cause(7, 0)
+      io.fromCP0.cause(7, 0)
     )
 
   }.otherwise {
