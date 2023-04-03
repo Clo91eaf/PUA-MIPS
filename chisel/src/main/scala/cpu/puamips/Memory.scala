@@ -10,11 +10,15 @@ class Memory extends Module {
     val fromMemoryStage = Flipped(new MemoryStage_Memory())
     val fromDataMemory = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
+    val fromCP0 = Flipped(new CP0_Memory())
 
     val decoder = new Memory_Decoder()
     val execute = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
     val dataMemory = new Memory_DataMemory()
+    val cp0 = new Memory_CP0()
+    val control = new Memory_Control()
+
   })
   // input-execute
   val aluop = Wire(ALU_OP_BUS)
@@ -52,8 +56,6 @@ class Memory extends Module {
   io.writeBackStage.LLbit_value := LLbit_value
   val mem_addr = Wire(REG_BUS)
   io.dataMemory.addr := mem_addr
-  val mem_wen = Wire(Bool())
-  io.dataMemory.wen := mem_wen
   val mem_sel = Wire(DATA_MEMORY_SEL_BUS)
   io.dataMemory.sel := mem_sel
   val mem_data = Wire(REG_BUS)
@@ -69,10 +71,28 @@ class Memory extends Module {
   val cp0_data = Wire(REG_BUS)
   io.writeBackStage.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
+  val excepttype = Wire(UInt(32.W))
+  io.control.excepttype := excepttype
+  io.cp0.excepttype := excepttype
+  val mem_we = Wire(Bool())
+  io.dataMemory.wen := mem_we & (~(excepttype === ZERO_WORD)) // ?可能有误
+  val epc = Wire(REG_BUS)
+  io.control.cp0_epc := epc
+  val is_in_delayslot = Wire(Bool())
+  io.cp0.is_in_delayslot := is_in_delayslot
+  val current_inst_addr = Wire(REG_BUS)
+  io.cp0.current_inst_addr := current_inst_addr
 
   val LLbit = Wire(Bool())
   val zero32 = Wire(REG_BUS)
+  val cp0_status = Wire(REG_BUS)
+  val cp0_cause = Wire(REG_BUS)
+  val cp0_epc = Wire(REG_BUS)
   zero32 := 0.U(32.W)
+
+  is_in_delayslot := io.fromMemoryStage.is_in_delayslot
+  current_inst_addr := io.fromMemoryStage.current_inst_addr
+  epc := cp0_epc
 
   // 获取最新的LLbit的值
   when(reset.asBool === RST_ENABLE) {
@@ -93,7 +113,7 @@ class Memory extends Module {
     lo := ZERO_WORD
     whilo := WRITE_DISABLE
     mem_addr := ZERO_WORD
-    mem_wen := WRITE_DISABLE
+    mem_we := WRITE_DISABLE
     mem_sel := "b0000".U
     mem_data := ZERO_WORD
     mem_ce := CHIP_DISABLE
@@ -109,7 +129,7 @@ class Memory extends Module {
     hi := io.fromMemoryStage.hi
     lo := io.fromMemoryStage.lo
     whilo := io.fromMemoryStage.whilo
-    mem_wen := WRITE_DISABLE
+    mem_we := WRITE_DISABLE
     mem_addr := ZERO_WORD
     mem_sel := "b1111".U
     mem_ce := CHIP_DISABLE
@@ -118,6 +138,19 @@ class Memory extends Module {
     cp0_we := io.fromMemoryStage.cp0_we
     cp0_write_addr := io.fromMemoryStage.cp0_write_addr
     cp0_data := io.fromMemoryStage.cp0_data
+
+    mem_we := MuxLookup(
+      aluop,
+      WRITE_DISABLE,
+      Seq(
+        EXE_SB_OP -> WRITE_ENABLE,
+        EXE_SH_OP -> WRITE_ENABLE,
+        EXE_SW_OP -> WRITE_ENABLE,
+        EXE_SWL_OP -> WRITE_ENABLE,
+        EXE_SWR_OP -> WRITE_ENABLE,
+        EXE_SC_OP -> WRITE_ENABLE
+      )
+    )
 
     mem_ce := MuxLookup(
       aluop,
@@ -364,6 +397,74 @@ class Memory extends Module {
         EXE_SC_OP -> (!LLbit)
       )
     ) // LLbit_value
+  }
+
+  when(reset.asBool === RST_ENABLE) {
+    cp0_status := ZERO_WORD
+  }.elsewhen(
+    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_STATUS)
+  ) {
+    cp0_status := io.fromWriteBackStage.cp0_data
+  }.otherwise {
+    cp0_status := io.fromCP0.status
+  }
+
+  when(reset.asBool === RST_ENABLE) {
+    cp0_epc := ZERO_WORD
+  }.elsewhen(
+    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_EPC)
+  ) {
+    cp0_epc := io.fromWriteBackStage.cp0_data
+  }.otherwise {
+    cp0_epc := io.fromCP0.epc
+  }
+
+  when(reset.asBool === RST_ENABLE) {
+    cp0_cause := ZERO_WORD
+  }.elsewhen(
+    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_CAUSE)
+  ) {
+    cp0_cause := Cat(
+      cp0_cause(31, 24),
+      io.fromWriteBackStage.cp0_data(23),
+      io.fromWriteBackStage.cp0_data(22),
+      cp0_cause(21, 10),
+      io.fromWriteBackStage.cp0_data(9, 8),
+      cp0_cause(7, 0)
+    )
+
+  }.otherwise {
+    cp0_cause := io.fromCP0.cause
+  }
+
+  when(reset.asBool === RST_ENABLE) {
+    excepttype := ZERO_WORD
+  }.otherwise {
+    excepttype := ZERO_WORD
+
+    when(io.fromMemoryStage.current_inst_addr =/= ZERO_WORD) {
+      when(
+        ((cp0_cause(15, 8) & (cp0_status(15, 8))) =/= 0.U) &&
+          (cp0_status(1) === 0.U) &&
+          (cp0_status(0))
+      ) {
+        excepttype := "h00000001".U // interrupt
+      }.elsewhen(io.fromMemoryStage.excepttype(8)) {
+        excepttype := "h00000008".U // syscall
+      }.elsewhen(io.fromMemoryStage.excepttype(9)) {
+        excepttype := "h0000000a".U // inst_invalid
+      }.elsewhen(io.fromMemoryStage.excepttype(10)) {
+        excepttype := "h0000000d".U // trap
+      }.elsewhen(io.fromMemoryStage.excepttype(11)) { // ov
+        excepttype := "h0000000c".U
+      }.elsewhen(io.fromMemoryStage.excepttype(12)) { // 返回指令
+        excepttype := "h0000000e".U
+      }
+    }
+
   }
 
   // debug

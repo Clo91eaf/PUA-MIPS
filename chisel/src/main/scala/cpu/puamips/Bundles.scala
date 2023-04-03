@@ -214,6 +214,9 @@ class WriteBackStage_HILO extends Bundle {
 class WriteBackStage_Memory extends Bundle {
   val LLbit_value = Output(Bool())
   val LLbit_wen = Output(Bool())
+  val cp0_data = Output(REG_BUS)
+  val cp0_we = Output(Bool())
+  val cp0_write_addr = Output(CP0_ADDR_BUS)
 }
 
 class WriteBackStage_RegFile extends Bundle {
