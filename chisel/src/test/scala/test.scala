@@ -6,7 +6,7 @@ import java.util.ResourceBundle.Control
 object testMain extends App {
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new MemoryStage))
+    Seq(ChiselGeneratorAnnotation(() => new Execute))
   )
 }
 

@@ -3,7 +3,6 @@ package cpu.puamips
 import chisel3._
 import chisel3.util._
 import Const._
-import firrtl.FirrtlProtos.Firrtl.Statement.Memory
 
 class Execute extends Module {
   val io = IO(new Bundle {
@@ -114,6 +113,12 @@ class Execute extends Module {
   io.memoryStage.cp0_write_addr := cp0_write_addr
   val cp0_data = Wire(REG_BUS)
   io.memoryStage.cp0_data := cp0_data
+  val current_inst_addr = Wire(REG_BUS)
+  io.memoryStage.current_inst_addr := current_inst_addr
+  val is_in_delayslot = Wire(Bool())
+  io.memoryStage.is_in_delayslot := is_in_delayslot
+  val excepttype = Wire(UInt(32.W))
+  io.memoryStage.excepttype := excepttype
 
   // 保存逻辑运算的结果
   val logicout = Wire(REG_BUS) // 保存逻辑运算的结果
@@ -135,6 +140,8 @@ class Execute extends Module {
   val hilo_temp1 = Wire(DOUBLE_REG_BUS)
   val stallreq_for_madd_msub = Wire(Bool())
   val stallreq_for_div = Wire(Bool())
+  val trapassert = Wire(Bool())
+  val ovassert = Wire(Bool())
 
   // liphen
   cp0_read_addr := ZERO_WORD
@@ -147,6 +154,16 @@ class Execute extends Module {
   mem_addr := reg1_i + Util.signedExtend(inst_i(15, 0))
   // 将两个操作数也传递到访存阶段，也是为记载、存储指令准备的
   reg2 := reg2_i
+
+  excepttype := Cat(
+    io.fromExecuteStage.excepttype(31, 12),
+    ovassert,
+    trapassert,
+    io.fromExecuteStage.excepttype(9, 8),
+    "h00".U(8.W)
+  )
+  is_in_delayslot := is_in_delayslot_i
+  current_inst_addr := io.fromExecuteStage.current_inst_addr
 
   // 根据aluop指示的运算子类型进行运算
   // LOGIC
@@ -184,7 +201,10 @@ class Execute extends Module {
 
   // 第二个操作数
   reg2_mux := Mux(
-    ((aluop_i === EXE_SUB_OP) || (aluop_i === EXE_SUBU_OP) || (aluop_i === EXE_SLT_OP)),
+    ((aluop_i === EXE_SUB_OP) || (aluop_i === EXE_SUBU_OP) ||
+      (aluop_i === EXE_SLT_OP) || (aluop_i === EXE_TLT_OP) ||
+      (aluop_i === EXE_TLTI_OP) || (aluop_i === EXE_TGE_OP) ||
+      (aluop_i === EXE_TGEI_OP)),
     ((~reg2_i) + 1.U),
     reg2_i
   )
@@ -195,7 +215,9 @@ class Execute extends Module {
     ((reg1_i(31) && reg2_mux(31)) && (!result_sum(31)))
   // 操作数1是否小于操作数2
   reg1_lt_reg2 := Mux(
-    ((aluop_i === EXE_SLT_OP)),
+    ((aluop_i === EXE_SLT_OP) || (aluop_i === EXE_TLT_OP) ||
+      (aluop_i === EXE_TLTI_OP) || (aluop_i === EXE_TGE_OP) ||
+      (aluop_i === EXE_TGEI_OP)),
     ((reg1_i(31) && !reg2_i(31)) ||
       (!reg1_i(31) && !reg2_i(31) && result_sum(31)) ||
       (reg1_i(31) && reg2_i(31) && result_sum(31))),
@@ -228,6 +250,34 @@ class Execute extends Module {
       )
     )
   // @formatter:on
+  }
+
+  when(reset.asBool === RST_ENABLE) {
+    trapassert := TRAP_NOT_ASSERT
+  }.otherwise {
+    trapassert := TRAP_NOT_ASSERT
+    switch(aluop_i) {
+      is(EXE_TEQ_OP, EXE_TEQI_OP) {
+        when(reg1_i === reg2_i) {
+          trapassert := TRAP_ASSERT;
+        }
+      }
+      is(EXE_TGE_OP, EXE_TGEI_OP, EXE_TGEIU_OP, EXE_TGEU_OP) {
+        when(~reg1_lt_reg2) {
+          trapassert := TRAP_ASSERT;
+        }
+      }
+      is(EXE_TLT_OP, EXE_TLTI_OP, EXE_TLTIU_OP, EXE_TLTU_OP) {
+        when(reg1_lt_reg2) {
+          trapassert := TRAP_ASSERT;
+        }
+      }
+      is(EXE_TNE_OP, EXE_TNEI_OP) {
+        when(reg1_i =/= reg2_i) {
+          trapassert := TRAP_ASSERT;
+        }
+      }
+    }
   }
 
   // 被乘数
@@ -427,8 +477,10 @@ class Execute extends Module {
     ((aluop_i === EXE_ADD_OP) || (aluop_i === EXE_ADDI_OP) || (aluop_i === EXE_SUB_OP)) && (ov_sum === 1.U)
   ) {
     wreg := WRITE_DISABLE
+    ovassert := true.B
   }.otherwise {
     wreg := wreg_i
+    ovassert := false.B
   }
   wdata := ZERO_WORD // default
   switch(alusel_i) {
