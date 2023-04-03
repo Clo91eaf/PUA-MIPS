@@ -37,7 +37,7 @@ class Regfile extends Module {
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(REG_BUS_INIT)))
 
-  when(reset.asBool === RST_ENABLE) {
+  when(reset.asBool === RST_DISABLE) {
     when(wen === WRITE_ENABLE && waddr =/= 0.U) {
       regs(waddr) := wdata
     }
