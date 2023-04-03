@@ -8,8 +8,10 @@ class CP0Reg extends Module {
   val io = IO(new Bundle {
     val fromWriteBackStage = Flipped(new WriteBackStage_CP0())
     val fromExecute = Flipped(new Execute_CP0())
+    val fromMemory = Flipped(new Memory_CP0())
     val int_i = Input(UInt(6.W))
 
+    val memory = new CP0_Memory()
     val execute = new CP0_Execute()
     val timer_int_o = Output(Bool())
     val out = new CP0_Output
@@ -23,11 +25,11 @@ class CP0Reg extends Module {
   val compare = RegInit(REG_BUS_INIT)
   io.out.compare := compare
   val status = RegInit("b00010000000000000000000000000000".U(32.W))
-  io.out.status := status
+  io.memory.status := status
   val cause = RegInit(REG_BUS_INIT)
-  io.out.cause := cause
+  io.memory.cause := cause
   val epc = RegInit(REG_BUS_INIT)
-  io.out.epc := epc
+  io.memory.epc := epc
   val config = RegInit("b00000000000000001000000000000000".U(32.W))
   io.out.config := config
   val prid = RegInit("b00000000010011000000000100000010".U(32.W))
@@ -69,6 +71,75 @@ class CP0Reg extends Module {
           cause(7, 0)
         )
       }
+    }
+  }
+
+  switch(io.fromMemory.excepttype) {
+    is("h00000001".U) {
+      when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
+        epc := io.fromMemory.current_inst_addr - 4.U
+        cause := Cat(1.U(1.W), cause(30, 0))
+      }.otherwise {
+        epc := io.fromMemory.current_inst_addr
+        cause := Cat(0.U(1.W), cause(30, 0))
+      }
+      status := Cat(status(31, 2), 1.U(1.W), status(0))
+      cause := Cat(cause(31, 7), "b00000".U(5.W), cause(1, 0))
+    }
+    is("h00000008".U) {
+      when(status(1) === 0.U) {
+        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
+          epc := io.fromMemory.current_inst_addr - 4.U
+          cause := Cat(1.U(1.W), cause(30, 0))
+        }.otherwise {
+          epc := io.fromMemory.current_inst_addr
+          cause := Cat(0.U(1.W), cause(30, 0))
+        }
+      }
+      status := Cat(status(31, 2), 1.U(1.W), status(0))
+      cause := Cat(cause(31, 7), "b01000".U(5.W), cause(1, 0))
+    }
+    is("h0000000a".U) {
+      when(status(1) === 0.U) {
+        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
+          epc := io.fromMemory.current_inst_addr - 4.U
+          cause := Cat(1.U(1.W), cause(30, 0))
+        }.otherwise {
+          epc := io.fromMemory.current_inst_addr
+          cause := Cat(0.U(1.W), cause(30, 0))
+        }
+      }
+      status := Cat(status(31, 2), 1.U(1.W), status(0))
+      cause := Cat(cause(31, 7), "b01010".U(5.W), cause(1, 0))
+    }
+    is("h0000000d".U) {
+      when(status(1) === 0.U) {
+        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
+          epc := io.fromMemory.current_inst_addr - 4.U
+          cause := Cat(1.U(1.W), cause(30, 0))
+        }.otherwise {
+          epc := io.fromMemory.current_inst_addr
+          cause := Cat(0.U(1.W), cause(30, 0))
+        }
+      }
+      status := Cat(status(31, 2), 1.U(1.W), status(0))
+      cause := Cat(cause(31, 7), "b01101".U(5.W), cause(1, 0))
+    }
+    is("h0000000c".U) {
+      when(status(1) === 0.U) {
+        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
+          epc := io.fromMemory.current_inst_addr - 4.U
+          cause := Cat(1.U(1.W), cause(30, 0))
+        }.otherwise {
+          epc := io.fromMemory.current_inst_addr
+          cause := Cat(0.U(1.W), cause(30, 0))
+        }
+      }
+      status := Cat(status(31, 2), 1.U(1.W), status(0))
+      cause := Cat(cause(31, 7), "b01100".U(5.W), cause(1, 0))
+    }
+    is("h0000000e".U) {
+      status := Cat(status(31, 2), 0.U(1.W), status(0))
     }
   }
 

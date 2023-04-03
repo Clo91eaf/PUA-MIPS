@@ -111,15 +111,8 @@ trait Constants {
   val EXE_SWL  = "b101010".U(6.W)
   val EXE_SWR  = "b101110".U(6.W)
 
-  val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
-  val SSNOP     = "b00000000_00000000_00000000_01000000".U(32.W) // 指令 SSNOP
-
-  val EXE_SPECIAL_INST  = "b000000".U(6.W) // special类的指令码
-  val EXE_REGIMM_INST   = "b000001".U(6.W) // REGIMM类的指令码
-  val EXE_SPECIAL2_INST = "b011100".U(6.W) // special2类的指令码
-
-  // 未实现
   val EXE_SYSCALL = "b001100".U(6.W)
+
   val EXE_TEQ   = "b110100".U(6.W)
   val EXE_TEQI  = "b01100".U(5.W)
   val EXE_TGE   = "b110000".U(6.W)
@@ -133,6 +126,13 @@ trait Constants {
   val EXE_TNE   = "b110110".U(6.W)
   val EXE_TNEI  = "b01110".U(5.W)
   val EXE_ERET  = "b01000010_00000000_00000000_00011000".U(32.W)
+
+  val EXE_NOP   = "b000000".U(6.W)  // 指令 nop 的功能码
+  val SSNOP     = "b00000000_00000000_00000000_01000000".U(32.W) // 指令 SSNOP
+
+  val EXE_SPECIAL_INST  = "b000000".U(6.W) // special类的指令码
+  val EXE_REGIMM_INST   = "b000001".U(6.W) // REGIMM类的指令码
+  val EXE_SPECIAL2_INST = "b011100".U(6.W) // special2类的指令码
 
   // AluOp
   val EXE_AND_OP   = "b00100100".U(8.W)
@@ -215,10 +215,8 @@ trait Constants {
   val EXE_MFC0_OP = "b01011101".U(8.W)
   val EXE_MTC0_OP = "b01100000".U(8.W)
 
-  val EXE_NOP_OP  = "b00000000".U(8.W)
-
-  // 未实现
   val EXE_SYSCALL_OP = "b00001100".U(8.W)
+
   val EXE_TEQ_OP     = "b00110100".U(8.W)
   val EXE_TEQI_OP    = "b01001000".U(8.W)
   val EXE_TGE_OP     = "b00110000".U(8.W)
@@ -231,7 +229,10 @@ trait Constants {
   val EXE_TLTU_OP    = "b00110011".U(8.W)
   val EXE_TNE_OP     = "b00110110".U(8.W)
   val EXE_TNEI_OP    = "b01001001".U(8.W)
+  
   val EXE_ERET_OP    = "b01101011".U(8.W)
+
+  val EXE_NOP_OP  = "b00000000".U(8.W)
 
   // AluSel
   val EXE_RES_LOGIC      = "b001".U(3.W)

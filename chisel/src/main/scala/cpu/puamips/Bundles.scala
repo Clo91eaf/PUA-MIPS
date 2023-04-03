@@ -134,7 +134,7 @@ class MemoryStage_Memory extends Bundle {
 class Memory_WriteBackStage extends Bundle {
   val pc = Output(REG_BUS)
   val LLbit_value = Output(Bool())
-  val LLbit_wen= Output(Bool())
+  val LLbit_wen = Output(Bool())
   val wdata = Output(REG_BUS)
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
@@ -163,16 +163,22 @@ class Memory_Execute extends Bundle {
 
 class Memory_DataMemory extends Bundle {
   val addr = Output(REG_BUS)
-  val wen= Output(Bool())
+  val wen = Output(Bool())
   val sel = Output(DATA_MEMORY_SEL_BUS)
   val data = Output(REG_BUS)
   val ce = Output(Bool())
 }
 
+class Memory_CP0 extends Bundle {
+  val current_inst_addr = Output(REG_BUS)
+  val is_in_delayslot = Output(Bool())
+  val excepttype = Output(UInt(32.W))
+}
+
 // writeBackStage
 class WriteBackStage_LLbitReg extends Bundle {
   val LLbit_value = Output(Bool())
-  val LLbit_wen= Output(Bool())
+  val LLbit_wen = Output(Bool())
 }
 
 class WriteBackStage_Execute extends Bundle {
@@ -192,7 +198,7 @@ class WriteBackStage_HILO extends Bundle {
 
 class WriteBackStage_Memory extends Bundle {
   val LLbit_value = Output(Bool())
-  val LLbit_wen= Output(Bool())
+  val LLbit_wen = Output(Bool())
 }
 
 class WriteBackStage_RegFile extends Bundle {
@@ -268,12 +274,15 @@ class CP0_Execute extends Bundle {
   val cp0_data = Output(REG_BUS)
 }
 
+class CP0_Memory extends Bundle {
+  val cause = Output(REG_BUS)
+  val epc = Output(REG_BUS)
+  val status = Output(REG_BUS)
+}
+
 class CP0_Output extends Bundle {
   val count = Output(REG_BUS)
   val compare = Output(REG_BUS)
-  val status = Output(REG_BUS)
-  val cause = Output(REG_BUS)
-  val epc = Output(REG_BUS)
   val config = Output(REG_BUS)
   val prid = Output(REG_BUS)
 }
@@ -281,7 +290,7 @@ class CP0_Output extends Bundle {
 // other
 class INST_SRAM extends Bundle {
   val en = Output(Bool())
-  val wen= Output(WEN_BUS)
+  val wen = Output(WEN_BUS)
   val addr = Output(REG_BUS)
   val wdata = Output(REG_BUS)
   val rdata = Input(REG_BUS)
@@ -289,7 +298,7 @@ class INST_SRAM extends Bundle {
 
 class DATA_SRAM extends Bundle {
   val en = Output(Bool())
-  val wen= Output(WEN_BUS)
+  val wen = Output(WEN_BUS)
   val addr = Output(REG_BUS)
   val wdata = Output(REG_BUS)
   val rdata = Input(REG_BUS)
@@ -297,7 +306,7 @@ class DATA_SRAM extends Bundle {
 
 class DEBUG extends Bundle {
   val pc = Output(REG_BUS)
-  val wen= Output(WEN_BUS)
+  val wen = Output(WEN_BUS)
   val waddr = Output(REG_ADDR_BUS)
   val wdata = Output(REG_BUS)
 }
