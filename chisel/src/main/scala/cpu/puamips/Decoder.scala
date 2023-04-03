@@ -77,6 +77,11 @@ class Decoder extends Module {
   val current_inst_addr = Wire(REG_BUS)
   io.executeStage.current_inst_addr := current_inst_addr
 
+  // flush时pc为0，此时不应该读到inst，将inst置为0
+  when(pc_i === ZERO_WORD) {
+    inst_i := ZERO_WORD
+  }
+
   // 取得的指令码功能码
   val op = Wire(UInt(6.W))
   val op2 = Wire(UInt(5.W))
