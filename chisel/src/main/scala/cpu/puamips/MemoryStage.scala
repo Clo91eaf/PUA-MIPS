@@ -14,6 +14,8 @@ class MemoryStage extends Module {
   // input
   val stall = Wire(STALL_BUS)
   stall := io.fromControl.stall
+  val flush = Wire(Bool())
+  flush := io.fromControl.flush
 
   // output
   val pc = RegInit(REG_BUS_INIT)
@@ -46,8 +48,32 @@ class MemoryStage extends Module {
   io.memory.cp0_write_addr := cp0_write_addr
   val cp0_data = RegInit(REG_BUS_INIT)
   io.memory.cp0_data := cp0_data
+  val current_inst_addr = RegInit(REG_BUS_INIT)
+  io.memory.current_inst_addr := current_inst_addr
+  val is_in_delayslot = RegInit(NOT_IN_DELAY_SLOT)
+  io.memory.is_in_delayslot := is_in_delayslot
+  val excepttype = RegInit(0.U(32.W))
+  io.memory.excepttype := excepttype
 
-  when(stall(3) === STOP && stall(4) === NOT_STOP) {
+  when(flush === true.B) {
+    wd := NOP_REG_ADDR
+    wreg := WRITE_DISABLE
+    wdata := ZERO_WORD
+    hi := ZERO_WORD
+    lo := ZERO_WORD
+    whilo := WRITE_DISABLE
+    aluop := EXE_NOP_OP
+    addr := ZERO_WORD
+    reg2 := ZERO_WORD
+    cp0_we := WRITE_DISABLE
+    cp0_write_addr := "b00000".U
+    cp0_data := ZERO_WORD
+    excepttype := ZERO_WORD
+    is_in_delayslot := NOT_IN_DELAY_SLOT
+    current_inst_addr := ZERO_WORD
+    hilo := ZERO_WORD
+    cnt := "b00".U
+  }.elsewhen(stall(3) === STOP && stall(4) === NOT_STOP) {
     wd := NOP_REG_ADDR
     wreg := WRITE_DISABLE
     wdata := ZERO_WORD
@@ -62,6 +88,9 @@ class MemoryStage extends Module {
     cp0_we := WRITE_DISABLE
     cp0_write_addr := 0.U
     cp0_data := ZERO_WORD
+    excepttype := ZERO_WORD
+    is_in_delayslot := NOT_IN_DELAY_SLOT
+    current_inst_addr := ZERO_WORD
     pc := pc
   }.elsewhen(stall(3) === NOT_STOP) {
     wd := io.fromExecute.wd
@@ -78,6 +107,9 @@ class MemoryStage extends Module {
     cp0_we := io.fromExecute.cp0_we
     cp0_write_addr := io.fromExecute.cp0_write_addr
     cp0_data := io.fromExecute.cp0_data
+    excepttype := io.fromExecute.excepttype
+    is_in_delayslot := io.fromExecute.is_in_delayslot
+    current_inst_addr := io.fromExecute.current_inst_addr
     pc := io.fromExecute.pc
   }.otherwise {
     hilo := io.fromExecute.hilo

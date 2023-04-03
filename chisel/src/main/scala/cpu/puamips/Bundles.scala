@@ -90,6 +90,9 @@ class Execute_MemoryStage extends Bundle {
   val cp0_we = Output(Bool())
   val cp0_write_addr = Output(CP0_ADDR_BUS)
   val cp0_data = Output(REG_BUS)
+  val current_inst_addr = Output(REG_BUS)
+  val is_in_delayslot = Output(Bool())
+  val excepttype = Output(UInt(32.W))
   val pc = Output(REG_BUS)
 }
 
@@ -127,6 +130,9 @@ class MemoryStage_Memory extends Bundle {
   val cp0_we = Output(Bool())
   val cp0_write_addr = Output(CP0_ADDR_BUS)
   val cp0_data = Output(REG_BUS)
+  val current_inst_addr = Output(REG_BUS)
+  val is_in_delayslot = Output(Bool())
+  val excepttype = Output(UInt(32.W))
   val pc = Output(REG_BUS)
 }
 
