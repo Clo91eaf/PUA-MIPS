@@ -72,6 +72,10 @@ class Decoder extends Module {
   io.executeStage.is_in_delayslot := is_in_delayslot
   val stallreq = Wire(Bool())
   io.control.stallreq := stallreq
+  val excepttype = Wire(UInt(32.W))
+  io.executeStage.excepttype := excepttype
+  val current_inst_addr = Wire(REG_BUS)
+  io.executeStage.current_inst_addr := current_inst_addr
 
   // 取得的指令码功能码
   val op = Wire(UInt(6.W))
@@ -103,6 +107,8 @@ class Decoder extends Module {
   val stallreq_for_reg1_loadrelate = Wire(Bool())
   val stallreq_for_reg2_loadrelate = Wire(Bool())
   val pre_inst_is_load = Wire(Bool())
+  val excepttype_is_syscall = Wire(Bool())
+  val excepttype_is_eret = Wire(Bool())
 
   pc_plus_4 := pc_i + 4.U
   pc_plus_8 := pc_i + 8.U
@@ -119,6 +125,19 @@ class Decoder extends Module {
   }.otherwise {
     pre_inst_is_load := false.B
   }
+
+  // exceptiontype的低8bit留给外部中断，第9bit表示是否是syscall指令
+  // 第10bit表示是否是无效指令，第11bit表示是否是trap指令
+  excepttype := Cat(
+    "b0".U(19.W),
+    excepttype_is_eret,
+    "b0".U(2.W),
+    instvalid,
+    excepttype_is_syscall,
+    "b0".U(8.W)
+  )
+
+  current_inst_addr := pc_i;
 
   val BTarget = pc_plus_4 + imm_sll2_signedext
   val JTarget = Cat(pc_plus_4(31, 28), inst_i(25, 0), 0.U(2.W))
@@ -139,6 +158,8 @@ class Decoder extends Module {
     branch_target_address := ZERO_WORD
     branch_flag := NOT_BRANCH
     next_inst_in_delayslot := NOT_IN_DELAY_SLOT
+    excepttype_is_syscall := false.B
+    excepttype_is_eret := false.B
   }
 
   aluop := EXE_NOP_OP
@@ -155,6 +176,14 @@ class Decoder extends Module {
   branch_target_address := ZERO_WORD
   branch_flag := NOT_BRANCH
   next_inst_in_delayslot := NOT_IN_DELAY_SLOT
+  excepttype_is_syscall := false.B
+  excepttype_is_eret := false.B
+  when(inst_i === SYSCALL) {
+    excepttype_is_syscall := true.B
+  }
+  when(inst_i === ERET) {
+    excepttype_is_eret := true.B
+  }
 
   val signals: List[UInt] = ListLookup(
     inst_i,
@@ -202,19 +231,19 @@ class Decoder extends Module {
       SLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_SLT_OP , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
       SLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_SLTU_OP, WRITE_ENABLE   , WRA_T2 , IMM_LSE),
 
-      // // Trap
-      // TEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_EQ, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_EQ, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      // TGE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_GE, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_GE, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      // TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_GEU, WRITE_DISABLE , WRA_X  , IMM_LSE),
-      // TGEU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_GEU, WRITE_DISABLE , WRA_X  , IMM_N  ),
-      // TLT       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_LT, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_LT, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      // TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_LTU, WRITE_DISABLE , WRA_X  , IMM_LSE),
-      // TLTU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_LTU, WRITE_DISABLE , WRA_X  , IMM_N  ),
-      // TNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , INST_TRAP, TRAP_NE, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , INST_TRAP, TRAP_NE, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      // Trap
+      TEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TGE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TGEU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
+      TLT       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TLTU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
+      TNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
 
       // 算术指令
       ADD       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -263,11 +292,11 @@ class Decoder extends Module {
       // TLBWI     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_WI  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       // TLBWR     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_WR  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
-      // // 例外指令
-      // SYSCALL   -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_SC  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // BREAK     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_BR  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // ERET      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_ER  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // WAIT      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_EXC, EXC_WAIT, WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // 例外指令
+      SYSCALL   -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_SYSCALL_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // BREAK     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXC_BR  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      ERET      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_ERET_OP  , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // WAIT      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXC_WAIT, WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
       // 访存指令
       LB        -> List(INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LB_OP  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
