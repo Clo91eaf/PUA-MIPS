@@ -73,6 +73,7 @@ class MemoryStage extends Module {
     current_inst_addr := ZERO_WORD
     hilo := ZERO_WORD
     cnt := "b00".U
+    pc := ZERO_WORD
   }.elsewhen(stall(3) === STOP && stall(4) === NOT_STOP) {
     wd := NOP_REG_ADDR
     wreg := WRITE_DISABLE

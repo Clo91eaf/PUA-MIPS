@@ -19,7 +19,9 @@ class DecoderStage extends Module {
   val pc = RegInit(INST_ADDR_BUS_INIT)
   io.decoder.pc := pc
 
-  when(stall(1) === STOP && stall(2) === NOT_STOP) {
+  when(io.fromControl.flush) {
+    pc := ZERO_WORD
+  }.elsewhen(stall(1) === STOP && stall(2) === NOT_STOP) {
     pc := pc
   }.elsewhen(stall(1) === NOT_STOP) {
     pc := io.fromFetch.pc

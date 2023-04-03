@@ -56,6 +56,7 @@ class ExecuteStage extends Module {
     is_in_delayslot := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
     is_in_delayslot := NOT_IN_DELAY_SLOT
+    pc := ZERO_WORD
   }.elsewhen(stall(2) === STOP && stall(3) === NOT_STOP) {
     aluop := EXE_NOP_OP
     alusel := EXE_RES_NOP
