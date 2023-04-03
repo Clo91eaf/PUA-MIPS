@@ -39,36 +39,36 @@ class Decoder extends Module {
 
   // output
   io.executeStage.pc := pc_i
-  val reg1_read = WireInit(READ_DISABLE)
+  val reg1_read = Wire(Bool())
   io.regfile.reg1_read := reg1_read
-  val reg2_read = WireInit(READ_DISABLE)
+  val reg2_read = Wire(Bool())
   io.regfile.reg2_read := reg2_read
-  val reg1_addr = WireInit(REG_ADDR_BUS_INIT)
+  val reg1_addr = Wire(REG_ADDR_BUS)
   io.regfile.reg1_addr := reg1_addr
-  val reg2_addr = WireInit(REG_ADDR_BUS_INIT)
+  val reg2_addr = Wire(REG_ADDR_BUS)
   io.regfile.reg2_addr := reg2_addr
-  val aluop = WireInit(ALU_OP_BUS_INIT)
+  val aluop = Wire(ALU_OP_BUS)
   io.executeStage.aluop := aluop
-  val alusel = WireInit(ALU_SEL_BUS_INIT)
+  val alusel = Wire(ALU_SEL_BUS)
   io.executeStage.alusel := alusel
-  val reg1 = WireInit(REG_BUS_INIT)
+  val reg1 = Wire(REG_BUS)
   io.executeStage.reg1 := reg1
-  val reg2 = WireInit(REG_BUS_INIT)
+  val reg2 = Wire(REG_BUS)
   io.executeStage.reg2 := reg2
-  val wd = WireInit(REG_ADDR_BUS_INIT)
+  val wd = Wire(REG_ADDR_BUS)
   io.executeStage.wd := wd
-  val wreg = WireInit(WRITE_DISABLE)
+  val wreg = Wire(Bool())
   io.executeStage.wreg := wreg
   io.executeStage.inst := inst_i
-  val next_inst_in_delayslot = WireInit(NOT_IN_DELAY_SLOT)
+  val next_inst_in_delayslot = Wire(Bool())
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
-  val branch_flag = WireInit(NOT_BRANCH)
+  val branch_flag = Wire(Bool())
   io.fetch.branch_flag := branch_flag
-  val branch_target_address = WireInit(REG_BUS_INIT)
+  val branch_target_address = Wire(REG_BUS)
   io.fetch.branch_target_address := branch_target_address
-  val link_addr = WireInit(REG_BUS_INIT)
+  val link_addr = Wire(REG_BUS)
   io.executeStage.link_addr := link_addr
-  val is_in_delayslot = WireInit(NOT_IN_DELAY_SLOT)
+  val is_in_delayslot = Wire(Bool())
   io.executeStage.is_in_delayslot := is_in_delayslot
   val stallreq = Wire(Bool())
   io.control.stallreq := stallreq
@@ -95,13 +95,13 @@ class Decoder extends Module {
   rs := inst_i(25, 21)
   imm16 := inst_i(15, 0)
 
-  val imm = WireInit(REG_BUS_INIT)
-  val instvalid = WireInit(INST_INVALID)
+  val imm = Wire(REG_BUS)
+  val instvalid = Wire(Bool())
   val pc_plus_4 = Wire(REG_BUS)
   val pc_plus_8 = Wire(REG_BUS)
   val imm_sll2_signedext = Wire(REG_BUS)
-  val stallreq_for_reg1_loadrelate = WireInit(NOT_STOP)
-  val stallreq_for_reg2_loadrelate = WireInit(NOT_STOP)
+  val stallreq_for_reg1_loadrelate = Wire(Bool())
+  val stallreq_for_reg2_loadrelate = Wire(Bool())
   val pre_inst_is_load = Wire(Bool())
 
   pc_plus_4 := pc_i + 4.U
@@ -124,6 +124,23 @@ class Decoder extends Module {
   val JTarget = Cat(pc_plus_4(31, 28), inst_i(25, 0), 0.U(2.W))
 
   // 对指令进行译码
+  when(reset.asBool === RST_ENABLE) {
+    aluop := EXE_NOP_OP
+    alusel := EXE_RES_NOP
+    wd := rd // inst_i(15, 11)
+    wreg := WRITE_DISABLE
+    instvalid := INST_INVALID
+    reg1_read := READ_DISABLE
+    reg2_read := READ_DISABLE
+    reg1_addr := rs // inst_i(25, 21)
+    reg2_addr := rt // inst_i(20, 16)
+    imm := ZERO_WORD
+    link_addr := ZERO_WORD
+    branch_target_address := ZERO_WORD
+    branch_flag := NOT_BRANCH
+    next_inst_in_delayslot := NOT_IN_DELAY_SLOT
+  }
+
   aluop := EXE_NOP_OP
   alusel := EXE_RES_NOP
   wd := rd // inst_i(15, 11)
@@ -396,8 +413,11 @@ class Decoder extends Module {
   )
 
   stallreq_for_reg1_loadrelate := NOT_STOP
-  when(pre_inst_is_load && io.fromExecute.wd === reg1_addr && reg1_read) {
+  when(reset.asBool === RST_ENABLE) {
+    reg1 := ZERO_WORD
+  }.elsewhen(pre_inst_is_load && io.fromExecute.wd === reg1_addr && reg1_read) {
     stallreq_for_reg1_loadrelate := STOP
+    reg1 := ZERO_WORD // liphen
   }.elsewhen(
     reg1_read && io.fromExecute.wreg && io.fromExecute.wd === reg1_addr
   ) {
@@ -415,30 +435,32 @@ class Decoder extends Module {
   }
 
   stallreq_for_reg2_loadrelate := NOT_STOP
-  when(pre_inst_is_load && io.fromExecute.wd === reg2_addr && reg2_read) {
+  when(reset.asBool === RST_ENABLE) {
+    reg2 := ZERO_WORD
+  }.elsewhen(pre_inst_is_load && io.fromExecute.wd === reg2_addr && reg2_read) {
     stallreq_for_reg2_loadrelate := STOP
+    reg2 := ZERO_WORD // liphen
+  }.elsewhen(
+    (reg2_read) && (io.fromExecute.wreg) && (io.fromExecute.wd === reg2_addr)
+  ) {
+    reg2 := io.fromExecute.wdata
+  }.elsewhen(
+    (reg2_read) && (io.fromMemory.wreg) && (io.fromMemory.wd === reg2_addr)
+  ) {
+    reg2 := io.fromMemory.wdata
+  }.elsewhen(reg2_read) {
+    reg2 := reg2_data_i
+  }.elsewhen(!reg2_read) {
+    reg2 := imm
+  }.otherwise {
+    reg2 := ZERO_WORD
   }
-    .elsewhen(
-      (reg2_read) && (io.fromExecute.wreg) && (io.fromExecute.wd === reg2_addr)
-    ) {
-      reg2 := io.fromExecute.wdata
-    }
-    .elsewhen(
-      (reg2_read) && (io.fromMemory.wreg) && (io.fromMemory.wd === reg2_addr)
-    ) {
-      reg2 := io.fromMemory.wdata
-    }
-    .elsewhen(reg2_read) {
-      reg2 := reg2_data_i
-    }
-    .elsewhen(!reg2_read) {
-      reg2 := imm
-    }
-    .otherwise {
-      reg2 := ZERO_WORD
-    }
 
-  is_in_delayslot := is_in_delayslot_i
+  when(reset.asBool === RST_ENABLE) {
+    is_in_delayslot := NOT_IN_DELAY_SLOT
+  }.otherwise {
+    is_in_delayslot := is_in_delayslot_i
+  }
 
   // debug
   // printf(p"decoder :pc 0x${Hexadecimal(pc_i)}, inst 0x${Hexadecimal(inst_i)}\n")

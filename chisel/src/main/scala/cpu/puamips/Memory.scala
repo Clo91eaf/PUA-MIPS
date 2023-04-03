@@ -25,324 +25,346 @@ class Memory extends Module {
   reg2_i := io.fromMemoryStage.reg2
 
   // output
-  val pc = WireInit(REG_BUS_INIT)
+  val pc = Wire(REG_BUS)
   pc := io.fromMemoryStage.pc
   io.writeBackStage.pc := pc
-  val wd = WireInit(REG_ADDR_BUS_INIT)
+  val wd = Wire(REG_ADDR_BUS)
   io.decoder.wd := wd
   io.writeBackStage.wd := wd
-  val wreg = WireInit(WRITE_DISABLE)
+  val wreg = Wire(Bool())
   io.decoder.wreg := wreg
   io.writeBackStage.wreg := wreg
-  val wdata = WireInit(REG_BUS_INIT)
+  val wdata = Wire(REG_BUS)
   io.decoder.wdata := wdata
   io.writeBackStage.wdata := wdata
-  val hi = WireInit(REG_BUS_INIT)
+  val hi = Wire(REG_BUS)
   io.execute.hi := hi
   io.writeBackStage.hi := hi
-  val lo = WireInit(REG_BUS_INIT)
+  val lo = Wire(REG_BUS)
   io.execute.lo := lo
   io.writeBackStage.lo := lo
-  val whilo = WireInit(WRITE_DISABLE)
+  val whilo = Wire(Bool())
   io.execute.whilo := whilo
   io.writeBackStage.whilo := whilo
-  val LLbit_wen= WireInit(false.B)
-  io.writeBackStage.LLbit_wen:= LLbit_wen
-  val LLbit_value = WireInit(false.B)
+  val LLbit_wen = Wire(Bool())
+  io.writeBackStage.LLbit_wen := LLbit_wen
+  val LLbit_value = Wire(Bool())
   io.writeBackStage.LLbit_value := LLbit_value
-  val mem_addr = WireInit(REG_BUS_INIT)
+  val mem_addr = Wire(REG_BUS)
   io.dataMemory.addr := mem_addr
-  val mem_wen= WireInit(WRITE_DISABLE)
-  io.dataMemory.wen:= mem_wen
-  val mem_sel = WireInit(DATA_MEMORY_SEL_BUS_INIT)
+  val mem_wen = Wire(Bool())
+  io.dataMemory.wen := mem_wen
+  val mem_sel = Wire(DATA_MEMORY_SEL_BUS)
   io.dataMemory.sel := mem_sel
-  val mem_data = WireInit(REG_BUS_INIT)
+  val mem_data = Wire(REG_BUS)
   io.dataMemory.data := mem_data
-  val mem_ce = WireInit(CHIP_DISABLE)
+  val mem_ce = Wire(Bool())
   io.dataMemory.ce := mem_ce
-  val cp0_we = WireInit(WRITE_DISABLE)
+  val cp0_we = Wire(Bool())
   io.writeBackStage.cp0_we := cp0_we
   io.execute.cp0_we := cp0_we
-  val cp0_write_addr = WireInit(CP0_ADDR_BUS_INIT)
+  val cp0_write_addr = Wire(CP0_ADDR_BUS)
   io.writeBackStage.cp0_write_addr := cp0_write_addr
   io.execute.cp0_write_addr := cp0_write_addr
-  val cp0_data = WireInit(REG_BUS_INIT)
+  val cp0_data = Wire(REG_BUS)
   io.writeBackStage.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
 
-  val LLbit = WireInit(false.B)
+  val LLbit = Wire(Bool())
   val zero32 = Wire(REG_BUS)
   zero32 := 0.U(32.W)
 
   // 获取最新的LLbit的值
-  when(io.fromWriteBackStage.LLbit_wen) {
-    LLbit := io.fromWriteBackStage.LLbit_value
+  when(reset.asBool === RST_ENABLE) {
+    LLbit := false.B
   }.otherwise {
-    LLbit := io.fromLLbitReg.LLbit
+    when(io.fromWriteBackStage.LLbit_wen) {
+      LLbit := io.fromWriteBackStage.LLbit_value
+    }.otherwise {
+      LLbit := io.fromLLbitReg.LLbit
+    }
   }
 
-  wd := io.fromMemoryStage.wd
-  wreg := io.fromMemoryStage.wreg
-  wdata := io.fromMemoryStage.wdata
-  hi := io.fromMemoryStage.hi
-  lo := io.fromMemoryStage.lo
-  whilo := io.fromMemoryStage.whilo
-  mem_wen:= WRITE_DISABLE
+  when(reset.asBool === RST_ENABLE) {
+    wd := NOP_REG_ADDR
+    wreg := WRITE_DISABLE
+    wdata := ZERO_WORD
+    hi := ZERO_WORD
+    lo := ZERO_WORD
+    whilo := WRITE_DISABLE
+    mem_addr := ZERO_WORD
+    mem_wen := WRITE_DISABLE
+    mem_sel := "b0000".U
+    mem_data := ZERO_WORD
+    mem_ce := CHIP_DISABLE
+    LLbit_wen := false.B
+    LLbit_value := false.B
+    cp0_we := WRITE_DISABLE
+    cp0_write_addr := "b00000".U
+    cp0_data := ZERO_WORD
+  }.otherwise {
+    wd := io.fromMemoryStage.wd
+    wreg := io.fromMemoryStage.wreg
+    wdata := io.fromMemoryStage.wdata
+    hi := io.fromMemoryStage.hi
+    lo := io.fromMemoryStage.lo
+    whilo := io.fromMemoryStage.whilo
+    mem_wen := WRITE_DISABLE
+    mem_addr := ZERO_WORD
+    mem_sel := "b1111".U
+    mem_ce := CHIP_DISABLE
+    LLbit_wen := false.B
+    LLbit_value := false.B
+    cp0_we := io.fromMemoryStage.cp0_we
+    cp0_write_addr := io.fromMemoryStage.cp0_write_addr
+    cp0_data := io.fromMemoryStage.cp0_data
 
-  mem_addr := ZERO_WORD
-  mem_sel := "b1111".U
-  mem_ce := CHIP_DISABLE
-  LLbit_wen:= false.B
-  LLbit_value := 0.U
-  cp0_we := io.fromMemoryStage.cp0_we
-  cp0_write_addr := io.fromMemoryStage.cp0_write_addr
-  cp0_data := io.fromMemoryStage.cp0_data
+    mem_ce := MuxLookup(
+      aluop,
+      CHIP_DISABLE,
+      Seq(
+        EXE_LB_OP -> CHIP_ENABLE,
+        EXE_LBU_OP -> CHIP_ENABLE,
+        EXE_LH_OP -> CHIP_ENABLE,
+        EXE_LHU_OP -> CHIP_ENABLE,
+        EXE_LW_OP -> CHIP_ENABLE,
+        EXE_LWL_OP -> CHIP_ENABLE,
+        EXE_LWL_OP -> CHIP_ENABLE,
+        EXE_LL_OP -> CHIP_ENABLE,
+        EXE_SB_OP -> CHIP_ENABLE,
+        EXE_SH_OP -> CHIP_ENABLE,
+        EXE_SW_OP -> CHIP_ENABLE,
+        EXE_SWL_OP -> CHIP_ENABLE,
+        EXE_SWR_OP -> CHIP_ENABLE,
+        EXE_SC_OP -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
+      )
+    ) // mem_ce
 
-  mem_ce := MuxLookup(
-    aluop,
-    CHIP_DISABLE,
-    Seq(
-      EXE_LB_OP -> CHIP_ENABLE,
-      EXE_LBU_OP -> CHIP_ENABLE,
-      EXE_LH_OP -> CHIP_ENABLE,
-      EXE_LHU_OP -> CHIP_ENABLE,
-      EXE_LW_OP -> CHIP_ENABLE,
-      EXE_LWL_OP -> CHIP_ENABLE,
-      EXE_LWL_OP -> CHIP_ENABLE,
-      EXE_LL_OP -> CHIP_ENABLE,
-      EXE_SB_OP -> CHIP_ENABLE,
-      EXE_SH_OP -> CHIP_ENABLE,
-      EXE_SW_OP -> CHIP_ENABLE,
-      EXE_SWL_OP -> CHIP_ENABLE,
-      EXE_SWR_OP -> CHIP_ENABLE,
-      EXE_SC_OP -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
-    )
-  ) // mem_ce
+    mem_addr := MuxLookup(
+      aluop,
+      ZERO_WORD,
+      Seq(
+        EXE_LB_OP -> io.fromMemoryStage.addr,
+        EXE_LBU_OP -> io.fromMemoryStage.addr,
+        EXE_LH_OP -> io.fromMemoryStage.addr,
+        EXE_LHU_OP -> io.fromMemoryStage.addr,
+        EXE_LW_OP -> io.fromMemoryStage.addr,
+        EXE_LWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
+        EXE_LWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
+        EXE_LL_OP -> io.fromMemoryStage.addr,
+        EXE_SB_OP -> io.fromMemoryStage.addr,
+        EXE_SH_OP -> io.fromMemoryStage.addr,
+        EXE_SW_OP -> io.fromMemoryStage.addr,
+        EXE_SWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
+        EXE_SWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
+        EXE_SC_OP -> Mux(LLbit, io.fromMemoryStage.addr, ZERO_WORD)
+      )
+    ) // mem_addr
 
-  mem_addr := MuxLookup(
-    aluop,
-    ZERO_WORD,
-    Seq(
-      EXE_LB_OP -> io.fromMemoryStage.addr,
-      EXE_LBU_OP -> io.fromMemoryStage.addr,
-      EXE_LH_OP -> io.fromMemoryStage.addr,
-      EXE_LHU_OP -> io.fromMemoryStage.addr,
-      EXE_LW_OP -> io.fromMemoryStage.addr,
-      EXE_LWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-      EXE_LWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-      EXE_LL_OP -> io.fromMemoryStage.addr,
-      EXE_SB_OP -> io.fromMemoryStage.addr,
-      EXE_SH_OP -> io.fromMemoryStage.addr,
-      EXE_SW_OP -> io.fromMemoryStage.addr,
-      EXE_SWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-      EXE_SWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-      EXE_SC_OP -> Mux(LLbit, io.fromMemoryStage.addr, ZERO_WORD)
-    )
-  ) // mem_addr
+    val addrLowBit2 = io.fromMemoryStage.addr(1, 0)
 
-  val addrLowBit2 = io.fromMemoryStage.addr(1, 0)
+    mem_sel := MuxLookup(
+      aluop,
+      "b1111".U,
+      Seq(
+        EXE_LB_OP -> MuxLookup(
+          addrLowBit2,
+          "b1111".U,
+          Seq(
+            "b00".U -> "b1000".U,
+            "b01".U -> "b0100".U,
+            "b10".U -> "b0010".U,
+            "b11".U -> "b0001".U
+          )
+        ),
+        EXE_LBU_OP -> MuxLookup(
+          addrLowBit2,
+          "b1111".U,
+          Seq(
+            "b00".U -> "b1000".U,
+            "b01".U -> "b0100".U,
+            "b10".U -> "b0010".U,
+            "b11".U -> "b0001".U
+          )
+        ),
+        EXE_LH_OP -> MuxLookup(
+          addrLowBit2,
+          "b1111".U,
+          Seq(
+            "b00".U -> "b1100".U,
+            "b10".U -> "b0011".U
+          )
+        ),
+        EXE_LHU_OP -> MuxLookup(
+          addrLowBit2,
+          "b1111".U,
+          Seq(
+            "b00".U -> "b1100".U,
+            "b10".U -> "b0011".U
+          )
+        ),
+        EXE_LW_OP -> "b1111".U,
+        EXE_LWL_OP -> "b1111".U,
+        EXE_LWR_OP -> "b1111".U,
+        EXE_LL_OP -> "b1111".U,
+        EXE_SB_OP -> MuxLookup(
+          addrLowBit2,
+          "b0000".U,
+          Seq(
+            "b00".U -> "b1000".U,
+            "b01".U -> "b0100".U,
+            "b10".U -> "b0010".U,
+            "b11".U -> "b0001".U
+          )
+        ),
+        EXE_SH_OP -> MuxLookup(
+          addrLowBit2,
+          "b0000".U,
+          Seq(
+            "b00".U -> "b1100".U,
+            "b10".U -> "b0011".U
+          )
+        ),
+        EXE_SW_OP -> "b1111".U,
+        EXE_SWL_OP -> MuxLookup(
+          addrLowBit2,
+          "b0000".U,
+          Seq(
+            "b00".U -> "b1111".U,
+            "b01".U -> "b0111".U,
+            "b10".U -> "b0011".U,
+            "b11".U -> "b0001".U
+          )
+        ),
+        EXE_SWR_OP -> MuxLookup(
+          addrLowBit2,
+          "b0000".U,
+          Seq(
+            "b00".U -> "b1000".U,
+            "b01".U -> "b1100".U,
+            "b10".U -> "b1110".U,
+            "b11".U -> "b1111".U
+          )
+        ),
+        EXE_SC_OP -> "b1111".U
+      )
+    ) // mem_sel
 
-  mem_sel := MuxLookup(
-    aluop,
-    "b1111".U,
-    Seq(
-      EXE_LB_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U
-        )
-      ),
-      EXE_LBU_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U
-        )
-      ),
-      EXE_LH_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U
-        )
-      ),
-      EXE_LHU_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U
-        )
-      ),
-      EXE_LW_OP -> "b1111".U,
-      EXE_LWL_OP -> "b1111".U,
-      EXE_LWR_OP -> "b1111".U,
-      EXE_LL_OP -> "b1111".U,
-      EXE_SB_OP -> MuxLookup(
-        addrLowBit2,
-        "b0000".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U
-        )
-      ),
-      EXE_SH_OP -> MuxLookup(
-        addrLowBit2,
-        "b0000".U,
-        Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U
-        )
-      ),
-      EXE_SW_OP -> "b1111".U,
-      EXE_SWL_OP -> MuxLookup(
-        addrLowBit2,
-        "b0000".U,
-        Seq(
-          "b00".U -> "b1111".U,
-          "b01".U -> "b0111".U,
-          "b10".U -> "b0011".U,
-          "b11".U -> "b0001".U
-        )
-      ),
-      EXE_SWR_OP -> MuxLookup(
-        addrLowBit2,
-        "b0000".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b1100".U,
-          "b10".U -> "b1110".U,
-          "b11".U -> "b1111".U
-        )
-      ),
-      EXE_SC_OP -> "b1111".U
-    )
-  ) // mem_sel
+    wdata := MuxLookup(
+      aluop,
+      io.fromMemoryStage.wdata,
+      Seq(
+        EXE_LB_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Util.signedExtend(mem_data_i(31, 24)),
+            "b01".U -> Util.signedExtend(mem_data_i(23, 16)),
+            "b10".U -> Util.signedExtend(mem_data_i(15, 8)),
+            "b11".U -> Util.signedExtend(mem_data_i(7, 0))
+          )
+        ),
+        EXE_LBU_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Util.zeroExtend(mem_data_i(31, 24)),
+            "b01".U -> Util.zeroExtend(mem_data_i(23, 16)),
+            "b10".U -> Util.zeroExtend(mem_data_i(15, 8)),
+            "b11".U -> Util.zeroExtend(mem_data_i(7, 0))
+          )
+        ),
+        EXE_LH_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Util.signedExtend(mem_data_i(31, 16)),
+            "b10".U -> Util.signedExtend(mem_data_i(15, 0))
+          )
+        ),
+        EXE_LHU_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Util.zeroExtend(mem_data_i(31, 16)),
+            "b10".U -> Util.zeroExtend(mem_data_i(15, 0))
+          )
+        ),
+        EXE_LW_OP -> mem_data_i,
+        EXE_LWL_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> mem_data_i(31, 0),
+            "b01".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
+            "b10".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
+            "b11".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0))
+          )
+        ),
+        EXE_LWR_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
+            "b01".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
+            "b10".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
+            "b11".U -> mem_data_i
+          )
+        ),
+        EXE_LL_OP -> mem_data_i,
+        EXE_SC_OP -> Mux(!LLbit, ZERO_WORD, io.fromMemoryStage.wdata)
+      )
+    ) // wdata
 
-  wdata := MuxLookup(
-    aluop,
-    io.fromMemoryStage.wdata,
-    Seq(
-      EXE_LB_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Util.signedExtend(mem_data_i(31, 24)),
-          "b01".U -> Util.signedExtend(mem_data_i(23, 16)),
-          "b10".U -> Util.signedExtend(mem_data_i(15, 8)),
-          "b11".U -> Util.signedExtend(mem_data_i(7, 0))
-        )
-      ),
-      EXE_LBU_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Util.zeroExtend(mem_data_i(31, 24)),
-          "b01".U -> Util.zeroExtend(mem_data_i(23, 16)),
-          "b10".U -> Util.zeroExtend(mem_data_i(15, 8)),
-          "b11".U -> Util.zeroExtend(mem_data_i(7, 0))
-        )
-      ),
-      EXE_LH_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Util.signedExtend(mem_data_i(31, 16)),
-          "b10".U -> Util.signedExtend(mem_data_i(15, 0))
-        )
-      ),
-      EXE_LHU_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Util.zeroExtend(mem_data_i(31, 16)),
-          "b10".U -> Util.zeroExtend(mem_data_i(15, 0))
-        )
-      ),
-      EXE_LW_OP -> mem_data_i,
-      EXE_LWL_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> mem_data_i(31, 0),
-          "b01".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
-          "b10".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
-          "b11".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0))
-        )
-      ),
-      EXE_LWR_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
-          "b01".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
-          "b10".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
-          "b11".U -> mem_data_i
-        )
-      ),
-      EXE_LL_OP -> mem_data_i,
-      EXE_SC_OP -> Mux(!LLbit, ZERO_WORD, io.fromMemoryStage.wdata)
-    )
-  ) // wdata
+    mem_data := MuxLookup(
+      aluop,
+      ZERO_WORD,
+      Seq(
+        EXE_SB_OP -> Fill(4, reg2_i(7, 0)),
+        EXE_SH_OP -> Fill(2, reg2_i(15, 0)),
+        EXE_SW_OP -> reg2_i,
+        EXE_SWL_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> reg2_i,
+            "b01".U -> Util.zeroExtend(reg2_i(31, 8)),
+            "b10".U -> Util.zeroExtend(reg2_i(31, 16)),
+            "b11".U -> Util.zeroExtend(reg2_i(31, 24))
+          )
+        ),
+        EXE_SWR_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> Cat(reg2_i(7, 0), zero32(23, 0)),
+            "b01".U -> Cat(reg2_i(15, 0), zero32(15, 0)),
+            "b10".U -> Cat(reg2_i(23, 0), zero32(7, 0)),
+            "b11".U -> reg2_i
+          )
+        ),
+        EXE_SC_OP -> Mux(LLbit, reg2_i, ZERO_WORD)
+      )
+    ) // mem_data
 
-  mem_data := MuxLookup(
-    aluop,
-    ZERO_WORD,
-    Seq(
-      EXE_SB_OP -> Fill(4, reg2_i(7, 0)),
-      EXE_SH_OP -> Fill(2, reg2_i(15, 0)),
-      EXE_SW_OP -> reg2_i,
-      EXE_SWL_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> reg2_i,
-          "b01".U -> Util.zeroExtend(reg2_i(31, 8)),
-          "b10".U -> Util.zeroExtend(reg2_i(31, 16)),
-          "b11".U -> Util.zeroExtend(reg2_i(31, 24))
-        )
-      ),
-      EXE_SWR_OP -> MuxLookup(
-        addrLowBit2,
-        ZERO_WORD,
-        Seq(
-          "b00".U -> Cat(reg2_i(7, 0), zero32(23, 0)),
-          "b01".U -> Cat(reg2_i(15, 0), zero32(15, 0)),
-          "b10".U -> Cat(reg2_i(23, 0), zero32(7, 0)),
-          "b11".U -> reg2_i
-        )
-      ),
-      EXE_SC_OP -> Mux(LLbit, reg2_i, ZERO_WORD)
-    )
-  ) // mem_data
+    LLbit_wen := MuxLookup(
+      aluop,
+      false.B,
+      Seq(
+        EXE_LL_OP -> true.B,
+        EXE_SC_OP -> LLbit
+      )
+    ) // LLbit_wen
 
-  LLbit_wen:= MuxLookup(
-    aluop,
-    false.B,
-    Seq(
-      EXE_LL_OP -> true.B,
-      EXE_SC_OP -> LLbit
-    )
-  ) // LLbit_wen
-
-  LLbit_value := MuxLookup(
-    aluop,
-    false.B,
-    Seq(
-      EXE_LL_OP -> true.B,
-      EXE_SC_OP -> (!LLbit)
-    )
-  ) // LLbit_value
+    LLbit_value := MuxLookup(
+      aluop,
+      false.B,
+      Seq(
+        EXE_LL_OP -> true.B,
+        EXE_SC_OP -> (!LLbit)
+      )
+    ) // LLbit_value
+  }
 
   // debug
   // printf(p"memory :pc 0x${Hexadecimal(pc)}\n")

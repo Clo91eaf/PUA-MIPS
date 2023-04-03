@@ -67,62 +67,62 @@ class Execute extends Module {
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
 
   // output
-  val pc = WireInit(REG_BUS_INIT)
+  val pc = Wire(REG_BUS)
   pc := io.fromExecuteStage.pc
   io.memoryStage.pc := pc
-  val wd = WireInit(REG_ADDR_BUS_INIT)
+  val wd = Wire(REG_ADDR_BUS)
   io.decoder.wd := wd
   io.memoryStage.wd := wd
-  val wreg = WireInit(WRITE_DISABLE)
+  val wreg = Wire(Bool())
   io.decoder.wreg := wreg
   io.memoryStage.wreg := wreg
-  val wdata = WireInit(REG_BUS_INIT)
+  val wdata = Wire(REG_BUS)
   io.decoder.wdata := wdata
   io.memoryStage.wdata := wdata
-  val hi = WireInit(REG_BUS_INIT)
+  val hi = Wire(REG_BUS)
   io.memoryStage.hi := hi
-  val lo = WireInit(REG_BUS_INIT)
+  val lo = Wire(REG_BUS)
   io.memoryStage.lo := lo
-  val whilo = WireInit(WRITE_DISABLE)
+  val whilo = Wire(Bool())
   io.memoryStage.whilo := whilo
-  val hilo_temp_o = WireInit(DOUBLE_REG_BUS_INIT)
+  val hilo_temp_o = Wire(DOUBLE_REG_BUS)
   io.memoryStage.hilo := hilo_temp_o
-  val cnt = WireInit(CNT_BUS_INIT)
+  val cnt = Wire(CNT_BUS)
   io.memoryStage.cnt := cnt
-  val div_opdata1 = WireInit(REG_BUS_INIT)
+  val div_opdata1 = Wire(REG_BUS)
   io.divider.opdata1 := div_opdata1
-  val div_opdata2 = WireInit(REG_BUS_INIT)
+  val div_opdata2 = Wire(REG_BUS)
   io.divider.opdata2 := div_opdata2
-  val div_start = WireInit(DIV_STOP)
+  val div_start = Wire(Bool())
   io.divider.start := div_start
-  val signed_div = WireInit(NOT_SIGNED)
+  val signed_div = Wire(Bool())
   io.divider.signed_div := signed_div
-  val aluop = WireInit(ALU_OP_BUS_INIT)
+  val aluop = Wire(ALU_OP_BUS)
   io.memoryStage.aluop := aluop
   io.decoder.aluop := aluop
-  val mem_addr = WireInit(REG_BUS_INIT)
+  val mem_addr = Wire(REG_BUS)
   io.memoryStage.addr := mem_addr
-  val reg2 = WireInit(REG_BUS_INIT)
+  val reg2 = Wire(REG_BUS)
   io.memoryStage.reg2 := reg2
-  val stallreq = WireInit(NOT_STOP)
+  val stallreq = Wire(Bool())
   io.control.stallreq := stallreq
-  val cp0_read_addr = WireInit(CP0_ADDR_BUS_INIT)
+  val cp0_read_addr = Wire(CP0_ADDR_BUS)
   io.cp0.cp0_read_addr := cp0_read_addr
-  val cp0_we = WireInit(WRITE_DISABLE)
+  val cp0_we = Wire(Bool())
   io.memoryStage.cp0_we := cp0_we
-  val cp0_write_addr = WireInit(CP0_ADDR_BUS_INIT)
+  val cp0_write_addr = Wire(CP0_ADDR_BUS)
   io.memoryStage.cp0_write_addr := cp0_write_addr
-  val cp0_data = WireInit(REG_BUS_INIT)
+  val cp0_data = Wire(REG_BUS)
   io.memoryStage.cp0_data := cp0_data
 
   // 保存逻辑运算的结果
-  val logicout = WireInit(REG_BUS_INIT) // 保存逻辑运算的结果
-  val shiftres = WireInit(REG_BUS_INIT) // 保存移位操作运算的结果
-  val moveres = WireInit(REG_BUS_INIT) // 保存移动操作运算的结果
-  val arithmeticres = WireInit(REG_BUS_INIT) // 保存算术运算结果
-  val mulres = WireInit(DOUBLE_REG_BUS_INIT) // 保存乘法结果，宽度为64位
-  val HI = WireInit(REG_BUS_INIT)
-  val LO = WireInit(REG_BUS_INIT)
+  val logicout = Wire(REG_BUS) // 保存逻辑运算的结果
+  val shiftres = Wire(REG_BUS) // 保存移位操作运算的结果
+  val moveres = Wire(REG_BUS) // 保存移动操作运算的结果
+  val arithmeticres = Wire(REG_BUS) // 保存算术运算结果
+  val mulres = Wire(DOUBLE_REG_BUS) // 保存乘法结果，宽度为64位
+  val HI = Wire(REG_BUS)
+  val LO = Wire(REG_BUS)
   val reg2_mux = Wire(REG_BUS) // 保存输入的第二个操作reg2的补码
   val reg1_not = Wire(REG_BUS) // 保存输入的第一个操作数reg1取反后的值
   val result_sum = Wire(REG_BUS) // 保存加法结果
@@ -132,9 +132,14 @@ class Execute extends Module {
   val opdata1_mult = Wire(REG_BUS) // 乘法操作中的被乘数
   val opdata2_mult = Wire(REG_BUS) // 乘法操作中的乘数
   val hilo_temp = Wire(DOUBLE_REG_BUS)
-  val hilo_temp1 = WireInit(DOUBLE_REG_BUS_INIT)
-  val stallreq_for_madd_msub = WireInit(NOT_STOP)
-  val stallreq_for_div = WireInit(NOT_STOP)
+  val hilo_temp1 = Wire(DOUBLE_REG_BUS)
+  val stallreq_for_madd_msub = Wire(Bool())
+  val stallreq_for_div = Wire(Bool())
+
+  // liphen
+  cp0_read_addr := ZERO_WORD
+  hilo_temp1 := ZERO_WORD
+  //
 
   // aluop传递到访存阶段，用于加载、存储指令
   aluop := aluop_i
@@ -145,9 +150,12 @@ class Execute extends Module {
 
   // 根据aluop指示的运算子类型进行运算
   // LOGIC
-  logicout := MuxLookup(
-    aluop_i,
-    ZERO_WORD,
+  when(reset.asBool === RST_ENABLE) {
+    logicout := ZERO_WORD
+  }.otherwise {
+    logicout := MuxLookup(
+      aluop_i,
+      ZERO_WORD,
     // @formatter:off
     Seq(
       EXE_OR_OP  -> (reg1_i | reg2_i),
@@ -156,18 +164,23 @@ class Execute extends Module {
       EXE_XOR_OP -> (reg1_i ^ reg2_i)
     )
     // @formatter:on
-  )
+    )
+  }
 
   // SHIFT
-  shiftres := MuxLookup(
-    aluop_i,
-    ZERO_WORD,
-    Seq(
-      EXE_SLL_OP -> (reg2_i << reg1_i(4, 0)),
-      EXE_SRL_OP -> (reg2_i >> reg1_i(4, 0)),
-      EXE_SRA_OP -> ((reg2_i.asSInt >> reg1_i(4, 0)).asUInt)
+  when(reset.asBool === RST_ENABLE) {
+    shiftres := ZERO_WORD
+  }.otherwise {
+    shiftres := MuxLookup(
+      aluop_i,
+      ZERO_WORD,
+      Seq(
+        EXE_SLL_OP -> (reg2_i << reg1_i(4, 0)),
+        EXE_SRL_OP -> (reg2_i >> reg1_i(4, 0)),
+        EXE_SRA_OP -> ((reg2_i.asSInt >> reg1_i(4, 0)).asUInt)
+      )
     )
-  )
+  }
 
   // 第二个操作数
   reg2_mux := Mux(
@@ -193,6 +206,9 @@ class Execute extends Module {
   // 对操作数1取反
   reg1_not := ~reg1_i
 
+  when(reset.asBool === RST_ENABLE) {
+    arithmeticres := ZERO_WORD
+  }.otherwise {
   // @formatter:off
   arithmeticres := 
       Mux(aluop_i === EXE_SLT_OP || aluop_i === EXE_SLTU_OP, 
@@ -212,6 +228,7 @@ class Execute extends Module {
       )
     )
   // @formatter:on
+  }
 
   // 被乘数
   opdata1_mult := MuxCase(
@@ -235,7 +252,9 @@ class Execute extends Module {
   hilo_temp := opdata1_mult * opdata2_mult
 
   // 对乘法结果修正(A*B）补=A补 * B补
-  when(
+  when(reset.asBool === RST_ENABLE) {
+    mulres := ZERO_WORD
+  }.elsewhen(
     (aluop_i === EXE_MULT_OP) ||
       (aluop_i === EXE_MUL_OP) ||
       (aluop_i === EXE_MADD_OP) ||
@@ -251,7 +270,10 @@ class Execute extends Module {
   }
 
   // 得到最新的HI、LO寄存器的值，此处要解决指令数据相关问题
-  when(mem_whilo_i === WRITE_ENABLE) {
+  when(reset.asBool === RST_ENABLE) {
+    HI := ZERO_WORD
+    LO := ZERO_WORD
+  }.elsewhen(mem_whilo_i === WRITE_ENABLE) {
     HI := mem_hi_i
     LO := mem_lo_i
   }.elsewhen(wb_whilo_i === WRITE_ENABLE) {
@@ -266,117 +288,135 @@ class Execute extends Module {
 
   // MADD、MADDU、MSUB、MSUBU指令
   // default
-  hilo_temp_o := ZERO_WORD
-  cnt := 0.U
-  stallreq_for_madd_msub := NOT_STOP
-  switch(aluop_i) {
-    is(EXE_MADD_OP, EXE_MADDU_OP) {
-      when(cnt_i === 0.U) {
-        hilo_temp_o := mulres
-        cnt := 1.U
-        stallreq_for_madd_msub := STOP
-        hilo_temp1 := ZERO_WORD
-      }.elsewhen(cnt_i === 1.U) {
-        hilo_temp_o := ZERO_WORD
-        cnt := 2.U
-        hilo_temp1 := hilo_temp_i + Cat(HI, LO)
-        stallreq_for_madd_msub := NOT_STOP
-      }
-    }
-    is(EXE_MSUB_OP, EXE_MSUBU_OP) {
-      when(cnt_i === 0.U) {
-        hilo_temp_o := ~mulres + 1.U
-        cnt := 1.U
-        stallreq_for_madd_msub := STOP
-      }
-        .elsewhen(cnt_i === 1.U) {
+  when(reset.asBool === RST_ENABLE) {
+    hilo_temp_o := ZERO_WORD
+    cnt := 0.U
+    stallreq_for_madd_msub := NOT_STOP
+  }.otherwise {
+    // default
+    hilo_temp_o := ZERO_WORD
+    cnt := 0.U
+    stallreq_for_madd_msub := NOT_STOP
+    switch(aluop_i) {
+      is(EXE_MADD_OP, EXE_MADDU_OP) {
+        when(cnt_i === 0.U) {
+          hilo_temp_o := mulres
+          cnt := 1.U
+          stallreq_for_madd_msub := STOP
+          hilo_temp1 := ZERO_WORD
+        }.elsewhen(cnt_i === 1.U) {
           hilo_temp_o := ZERO_WORD
           cnt := 2.U
           hilo_temp1 := hilo_temp_i + Cat(HI, LO)
           stallreq_for_madd_msub := NOT_STOP
         }
+      }
+      is(EXE_MSUB_OP, EXE_MSUBU_OP) {
+        when(cnt_i === 0.U) {
+          hilo_temp_o := ~mulres + 1.U
+          cnt := 1.U
+          stallreq_for_madd_msub := STOP
+        }.elsewhen(cnt_i === 1.U) {
+          hilo_temp_o := ZERO_WORD
+          cnt := 2.U
+          hilo_temp1 := hilo_temp_i + Cat(HI, LO)
+          stallreq_for_madd_msub := NOT_STOP
+        }
+      }
     }
   }
 
   // DIV、DIVU指令
-  stallreq_for_div := NOT_STOP
-  div_opdata1 := ZERO_WORD
-  div_opdata2 := ZERO_WORD
-  div_start := DIV_STOP
-  signed_div := NOT_SIGNED
-  switch(aluop_i) {
-    is(EXE_DIV_OP) {
-      when(div_ready_i === DIV_RESULT_NOT_READY) {
-        div_opdata1 := reg1_i
-        div_opdata2 := reg2_i
-        div_start := DIV_START
-        signed_div := SIGNED
-        stallreq_for_div := STOP
-      }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-        div_opdata1 := reg1_i
-        div_opdata2 := reg2_i
-        div_start := DIV_STOP
-        signed_div := SIGNED
-        stallreq_for_div := NOT_STOP
-      }.otherwise {
-        div_opdata1 := ZERO_WORD
-        div_opdata2 := ZERO_WORD
-        div_start := DIV_STOP
-        signed_div := NOT_SIGNED
-        stallreq_for_div := NOT_STOP
+  when(reset.asBool === RST_ENABLE) {
+    stallreq_for_div := NOT_STOP
+    div_opdata1 := ZERO_WORD
+    div_opdata2 := ZERO_WORD
+    div_start := DIV_STOP
+    signed_div := NOT_SIGNED
+  }.otherwise {
+    stallreq_for_div := NOT_STOP
+    div_opdata1 := ZERO_WORD
+    div_opdata2 := ZERO_WORD
+    div_start := DIV_STOP
+    signed_div := NOT_SIGNED
+    switch(aluop_i) {
+      is(EXE_DIV_OP) {
+        when(div_ready_i === DIV_RESULT_NOT_READY) {
+          div_opdata1 := reg1_i
+          div_opdata2 := reg2_i
+          div_start := DIV_START
+          signed_div := SIGNED
+          stallreq_for_div := STOP
+        }.elsewhen(div_ready_i === DIV_RESULT_READY) {
+          div_opdata1 := reg1_i
+          div_opdata2 := reg2_i
+          div_start := DIV_STOP
+          signed_div := SIGNED
+          stallreq_for_div := NOT_STOP
+        }.otherwise {
+          div_opdata1 := ZERO_WORD
+          div_opdata2 := ZERO_WORD
+          div_start := DIV_STOP
+          signed_div := NOT_SIGNED
+          stallreq_for_div := NOT_STOP
+        }
       }
-    }
-    is(EXE_DIVU_OP) {
-      when(div_ready_i === DIV_RESULT_NOT_READY) {
-        div_opdata1 := reg1_i
-        div_opdata2 := reg2_i
-        div_start := DIV_START
-        signed_div := NOT_SIGNED
-        stallreq_for_div := STOP
-      }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-        div_opdata1 := reg1_i
-        div_opdata2 := reg2_i
-        div_start := DIV_STOP
-        signed_div := NOT_SIGNED
-        stallreq_for_div := NOT_STOP
-      }.otherwise {
-        div_opdata1 := ZERO_WORD
-        div_opdata2 := ZERO_WORD
-        div_start := DIV_STOP
-        signed_div := NOT_SIGNED
-        stallreq_for_div := NOT_STOP
+      is(EXE_DIVU_OP) {
+        when(div_ready_i === DIV_RESULT_NOT_READY) {
+          div_opdata1 := reg1_i
+          div_opdata2 := reg2_i
+          div_start := DIV_START
+          signed_div := NOT_SIGNED
+          stallreq_for_div := STOP
+        }.elsewhen(div_ready_i === DIV_RESULT_READY) {
+          div_opdata1 := reg1_i
+          div_opdata2 := reg2_i
+          div_start := DIV_STOP
+          signed_div := NOT_SIGNED
+          stallreq_for_div := NOT_STOP
+        }.otherwise {
+          div_opdata1 := ZERO_WORD
+          div_opdata2 := ZERO_WORD
+          div_start := DIV_STOP
+          signed_div := NOT_SIGNED
+          stallreq_for_div := NOT_STOP
+        }
       }
     }
   }
 
   // MFHI、MFLO、MOVN、MOVZ指令
-  moveres := ZERO_WORD
-  switch(aluop_i) {
-    is(EXE_MFHI_OP) {
-      moveres := HI
-    }
-    is(EXE_MFLO_OP) {
-      moveres := LO
-    }
-    is(EXE_MOVZ_OP) {
-      moveres := reg1_i
-    }
-    is(EXE_MOVN_OP) {
-      moveres := reg1_i
-    }
-    is(EXE_MFC0_OP) {
-      cp0_read_addr := inst_i(15, 11)
-      moveres := io.fromCP0.cp0_data
-      when(
-        io.fromMemory.cp0_we === WRITE_ENABLE &&
-          io.fromMemory.cp0_write_addr === inst_i(15, 11)
-      ) {
-        moveres := io.fromMemory.cp0_data
-      }.elsewhen(
-        io.fromWriteBackStage.cp0_we === WRITE_ENABLE &&
-          io.fromWriteBackStage.cp0_write_addr === inst_i(15, 11)
-      ) {
-        moveres := io.fromWriteBackStage.cp0_data
+  when(reset.asBool === RST_ENABLE) {
+    moveres := ZERO_WORD
+  }.otherwise {
+    moveres := ZERO_WORD
+    switch(aluop_i) {
+      is(EXE_MFHI_OP) {
+        moveres := HI
+      }
+      is(EXE_MFLO_OP) {
+        moveres := LO
+      }
+      is(EXE_MOVZ_OP) {
+        moveres := reg1_i
+      }
+      is(EXE_MOVN_OP) {
+        moveres := reg1_i
+      }
+      is(EXE_MFC0_OP) {
+        cp0_read_addr := inst_i(15, 11)
+        moveres := io.fromCP0.cp0_data
+        when(
+          io.fromMemory.cp0_we === WRITE_ENABLE &&
+            io.fromMemory.cp0_write_addr === inst_i(15, 11)
+        ) {
+          moveres := io.fromMemory.cp0_data
+        }.elsewhen(
+          io.fromWriteBackStage.cp0_we === WRITE_ENABLE &&
+            io.fromWriteBackStage.cp0_write_addr === inst_i(15, 11)
+        ) {
+          moveres := io.fromWriteBackStage.cp0_data
+        }
       }
     }
   }
@@ -401,7 +441,11 @@ class Execute extends Module {
   }
 
   // MTHI和MTLO指令 乘法运算结果保存
-  when((aluop_i === EXE_MULT_OP) || (aluop_i === EXE_MULTU_OP)) {
+  when(reset.asBool === RST_ENABLE) {
+    whilo := WRITE_DISABLE
+    hi := ZERO_WORD
+    lo := ZERO_WORD
+  }.elsewhen((aluop_i === EXE_MULT_OP) || (aluop_i === EXE_MULTU_OP)) {
     whilo := WRITE_ENABLE
     hi := mulres(63, 32)
     lo := mulres(31, 0)
@@ -431,7 +475,11 @@ class Execute extends Module {
     lo := ZERO_WORD
   }
 
-  when(aluop_i === EXE_MTC0_OP) {
+  when(reset.asBool === RST_ENABLE) {
+    cp0_write_addr := 0.U
+    cp0_we := WRITE_DISABLE
+    cp0_data := ZERO_WORD
+  }.elsewhen(aluop_i === EXE_MTC0_OP) {
     cp0_write_addr := inst_i(15, 11)
     cp0_we := WRITE_ENABLE
     cp0_data := reg1_i

@@ -16,7 +16,7 @@ class CP0Reg extends Module {
   })
 
   // output
-  val data = RegInit(REG_BUS_INIT)
+  val data = Wire(REG_BUS)
   io.execute.cp0_data := data
   val count = RegInit(REG_BUS_INIT)
   io.out.count := count
@@ -72,27 +72,32 @@ class CP0Reg extends Module {
     }
   }
 
-  switch(io.fromExecute.cp0_read_addr) {
-    is(CP0_REG_COUNT) {
-      data := count
-    }
-    is(CP0_REG_COMPARE) {
-      data := compare
-    }
-    is(CP0_REG_STATUS) {
-      data := status
-    }
-    is(CP0_REG_CAUSE) {
-      data := cause
-    }
-    is(CP0_REG_EPC) {
-      data := epc
-    }
-    is(CP0_REG_PRID) {
-      data := prid
-    }
-    is(CP0_REG_CONFIG) {
-      data := config
+  when(reset.asBool === RST_ENABLE) {
+    data := ZERO_WORD
+  }.otherwise {
+    data := ZERO_WORD // defalut
+    switch(io.fromExecute.cp0_read_addr) {
+      is(CP0_REG_COUNT) {
+        data := count
+      }
+      is(CP0_REG_COMPARE) {
+        data := compare
+      }
+      is(CP0_REG_STATUS) {
+        data := status
+      }
+      is(CP0_REG_CAUSE) {
+        data := cause
+      }
+      is(CP0_REG_EPC) {
+        data := epc
+      }
+      is(CP0_REG_PRID) {
+        data := prid
+      }
+      is(CP0_REG_CONFIG) {
+        data := config
+      }
     }
   }
 }
