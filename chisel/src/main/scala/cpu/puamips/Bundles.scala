@@ -175,6 +175,11 @@ class Memory_CP0 extends Bundle {
   val excepttype = Output(UInt(32.W))
 }
 
+class Memory_Control extends Bundle {
+  val excepttype = Output(UInt(32.W))
+  val cp0_epc = Output(REG_BUS)
+}
+
 // writeBackStage
 class WriteBackStage_LLbitReg extends Bundle {
   val LLbit_value = Output(Bool())
@@ -218,22 +223,36 @@ class WriteBackStage_CP0 extends Bundle {
 // control
 class Control_Fetch extends Bundle {
   val stall = Output(STALL_BUS)
+  val new_pc = Output(REG_BUS)
+  val flush = Output(Bool())
 }
 
 class Control_DecoderStage extends Bundle {
   val stall = Output(STALL_BUS)
+  val flush = Output(Bool())
 }
 
 class Control_ExecuteStage extends Bundle {
   val stall = Output(STALL_BUS)
+  val flush = Output(Bool())
 }
 
 class Control_MemoryStage extends Bundle {
   val stall = Output(STALL_BUS)
+  val flush = Output(Bool())
 }
 
 class Control_WriteBackStage extends Bundle {
   val stall = Output(STALL_BUS)
+  val flush = Output(Bool())
+}
+
+class Control_Divider extends Bundle {
+  val flush = Output(Bool())
+}
+
+class Control_LLbitReg extends Bundle {
+  val flush = Output(Bool())
 }
 
 // instMemory
