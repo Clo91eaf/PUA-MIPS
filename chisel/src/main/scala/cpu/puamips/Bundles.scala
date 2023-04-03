@@ -35,6 +35,8 @@ class Decoder_ExecuteStage extends Bundle {
   val wd = Output(REG_ADDR_BUS)
   val wreg = Output(Bool())
   val next_inst_in_delayslot = Output(Bool())
+  val current_inst_addr = Output(REG_BUS)
+  val excepttype = Output(UInt(32.W))
   val pc = Output(INST_ADDR_BUS)
 }
 
