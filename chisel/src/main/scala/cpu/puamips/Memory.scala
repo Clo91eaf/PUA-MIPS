@@ -312,7 +312,7 @@ class Memory extends Module {
           )
         ),
         EXE_LL_OP -> mem_data_i,
-        EXE_SC_OP -> Mux(!LLbit, ZERO_WORD, io.fromMemoryStage.wdata)
+        EXE_SC_OP -> Mux(LLbit, 1.U, ZERO_WORD)
       )
     ) // wdata
 
