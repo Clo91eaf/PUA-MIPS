@@ -12,22 +12,24 @@ class Control extends Module {
 
     val fetch = new Control_Fetch()
     val decoderStage = new Control_DecoderStage()
+    val decoder = new Control_Decoder()
     val executeStage = new Control_ExecuteStage()
     val memoryStage = new Control_MemoryStage()
     val writeBackStage = new Control_WriteBackStage()
     val llbitReg = new Control_LLbitReg()
     val divider = new Control_Divider()
   })
-  val stall = Wire(STALL_BUS)
+  val stall = RegInit(STALL_BUS_INIT)
   io.fetch.stall := stall
   io.decoderStage.stall := stall
   io.executeStage.stall := stall
   io.memoryStage.stall := stall
   io.writeBackStage.stall := stall
-  val new_pc = Wire(REG_BUS)
+  val new_pc = RegInit(REG_BUS_INIT)
   io.fetch.new_pc := new_pc
-  val flush = Wire(Bool())
+  val flush = RegInit(false.B)
   io.decoderStage.flush := flush
+  io.decoder.flush := flush
   io.divider.flush := flush
   io.executeStage.flush := flush
   io.fetch.flush := flush

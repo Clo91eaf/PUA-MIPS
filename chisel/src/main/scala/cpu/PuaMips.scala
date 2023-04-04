@@ -101,6 +101,7 @@ class PuaMips extends Module {
 
   // control
   control.io.decoderStage   <> decoderStage.io.fromControl
+  control.io.decoder        <> decoder.io.fromControl
   control.io.executeStage   <> executeStage.io.fromControl
   control.io.fetch          <> fetch.io.fromControl
   control.io.memoryStage    <> memoryStage.io.fromControl

@@ -245,6 +245,10 @@ class Control_DecoderStage extends Bundle {
   val flush = Output(Bool())
 }
 
+class Control_Decoder extends Bundle {
+  val flush = Output(Bool())
+}
+
 class Control_ExecuteStage extends Bundle {
   val stall = Output(STALL_BUS)
   val flush = Output(Bool())
