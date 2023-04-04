@@ -75,7 +75,7 @@ class Memory extends Module {
   io.control.excepttype := excepttype
   io.cp0.excepttype := excepttype
   val mem_we = Wire(Bool())
-  io.dataMemory.wen := mem_we & (~(excepttype === ZERO_WORD)) // ?可能有误
+  io.dataMemory.wen := mem_we & ~excepttype.orR() 
   val epc = Wire(REG_BUS)
   io.control.cp0_epc := epc
   val is_in_delayslot = Wire(Bool())
