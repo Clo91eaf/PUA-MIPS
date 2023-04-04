@@ -24,9 +24,9 @@ class Regfile extends Module {
   val wen = Wire(Bool())
   val waddr = Wire(REG_ADDR_BUS)
   val wdata = Wire(REG_BUS)
-  wen := io.fromWriteBackStage.wreg
+  wen := io.fromWriteBackStage.wen
   wdata := io.fromWriteBackStage.wdata
-  waddr := io.fromWriteBackStage.wd
+  waddr := io.fromWriteBackStage.waddr
 
   // output-decoder
   val rdata1 = Wire(REG_BUS)

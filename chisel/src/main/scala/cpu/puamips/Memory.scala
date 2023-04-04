@@ -32,12 +32,12 @@ class Memory extends Module {
   val pc = Wire(REG_BUS)
   pc := io.fromMemoryStage.pc
   io.writeBackStage.pc := pc
-  val wd = Wire(REG_ADDR_BUS)
-  io.decoder.wd := wd
-  io.writeBackStage.wd := wd
-  val wreg = Wire(Bool())
-  io.decoder.wreg := wreg
-  io.writeBackStage.wreg := wreg
+  val waddr = Wire(REG_ADDR_BUS)
+  io.decoder.waddr := waddr
+  io.writeBackStage.waddr := waddr
+  val wen = Wire(Bool())
+  io.decoder.wen := wen
+  io.writeBackStage.wen := wen
   val wdata = Wire(REG_BUS)
   io.decoder.wdata := wdata
   io.writeBackStage.wdata := wdata
@@ -62,12 +62,12 @@ class Memory extends Module {
   io.dataMemory.data := mem_data
   val mem_ce = Wire(Bool())
   io.dataMemory.ce := mem_ce
-  val cp0_we = Wire(Bool())
-  io.writeBackStage.cp0_we := cp0_we
-  io.execute.cp0_we := cp0_we
-  val cp0_write_addr = Wire(CP0_ADDR_BUS)
-  io.writeBackStage.cp0_write_addr := cp0_write_addr
-  io.execute.cp0_write_addr := cp0_write_addr
+  val cp0_wen = Wire(Bool())
+  io.writeBackStage.cp0_wen := cp0_wen
+  io.execute.cp0_wen := cp0_wen
+  val cp0_waddr = Wire(CP0_ADDR_BUS)
+  io.writeBackStage.cp0_waddr := cp0_waddr
+  io.execute.cp0_waddr := cp0_waddr
   val cp0_data = Wire(REG_BUS)
   io.writeBackStage.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
@@ -106,8 +106,8 @@ class Memory extends Module {
   }
 
   when(reset.asBool === RST_ENABLE) {
-    wd := NOP_REG_ADDR
-    wreg := WRITE_DISABLE
+    waddr := NOP_REG_ADDR
+    wen := WRITE_DISABLE
     wdata := ZERO_WORD
     hi := ZERO_WORD
     lo := ZERO_WORD
@@ -119,12 +119,12 @@ class Memory extends Module {
     mem_ce := CHIP_DISABLE
     LLbit_wen := false.B
     LLbit_value := false.B
-    cp0_we := WRITE_DISABLE
-    cp0_write_addr := "b00000".U
+    cp0_wen := WRITE_DISABLE
+    cp0_waddr := "b00000".U
     cp0_data := ZERO_WORD
   }.otherwise {
-    wd := io.fromMemoryStage.wd
-    wreg := io.fromMemoryStage.wreg
+    waddr := io.fromMemoryStage.waddr
+    wen := io.fromMemoryStage.wen
     wdata := io.fromMemoryStage.wdata
     hi := io.fromMemoryStage.hi
     lo := io.fromMemoryStage.lo
@@ -135,8 +135,8 @@ class Memory extends Module {
     mem_ce := CHIP_DISABLE
     LLbit_wen := false.B
     LLbit_value := false.B
-    cp0_we := io.fromMemoryStage.cp0_we
-    cp0_write_addr := io.fromMemoryStage.cp0_write_addr
+    cp0_wen := io.fromMemoryStage.cp0_wen
+    cp0_waddr := io.fromMemoryStage.cp0_waddr
     cp0_data := io.fromMemoryStage.cp0_data
 
     mem_we := MuxLookup(
@@ -402,8 +402,8 @@ class Memory extends Module {
   when(reset.asBool === RST_ENABLE) {
     cp0_status := ZERO_WORD
   }.elsewhen(
-    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_STATUS)
+    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_STATUS)
   ) {
     cp0_status := io.fromWriteBackStage.cp0_data
   }.otherwise {
@@ -413,8 +413,8 @@ class Memory extends Module {
   when(reset.asBool === RST_ENABLE) {
     cp0_epc := ZERO_WORD
   }.elsewhen(
-    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_EPC)
+    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_EPC)
   ) {
     cp0_epc := io.fromWriteBackStage.cp0_data
   }.otherwise {
@@ -424,8 +424,8 @@ class Memory extends Module {
   when(reset.asBool === RST_ENABLE) {
     cp0_cause := ZERO_WORD
   }.elsewhen(
-    (io.fromWriteBackStage.cp0_we === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_write_addr === CP0_REG_CAUSE)
+    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_CAUSE)
   ) {
     cp0_cause := Cat(
       io.fromCP0.cause(31, 24),

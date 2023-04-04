@@ -31,9 +31,9 @@ class Execute extends Module {
   val reg2_i = Wire(REG_BUS)
   reg2_i := io.fromExecuteStage.reg2
   val wd_i = Wire(REG_ADDR_BUS)
-  wd_i := io.fromExecuteStage.wd
+  wd_i := io.fromExecuteStage.waddr
   val wreg_i = Wire(Bool())
-  wreg_i := io.fromExecuteStage.wreg
+  wreg_i := io.fromExecuteStage.wen
   val inst_i = Wire(REG_BUS)
   inst_i := io.fromExecuteStage.inst
   val hi_i = Wire(REG_BUS)
@@ -69,12 +69,12 @@ class Execute extends Module {
   val pc = Wire(REG_BUS)
   pc := io.fromExecuteStage.pc
   io.memoryStage.pc := pc
-  val wd = Wire(REG_ADDR_BUS)
-  io.decoder.wd := wd
-  io.memoryStage.wd := wd
-  val wreg = Wire(Bool())
-  io.decoder.wreg := wreg
-  io.memoryStage.wreg := wreg
+  val waddr = Wire(REG_ADDR_BUS)
+  io.decoder.waddr := waddr
+  io.memoryStage.waddr := waddr
+  val wen = Wire(Bool())
+  io.decoder.wen := wen
+  io.memoryStage.wen := wen
   val wdata = Wire(REG_BUS)
   io.decoder.wdata := wdata
   io.memoryStage.wdata := wdata
@@ -105,12 +105,12 @@ class Execute extends Module {
   io.memoryStage.reg2 := reg2
   val stallreq = Wire(Bool())
   io.control.stallreq := stallreq
-  val cp0_read_addr = Wire(CP0_ADDR_BUS)
-  io.cp0.cp0_read_addr := cp0_read_addr
-  val cp0_we = Wire(Bool())
-  io.memoryStage.cp0_we := cp0_we
-  val cp0_write_addr = Wire(CP0_ADDR_BUS)
-  io.memoryStage.cp0_write_addr := cp0_write_addr
+  val cp0_raddr = Wire(CP0_ADDR_BUS)
+  io.cp0.cp0_raddr := cp0_raddr
+  val cp0_wen = Wire(Bool())
+  io.memoryStage.cp0_wen := cp0_wen
+  val cp0_waddr = Wire(CP0_ADDR_BUS)
+  io.memoryStage.cp0_waddr := cp0_waddr
   val cp0_data = Wire(REG_BUS)
   io.memoryStage.cp0_data := cp0_data
   val current_inst_addr = Wire(REG_BUS)
@@ -144,7 +144,7 @@ class Execute extends Module {
   val ovassert = Wire(Bool())
 
   // liphen
-  cp0_read_addr := ZERO_WORD
+  cp0_raddr := ZERO_WORD
   hilo_temp1 := ZERO_WORD
   //
 
@@ -454,16 +454,16 @@ class Execute extends Module {
         moveres := reg1_i
       }
       is(EXE_MFC0_OP) {
-        cp0_read_addr := inst_i(15, 11)
+        cp0_raddr := inst_i(15, 11)
         moveres := io.fromCP0.cp0_data
         when(
-          io.fromMemory.cp0_we === WRITE_ENABLE &&
-            io.fromMemory.cp0_write_addr === inst_i(15, 11)
+          io.fromMemory.cp0_wen === WRITE_ENABLE &&
+            io.fromMemory.cp0_waddr === inst_i(15, 11)
         ) {
           moveres := io.fromMemory.cp0_data
         }.elsewhen(
-          io.fromWriteBackStage.cp0_we === WRITE_ENABLE &&
-            io.fromWriteBackStage.cp0_write_addr === inst_i(15, 11)
+          io.fromWriteBackStage.cp0_wen === WRITE_ENABLE &&
+            io.fromWriteBackStage.cp0_waddr === inst_i(15, 11)
         ) {
           moveres := io.fromWriteBackStage.cp0_data
         }
@@ -472,14 +472,14 @@ class Execute extends Module {
   }
 
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
-  wd := wd_i
+  waddr := wd_i
   when(
     ((aluop_i === EXE_ADD_OP) || (aluop_i === EXE_ADDI_OP) || (aluop_i === EXE_SUB_OP)) && (ov_sum === 1.U)
   ) {
-    wreg := WRITE_DISABLE
+    wen := WRITE_DISABLE
     ovassert := true.B
   }.otherwise {
-    wreg := wreg_i
+    wen := wreg_i
     ovassert := false.B
   }
   wdata := ZERO_WORD // default
@@ -528,16 +528,16 @@ class Execute extends Module {
   }
 
   when(reset.asBool === RST_ENABLE) {
-    cp0_write_addr := 0.U
-    cp0_we := WRITE_DISABLE
+    cp0_waddr := 0.U
+    cp0_wen := WRITE_DISABLE
     cp0_data := ZERO_WORD
   }.elsewhen(aluop_i === EXE_MTC0_OP) {
-    cp0_write_addr := inst_i(15, 11)
-    cp0_we := WRITE_ENABLE
+    cp0_waddr := inst_i(15, 11)
+    cp0_wen := WRITE_ENABLE
     cp0_data := reg1_i
   }.otherwise {
-    cp0_write_addr := 0.U
-    cp0_we := WRITE_DISABLE
+    cp0_waddr := 0.U
+    cp0_wen := WRITE_DISABLE
     cp0_data := ZERO_WORD
   }
 

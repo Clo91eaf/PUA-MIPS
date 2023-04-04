@@ -20,10 +20,10 @@ class MemoryStage extends Module {
   // output
   val pc = RegInit(REG_BUS_INIT)
   io.memory.pc := pc
-  val wd = RegInit(REG_ADDR_BUS_INIT)
-  io.memory.wd := wd
-  val wreg = RegInit(WRITE_DISABLE)
-  io.memory.wreg := wreg
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  io.memory.waddr := waddr
+  val wen = RegInit(WRITE_DISABLE)
+  io.memory.wen := wen
   val wdata = RegInit(REG_BUS_INIT)
   io.memory.wdata := wdata
   val hi = RegInit(REG_BUS_INIT)
@@ -42,10 +42,10 @@ class MemoryStage extends Module {
   io.execute.hilo := hilo
   val cnt = RegInit(CNT_BUS_INIT)
   io.execute.cnt := cnt
-  val cp0_we = RegInit(WRITE_DISABLE)
-  io.memory.cp0_we := cp0_we
-  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
-  io.memory.cp0_write_addr := cp0_write_addr
+  val cp0_wen = RegInit(WRITE_DISABLE)
+  io.memory.cp0_wen := cp0_wen
+  val cp0_waddr = RegInit(CP0_ADDR_BUS_INIT)
+  io.memory.cp0_waddr := cp0_waddr
   val cp0_data = RegInit(REG_BUS_INIT)
   io.memory.cp0_data := cp0_data
   val current_inst_addr = RegInit(REG_BUS_INIT)
@@ -56,8 +56,8 @@ class MemoryStage extends Module {
   io.memory.excepttype := excepttype
 
   when(flush === true.B) {
-    wd := NOP_REG_ADDR
-    wreg := WRITE_DISABLE
+    waddr := NOP_REG_ADDR
+    wen := WRITE_DISABLE
     wdata := ZERO_WORD
     hi := ZERO_WORD
     lo := ZERO_WORD
@@ -65,8 +65,8 @@ class MemoryStage extends Module {
     aluop := EXE_NOP_OP
     addr := ZERO_WORD
     reg2 := ZERO_WORD
-    cp0_we := WRITE_DISABLE
-    cp0_write_addr := "b00000".U
+    cp0_wen := WRITE_DISABLE
+    cp0_waddr := "b00000".U
     cp0_data := ZERO_WORD
     excepttype := ZERO_WORD
     is_in_delayslot := NOT_IN_DELAY_SLOT
@@ -75,8 +75,8 @@ class MemoryStage extends Module {
     cnt := "b00".U
     pc := ZERO_WORD
   }.elsewhen(stall(3) === STOP && stall(4) === NOT_STOP) {
-    wd := NOP_REG_ADDR
-    wreg := WRITE_DISABLE
+    waddr := NOP_REG_ADDR
+    wen := WRITE_DISABLE
     wdata := ZERO_WORD
     hi := ZERO_WORD
     lo := ZERO_WORD
@@ -86,16 +86,16 @@ class MemoryStage extends Module {
     aluop := EXE_NOP_OP
     addr := ZERO_WORD
     reg2 := ZERO_WORD
-    cp0_we := WRITE_DISABLE
-    cp0_write_addr := 0.U
+    cp0_wen := WRITE_DISABLE
+    cp0_waddr := 0.U
     cp0_data := ZERO_WORD
     excepttype := ZERO_WORD
     is_in_delayslot := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
     pc := pc
   }.elsewhen(stall(3) === NOT_STOP) {
-    wd := io.fromExecute.wd
-    wreg := io.fromExecute.wreg
+    waddr := io.fromExecute.waddr
+    wen := io.fromExecute.wen
     wdata := io.fromExecute.wdata
     hi := io.fromExecute.hi
     lo := io.fromExecute.lo
@@ -105,8 +105,8 @@ class MemoryStage extends Module {
     aluop := io.fromExecute.aluop
     addr := io.fromExecute.addr
     reg2 := io.fromExecute.reg2
-    cp0_we := io.fromExecute.cp0_we
-    cp0_write_addr := io.fromExecute.cp0_write_addr
+    cp0_wen := io.fromExecute.cp0_wen
+    cp0_waddr := io.fromExecute.cp0_waddr
     cp0_data := io.fromExecute.cp0_data
     excepttype := io.fromExecute.excepttype
     is_in_delayslot := io.fromExecute.is_in_delayslot

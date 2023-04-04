@@ -32,8 +32,8 @@ class Decoder extends Module {
   pc_i := io.fromDecoderStage.pc
   inst_i := io.fromInstMemory.inst
   aluop_i := io.fromExecute.aluop
-  wd_i := io.fromExecute.wd
-  wd_i := io.fromMemory.wd
+  wd_i := io.fromExecute.waddr
+  wd_i := io.fromMemory.waddr
   reg1_data_i := io.fromRegfile.reg1_data
   reg2_data_i := io.fromRegfile.reg2_data
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
@@ -56,10 +56,10 @@ class Decoder extends Module {
   io.executeStage.reg1 := reg1
   val reg2 = Wire(REG_BUS)
   io.executeStage.reg2 := reg2
-  val wd = Wire(REG_ADDR_BUS)
-  io.executeStage.wd := wd
-  val wreg = Wire(Bool())
-  io.executeStage.wreg := wreg
+  val waddr = Wire(REG_ADDR_BUS)
+  io.executeStage.waddr := waddr
+  val wen = Wire(Bool())
+  io.executeStage.wen := wen
   io.executeStage.inst := inst_i
   val next_inst_in_delayslot = Wire(Bool())
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
@@ -152,8 +152,8 @@ class Decoder extends Module {
   when(reset.asBool === RST_ENABLE) {
     aluop := EXE_NOP_OP
     alusel := EXE_RES_NOP
-    wd := rd // inst_i(15, 11)
-    wreg := WRITE_DISABLE
+    waddr := rd // inst_i(15, 11)
+    wen := WRITE_DISABLE
     instValid := INST_INVALID
     reg1_read := READ_DISABLE
     reg2_read := READ_DISABLE
@@ -170,8 +170,8 @@ class Decoder extends Module {
 
   aluop := EXE_NOP_OP
   alusel := EXE_RES_NOP
-  wd := rd // inst_i(15, 11)
-  wreg := WRITE_DISABLE
+  waddr := rd // inst_i(15, 11)
+  wen := WRITE_DISABLE
   instValid := INST_INVALID
   reg1_read := READ_DISABLE
   reg2_read := READ_DISABLE
@@ -195,7 +195,7 @@ class Decoder extends Module {
     inst_i,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   instValid  | reg1_read     | reg2_read     | alusel       | aluop      | wreg           | wd     | immType */
+    Array(         /*   instValid  | reg1_read     | reg2_read     | alusel       | aluop      | wen           | waddr     | immType */
       // NOP
       NOP       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作
@@ -355,7 +355,7 @@ class Decoder extends Module {
     )
   )
 
-  wd := MuxLookup(
+  waddr := MuxLookup(
     wraType,
     "b11111".U(5.W), // 取"b11111", 即31号寄存器
     Seq(
@@ -366,8 +366,8 @@ class Decoder extends Module {
 
   aluop := csOpType
   alusel := csInstType
-  wreg := csWReg
-  wreg := MuxLookup(
+  wen := csWReg
+  wen := MuxLookup(
     aluop,
     csWReg, // wreg默认为查找表中的结果
     Seq(
@@ -449,15 +449,15 @@ class Decoder extends Module {
   stallreq_for_reg1_loadrelate := NOT_STOP
   when(reset.asBool === RST_ENABLE) {
     reg1 := ZERO_WORD
-  }.elsewhen(pre_inst_is_load && io.fromExecute.wd === reg1_addr && reg1_read) {
+  }.elsewhen(pre_inst_is_load && io.fromExecute.waddr === reg1_addr && reg1_read) {
     stallreq_for_reg1_loadrelate := STOP
     reg1 := ZERO_WORD // liphen
   }.elsewhen(
-    reg1_read && io.fromExecute.wreg && io.fromExecute.wd === reg1_addr
+    reg1_read && io.fromExecute.wen && io.fromExecute.waddr === reg1_addr
   ) {
     reg1 := io.fromExecute.wdata
   }.elsewhen(
-    reg1_read && io.fromMemory.wreg && io.fromMemory.wd === reg1_addr
+    reg1_read && io.fromMemory.wen && io.fromMemory.waddr === reg1_addr
   ) {
     reg1 := io.fromMemory.wdata
   }.elsewhen(reg1_read) {
@@ -471,15 +471,15 @@ class Decoder extends Module {
   stallreq_for_reg2_loadrelate := NOT_STOP
   when(reset.asBool === RST_ENABLE) {
     reg2 := ZERO_WORD
-  }.elsewhen(pre_inst_is_load && io.fromExecute.wd === reg2_addr && reg2_read) {
+  }.elsewhen(pre_inst_is_load && io.fromExecute.waddr === reg2_addr && reg2_read) {
     stallreq_for_reg2_loadrelate := STOP
     reg2 := ZERO_WORD // liphen
   }.elsewhen(
-    (reg2_read) && (io.fromExecute.wreg) && (io.fromExecute.wd === reg2_addr)
+    (reg2_read) && (io.fromExecute.wen) && (io.fromExecute.waddr === reg2_addr)
   ) {
     reg2 := io.fromExecute.wdata
   }.elsewhen(
-    (reg2_read) && (io.fromMemory.wreg) && (io.fromMemory.wd === reg2_addr)
+    (reg2_read) && (io.fromMemory.wen) && (io.fromMemory.waddr === reg2_addr)
   ) {
     reg2 := io.fromMemory.wdata
   }.elsewhen(reg2_read) {

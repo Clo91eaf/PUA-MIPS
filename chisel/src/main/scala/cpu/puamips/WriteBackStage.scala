@@ -23,10 +23,10 @@ class WriteBackStage extends Module {
 
   // output
   val pc = RegInit(REG_BUS_INIT)
-  val wd = RegInit(REG_ADDR_BUS_INIT)
-  io.regFile.wd := wd
-  val wreg = RegInit(WRITE_DISABLE)
-  io.regFile.wreg := wreg
+  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  io.regFile.waddr := waddr
+  val wen = RegInit(WRITE_DISABLE)
+  io.regFile.wen := wen
   val wdata = RegInit(REG_BUS_INIT)
   io.regFile.wdata := wdata
   val hi = RegInit(REG_BUS_INIT)
@@ -44,14 +44,14 @@ class WriteBackStage extends Module {
   val LLbit_value = RegInit(false.B)
   io.llbitReg.LLbit_value := LLbit_value
   io.memory.LLbit_value := LLbit_value
-  val cp0_we = RegInit(WRITE_DISABLE)
-  io.cp0.cp0_we := cp0_we
-  io.execute.cp0_we := cp0_we
-  io.memory.cp0_we := cp0_we
-  val cp0_write_addr = RegInit(CP0_ADDR_BUS_INIT)
-  io.cp0.cp0_write_addr := cp0_write_addr
-  io.execute.cp0_write_addr := cp0_write_addr
-  io.memory.cp0_write_addr := cp0_write_addr
+  val cp0_wen = RegInit(WRITE_DISABLE)
+  io.cp0.cp0_wen := cp0_wen
+  io.execute.cp0_wen := cp0_wen
+  io.memory.cp0_wen := cp0_wen
+  val cp0_waddr = RegInit(CP0_ADDR_BUS_INIT)
+  io.cp0.cp0_waddr := cp0_waddr
+  io.execute.cp0_waddr := cp0_waddr
+  io.memory.cp0_waddr := cp0_waddr
   val cp0_data = RegInit(REG_BUS_INIT)
   io.cp0.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
@@ -59,46 +59,46 @@ class WriteBackStage extends Module {
 
   // output-debug
   io.debug.pc := pc
-  io.debug.waddr := wd
-  io.debug.wen := Fill(4, wreg)
+  io.debug.waddr := waddr
+  io.debug.wen := Fill(4, wen)
   io.debug.wdata := wdata
 
   when(io.fromControl.flush) {
-    wd := NOP_REG_ADDR
-    wreg := WRITE_DISABLE
+    waddr := NOP_REG_ADDR
+    wen := WRITE_DISABLE
     wdata := ZERO_WORD
     hi := ZERO_WORD
     lo := ZERO_WORD
     whilo := WRITE_DISABLE
     LLbit_wen := false.B
     LLbit_value := false.B
-    cp0_we := WRITE_DISABLE
-    cp0_write_addr := "b00000".U
+    cp0_wen := WRITE_DISABLE
+    cp0_waddr := "b00000".U
     cp0_data := ZERO_WORD
   }.elsewhen(stall(4) === STOP && stall(5) === NOT_STOP) {
-    wd := NOP_REG_ADDR
-    wreg := WRITE_DISABLE
+    waddr := NOP_REG_ADDR
+    wen := WRITE_DISABLE
     wdata := ZERO_WORD
     hi := ZERO_WORD
     lo := ZERO_WORD
     whilo := WRITE_DISABLE
     LLbit_wen := false.B
     LLbit_value := false.B
-    cp0_we := WRITE_DISABLE
-    cp0_write_addr := 0.U
+    cp0_wen := WRITE_DISABLE
+    cp0_waddr := 0.U
     cp0_data := ZERO_WORD
     pc := pc
   }.elsewhen(stall(4) === NOT_STOP) {
-    wd := io.fromMemory.wd
-    wreg := io.fromMemory.wreg
+    waddr := io.fromMemory.waddr
+    wen := io.fromMemory.wen
     wdata := io.fromMemory.wdata
     hi := io.fromMemory.hi
     lo := io.fromMemory.lo
     whilo := io.fromMemory.whilo
     LLbit_wen := io.fromMemory.LLbit_wen
     LLbit_value := io.fromMemory.LLbit_value
-    cp0_we := io.fromMemory.cp0_we
-    cp0_write_addr := io.fromMemory.cp0_write_addr
+    cp0_wen := io.fromMemory.cp0_wen
+    cp0_waddr := io.fromMemory.cp0_waddr
     cp0_data := io.fromMemory.cp0_data
     pc := io.fromMemory.pc
   }

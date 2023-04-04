@@ -44,8 +44,8 @@ class CP0Reg extends Module {
     timer_int := INTERRUPT_ASSERT
   }
 
-  when(io.fromWriteBackStage.cp0_we === WRITE_ENABLE) {
-    switch(io.fromWriteBackStage.cp0_write_addr) {
+  when(io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) {
+    switch(io.fromWriteBackStage.cp0_waddr) {
       is(CP0_REG_COUNT) {
         count := io.fromWriteBackStage.cp0_data
       }
@@ -147,7 +147,7 @@ class CP0Reg extends Module {
     data := ZERO_WORD
   }.otherwise {
     data := ZERO_WORD // defalut
-    switch(io.fromExecute.cp0_read_addr) {
+    switch(io.fromExecute.cp0_raddr) {
       is(CP0_REG_COUNT) {
         data := count
       }
