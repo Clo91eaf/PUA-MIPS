@@ -14,6 +14,7 @@ class Decoder extends Module {
     val fromExecute = Flipped(new Execute_Decoder())
     val fromRegfile = Flipped(new RegFile_Decoder())
     val fromMemory = Flipped(new Memory_Decoder())
+    val fromControl = Flipped(new Control_Decoder())
 
     val fetch = new Decoder_Fetch()
     val executeStage = new Decoder_ExecuteStage()
@@ -78,7 +79,7 @@ class Decoder extends Module {
   io.executeStage.current_inst_addr := current_inst_addr
 
   // flush时pc为0，此时不应该读到inst，将inst置为0
-  when(pc_i === ZERO_WORD) {
+  when(io.fromControl.flush === true.B) {
     inst_i := ZERO_WORD
   }
 
@@ -105,7 +106,7 @@ class Decoder extends Module {
   imm16 := inst_i(15, 0)
 
   val imm = Wire(REG_BUS)
-  val instvalid = Wire(Bool())
+  val instValid = Wire(Bool())
   val pc_plus_4 = Wire(REG_BUS)
   val pc_plus_8 = Wire(REG_BUS)
   val imm_sll2_signedext = Wire(REG_BUS)
@@ -137,7 +138,7 @@ class Decoder extends Module {
     "b0".U(19.W),
     excepttype_is_eret,
     "b0".U(2.W),
-    instvalid,
+    instValid,
     excepttype_is_syscall,
     "b0".U(8.W)
   )
@@ -153,7 +154,7 @@ class Decoder extends Module {
     alusel := EXE_RES_NOP
     wd := rd // inst_i(15, 11)
     wreg := WRITE_DISABLE
-    instvalid := INST_INVALID
+    instValid := INST_INVALID
     reg1_read := READ_DISABLE
     reg2_read := READ_DISABLE
     reg1_addr := rs // inst_i(25, 21)
@@ -171,7 +172,7 @@ class Decoder extends Module {
   alusel := EXE_RES_NOP
   wd := rd // inst_i(15, 11)
   wreg := WRITE_DISABLE
-  instvalid := INST_INVALID
+  instValid := INST_INVALID
   reg1_read := READ_DISABLE
   reg2_read := READ_DISABLE
   reg1_addr := rs // inst_i(25, 21)
@@ -194,9 +195,9 @@ class Decoder extends Module {
     inst_i,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   instvalid  | reg1_read     | reg2_read     | alusel       | aluop      | wreg           | wd     | immType */
+    Array(         /*   instValid  | reg1_read     | reg2_read     | alusel       | aluop      | wreg           | wd     | immType */
       // NOP
-      NOP       -> List(INST_INVALID, READ_DISABLE  , READ_DISABLE , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
+      NOP       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作
       OR        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_OR_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       AND       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC, EXE_AND_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -334,7 +335,6 @@ class Decoder extends Module {
     signals
   val csOpType :: (csWReg: Bool) :: csWRType :: csIMMType :: Nil = cs0
 
-  val instValid = Wire(Bool())
   val wraType = Wire(UInt(2.W))
   val immType = Wire(UInt(3.W))
 
