@@ -23,28 +23,28 @@ class Memory extends Module {
   // input-execute
   val aluop = Wire(ALU_OP_BUS)
   aluop := io.fromMemoryStage.aluop
-  val mem_data_i = Wire(REG_BUS)
+  val mem_data_i = Wire(BUS)
   mem_data_i := io.fromDataMemory.data
-  val reg2_i = Wire(REG_BUS)
+  val reg2_i = Wire(BUS)
   reg2_i := io.fromMemoryStage.reg2
 
   // output
-  val pc = Wire(REG_BUS)
+  val pc = Wire(BUS)
   pc := io.fromMemoryStage.pc
   io.writeBackStage.pc := pc
-  val waddr = Wire(REG_ADDR_BUS)
+  val waddr = Wire(ADDR_BUS)
   io.decoder.waddr := waddr
   io.writeBackStage.waddr := waddr
   val wen = Wire(Bool())
   io.decoder.wen := wen
   io.writeBackStage.wen := wen
-  val wdata = Wire(REG_BUS)
+  val wdata = Wire(BUS)
   io.decoder.wdata := wdata
   io.writeBackStage.wdata := wdata
-  val hi = Wire(REG_BUS)
+  val hi = Wire(BUS)
   io.execute.hi := hi
   io.writeBackStage.hi := hi
-  val lo = Wire(REG_BUS)
+  val lo = Wire(BUS)
   io.execute.lo := lo
   io.writeBackStage.lo := lo
   val whilo = Wire(Bool())
@@ -54,11 +54,11 @@ class Memory extends Module {
   io.writeBackStage.LLbit_wen := LLbit_wen
   val LLbit_value = Wire(Bool())
   io.writeBackStage.LLbit_value := LLbit_value
-  val mem_addr = Wire(REG_BUS)
+  val mem_addr = Wire(BUS)
   io.dataMemory.addr := mem_addr
   val mem_sel = Wire(DATA_MEMORY_SEL_BUS)
   io.dataMemory.sel := mem_sel
-  val mem_data = Wire(REG_BUS)
+  val mem_data = Wire(BUS)
   io.dataMemory.data := mem_data
   val mem_ce = Wire(Bool())
   io.dataMemory.ce := mem_ce
@@ -68,7 +68,7 @@ class Memory extends Module {
   val cp0_waddr = Wire(CP0_ADDR_BUS)
   io.writeBackStage.cp0_waddr := cp0_waddr
   io.execute.cp0_waddr := cp0_waddr
-  val cp0_data = Wire(REG_BUS)
+  val cp0_data = Wire(BUS)
   io.writeBackStage.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
   val excepttype = Wire(UInt(32.W))
@@ -76,18 +76,18 @@ class Memory extends Module {
   io.cp0.excepttype := excepttype
   val mem_we = Wire(Bool())
   io.dataMemory.wen := mem_we & ~excepttype.orR() 
-  val epc = Wire(REG_BUS)
+  val epc = Wire(BUS)
   io.control.cp0_epc := epc
   val is_in_delayslot = Wire(Bool())
   io.cp0.is_in_delayslot := is_in_delayslot
-  val current_inst_addr = Wire(REG_BUS)
+  val current_inst_addr = Wire(BUS)
   io.cp0.current_inst_addr := current_inst_addr
 
   val LLbit = Wire(Bool())
-  val zero32 = Wire(REG_BUS)
-  val cp0_status = Wire(REG_BUS)
-  val cp0_cause = Wire(REG_BUS)
-  val cp0_epc = Wire(REG_BUS)
+  val zero32 = Wire(BUS)
+  val cp0_status = Wire(BUS)
+  val cp0_cause = Wire(BUS)
+  val cp0_epc = Wire(BUS)
   zero32 := 0.U(32.W)
 
   is_in_delayslot := io.fromMemoryStage.is_in_delayslot

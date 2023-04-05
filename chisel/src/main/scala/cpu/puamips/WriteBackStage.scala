@@ -22,17 +22,17 @@ class WriteBackStage extends Module {
   stall := io.fromControl.stall
 
   // output
-  val pc = RegInit(REG_BUS_INIT)
-  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val pc = RegInit(BUS_INIT)
+  val waddr = RegInit(ADDR_BUS_INIT)
   io.regFile.waddr := waddr
   val wen = RegInit(WRITE_DISABLE)
   io.regFile.wen := wen
-  val wdata = RegInit(REG_BUS_INIT)
+  val wdata = RegInit(BUS_INIT)
   io.regFile.wdata := wdata
-  val hi = RegInit(REG_BUS_INIT)
+  val hi = RegInit(BUS_INIT)
   io.hilo.hi := hi
   io.execute.hi := hi
-  val lo = RegInit(REG_BUS_INIT)
+  val lo = RegInit(BUS_INIT)
   io.hilo.lo := lo
   io.execute.lo := lo
   val whilo = RegInit(WRITE_DISABLE)
@@ -52,7 +52,7 @@ class WriteBackStage extends Module {
   io.cp0.cp0_waddr := cp0_waddr
   io.execute.cp0_waddr := cp0_waddr
   io.memory.cp0_waddr := cp0_waddr
-  val cp0_data = RegInit(REG_BUS_INIT)
+  val cp0_data = RegInit(BUS_INIT)
   io.cp0.cp0_data := cp0_data
   io.execute.cp0_data := cp0_data
   io.memory.cp0_data := cp0_data

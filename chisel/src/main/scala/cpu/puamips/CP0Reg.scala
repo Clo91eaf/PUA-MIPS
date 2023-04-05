@@ -18,17 +18,17 @@ class CP0Reg extends Module {
   })
 
   // output
-  val data = Wire(REG_BUS)
+  val data = Wire(BUS)
   io.execute.cp0_data := data
-  val count = RegInit(REG_BUS_INIT)
+  val count = RegInit(BUS_INIT)
   io.out.count := count
-  val compare = RegInit(REG_BUS_INIT)
+  val compare = RegInit(BUS_INIT)
   io.out.compare := compare
   val status = RegInit("b00010000000000000000000000000000".U(32.W))
   io.memory.status := status
-  val cause = RegInit(REG_BUS_INIT)
+  val cause = RegInit(BUS_INIT)
   io.memory.cause := cause
-  val epc = RegInit(REG_BUS_INIT)
+  val epc = RegInit(BUS_INIT)
   io.memory.epc := epc
   val config = RegInit("b00000000000000001000000000000000".U(32.W))
   io.out.config := config

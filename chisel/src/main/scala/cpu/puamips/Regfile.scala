@@ -12,9 +12,9 @@ class Regfile extends Module {
   })
   // input-decoder
   val re1 = Wire(Bool())
-  val raddr1 = Wire(REG_ADDR_BUS)
+  val raddr1 = Wire(ADDR_BUS)
   val re2 = Wire(Bool())
-  val raddr2 = Wire(REG_ADDR_BUS)
+  val raddr2 = Wire(ADDR_BUS)
   re1 := io.fromDecoder.reg1_read
   re2 := io.fromDecoder.reg2_read
   raddr1 := io.fromDecoder.reg1_addr
@@ -22,20 +22,20 @@ class Regfile extends Module {
 
   // input-write back
   val wen = Wire(Bool())
-  val waddr = Wire(REG_ADDR_BUS)
-  val wdata = Wire(REG_BUS)
+  val waddr = Wire(ADDR_BUS)
+  val wdata = Wire(BUS)
   wen := io.fromWriteBackStage.wen
   wdata := io.fromWriteBackStage.wdata
   waddr := io.fromWriteBackStage.waddr
 
   // output-decoder
-  val rdata1 = Wire(REG_BUS)
-  val rdata2 = Wire(REG_BUS)
+  val rdata1 = Wire(BUS)
+  val rdata2 = Wire(BUS)
   io.decoder.reg1_data := rdata1
   io.decoder.reg2_data := rdata2
 
   // 定义32个32位寄存器
-  val regs = RegInit(VecInit(Seq.fill(REG_NUM)(REG_BUS_INIT)))
+  val regs = RegInit(VecInit(Seq.fill(REG_NUM)(BUS_INIT)))
 
   when(reset.asBool === RST_DISABLE) {
     when(wen === WRITE_ENABLE && waddr =/= 0.U) {

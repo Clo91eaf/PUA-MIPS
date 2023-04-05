@@ -18,27 +18,27 @@ class MemoryStage extends Module {
   flush := io.fromControl.flush
 
   // output
-  val pc = RegInit(REG_BUS_INIT)
+  val pc = RegInit(BUS_INIT)
   io.memory.pc := pc
-  val waddr = RegInit(REG_ADDR_BUS_INIT)
+  val waddr = RegInit(ADDR_BUS_INIT)
   io.memory.waddr := waddr
   val wen = RegInit(WRITE_DISABLE)
   io.memory.wen := wen
-  val wdata = RegInit(REG_BUS_INIT)
+  val wdata = RegInit(BUS_INIT)
   io.memory.wdata := wdata
-  val hi = RegInit(REG_BUS_INIT)
+  val hi = RegInit(BUS_INIT)
   io.memory.hi := hi
-  val lo = RegInit(REG_BUS_INIT)
+  val lo = RegInit(BUS_INIT)
   io.memory.lo := lo
   val whilo = RegInit(WRITE_DISABLE)
   io.memory.whilo := whilo
   val aluop = RegInit(ALU_OP_BUS_INIT)
   io.memory.aluop := aluop
-  val addr = RegInit(REG_BUS_INIT)
+  val addr = RegInit(BUS_INIT)
   io.memory.addr := addr
-  val reg2 = RegInit(REG_BUS_INIT)
+  val reg2 = RegInit(BUS_INIT)
   io.memory.reg2 := reg2
-  val hilo = RegInit(DOUBLE_REG_BUS_INIT)
+  val hilo = RegInit(DOUBLE_BUS_INIT)
   io.execute.hilo := hilo
   val cnt = RegInit(CNT_BUS_INIT)
   io.execute.cnt := cnt
@@ -46,9 +46,9 @@ class MemoryStage extends Module {
   io.memory.cp0_wen := cp0_wen
   val cp0_waddr = RegInit(CP0_ADDR_BUS_INIT)
   io.memory.cp0_waddr := cp0_waddr
-  val cp0_data = RegInit(REG_BUS_INIT)
+  val cp0_data = RegInit(BUS_INIT)
   io.memory.cp0_data := cp0_data
-  val current_inst_addr = RegInit(REG_BUS_INIT)
+  val current_inst_addr = RegInit(BUS_INIT)
   io.memory.current_inst_addr := current_inst_addr
   val is_in_delayslot = RegInit(NOT_IN_DELAY_SLOT)
   io.memory.is_in_delayslot := is_in_delayslot

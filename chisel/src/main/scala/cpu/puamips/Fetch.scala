@@ -16,7 +16,7 @@ class Fetch extends Module {
   stall := io.fromControl.stall
   val branch_flag = Wire(Bool())
   branch_flag := io.fromDecoder.branch_flag
-  val branch_target_address = Wire(REG_BUS)
+  val branch_target_address = Wire(BUS)
   branch_target_address := io.fromDecoder.branch_target_address
   // output
   val pc = RegInit(PC_INIT)

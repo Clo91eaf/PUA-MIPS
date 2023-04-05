@@ -24,7 +24,7 @@ class Divider extends Module {
   annul_i := io.annul
 
   // output
-  val result = RegInit(DOUBLE_REG_BUS_INIT)
+  val result = RegInit(DOUBLE_BUS_INIT)
   io.execute.result := result
   val ready = RegInit(DIV_RESULT_NOT_READY)
   io.execute.ready := ready

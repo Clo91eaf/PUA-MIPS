@@ -25,7 +25,7 @@ class Control extends Module {
   io.executeStage.stall := stall
   io.memoryStage.stall := stall
   io.writeBackStage.stall := stall
-  val new_pc = RegInit(REG_BUS_INIT)
+  val new_pc = RegInit(BUS_INIT)
   io.fetch.new_pc := new_pc
   val flush = RegInit(false.B)
   io.decoderStage.flush := flush

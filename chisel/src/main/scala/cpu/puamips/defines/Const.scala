@@ -265,17 +265,16 @@ trait Constants {
   val DATA_MEMORY_SEL_BUS_INIT = 0.U(4.W)
 
   // GPR RegFile
-  val REG_ADDR_BUS        = UInt(5.W)
-  val REG_ADDR_BUS_INIT   = 0.U(5.W)
-  val REG_BUS             = UInt(32.W)
-  val REG_BUS_INIT        = 0.U(32.W)
+  val ADDR_BUS        = UInt(5.W)
+  val ADDR_BUS_INIT   = 0.U(5.W)
+  val BUS             = UInt(32.W)
+  val BUS_INIT        = 0.U(32.W)
   val PC_INIT             = "hbfc00000".U(32.W)
   val WEN_BUS             = UInt(4.W)
   val WEN_BUS_INIT        = 0.U(4.W)
   val REG_WIDTH           = 32
-  val WIRE_BUS            = UInt(32.W)
-  val DOUBLE_REG_BUS      = UInt(64.W)
-  val DOUBLE_REG_BUS_INIT = 0.U(64.W)
+  val DOUBLE_BUS      = UInt(64.W)
+  val DOUBLE_BUS_INIT = 0.U(64.W)
   val DOUBLE_REG_WIDTH    = 64
   val REG_NUM             = 32
   val REG_NUM_LOG2        = 5

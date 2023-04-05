@@ -8,26 +8,26 @@ import UInt._
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
-    val fromInstMemory = Flipped(new InstMemory_Decoder())
-    val fromDecoderStage = Flipped(new DecoderStage_Decoder())
-    val fromExecuteStage = Flipped(new ExecuteStage_Decoder())
-    val fromExecute = Flipped(new Execute_Decoder())
-    val fromRegfile = Flipped(new RegFile_Decoder())
-    val fromMemory = Flipped(new Memory_Decoder())
-    val fromControl = Flipped(new Control_Decoder())
+    val  fromInstMemory    =  Flipped(new  InstMemory_Decoder())
+    val  fromDecoderStage  =  Flipped(new  DecoderStage_Decoder())
+    val  fromExecuteStage  =  Flipped(new  ExecuteStage_Decoder())
+    val  fromExecute       =  Flipped(new  Execute_Decoder())
+    val  fromRegfile       =  Flipped(new  RegFile_Decoder())
+    val  fromMemory        =  Flipped(new  Memory_Decoder())
+    val  fromControl       =  Flipped(new  Control_Decoder())
 
-    val fetch = new Decoder_Fetch()
-    val executeStage = new Decoder_ExecuteStage()
-    val regfile = new Decoder_RegFile()
-    val control = new Decoder_Control()
-  })
+    val  fetch         =  new  Decoder_Fetch()
+    val  executeStage  =  new  Decoder_ExecuteStage()
+    val  regfile       =  new  Decoder_RegFile()
+    val  control       =  new  Decoder_Control()
+})                               
   // input
   val pc_i = Wire(INST_ADDR_BUS)
   val inst_i = Wire(INST_BUS)
   val aluop_i = Wire(ALU_OP_BUS)
-  val wd_i = Wire(REG_ADDR_BUS)
-  val reg1_data_i = Wire(REG_BUS)
-  val reg2_data_i = Wire(REG_BUS)
+  val wd_i = Wire(ADDR_BUS)
+  val reg1_data_i = Wire(BUS)
+  val reg2_data_i = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
   pc_i := io.fromDecoderStage.pc
   inst_i := io.fromInstMemory.inst
@@ -44,19 +44,19 @@ class Decoder extends Module {
   io.regfile.reg1_read := reg1_read
   val reg2_read = Wire(Bool())
   io.regfile.reg2_read := reg2_read
-  val reg1_addr = Wire(REG_ADDR_BUS)
+  val reg1_addr = Wire(ADDR_BUS)
   io.regfile.reg1_addr := reg1_addr
-  val reg2_addr = Wire(REG_ADDR_BUS)
+  val reg2_addr = Wire(ADDR_BUS)
   io.regfile.reg2_addr := reg2_addr
   val aluop = Wire(ALU_OP_BUS)
   io.executeStage.aluop := aluop
   val alusel = Wire(ALU_SEL_BUS)
   io.executeStage.alusel := alusel
-  val reg1 = Wire(REG_BUS)
+  val reg1 = Wire(BUS)
   io.executeStage.reg1 := reg1
-  val reg2 = Wire(REG_BUS)
+  val reg2 = Wire(BUS)
   io.executeStage.reg2 := reg2
-  val waddr = Wire(REG_ADDR_BUS)
+  val waddr = Wire(ADDR_BUS)
   io.executeStage.waddr := waddr
   val wen = Wire(Bool())
   io.executeStage.wen := wen
@@ -65,9 +65,9 @@ class Decoder extends Module {
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
   val branch_flag = Wire(Bool())
   io.fetch.branch_flag := branch_flag
-  val branch_target_address = Wire(REG_BUS)
+  val branch_target_address = Wire(BUS)
   io.fetch.branch_target_address := branch_target_address
-  val link_addr = Wire(REG_BUS)
+  val link_addr = Wire(BUS)
   io.executeStage.link_addr := link_addr
   val is_in_delayslot = Wire(Bool())
   io.executeStage.is_in_delayslot := is_in_delayslot
@@ -75,7 +75,7 @@ class Decoder extends Module {
   io.control.stallreq := stallreq
   val excepttype = Wire(UInt(32.W))
   io.executeStage.excepttype := excepttype
-  val current_inst_addr = Wire(REG_BUS)
+  val current_inst_addr = Wire(BUS)
   io.executeStage.current_inst_addr := current_inst_addr
 
   // flush时pc为0，此时不应该读到inst，将inst置为0
@@ -105,11 +105,11 @@ class Decoder extends Module {
   rs := inst_i(25, 21)
   imm16 := inst_i(15, 0)
 
-  val imm = Wire(REG_BUS)
+  val imm = Wire(BUS)
   val instValid = Wire(Bool())
-  val pc_plus_4 = Wire(REG_BUS)
-  val pc_plus_8 = Wire(REG_BUS)
-  val imm_sll2_signedext = Wire(REG_BUS)
+  val pc_plus_4 = Wire(BUS)
+  val pc_plus_8 = Wire(BUS)
+  val imm_sll2_signedext = Wire(BUS)
   val stallreq_for_reg1_loadrelate = Wire(Bool())
   val stallreq_for_reg2_loadrelate = Wire(Bool())
   val pre_inst_is_load = Wire(Bool())

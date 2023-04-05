@@ -10,9 +10,9 @@ class HILO extends Module {
     val execute = new HILO_Execute()
   })
   // output
-  val hi = RegInit(REG_BUS_INIT)
+  val hi = RegInit(BUS_INIT)
   io.execute.hi := hi
-  val lo = RegInit(REG_BUS_INIT)
+  val lo = RegInit(BUS_INIT)
   io.execute.lo := lo
 
   when(io.fromWriteBackStage.whilo === WRITE_ENABLE) {

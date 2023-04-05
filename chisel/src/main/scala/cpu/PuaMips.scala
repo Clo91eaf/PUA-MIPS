@@ -30,7 +30,7 @@ class PuaMips extends Module {
   io.inst_sram.en := fetch.io.instMemory.ce
   io.inst_sram.wen:= WEN_BUS_INIT
   io.inst_sram.addr := fetch.io.instMemory.pc
-  io.inst_sram.wdata := REG_BUS_INIT
+  io.inst_sram.wdata := BUS_INIT
   decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
   io.data_sram.en := memory.io.dataMemory.ce
