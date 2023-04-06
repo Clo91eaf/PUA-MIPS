@@ -20,24 +20,24 @@ class DecoderStage_Decoder extends Bundle {
 
 // decoder
 class Decoder_Fetch extends Bundle {
-  val branch_flag = Output(Bool()) // 是否发生转移
-  val branch_target_address = Output(BUS) // 转移到的目标地址
+  val branch_flag           = Output(Bool()) // 是否发生转移
+  val branch_target_address = Output(BUS)    // 转移到的目标地址
 }
 
 class Decoder_ExecuteStage extends Bundle {
-  val aluop = Output(ALU_OP_BUS)
-  val alusel = Output(ALU_SEL_BUS)
-  val inst = Output(BUS)
-  val is_in_delayslot = Output(Bool())
-  val link_addr = Output(BUS)
-  val reg1 = Output(BUS)
-  val reg2 = Output(BUS)
-  val waddr = Output(ADDR_BUS)
-  val wen = Output(Bool())
+  val aluop                  = Output(ALU_OP_BUS)
+  val alusel                 = Output(ALU_SEL_BUS)
+  val inst                   = Output(BUS)
+  val is_in_delayslot        = Output(Bool())
+  val link_addr              = Output(BUS)
+  val reg1                   = Output(BUS)
+  val reg2                   = Output(BUS)
+  val waddr                  = Output(ADDR_BUS)
+  val wen                    = Output(Bool())
   val next_inst_in_delayslot = Output(Bool())
-  val current_inst_addr = Output(BUS)
-  val excepttype = Output(UInt(32.W))
-  val pc = Output(INST_ADDR_BUS)
+  val current_inst_addr      = Output(BUS)
+  val excepttype             = Output(UInt(32.W))
+  val pc                     = Output(INST_ADDR_BUS)
 }
 
 class Decoder_RegFile extends Bundle {
@@ -57,18 +57,18 @@ class ExecuteStage_Decoder extends Bundle {
 }
 
 class ExecuteStage_Execute extends Bundle {
-  val aluop = Output(ALU_OP_BUS)
-  val alusel = Output(ALU_SEL_BUS)
-  val inst = Output(BUS)
-  val is_in_delayslot = Output(Bool())
-  val link_addr = Output(BUS)
-  val reg1 = Output(BUS)
-  val reg2 = Output(BUS)
-  val waddr = Output(ADDR_BUS)
-  val wen = Output(Bool())
+  val aluop             = Output(ALU_OP_BUS)
+  val alusel            = Output(ALU_SEL_BUS)
+  val inst              = Output(BUS)
+  val is_in_delayslot   = Output(Bool())
+  val link_addr         = Output(BUS)
+  val reg1              = Output(BUS)
+  val reg2              = Output(BUS)
+  val waddr             = Output(ADDR_BUS)
+  val wen               = Output(Bool())
   val current_inst_addr = Output(BUS)
-  val excepttype = Output(UInt(32.W))
-  val pc = Output(INST_ADDR_BUS)
+  val excepttype        = Output(UInt(32.W))
+  val pc                = Output(INST_ADDR_BUS)
 }
 
 // execute
@@ -76,28 +76,28 @@ class Execute_Decoder extends Bundle {
   val aluop = Output(ALU_OP_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
-  val wen = Output(Bool())
+  val wen   = Output(Bool())
 }
 
 class Execute_MemoryStage extends Bundle {
-  val aluop = Output(ALU_OP_BUS)
-  val cnt = Output(CNT_BUS)
-  val hi = Output(BUS)
-  val hilo = Output(DOUBLE_BUS)
-  val lo = Output(BUS)
-  val addr = Output(BUS)
-  val reg2 = Output(BUS)
-  val waddr = Output(ADDR_BUS)
-  val wdata = Output(BUS)
-  val whilo = Output(Bool())
-  val wen = Output(Bool())
-  val cp0_wen = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_data = Output(BUS)
+  val aluop             = Output(ALU_OP_BUS)
+  val cnt               = Output(CNT_BUS)
+  val hi                = Output(BUS)
+  val hilo              = Output(DOUBLE_BUS)
+  val lo                = Output(BUS)
+  val addr              = Output(BUS)
+  val reg2              = Output(BUS)
+  val waddr             = Output(ADDR_BUS)
+  val wdata             = Output(BUS)
+  val whilo             = Output(Bool())
+  val wen               = Output(Bool())
+  val cp0_wen           = Output(Bool())
+  val cp0_waddr         = Output(CP0_ADDR_BUS)
+  val cp0_data          = Output(BUS)
   val current_inst_addr = Output(BUS)
-  val is_in_delayslot = Output(Bool())
-  val excepttype = Output(UInt(32.W))
-  val pc = Output(BUS)
+  val is_in_delayslot   = Output(Bool())
+  val excepttype        = Output(UInt(32.W))
+  val pc                = Output(BUS)
 }
 
 class Execute_Control extends Bundle {
@@ -105,9 +105,9 @@ class Execute_Control extends Bundle {
 }
 
 class Execute_Divider extends Bundle {
-  val opdata1 = Output(BUS)
-  val opdata2 = Output(BUS)
-  val start = Output(Bool())
+  val opdata1    = Output(BUS)
+  val opdata2    = Output(BUS)
+  val start      = Output(Bool())
   val signed_div = Output(Bool())
 }
 
@@ -117,117 +117,117 @@ class Execute_CP0 extends Bundle {
 
 // memoryStage
 class MemoryStage_Execute extends Bundle {
-  val cnt = Output(CNT_BUS)
+  val cnt  = Output(CNT_BUS)
   val hilo = Output(DOUBLE_BUS)
 }
 
 class MemoryStage_Memory extends Bundle {
-  val aluop = Output(ALU_OP_BUS)
-  val hi = Output(BUS)
-  val lo = Output(BUS)
-  val whilo = Output(Bool())
-  val addr = Output(BUS)
-  val reg2 = Output(BUS)
-  val waddr = Output(ADDR_BUS)
-  val wen = Output(Bool())
-  val wdata = Output(BUS)
-  val cp0_wen = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_data = Output(BUS)
+  val aluop             = Output(ALU_OP_BUS)
+  val hi                = Output(BUS)
+  val lo                = Output(BUS)
+  val whilo             = Output(Bool())
+  val addr              = Output(BUS)
+  val reg2              = Output(BUS)
+  val waddr             = Output(ADDR_BUS)
+  val wen               = Output(Bool())
+  val wdata             = Output(BUS)
+  val cp0_wen           = Output(Bool())
+  val cp0_waddr         = Output(CP0_ADDR_BUS)
+  val cp0_data          = Output(BUS)
   val current_inst_addr = Output(BUS)
-  val is_in_delayslot = Output(Bool())
-  val excepttype = Output(UInt(32.W))
-  val pc = Output(BUS)
+  val is_in_delayslot   = Output(Bool())
+  val excepttype        = Output(UInt(32.W))
+  val pc                = Output(BUS)
 }
 
 // memory
 class Memory_WriteBackStage extends Bundle {
-  val pc = Output(BUS)
+  val pc          = Output(BUS)
   val LLbit_value = Output(Bool())
-  val LLbit_wen = Output(Bool())
-  val wdata = Output(BUS)
-  val waddr = Output(ADDR_BUS)
-  val wen = Output(Bool())
-  val whilo = Output(Bool())
-  val hi = Output(BUS)
-  val lo = Output(BUS)
-  val cp0_wen = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_data = Output(BUS)
+  val LLbit_wen   = Output(Bool())
+  val wdata       = Output(BUS)
+  val waddr       = Output(ADDR_BUS)
+  val wen         = Output(Bool())
+  val whilo       = Output(Bool())
+  val hi          = Output(BUS)
+  val lo          = Output(BUS)
+  val cp0_wen     = Output(Bool())
+  val cp0_waddr   = Output(CP0_ADDR_BUS)
+  val cp0_data    = Output(BUS)
 }
 
 class Memory_Decoder extends Bundle {
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
-  val wen = Output(Bool())
+  val wen   = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {
-  val whilo = Output(Bool())
-  val hi = Output(BUS)
-  val lo = Output(BUS)
-  val cp0_wen = Output(Bool())
+  val whilo     = Output(Bool())
+  val hi        = Output(BUS)
+  val lo        = Output(BUS)
+  val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_data = Output(BUS)
+  val cp0_data  = Output(BUS)
 }
 
 class Memory_DataMemory extends Bundle {
   val addr = Output(BUS)
-  val wen = Output(Bool())
-  val sel = Output(DATA_MEMORY_SEL_BUS)
+  val wen  = Output(Bool())
+  val sel  = Output(DATA_MEMORY_SEL_BUS)
   val data = Output(BUS)
-  val ce = Output(Bool())
+  val ce   = Output(Bool())
 }
 
 class Memory_CP0 extends Bundle {
   val current_inst_addr = Output(BUS)
-  val is_in_delayslot = Output(Bool())
-  val excepttype = Output(UInt(32.W))
+  val is_in_delayslot   = Output(Bool())
+  val excepttype        = Output(UInt(32.W))
 }
 
 class Memory_Control extends Bundle {
   val excepttype = Output(UInt(32.W))
-  val cp0_epc = Output(BUS)
+  val cp0_epc    = Output(BUS)
 }
 
 // writeBackStage
 class WriteBackStage_LLbitReg extends Bundle {
   val LLbit_value = Output(Bool())
-  val LLbit_wen = Output(Bool())
+  val LLbit_wen   = Output(Bool())
 }
 
 class WriteBackStage_Execute extends Bundle {
-  val whilo = Output(Bool())
-  val hi = Output(BUS)
-  val lo = Output(BUS)
-  val cp0_wen = Output(Bool())
+  val whilo     = Output(Bool())
+  val hi        = Output(BUS)
+  val lo        = Output(BUS)
+  val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_data = Output(BUS)
+  val cp0_data  = Output(BUS)
 }
 
 class WriteBackStage_HILO extends Bundle {
   val whilo = Output(Bool())
-  val hi = Output(BUS)
-  val lo = Output(BUS)
+  val hi    = Output(BUS)
+  val lo    = Output(BUS)
 }
 
 class WriteBackStage_Memory extends Bundle {
   val LLbit_value = Output(Bool())
-  val LLbit_wen = Output(Bool())
-  val cp0_data = Output(BUS)
-  val cp0_wen = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
+  val LLbit_wen   = Output(Bool())
+  val cp0_data    = Output(BUS)
+  val cp0_wen     = Output(Bool())
+  val cp0_waddr   = Output(CP0_ADDR_BUS)
 }
 
 class WriteBackStage_RegFile extends Bundle {
   val wdata = Output(BUS)
   val waddr = Output(ADDR_BUS)
-  val wen = Output(Bool())
+  val wen   = Output(Bool())
 }
 
 class WriteBackStage_CP0 extends Bundle {
-  val cp0_data = Output(BUS)
-  val cp0_wen = Output(Bool())
+  val cp0_data  = Output(BUS)
+  val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(CP0_ADDR_BUS)
 }
 
@@ -235,9 +235,9 @@ class WriteBackStage_CP0 extends Bundle {
 
 // control
 class Control_Fetch extends Bundle {
-  val stall = Output(STALL_BUS)
+  val stall  = Output(STALL_BUS)
   val new_pc = Output(BUS)
-  val flush = Output(Bool())
+  val flush  = Output(Bool())
 }
 
 class Control_DecoderStage extends Bundle {
@@ -296,7 +296,7 @@ class HILO_Execute extends Bundle {
 
 // divider
 class Divider_Execute extends Bundle {
-  val ready = Output(Bool())
+  val ready  = Output(Bool())
   val result = Output(DOUBLE_BUS)
 }
 
@@ -311,38 +311,38 @@ class CP0_Execute extends Bundle {
 }
 
 class CP0_Memory extends Bundle {
-  val cause = Output(BUS)
-  val epc = Output(BUS)
+  val cause  = Output(BUS)
+  val epc    = Output(BUS)
   val status = Output(BUS)
 }
 
 class CP0_Output extends Bundle {
-  val count = Output(BUS)
+  val count   = Output(BUS)
   val compare = Output(BUS)
-  val config = Output(BUS)
-  val prid = Output(BUS)
+  val config  = Output(BUS)
+  val prid    = Output(BUS)
 }
 
 // other
 class INST_SRAM extends Bundle {
-  val en = Output(Bool())
-  val wen = Output(WEN_BUS)
-  val addr = Output(BUS)
+  val en    = Output(Bool())
+  val wen   = Output(WEN_BUS)
+  val addr  = Output(BUS)
   val wdata = Output(BUS)
   val rdata = Input(BUS)
 }
 
 class DATA_SRAM extends Bundle {
-  val en = Output(Bool())
-  val wen = Output(WEN_BUS)
-  val addr = Output(BUS)
+  val en    = Output(Bool())
+  val wen   = Output(WEN_BUS)
+  val addr  = Output(BUS)
   val wdata = Output(BUS)
   val rdata = Input(BUS)
 }
 
 class DEBUG extends Bundle {
-  val pc = Output(BUS)
-  val wen = Output(WEN_BUS)
+  val pc    = Output(BUS)
+  val wen   = Output(WEN_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
 }

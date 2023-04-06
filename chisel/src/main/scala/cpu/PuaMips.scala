@@ -111,11 +111,5 @@ class PuaMips extends Module {
   cp0.io.execute  <> execute.io.fromCP0
   cp0.io.memory   <> memory.io.fromCP0
   cp0.io.int_i    := Cat(0.U(5.W), cp0.io.timer_int_o)
-
-  // inst memory
-  // instMemory.io.fetch   <> fetch.io.fromInstMemory
-
-  // data memory
-  // dataMemory.io.memory  <> memory.io.fromDataMemory
   // @formatter:on
 }

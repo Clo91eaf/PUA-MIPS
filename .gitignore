@@ -9,6 +9,7 @@ chisel/.metals/
 chisel/.vscode/
 chisel/project/
 chisel/generated/
+chisel/target/
 
 # vivado file
 vivado/*.runs/
