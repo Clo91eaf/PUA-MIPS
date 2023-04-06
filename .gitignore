@@ -1,5 +1,18 @@
-chisel/project/
 .metals/
 .vscode/
 .workflow/
+
+# chisel file
 chisel/.bloop/
+chisel/.bsp/
+chisel/.metals/
+chisel/.vscode/
+chisel/project/
+chisel/generated/
+
+# vivado file
+vivado/*.runs/
+vivado/*.cache/
+vivado/*.sim/
+vivado/*.ip_user_files/
+vivado/vivado*

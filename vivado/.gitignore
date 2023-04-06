@@ -1,5 +1,0 @@
-*.runs/
-*.cache/
-*.sim/
-*.ip_user_files/
-vivado*
