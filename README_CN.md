@@ -6,6 +6,11 @@
 你可以在项目目录下输入`make verilog`来生成verilog,verilog文件会自动生成在chisel/generated目录下。
 你可以通过vivado/pua-mips.xpr启动项目并且运行对应的仿真以及生成比特流。
 
+### vscode配置
+- 有用的拓展: `Scala (Metals)` 、 `Scala Syntax (official)` 、 `Chisel Syntax`
+  - `Scala (sbt)`与`Scala Language Server`这两个拓展同 `Scala (Metals)`拓展冲突,不建议安装.
+  - 请在项目目录 `PUA-MIPS` 中禁用拓展(禁用(工作区)),在`chisel`目录中启用拓展.
+
 ## 资源:
 
 1. [Git commit message conventions](https://gitee.com/help/articles/4231#article-header0)
