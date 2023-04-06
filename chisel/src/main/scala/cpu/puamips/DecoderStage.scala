@@ -9,13 +9,11 @@ class DecoderStage extends Module {
     val fromFetch = Flipped(new Fetch_DecoderStage())
     val decoder = new DecoderStage_Decoder()
   })
-  // input
+  // input-control
   val stall = Wire(STALL_BUS)
   stall := io.fromControl.stall
-  // io.fromFetch.pc
-  // io.fromInstMemory.inst
 
-  // output
+  // output-decoder
   val pc = RegInit(INST_ADDR_BUS_INIT)
   io.decoder.pc := pc
 

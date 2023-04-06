@@ -8,7 +8,7 @@ import chisel3.util.experimental.loadMemoryFromFile
 class InstMemory extends Module {
   val io = IO(new Bundle {
     val fromFetch = Flipped(new Fetch_InstMemory())
-    val decoder = new InstMemory_Decoder()
+    val decoder   = new InstMemory_Decoder()
   })
   // input-top
   val ce = Wire(Bool())

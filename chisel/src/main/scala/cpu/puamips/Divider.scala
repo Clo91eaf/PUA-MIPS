@@ -13,20 +13,28 @@ class Divider extends Module {
   })
   // input
   val signed_div_i = Wire(Bool())
-  signed_div_i := io.fromExecute.signed_div
   val opdata1_i = Wire(UInt(32.W))
-  opdata1_i := io.fromExecute.opdata1
   val opdata2_i = Wire(UInt(32.W))
-  opdata2_i := io.fromExecute.opdata2
   val start_i = Wire(Bool())
-  start_i := io.fromExecute.start
   val annul_i = Wire(Bool())
+
+  // input-execute
+  signed_div_i := io.fromExecute.signed_div
+  opdata1_i := io.fromExecute.opdata1
+  opdata2_i := io.fromExecute.opdata2
+  start_i := io.fromExecute.start
+
+  // input-annul
   annul_i := io.annul
+
 
   // output
   val result = RegInit(DOUBLE_BUS_INIT)
-  io.execute.result := result
   val ready = RegInit(DIV_RESULT_NOT_READY)
+
+
+  // output-execute
+  io.execute.result := result
   io.execute.ready := ready
 
   val div_temp = Wire(UInt(33.W))

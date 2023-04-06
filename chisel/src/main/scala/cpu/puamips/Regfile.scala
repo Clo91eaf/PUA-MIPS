@@ -6,25 +6,25 @@ import cpu.puamips.Const._
 
 class Regfile extends Module {
   val io = IO(new Bundle {
-    val fromDecoder = Flipped(new Decoder_RegFile())
+    val fromDecoder        = Flipped(new Decoder_RegFile())
     val fromWriteBackStage = Flipped(new WriteBackStage_RegFile())
-    val decoder = new RegFile_Decoder()
+    val decoder            = new RegFile_Decoder()
   })
   // input-decoder
-  val re1 = Wire(Bool())
+  val re1    = Wire(Bool())
   val raddr1 = Wire(ADDR_BUS)
-  val re2 = Wire(Bool())
+  val re2    = Wire(Bool())
   val raddr2 = Wire(ADDR_BUS)
-  re1 := io.fromDecoder.reg1_read
-  re2 := io.fromDecoder.reg2_read
+  re1    := io.fromDecoder.reg1_read
+  re2    := io.fromDecoder.reg2_read
   raddr1 := io.fromDecoder.reg1_addr
   raddr2 := io.fromDecoder.reg2_addr
 
   // input-write back
-  val wen = Wire(Bool())
+  val wen   = Wire(Bool())
   val waddr = Wire(ADDR_BUS)
   val wdata = Wire(BUS)
-  wen := io.fromWriteBackStage.wen
+  wen   := io.fromWriteBackStage.wen
   wdata := io.fromWriteBackStage.wdata
   waddr := io.fromWriteBackStage.waddr
 

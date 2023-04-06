@@ -6,154 +6,197 @@ import Const._
 
 class Execute extends Module {
   val io = IO(new Bundle {
-    val fromExecuteStage = Flipped(new ExecuteStage_Execute())
-    val fromMemoryStage = Flipped(new MemoryStage_Execute())
-    val fromDivider = Flipped(new Divider_Execute())
-    val fromHILO = Flipped(new HILO_Execute())
-    val fromMemory = Flipped(new Memory_Execute())
+    val fromExecuteStage   = Flipped(new ExecuteStage_Execute())
+    val fromMemoryStage    = Flipped(new MemoryStage_Execute())
+    val fromDivider        = Flipped(new Divider_Execute())
+    val fromHILO           = Flipped(new HILO_Execute())
+    val fromMemory         = Flipped(new Memory_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
-    val fromCP0 = Flipped(new CP0_Execute())
+    val fromCP0            = Flipped(new CP0_Execute())
 
     val memoryStage = new Execute_MemoryStage()
-    val decoder = new Execute_Decoder()
-    val divider = new Execute_Divider()
-    val control = new Execute_Control()
-    val cp0 = new Execute_CP0()
+    val decoder     = new Execute_Decoder()
+    val divider     = new Execute_Divider()
+    val control     = new Execute_Control()
+    val cp0         = new Execute_CP0()
   })
 
   // input
-  val aluop_i = Wire(ALU_OP_BUS)
-  aluop_i := io.fromExecuteStage.aluop
-  val alusel_i = Wire(ALU_SEL_BUS)
-  alusel_i := io.fromExecuteStage.alusel
-  val reg1_i = Wire(BUS)
-  reg1_i := io.fromExecuteStage.reg1
-  val reg2_i = Wire(BUS)
-  reg2_i := io.fromExecuteStage.reg2
-  val wd_i = Wire(ADDR_BUS)
-  wd_i := io.fromExecuteStage.waddr
-  val wreg_i = Wire(Bool())
-  wreg_i := io.fromExecuteStage.wen
-  val inst_i = Wire(BUS)
-  inst_i := io.fromExecuteStage.inst
-  val hi_i = Wire(BUS)
-  hi_i := io.fromHILO.hi
-  val lo_i = Wire(BUS)
-  lo_i := io.fromHILO.lo
-  val wb_hi_i = Wire(BUS)
-  wb_hi_i := io.fromWriteBackStage.hi
-  val wb_lo_i = Wire(BUS)
-  wb_lo_i := io.fromWriteBackStage.lo
-  val wb_whilo_i = Wire(Bool())
-  wb_whilo_i := io.fromWriteBackStage.whilo
-  val mem_hi_i = Wire(BUS)
-  mem_hi_i := io.fromMemory.hi
-  val mem_lo_i = Wire(BUS)
-  mem_lo_i := io.fromMemory.lo
-  val mem_whilo_i = Wire(Bool())
-  mem_whilo_i := io.fromMemory.whilo
-  val hilo_temp_i = Wire(DOUBLE_BUS)
-  hilo_temp_i := io.fromMemoryStage.hilo
-  val cnt_i = Wire(CNT_BUS)
-  cnt_i := io.fromMemoryStage.cnt
-  val div_result_i = Wire(DOUBLE_BUS)
-  div_result_i := io.fromDivider.result
-  val div_ready_i = Wire(Bool())
-  div_ready_i := io.fromDivider.ready
-  val link_addr_i = Wire(BUS)
-  link_addr_i := io.fromExecuteStage.link_addr
+  val aluop_i           = Wire(ALU_OP_BUS)
+  val alusel_i          = Wire(ALU_SEL_BUS)
+  val reg1_i            = Wire(BUS)
+  val reg2_i            = Wire(BUS)
+  val wd_i              = Wire(ADDR_BUS)
+  val wreg_i            = Wire(Bool())
+  val inst_i            = Wire(BUS)
+  val hi_i              = Wire(BUS)
+  val lo_i              = Wire(BUS)
+  val wb_hi_i           = Wire(BUS)
+  val wb_lo_i           = Wire(BUS)
+  val wb_whilo_i        = Wire(Bool())
+  val mem_hi_i          = Wire(BUS)
+  val mem_lo_i          = Wire(BUS)
+  val mem_whilo_i       = Wire(Bool())
+  val hilo_temp_i       = Wire(DOUBLE_BUS)
+  val cnt_i             = Wire(CNT_BUS)
+  val div_result_i      = Wire(DOUBLE_BUS)
+  val div_ready_i       = Wire(Bool())
+  val link_addr_i       = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
+
+  // input-execute stage
+  aluop_i  := io.fromExecuteStage.aluop
+  alusel_i := io.fromExecuteStage.alusel
+  reg1_i   := io.fromExecuteStage.reg1
+  reg2_i   := io.fromExecuteStage.reg2
+  wd_i     := io.fromExecuteStage.waddr
+  wreg_i   := io.fromExecuteStage.wen
+  inst_i   := io.fromExecuteStage.inst
+
+  // input-hilo
+  hi_i := io.fromHILO.hi
+  lo_i := io.fromHILO.lo
+
+  // input-write back stage
+  wb_hi_i    := io.fromWriteBackStage.hi
+  wb_lo_i    := io.fromWriteBackStage.lo
+  wb_whilo_i := io.fromWriteBackStage.whilo
+
+  // input-memory
+  mem_hi_i    := io.fromMemory.hi
+  mem_lo_i    := io.fromMemory.lo
+  mem_whilo_i := io.fromMemory.whilo
+
+  // input-memory stage
+  hilo_temp_i := io.fromMemoryStage.hilo
+  cnt_i       := io.fromMemoryStage.cnt
+
+  // input-divider
+  div_result_i := io.fromDivider.result
+  div_ready_i  := io.fromDivider.ready
+
+  // input-execute stage
+  link_addr_i       := io.fromExecuteStage.link_addr
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
 
   // output
-  val pc = Wire(BUS)
-  pc := io.fromExecuteStage.pc
-  io.memoryStage.pc := pc
-  val waddr = Wire(ADDR_BUS)
-  io.decoder.waddr := waddr
-  io.memoryStage.waddr := waddr
-  val wen = Wire(Bool())
-  io.decoder.wen := wen
-  io.memoryStage.wen := wen
-  val wdata = Wire(BUS)
-  io.decoder.wdata := wdata
-  io.memoryStage.wdata := wdata
-  val hi = Wire(BUS)
-  io.memoryStage.hi := hi
-  val lo = Wire(BUS)
-  io.memoryStage.lo := lo
-  val whilo = Wire(Bool())
-  io.memoryStage.whilo := whilo
-  val hilo_temp_o = Wire(DOUBLE_BUS)
-  io.memoryStage.hilo := hilo_temp_o
-  val cnt = Wire(CNT_BUS)
-  io.memoryStage.cnt := cnt
-  val div_opdata1 = Wire(BUS)
-  io.divider.opdata1 := div_opdata1
-  val div_opdata2 = Wire(BUS)
-  io.divider.opdata2 := div_opdata2
-  val div_start = Wire(Bool())
-  io.divider.start := div_start
-  val signed_div = Wire(Bool())
-  io.divider.signed_div := signed_div
-  val aluop = Wire(ALU_OP_BUS)
-  io.memoryStage.aluop := aluop
-  io.decoder.aluop := aluop
-  val mem_addr = Wire(BUS)
-  io.memoryStage.addr := mem_addr
-  val reg2 = Wire(BUS)
-  io.memoryStage.reg2 := reg2
-  val stallreq = Wire(Bool())
-  io.control.stallreq := stallreq
-  val cp0_raddr = Wire(CP0_ADDR_BUS)
-  io.cp0.cp0_raddr := cp0_raddr
-  val cp0_wen = Wire(Bool())
-  io.memoryStage.cp0_wen := cp0_wen
-  val cp0_waddr = Wire(CP0_ADDR_BUS)
-  io.memoryStage.cp0_waddr := cp0_waddr
-  val cp0_data = Wire(BUS)
-  io.memoryStage.cp0_data := cp0_data
+  val pc                = Wire(BUS)
+  val waddr             = Wire(ADDR_BUS)
+  val wen               = Wire(Bool())
+  val wdata             = Wire(BUS)
+  val hi                = Wire(BUS)
+  val lo                = Wire(BUS)
+  val whilo             = Wire(Bool())
+  val hilo_temp_o       = Wire(DOUBLE_BUS)
+  val cnt               = Wire(CNT_BUS)
+  val div_opdata1       = Wire(BUS)
+  val div_opdata2       = Wire(BUS)
+  val div_start         = Wire(Bool())
+  val signed_div        = Wire(Bool())
+  val aluop             = Wire(ALU_OP_BUS)
+  val mem_addr          = Wire(BUS)
+  val reg2              = Wire(BUS)
+  val stallreq          = Wire(Bool())
+  val cp0_raddr         = Wire(CP0_ADDR_BUS)
+  val cp0_wen           = Wire(Bool())
+  val cp0_waddr         = Wire(CP0_ADDR_BUS)
+  val cp0_data          = Wire(BUS)
   val current_inst_addr = Wire(BUS)
+  val is_in_delayslot   = Wire(Bool())
+  val excepttype        = Wire(UInt(32.W))
+  pc := io.fromExecuteStage.pc
+
+  // output-memory stage
+  io.memoryStage.pc := pc
+
+  // output-decoder
+  io.decoder.waddr := waddr
+
+  // output-memory stage
+  io.memoryStage.waddr := waddr
+
+  // output-decoder
+  io.decoder.wen := wen
+
+  // output-memory stage
+  io.memoryStage.wen := wen
+
+  // output-decoder
+  io.decoder.wdata := wdata
+
+  // output-memory stage
+  io.memoryStage.wdata := wdata
+  io.memoryStage.hi    := hi
+  io.memoryStage.lo    := lo
+  io.memoryStage.whilo := whilo
+  io.memoryStage.hilo  := hilo_temp_o
+  io.memoryStage.cnt   := cnt
+
+  // output-divider
+  io.divider.opdata1    := div_opdata1
+  io.divider.opdata2    := div_opdata2
+  io.divider.start      := div_start
+  io.divider.signed_div := signed_div
+
+  // output-memory stage
+  io.memoryStage.aluop := aluop
+
+  // output-decoder
+  io.decoder.aluop := aluop
+
+  // output-memory stage
+  io.memoryStage.addr := mem_addr
+  io.memoryStage.reg2 := reg2
+
+  // output-control
+  io.control.stallreq := stallreq
+
+  // output-cp0
+  io.cp0.cp0_raddr := cp0_raddr
+
+  // output-memory stage
+  io.memoryStage.cp0_wen           := cp0_wen
+  io.memoryStage.cp0_waddr         := cp0_waddr
+  io.memoryStage.cp0_data          := cp0_data
   io.memoryStage.current_inst_addr := current_inst_addr
-  val is_in_delayslot = Wire(Bool())
-  io.memoryStage.is_in_delayslot := is_in_delayslot
-  val excepttype = Wire(UInt(32.W))
-  io.memoryStage.excepttype := excepttype
+  io.memoryStage.is_in_delayslot   := is_in_delayslot
+  io.memoryStage.excepttype        := excepttype
+
+  // io-finish
 
   // 保存逻辑运算的结果
-  val logicout = Wire(BUS) // 保存逻辑运算的结果
-  val shiftres = Wire(BUS) // 保存移位操作运算的结果
-  val moveres = Wire(BUS) // 保存移动操作运算的结果
-  val arithmeticres = Wire(BUS) // 保存算术运算结果
-  val mulres = Wire(DOUBLE_BUS) // 保存乘法结果，宽度为64位
-  val HI = Wire(BUS)
-  val LO = Wire(BUS)
-  val reg2_mux = Wire(BUS) // 保存输入的第二个操作reg2的补码
-  val reg1_not = Wire(BUS) // 保存输入的第一个操作数reg1取反后的值
-  val result_sum = Wire(BUS) // 保存加法结果
-  val ov_sum = Wire(Bool()) // 保存溢出情况
-  val reg1_eq_reg2 = Wire(Bool()) // 第一个操作数是否等于第二个操作数
-  val reg1_lt_reg2 = Wire(Bool()) // 第一个操作数是否小于第二个操作数
-  val opdata1_mult = Wire(BUS) // 乘法操作中的被乘数
-  val opdata2_mult = Wire(BUS) // 乘法操作中的乘数
-  val hilo_temp = Wire(DOUBLE_BUS)
-  val hilo_temp1 = Wire(DOUBLE_BUS)
+  val logicout               = Wire(BUS)        // 保存逻辑运算的结果
+  val shiftres               = Wire(BUS)        // 保存移位操作运算的结果
+  val moveres                = Wire(BUS)        // 保存移动操作运算的结果
+  val arithmeticres          = Wire(BUS)        // 保存算术运算结果
+  val mulres                 = Wire(DOUBLE_BUS) // 保存乘法结果，宽度为64位
+  val HI                     = Wire(BUS)
+  val LO                     = Wire(BUS)
+  val reg2_mux               = Wire(BUS)        // 保存输入的第二个操作reg2的补码
+  val reg1_not               = Wire(BUS)        // 保存输入的第一个操作数reg1取反后的值
+  val result_sum             = Wire(BUS)        // 保存加法结果
+  val ov_sum                 = Wire(Bool())     // 保存溢出情况
+  val reg1_eq_reg2           = Wire(Bool())     // 第一个操作数是否等于第二个操作数
+  val reg1_lt_reg2           = Wire(Bool())     // 第一个操作数是否小于第二个操作数
+  val opdata1_mult           = Wire(BUS)        // 乘法操作中的被乘数
+  val opdata2_mult           = Wire(BUS)        // 乘法操作中的乘数
+  val hilo_temp              = Wire(DOUBLE_BUS)
+  val hilo_temp1             = Wire(DOUBLE_BUS)
   val stallreq_for_madd_msub = Wire(Bool())
-  val stallreq_for_div = Wire(Bool())
-  val trapassert = Wire(Bool())
-  val ovassert = Wire(Bool())
+  val stallreq_for_div       = Wire(Bool())
+  val trapassert             = Wire(Bool())
+  val ovassert               = Wire(Bool())
 
   // liphen
-  cp0_raddr := ZERO_WORD
+  cp0_raddr  := ZERO_WORD
   hilo_temp1 := ZERO_WORD
   //
 
-  // aluop传递到访存阶段，用于加载、存储指令
-  aluop := aluop_i
-  // mem_addr传递到访存阶段，是加载、存储指令对应的存储器地址
-  mem_addr := reg1_i + Util.signedExtend(inst_i(15, 0))
-  // 将两个操作数也传递到访存阶段，也是为记载、存储指令准备的
-  reg2 := reg2_i
+  aluop := aluop_i // aluop传递到访存阶段，用于加载、存储指令
+  mem_addr := reg1_i + Util.signedExtend(
+    inst_i(15, 0)
+  ) // mem_addr传递到访存阶段，是加载、存储指令对应的存储器地址
+  reg2 := reg2_i // 将两个操作数也传递到访存阶段，也是为记载、存储指令准备的
 
   excepttype := Cat(
     io.fromExecuteStage.excepttype(31, 12),
@@ -163,6 +206,8 @@ class Execute extends Module {
     "h00".U(8.W)
   )
   is_in_delayslot := is_in_delayslot_i
+
+  // input-execute stage
   current_inst_addr := io.fromExecuteStage.current_inst_addr
 
   // 根据aluop指示的运算子类型进行运算
@@ -284,18 +329,18 @@ class Execute extends Module {
   opdata1_mult := MuxCase(
     reg1_i,
     Seq(
-      (aluop_i === EXE_MUL_OP) -> (~reg1_i + 1.U),
+      (aluop_i === EXE_MUL_OP)  -> (~reg1_i + 1.U),
       (aluop_i === EXE_MULT_OP) -> (~reg1_i + 1.U),
-      (reg1_i(31) === 1.U) -> (~reg1_i + 1.U)
+      (reg1_i(31) === 1.U)      -> (~reg1_i + 1.U)
     )
   )
   // 乘数
   opdata2_mult := MuxCase(
     reg2_i,
     Seq(
-      (aluop_i === EXE_MUL_OP) -> (~reg2_i + 1.U),
+      (aluop_i === EXE_MUL_OP)  -> (~reg2_i + 1.U),
       (aluop_i === EXE_MULT_OP) -> (~reg2_i + 1.U),
-      (reg2_i(31) === 1.U) -> (~reg2_i + 1.U)
+      (reg2_i(31) === 1.U)      -> (~reg2_i + 1.U)
     )
   )
   // 临时乘法结果
@@ -339,37 +384,37 @@ class Execute extends Module {
   // MADD、MADDU、MSUB、MSUBU指令
   // default
   when(reset.asBool === RST_ENABLE) {
-    hilo_temp_o := ZERO_WORD
-    cnt := 0.U
+    hilo_temp_o            := ZERO_WORD
+    cnt                    := 0.U
     stallreq_for_madd_msub := NOT_STOP
   }.otherwise {
     // default
-    hilo_temp_o := ZERO_WORD
-    cnt := 0.U
+    hilo_temp_o            := ZERO_WORD
+    cnt                    := 0.U
     stallreq_for_madd_msub := NOT_STOP
     switch(aluop_i) {
       is(EXE_MADD_OP, EXE_MADDU_OP) {
         when(cnt_i === 0.U) {
-          hilo_temp_o := mulres
-          cnt := 1.U
+          hilo_temp_o            := mulres
+          cnt                    := 1.U
           stallreq_for_madd_msub := STOP
-          hilo_temp1 := ZERO_WORD
+          hilo_temp1             := ZERO_WORD
         }.elsewhen(cnt_i === 1.U) {
-          hilo_temp_o := ZERO_WORD
-          cnt := 2.U
-          hilo_temp1 := hilo_temp_i + Cat(HI, LO)
+          hilo_temp_o            := ZERO_WORD
+          cnt                    := 2.U
+          hilo_temp1             := hilo_temp_i + Cat(HI, LO)
           stallreq_for_madd_msub := NOT_STOP
         }
       }
       is(EXE_MSUB_OP, EXE_MSUBU_OP) {
         when(cnt_i === 0.U) {
-          hilo_temp_o := ~mulres + 1.U
-          cnt := 1.U
+          hilo_temp_o            := ~mulres + 1.U
+          cnt                    := 1.U
           stallreq_for_madd_msub := STOP
         }.elsewhen(cnt_i === 1.U) {
-          hilo_temp_o := ZERO_WORD
-          cnt := 2.U
-          hilo_temp1 := hilo_temp_i + Cat(HI, LO)
+          hilo_temp_o            := ZERO_WORD
+          cnt                    := 2.U
+          hilo_temp1             := hilo_temp_i + Cat(HI, LO)
           stallreq_for_madd_msub := NOT_STOP
         }
       }
@@ -379,56 +424,56 @@ class Execute extends Module {
   // DIV、DIVU指令
   when(reset.asBool === RST_ENABLE) {
     stallreq_for_div := NOT_STOP
-    div_opdata1 := ZERO_WORD
-    div_opdata2 := ZERO_WORD
-    div_start := DIV_STOP
-    signed_div := NOT_SIGNED
+    div_opdata1      := ZERO_WORD
+    div_opdata2      := ZERO_WORD
+    div_start        := DIV_STOP
+    signed_div       := NOT_SIGNED
   }.otherwise {
     stallreq_for_div := NOT_STOP
-    div_opdata1 := ZERO_WORD
-    div_opdata2 := ZERO_WORD
-    div_start := DIV_STOP
-    signed_div := NOT_SIGNED
+    div_opdata1      := ZERO_WORD
+    div_opdata2      := ZERO_WORD
+    div_start        := DIV_STOP
+    signed_div       := NOT_SIGNED
     switch(aluop_i) {
       is(EXE_DIV_OP) {
         when(div_ready_i === DIV_RESULT_NOT_READY) {
-          div_opdata1 := reg1_i
-          div_opdata2 := reg2_i
-          div_start := DIV_START
-          signed_div := SIGNED
+          div_opdata1      := reg1_i
+          div_opdata2      := reg2_i
+          div_start        := DIV_START
+          signed_div       := SIGNED
           stallreq_for_div := STOP
         }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-          div_opdata1 := reg1_i
-          div_opdata2 := reg2_i
-          div_start := DIV_STOP
-          signed_div := SIGNED
+          div_opdata1      := reg1_i
+          div_opdata2      := reg2_i
+          div_start        := DIV_STOP
+          signed_div       := SIGNED
           stallreq_for_div := NOT_STOP
         }.otherwise {
-          div_opdata1 := ZERO_WORD
-          div_opdata2 := ZERO_WORD
-          div_start := DIV_STOP
-          signed_div := NOT_SIGNED
+          div_opdata1      := ZERO_WORD
+          div_opdata2      := ZERO_WORD
+          div_start        := DIV_STOP
+          signed_div       := NOT_SIGNED
           stallreq_for_div := NOT_STOP
         }
       }
       is(EXE_DIVU_OP) {
         when(div_ready_i === DIV_RESULT_NOT_READY) {
-          div_opdata1 := reg1_i
-          div_opdata2 := reg2_i
-          div_start := DIV_START
-          signed_div := NOT_SIGNED
+          div_opdata1      := reg1_i
+          div_opdata2      := reg2_i
+          div_start        := DIV_START
+          signed_div       := NOT_SIGNED
           stallreq_for_div := STOP
         }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-          div_opdata1 := reg1_i
-          div_opdata2 := reg2_i
-          div_start := DIV_STOP
-          signed_div := NOT_SIGNED
+          div_opdata1      := reg1_i
+          div_opdata2      := reg2_i
+          div_start        := DIV_STOP
+          signed_div       := NOT_SIGNED
           stallreq_for_div := NOT_STOP
         }.otherwise {
-          div_opdata1 := ZERO_WORD
-          div_opdata2 := ZERO_WORD
-          div_start := DIV_STOP
-          signed_div := NOT_SIGNED
+          div_opdata1      := ZERO_WORD
+          div_opdata2      := ZERO_WORD
+          div_start        := DIV_STOP
+          signed_div       := NOT_SIGNED
           stallreq_for_div := NOT_STOP
         }
       }
@@ -455,16 +500,22 @@ class Execute extends Module {
       }
       is(EXE_MFC0_OP) {
         cp0_raddr := inst_i(15, 11)
+
+        // input-c p0
         moveres := io.fromCP0.cp0_data
         when(
           io.fromMemory.cp0_wen === WRITE_ENABLE &&
             io.fromMemory.cp0_waddr === inst_i(15, 11)
         ) {
+
+          // input-memory
           moveres := io.fromMemory.cp0_data
         }.elsewhen(
           io.fromWriteBackStage.cp0_wen === WRITE_ENABLE &&
             io.fromWriteBackStage.cp0_waddr === inst_i(15, 11)
         ) {
+
+          // input-write back stage
           moveres := io.fromWriteBackStage.cp0_data
         }
       }
@@ -476,10 +527,10 @@ class Execute extends Module {
   when(
     ((aluop_i === EXE_ADD_OP) || (aluop_i === EXE_ADDI_OP) || (aluop_i === EXE_SUB_OP)) && (ov_sum === 1.U)
   ) {
-    wen := WRITE_DISABLE
+    wen      := WRITE_DISABLE
     ovassert := true.B
   }.otherwise {
-    wen := wreg_i
+    wen      := wreg_i
     ovassert := false.B
   }
   wdata := ZERO_WORD // default
@@ -495,50 +546,50 @@ class Execute extends Module {
   // MTHI和MTLO指令 乘法运算结果保存
   when(reset.asBool === RST_ENABLE) {
     whilo := WRITE_DISABLE
-    hi := ZERO_WORD
-    lo := ZERO_WORD
+    hi    := ZERO_WORD
+    lo    := ZERO_WORD
   }.elsewhen((aluop_i === EXE_MULT_OP) || (aluop_i === EXE_MULTU_OP)) {
     whilo := WRITE_ENABLE
-    hi := mulres(63, 32)
-    lo := mulres(31, 0)
+    hi    := mulres(63, 32)
+    lo    := mulres(31, 0)
   }.elsewhen((aluop_i === EXE_MADD_OP) || (aluop_i === EXE_MADDU_OP)) {
     whilo := WRITE_ENABLE
-    hi := hilo_temp1(63, 32)
-    lo := hilo_temp1(31, 0)
+    hi    := hilo_temp1(63, 32)
+    lo    := hilo_temp1(31, 0)
   }.elsewhen((aluop_i === EXE_MSUB_OP) || (aluop_i === EXE_MSUBU_OP)) {
     whilo := WRITE_ENABLE
-    hi := hilo_temp1(63, 32)
-    lo := hilo_temp1(31, 0)
+    hi    := hilo_temp1(63, 32)
+    lo    := hilo_temp1(31, 0)
   }.elsewhen((aluop_i === EXE_DIV_OP) || (aluop_i === EXE_DIVU_OP)) {
     whilo := WRITE_ENABLE
-    hi := div_result_i(63, 32)
-    lo := div_result_i(31, 0)
+    hi    := div_result_i(63, 32)
+    lo    := div_result_i(31, 0)
   }.elsewhen(aluop_i === EXE_MTHI_OP) {
     whilo := WRITE_ENABLE
-    hi := reg1_i
-    lo := LO
+    hi    := reg1_i
+    lo    := LO
   }.elsewhen(aluop_i === EXE_MTLO_OP) {
     whilo := WRITE_ENABLE
-    hi := HI
-    lo := reg1_i
+    hi    := HI
+    lo    := reg1_i
   }.otherwise {
     whilo := WRITE_DISABLE
-    hi := ZERO_WORD
-    lo := ZERO_WORD
+    hi    := ZERO_WORD
+    lo    := ZERO_WORD
   }
 
   when(reset.asBool === RST_ENABLE) {
     cp0_waddr := 0.U
-    cp0_wen := WRITE_DISABLE
-    cp0_data := ZERO_WORD
+    cp0_wen   := WRITE_DISABLE
+    cp0_data  := ZERO_WORD
   }.elsewhen(aluop_i === EXE_MTC0_OP) {
     cp0_waddr := inst_i(15, 11)
-    cp0_wen := WRITE_ENABLE
-    cp0_data := reg1_i
+    cp0_wen   := WRITE_ENABLE
+    cp0_data  := reg1_i
   }.otherwise {
     cp0_waddr := 0.U
-    cp0_wen := WRITE_DISABLE
-    cp0_data := ZERO_WORD
+    cp0_wen   := WRITE_DISABLE
+    cp0_data  := ZERO_WORD
   }
 
   // debug

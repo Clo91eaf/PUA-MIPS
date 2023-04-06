@@ -10,8 +10,6 @@ class LLbitReg extends Module {
     val memory = new LLbitReg_Memory()
     val flush = Input(Bool())
   })
-  // input
-
   // output
   val LLbit = RegInit(false.B)
   io.memory.LLbit := LLbit

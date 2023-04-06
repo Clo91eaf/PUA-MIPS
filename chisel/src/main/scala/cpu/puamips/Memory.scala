@@ -6,149 +6,176 @@ import chisel3.util._
 
 class Memory extends Module {
   val io = IO(new Bundle {
-    val fromLLbitReg = Flipped(new LLbitReg_Memory())
-    val fromMemoryStage = Flipped(new MemoryStage_Memory())
-    val fromDataMemory = Flipped(new DataMemory_Memory())
+    val fromLLbitReg       = Flipped(new LLbitReg_Memory())
+    val fromMemoryStage    = Flipped(new MemoryStage_Memory())
+    val fromDataMemory     = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
-    val fromCP0 = Flipped(new CP0_Memory())
+    val fromCP0            = Flipped(new CP0_Memory())
 
-    val decoder = new Memory_Decoder()
-    val execute = new Memory_Execute()
+    val decoder        = new Memory_Decoder()
+    val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
-    val dataMemory = new Memory_DataMemory()
-    val cp0 = new Memory_CP0()
-    val control = new Memory_Control()
+    val dataMemory     = new Memory_DataMemory()
+    val cp0            = new Memory_CP0()
+    val control        = new Memory_Control()
 
   })
-  // input-execute
-  val aluop = Wire(ALU_OP_BUS)
-  aluop := io.fromMemoryStage.aluop
+  // input
+  val aluop      = Wire(ALU_OP_BUS)
+  val pc         = Wire(BUS)
+  val reg2_i     = Wire(BUS)
   val mem_data_i = Wire(BUS)
-  mem_data_i := io.fromDataMemory.data
-  val reg2_i = Wire(BUS)
+
+  // input-execute
+  aluop := io.fromMemoryStage.aluop
+
+  // input-memory stage
+  pc     := io.fromMemoryStage.pc
   reg2_i := io.fromMemoryStage.reg2
 
+  // input-data memory
+  mem_data_i := io.fromDataMemory.data
+
   // output
-  val pc = Wire(BUS)
-  pc := io.fromMemoryStage.pc
-  io.writeBackStage.pc := pc
-  val waddr = Wire(ADDR_BUS)
-  io.decoder.waddr := waddr
-  io.writeBackStage.waddr := waddr
-  val wen = Wire(Bool())
-  io.decoder.wen := wen
-  io.writeBackStage.wen := wen
-  val wdata = Wire(BUS)
-  io.decoder.wdata := wdata
-  io.writeBackStage.wdata := wdata
-  val hi = Wire(BUS)
-  io.execute.hi := hi
-  io.writeBackStage.hi := hi
-  val lo = Wire(BUS)
-  io.execute.lo := lo
-  io.writeBackStage.lo := lo
-  val whilo = Wire(Bool())
-  io.execute.whilo := whilo
-  io.writeBackStage.whilo := whilo
-  val LLbit_wen = Wire(Bool())
-  io.writeBackStage.LLbit_wen := LLbit_wen
-  val LLbit_value = Wire(Bool())
-  io.writeBackStage.LLbit_value := LLbit_value
-  val mem_addr = Wire(BUS)
-  io.dataMemory.addr := mem_addr
-  val mem_sel = Wire(DATA_MEMORY_SEL_BUS)
-  io.dataMemory.sel := mem_sel
-  val mem_data = Wire(BUS)
-  io.dataMemory.data := mem_data
-  val mem_ce = Wire(Bool())
-  io.dataMemory.ce := mem_ce
-  val cp0_wen = Wire(Bool())
-  io.writeBackStage.cp0_wen := cp0_wen
-  io.execute.cp0_wen := cp0_wen
-  val cp0_waddr = Wire(CP0_ADDR_BUS)
-  io.writeBackStage.cp0_waddr := cp0_waddr
-  io.execute.cp0_waddr := cp0_waddr
-  val cp0_data = Wire(BUS)
-  io.writeBackStage.cp0_data := cp0_data
-  io.execute.cp0_data := cp0_data
-  val excepttype = Wire(UInt(32.W))
-  io.control.excepttype := excepttype
-  io.cp0.excepttype := excepttype
-  val mem_we = Wire(Bool())
-  io.dataMemory.wen := mem_we & ~excepttype.orR() 
-  val epc = Wire(BUS)
-  io.control.cp0_epc := epc
-  val is_in_delayslot = Wire(Bool())
-  io.cp0.is_in_delayslot := is_in_delayslot
+  val waddr             = Wire(ADDR_BUS)
+  val wen               = Wire(Bool())
+  val wdata             = Wire(BUS)
+  val hi                = Wire(BUS)
+  val lo                = Wire(BUS)
+  val whilo             = Wire(Bool())
+  val LLbit_wen         = Wire(Bool())
+  val LLbit_value       = Wire(Bool())
+  val mem_addr          = Wire(BUS)
+  val mem_sel           = Wire(DATA_MEMORY_SEL_BUS)
+  val mem_data          = Wire(BUS)
+  val mem_ce            = Wire(Bool())
+  val cp0_wen           = Wire(Bool())
+  val cp0_waddr         = Wire(CP0_ADDR_BUS)
+  val cp0_data          = Wire(BUS)
+  val excepttype        = Wire(UInt(32.W))
+  val mem_we            = Wire(Bool())
+  val epc               = Wire(BUS)
+  val is_in_delayslot   = Wire(Bool())
   val current_inst_addr = Wire(BUS)
+  val LLbit             = Wire(Bool())
+  val zero32            = Wire(BUS)
+  val cp0_status        = Wire(BUS)
+  val cp0_cause         = Wire(BUS)
+  val cp0_epc           = Wire(BUS)
+
+  // output-decoder
+  io.decoder.waddr := waddr
+  io.decoder.wen   := wen
+  io.decoder.wdata := wdata
+
+  // output-execute
+  io.execute.hi    := hi
+  io.execute.lo    := lo
+  io.execute.whilo := whilo
+
+  // output-write back stage
+  io.writeBackStage.wen         := wen
+  io.writeBackStage.waddr       := waddr
+  io.writeBackStage.pc          := pc
+  io.writeBackStage.wdata       := wdata
+  io.writeBackStage.hi          := hi
+  io.writeBackStage.lo          := lo
+  io.writeBackStage.whilo       := whilo
+  io.writeBackStage.LLbit_wen   := LLbit_wen
+  io.writeBackStage.LLbit_value := LLbit_value
+  io.writeBackStage.cp0_wen     := cp0_wen
+  io.writeBackStage.cp0_waddr   := cp0_waddr
+  io.writeBackStage.cp0_data    := cp0_data
+
+  // output-data memory
+  io.dataMemory.addr := mem_addr
+  io.dataMemory.sel  := mem_sel
+  io.dataMemory.data := mem_data
+  io.dataMemory.ce   := mem_ce
+  io.dataMemory.wen  := mem_we & ~excepttype.orR()
+
+  // output-execute
+  io.execute.cp0_wen   := cp0_wen
+  io.execute.cp0_waddr := cp0_waddr
+  io.execute.cp0_data  := cp0_data
+
+  // output-control
+  io.control.excepttype := excepttype
+  io.control.cp0_epc    := epc
+
+  // output-cp0
+  io.cp0.excepttype        := excepttype
+  io.cp0.is_in_delayslot   := is_in_delayslot
   io.cp0.current_inst_addr := current_inst_addr
 
-  val LLbit = Wire(Bool())
-  val zero32 = Wire(BUS)
-  val cp0_status = Wire(BUS)
-  val cp0_cause = Wire(BUS)
-  val cp0_epc = Wire(BUS)
-  zero32 := 0.U(32.W)
-
-  is_in_delayslot := io.fromMemoryStage.is_in_delayslot
+  // input-memory stage
+  is_in_delayslot   := io.fromMemoryStage.is_in_delayslot
   current_inst_addr := io.fromMemoryStage.current_inst_addr
-  epc := cp0_epc
+  epc               := cp0_epc
+
+  // io-finish
+  zero32 := 0.U(32.W)
 
   // 获取最新的LLbit的值
   when(reset.asBool === RST_ENABLE) {
     LLbit := false.B
   }.otherwise {
     when(io.fromWriteBackStage.LLbit_wen) {
+
+      // input-write back stage
       LLbit := io.fromWriteBackStage.LLbit_value
     }.otherwise {
+
+      // input-l lbit reg
       LLbit := io.fromLLbitReg.LLbit
     }
   }
 
   when(reset.asBool === RST_ENABLE) {
-    waddr := NOP_REG_ADDR
-    wen := WRITE_DISABLE
-    wdata := ZERO_WORD
-    hi := ZERO_WORD
-    lo := ZERO_WORD
-    whilo := WRITE_DISABLE
-    mem_addr := ZERO_WORD
-    mem_we := WRITE_DISABLE
-    mem_sel := "b0000".U
-    mem_data := ZERO_WORD
-    mem_ce := CHIP_DISABLE
-    LLbit_wen := false.B
+    waddr       := NOP_REG_ADDR
+    wen         := WRITE_DISABLE
+    wdata       := ZERO_WORD
+    hi          := ZERO_WORD
+    lo          := ZERO_WORD
+    whilo       := WRITE_DISABLE
+    mem_addr    := ZERO_WORD
+    mem_we      := WRITE_DISABLE
+    mem_sel     := "b0000".U
+    mem_data    := ZERO_WORD
+    mem_ce      := CHIP_DISABLE
+    LLbit_wen   := false.B
     LLbit_value := false.B
-    cp0_wen := WRITE_DISABLE
-    cp0_waddr := "b00000".U
-    cp0_data := ZERO_WORD
+    cp0_wen     := WRITE_DISABLE
+    cp0_waddr   := "b00000".U
+    cp0_data    := ZERO_WORD
   }.otherwise {
-    waddr := io.fromMemoryStage.waddr
-    wen := io.fromMemoryStage.wen
-    wdata := io.fromMemoryStage.wdata
-    hi := io.fromMemoryStage.hi
-    lo := io.fromMemoryStage.lo
-    whilo := io.fromMemoryStage.whilo
-    mem_we := WRITE_DISABLE
-    mem_addr := ZERO_WORD
-    mem_sel := "b1111".U
-    mem_ce := CHIP_DISABLE
-    LLbit_wen := false.B
+    // input-memory stage
+    waddr       := io.fromMemoryStage.waddr
+    wen         := io.fromMemoryStage.wen
+    wdata       := io.fromMemoryStage.wdata
+    hi          := io.fromMemoryStage.hi
+    lo          := io.fromMemoryStage.lo
+    whilo       := io.fromMemoryStage.whilo
+    mem_we      := WRITE_DISABLE
+    mem_addr    := ZERO_WORD
+    mem_sel     := "b1111".U
+    mem_ce      := CHIP_DISABLE
+    LLbit_wen   := false.B
     LLbit_value := false.B
-    cp0_wen := io.fromMemoryStage.cp0_wen
-    cp0_waddr := io.fromMemoryStage.cp0_waddr
-    cp0_data := io.fromMemoryStage.cp0_data
+    cp0_wen     := io.fromMemoryStage.cp0_wen
+    cp0_waddr   := io.fromMemoryStage.cp0_waddr
+    cp0_data    := io.fromMemoryStage.cp0_data
 
     mem_we := MuxLookup(
       aluop,
       WRITE_DISABLE,
       Seq(
-        EXE_SB_OP -> WRITE_ENABLE,
-        EXE_SH_OP -> WRITE_ENABLE,
-        EXE_SW_OP -> WRITE_ENABLE,
+        EXE_SB_OP  -> WRITE_ENABLE,
+        EXE_SH_OP  -> WRITE_ENABLE,
+        EXE_SW_OP  -> WRITE_ENABLE,
         EXE_SWL_OP -> WRITE_ENABLE,
         EXE_SWR_OP -> WRITE_ENABLE,
-        EXE_SC_OP -> WRITE_ENABLE
+        EXE_SC_OP  -> WRITE_ENABLE
       )
     )
 
@@ -156,20 +183,20 @@ class Memory extends Module {
       aluop,
       CHIP_DISABLE,
       Seq(
-        EXE_LB_OP -> CHIP_ENABLE,
+        EXE_LB_OP  -> CHIP_ENABLE,
         EXE_LBU_OP -> CHIP_ENABLE,
-        EXE_LH_OP -> CHIP_ENABLE,
+        EXE_LH_OP  -> CHIP_ENABLE,
         EXE_LHU_OP -> CHIP_ENABLE,
-        EXE_LW_OP -> CHIP_ENABLE,
+        EXE_LW_OP  -> CHIP_ENABLE,
         EXE_LWL_OP -> CHIP_ENABLE,
         EXE_LWL_OP -> CHIP_ENABLE,
-        EXE_LL_OP -> CHIP_ENABLE,
-        EXE_SB_OP -> CHIP_ENABLE,
-        EXE_SH_OP -> CHIP_ENABLE,
-        EXE_SW_OP -> CHIP_ENABLE,
+        EXE_LL_OP  -> CHIP_ENABLE,
+        EXE_SB_OP  -> CHIP_ENABLE,
+        EXE_SH_OP  -> CHIP_ENABLE,
+        EXE_SW_OP  -> CHIP_ENABLE,
         EXE_SWL_OP -> CHIP_ENABLE,
         EXE_SWR_OP -> CHIP_ENABLE,
-        EXE_SC_OP -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
+        EXE_SC_OP  -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
       )
     ) // mem_ce
 
@@ -177,20 +204,20 @@ class Memory extends Module {
       aluop,
       ZERO_WORD,
       Seq(
-        EXE_LB_OP -> io.fromMemoryStage.addr,
+        EXE_LB_OP  -> io.fromMemoryStage.addr,
         EXE_LBU_OP -> io.fromMemoryStage.addr,
-        EXE_LH_OP -> io.fromMemoryStage.addr,
+        EXE_LH_OP  -> io.fromMemoryStage.addr,
         EXE_LHU_OP -> io.fromMemoryStage.addr,
-        EXE_LW_OP -> io.fromMemoryStage.addr,
+        EXE_LW_OP  -> io.fromMemoryStage.addr,
         EXE_LWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
         EXE_LWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-        EXE_LL_OP -> io.fromMemoryStage.addr,
-        EXE_SB_OP -> io.fromMemoryStage.addr,
-        EXE_SH_OP -> io.fromMemoryStage.addr,
-        EXE_SW_OP -> io.fromMemoryStage.addr,
+        EXE_LL_OP  -> io.fromMemoryStage.addr,
+        EXE_SB_OP  -> io.fromMemoryStage.addr,
+        EXE_SH_OP  -> io.fromMemoryStage.addr,
+        EXE_SW_OP  -> io.fromMemoryStage.addr,
         EXE_SWL_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
         EXE_SWR_OP -> Cat(io.fromMemoryStage.addr(31, 2), 0.U(2.W)),
-        EXE_SC_OP -> Mux(LLbit, io.fromMemoryStage.addr, ZERO_WORD)
+        EXE_SC_OP  -> Mux(LLbit, io.fromMemoryStage.addr, ZERO_WORD)
       )
     ) // mem_addr
 
@@ -236,10 +263,10 @@ class Memory extends Module {
             "b10".U -> "b0011".U
           )
         ),
-        EXE_LW_OP -> "b1111".U,
+        EXE_LW_OP  -> "b1111".U,
         EXE_LWL_OP -> "b1111".U,
         EXE_LWR_OP -> "b1111".U,
-        EXE_LL_OP -> "b1111".U,
+        EXE_LL_OP  -> "b1111".U,
         EXE_SB_OP -> MuxLookup(
           addrLowBit2,
           "b0000".U,
@@ -405,8 +432,12 @@ class Memory extends Module {
     (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
       (io.fromWriteBackStage.cp0_waddr === CP0_REG_STATUS)
   ) {
+
+    // input-write back stage
     cp0_status := io.fromWriteBackStage.cp0_data
   }.otherwise {
+
+    // input-c p0
     cp0_status := io.fromCP0.status
   }
 
@@ -416,8 +447,12 @@ class Memory extends Module {
     (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
       (io.fromWriteBackStage.cp0_waddr === CP0_REG_EPC)
   ) {
+
+    // input-write back stage
     cp0_epc := io.fromWriteBackStage.cp0_data
   }.otherwise {
+
+    // input-c p0
     cp0_epc := io.fromCP0.epc
   }
 

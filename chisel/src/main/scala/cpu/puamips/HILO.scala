@@ -7,7 +7,7 @@ import cpu.puamips.Const._
 class HILO extends Module {
   val io = IO(new Bundle {
     val fromWriteBackStage = Flipped(new WriteBackStage_HILO())
-    val execute = new HILO_Execute()
+    val execute            = new HILO_Execute()
   })
   // output
   val hi = RegInit(BUS_INIT)

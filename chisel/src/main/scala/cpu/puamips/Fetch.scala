@@ -5,24 +5,32 @@ import chisel3._
 
 class Fetch extends Module {
   val io = IO(new Bundle {
-    val fromControl = Flipped(new Control_Fetch())
-    val fromDecoder = Flipped(new Decoder_Fetch())
+    val fromControl  = Flipped(new Control_Fetch())
+    val fromDecoder  = Flipped(new Decoder_Fetch())
     val decoderStage = new Fetch_DecoderStage()
-    val instMemory = new Fetch_InstMemory()
+    val instMemory   = new Fetch_InstMemory()
   })
-
   // input
-  val stall = Wire(STALL_BUS)
-  stall := io.fromControl.stall
-  val branch_flag = Wire(Bool())
-  branch_flag := io.fromDecoder.branch_flag
+  val stall                 = Wire(STALL_BUS)
+  val branch_flag           = Wire(Bool())
   val branch_target_address = Wire(BUS)
+
+  // input-control
+  stall := io.fromControl.stall
+
+  // input-decoder
+  branch_flag           := io.fromDecoder.branch_flag
   branch_target_address := io.fromDecoder.branch_target_address
+
   // output
   val pc = RegInit(PC_INIT)
-  io.decoderStage.pc := pc
-  io.instMemory.pc := pc
   val ce = Wire(Bool())
+
+  // output-decoderStage
+  io.decoderStage.pc := pc
+
+  // output-instMemory
+  io.instMemory.pc := pc
   io.instMemory.ce := ce
 
   when(ce === false.B) {
