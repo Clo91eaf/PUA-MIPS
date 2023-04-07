@@ -12,22 +12,22 @@ class Regfile extends Module {
     val decoder            = new RegFile_Decoder()
   })
   // input-decoder
-  val re1    = Wire(Bool())
+  val ren1    = Wire(Bool())
   val raddr1 = Wire(ADDR_BUS)
-  val re2    = Wire(Bool())
+  val ren2    = Wire(Bool())
   val raddr2 = Wire(ADDR_BUS)
-  re1    := io.fromDecoder.reg1_read
-  re2    := io.fromDecoder.reg2_read
-  raddr1 := io.fromDecoder.reg1_addr
-  raddr2 := io.fromDecoder.reg2_addr
+  ren1    := io.fromDecoder.reg1_ren
+  ren2    := io.fromDecoder.reg2_ren
+  raddr1 := io.fromDecoder.reg1_raddr
+  raddr2 := io.fromDecoder.reg2_raddr
 
   // input-write back
   val wen   = Wire(Bool())
   val waddr = Wire(ADDR_BUS)
   val wdata = Wire(BUS)
-  wen   := io.fromWriteBackStage.wen
-  wdata := io.fromWriteBackStage.wdata
-  waddr := io.fromWriteBackStage.waddr
+  wen   := io.fromWriteBackStage.reg_wen
+  wdata := io.fromWriteBackStage.reg_wdata
+  waddr := io.fromWriteBackStage.reg_waddr
 
   // output-decoder
   val rdata1 = Wire(BUS)
@@ -50,10 +50,10 @@ class Regfile extends Module {
     rdata1 := ZERO_WORD
   }.elsewhen(
     (raddr1 === waddr) && (wen === WRITE_ENABLE)
-      && (re1 === READ_ENABLE)
+      && (ren1 === READ_ENABLE)
   ) {
     rdata1 := wdata
-  }.elsewhen(re1 === READ_ENABLE) {
+  }.elsewhen(ren1 === READ_ENABLE) {
     rdata1 := regs(raddr1)
   }.otherwise {
     rdata1 := ZERO_WORD
@@ -65,10 +65,10 @@ class Regfile extends Module {
     rdata2 := ZERO_WORD
   }.elsewhen(
     (raddr2 === waddr) && (wen === WRITE_ENABLE)
-      && (re2 === READ_ENABLE)
+      && (ren2 === READ_ENABLE)
   ) {
     rdata2 := wdata
-  }.elsewhen(re2 === READ_ENABLE) {
+  }.elsewhen(ren2 === READ_ENABLE) {
     rdata2 := regs(raddr2)
   }.otherwise {
     rdata2 := ZERO_WORD

@@ -50,8 +50,8 @@ class Execute extends Module {
   alusel_i := io.fromExecuteStage.alusel
   reg1_i   := io.fromExecuteStage.reg1
   reg2_i   := io.fromExecuteStage.reg2
-  wd_i     := io.fromExecuteStage.waddr
-  wreg_i   := io.fromExecuteStage.wen
+  wd_i     := io.fromExecuteStage.reg_waddr
+  wreg_i   := io.fromExecuteStage.reg_wen
   inst_i   := io.fromExecuteStage.inst
 
   // input-hilo
@@ -82,9 +82,9 @@ class Execute extends Module {
 
   // output
   val pc                = Wire(BUS)
-  val waddr             = Wire(ADDR_BUS)
-  val wen               = Wire(Bool())
-  val wdata             = Wire(BUS)
+  val reg_waddr         = Wire(ADDR_BUS)
+  val reg_wen           = Wire(Bool())
+  val reg_wdata         = Wire(BUS)
   val hi                = Wire(BUS)
   val lo                = Wire(BUS)
   val whilo             = Wire(Bool())
@@ -101,7 +101,7 @@ class Execute extends Module {
   val cp0_raddr         = Wire(CP0_ADDR_BUS)
   val cp0_wen           = Wire(Bool())
   val cp0_waddr         = Wire(CP0_ADDR_BUS)
-  val cp0_data          = Wire(BUS)
+  val cp0_wdata         = Wire(BUS)
   val current_inst_addr = Wire(BUS)
   val is_in_delayslot   = Wire(Bool())
   val excepttype        = Wire(UInt(32.W))
@@ -111,27 +111,27 @@ class Execute extends Module {
   io.memoryStage.pc := pc
 
   // output-decoder
-  io.decoder.waddr := waddr
+  io.decoder.reg_waddr := reg_waddr
 
   // output-memory stage
-  io.memoryStage.waddr := waddr
+  io.memoryStage.reg_waddr := reg_waddr
 
   // output-decoder
-  io.decoder.wen := wen
+  io.decoder.reg_wen := reg_wen
 
   // output-memory stage
-  io.memoryStage.wen := wen
+  io.memoryStage.reg_wen := reg_wen
 
   // output-decoder
-  io.decoder.wdata := wdata
+  io.decoder.reg_wdata := reg_wdata
 
   // output-memory stage
-  io.memoryStage.wdata := wdata
-  io.memoryStage.hi    := hi
-  io.memoryStage.lo    := lo
-  io.memoryStage.whilo := whilo
-  io.memoryStage.hilo  := hilo_temp_o
-  io.memoryStage.cnt   := cnt
+  io.memoryStage.reg_wdata := reg_wdata
+  io.memoryStage.hi        := hi
+  io.memoryStage.lo        := lo
+  io.memoryStage.whilo     := whilo
+  io.memoryStage.hilo      := hilo_temp_o
+  io.memoryStage.cnt       := cnt
 
   // output-divider
   io.divider.opdata1    := div_opdata1
@@ -146,8 +146,8 @@ class Execute extends Module {
   io.decoder.aluop := aluop
 
   // output-memory stage
-  io.memoryStage.addr := mem_addr
-  io.memoryStage.reg2 := reg2
+  io.memoryStage.mem_addr := mem_addr
+  io.memoryStage.reg2     := reg2
 
   // output-control
   io.control.stallreq := stallreq
@@ -158,7 +158,7 @@ class Execute extends Module {
   // output-memory stage
   io.memoryStage.cp0_wen           := cp0_wen
   io.memoryStage.cp0_waddr         := cp0_waddr
-  io.memoryStage.cp0_data          := cp0_data
+  io.memoryStage.cp0_wdata         := cp0_wdata
   io.memoryStage.current_inst_addr := current_inst_addr
   io.memoryStage.is_in_delayslot   := is_in_delayslot
   io.memoryStage.except_type       := excepttype
@@ -503,45 +503,45 @@ class Execute extends Module {
         cp0_raddr := inst_i(15, 11)
 
         // input-c p0
-        moveres := io.fromCP0.cp0_data
+        moveres := io.fromCP0.cp0_rdata
         when(
           io.fromMemory.cp0_wen === WRITE_ENABLE &&
             io.fromMemory.cp0_waddr === inst_i(15, 11)
         ) {
 
           // input-memory
-          moveres := io.fromMemory.cp0_data
+          moveres := io.fromMemory.cp0_wdata
         }.elsewhen(
           io.fromWriteBackStage.cp0_wen === WRITE_ENABLE &&
             io.fromWriteBackStage.cp0_waddr === inst_i(15, 11)
         ) {
 
           // input-write back stage
-          moveres := io.fromWriteBackStage.cp0_data
+          moveres := io.fromWriteBackStage.cp0_wdata
         }
       }
     }
   }
 
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
-  waddr := wd_i
+  reg_waddr := wd_i
   when(
     ((aluop_i === EXE_ADD_OP) || (aluop_i === EXE_ADDI_OP) || (aluop_i === EXE_SUB_OP)) && (ov_sum === 1.U)
   ) {
-    wen      := WRITE_DISABLE
+    reg_wen  := WRITE_DISABLE
     ovassert := true.B
   }.otherwise {
-    wen      := wreg_i
+    reg_wen  := wreg_i
     ovassert := false.B
   }
-  wdata := ZERO_WORD // default
+  reg_wdata := ZERO_WORD // default
   switch(alusel_i) {
-    is(EXE_RES_LOGIC) { wdata := logicout } // 逻辑运算
-    is(EXE_RES_SHIFT) { wdata := shiftres } // 移位运算
-    is(EXE_RES_MOVE) { wdata := moveres } // 移动运算
-    is(EXE_RES_ARITHMETIC) { wdata := arithmeticres } // 除乘法外简单算术操作指令
-    is(EXE_RES_MUL) { wdata := mulres(31, 0) } // 乘法指令mul
-    is(EXE_RES_JUMP_BRANCH) { wdata := link_addr_i }
+    is(EXE_RES_LOGIC) { reg_wdata := logicout } // 逻辑运算
+    is(EXE_RES_SHIFT) { reg_wdata := shiftres } // 移位运算
+    is(EXE_RES_MOVE) { reg_wdata := moveres } // 移动运算
+    is(EXE_RES_ARITHMETIC) { reg_wdata := arithmeticres } // 除乘法外简单算术操作指令
+    is(EXE_RES_MUL) { reg_wdata := mulres(31, 0) } // 乘法指令mul
+    is(EXE_RES_JUMP_BRANCH) { reg_wdata := link_addr_i }
   }
 
   // MTHI和MTLO指令 乘法运算结果保存
@@ -582,15 +582,15 @@ class Execute extends Module {
   when(reset.asBool === RST_ENABLE) {
     cp0_waddr := 0.U
     cp0_wen   := WRITE_DISABLE
-    cp0_data  := ZERO_WORD
+    cp0_wdata := ZERO_WORD
   }.elsewhen(aluop_i === EXE_MTC0_OP) {
     cp0_waddr := inst_i(15, 11)
     cp0_wen   := WRITE_ENABLE
-    cp0_data  := reg1_i
+    cp0_wdata := reg1_i
   }.otherwise {
     cp0_waddr := 0.U
     cp0_wen   := WRITE_DISABLE
-    cp0_data  := ZERO_WORD
+    cp0_wdata := ZERO_WORD
   }
 
   // debug

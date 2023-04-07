@@ -38,10 +38,10 @@ class Decoder extends Module {
 
   // input-execute
   aluop_i := io.fromExecute.aluop
-  waddr_i := io.fromExecute.waddr // TODO:未被使用
+  waddr_i := io.fromExecute.reg_waddr // TODO:未被使用
 
   // input-memory
-  waddr_i := io.fromMemory.waddr // TODO:未被使用
+  waddr_i := io.fromMemory.reg_waddr // TODO:未被使用
 
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
@@ -51,16 +51,16 @@ class Decoder extends Module {
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg1_read              = Wire(Bool())
-  val reg2_read              = Wire(Bool())
-  val reg1_addr              = Wire(ADDR_BUS)
-  val reg2_addr              = Wire(ADDR_BUS)
+  val reg1_ren               = Wire(Bool())
+  val reg2_ren               = Wire(Bool())
+  val reg1_raddr             = Wire(ADDR_BUS)
+  val reg2_raddr             = Wire(ADDR_BUS)
   val aluop                  = Wire(ALU_OP_BUS)
   val alusel                 = Wire(ALU_SEL_BUS)
   val reg1                   = Wire(BUS)
   val reg2                   = Wire(BUS)
-  val waddr                  = Wire(ADDR_BUS)
-  val wen                    = Wire(Bool())
+  val reg_waddr              = Wire(ADDR_BUS)
+  val reg_wen                = Wire(Bool())
   val next_inst_in_delayslot = Wire(Bool())
   val branch_flag            = Wire(Bool())
   val branch_target_address  = Wire(BUS)
@@ -74,18 +74,18 @@ class Decoder extends Module {
   io.executeStage.pc := pc
 
   // output-regfile
-  io.regfile.reg1_read := reg1_read
-  io.regfile.reg2_read := reg2_read
-  io.regfile.reg1_addr := reg1_addr
-  io.regfile.reg2_addr := reg2_addr
+  io.regfile.reg1_ren   := reg1_ren
+  io.regfile.reg2_ren   := reg2_ren
+  io.regfile.reg1_raddr := reg1_raddr
+  io.regfile.reg2_raddr := reg2_raddr
 
   // output-execute stage
   io.executeStage.aluop                  := aluop
   io.executeStage.alusel                 := alusel
   io.executeStage.reg1                   := reg1
   io.executeStage.reg2                   := reg2
-  io.executeStage.waddr                  := waddr
-  io.executeStage.wen                    := wen
+  io.executeStage.reg_waddr              := reg_waddr
+  io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
 
@@ -180,13 +180,13 @@ class Decoder extends Module {
   when(reset.asBool === RST_ENABLE) {
     aluop                  := EXE_NOP_OP
     alusel                 := EXE_RES_NOP
-    waddr                  := rd // inst(15, 11)
-    wen                    := WRITE_DISABLE
-    inst_valid             := INST_INVALID
-    reg1_read              := READ_DISABLE
-    reg2_read              := READ_DISABLE
-    reg1_addr              := rs // inst(25, 21)
-    reg2_addr              := rt // inst(20, 16)
+    reg_waddr              := rd // inst(15, 11)
+    reg_wen                := WRITE_DISABLE
+    instValid              := INST_INVALID
+    reg1_ren               := READ_DISABLE
+    reg2_ren               := READ_DISABLE
+    reg1_raddr             := rs // inst(25, 21)
+    reg2_raddr             := rt // inst(20, 16)
     imm                    := ZERO_WORD
     link_addr              := ZERO_WORD
     branch_target_address  := ZERO_WORD
@@ -198,13 +198,13 @@ class Decoder extends Module {
 
   aluop                  := EXE_NOP_OP
   alusel                 := EXE_RES_NOP
-  waddr                  := rd // inst(15, 11)
-  wen                    := WRITE_DISABLE
-  inst_valid             := INST_INVALID
-  reg1_read              := READ_DISABLE
-  reg2_read              := READ_DISABLE
-  reg1_addr              := rs // inst(25, 21)
-  reg2_addr              := rt // inst(20, 16)
+  reg_waddr              := rd // inst(15, 11)
+  reg_wen                := WRITE_DISABLE
+  instValid              := INST_INVALID
+  reg1_ren               := READ_DISABLE
+  reg2_ren               := READ_DISABLE
+  reg1_raddr             := rs // inst(25, 21)
+  reg2_raddr             := rt // inst(20, 16)
   imm                    := ZERO_WORD
   link_addr              := ZERO_WORD
   branch_target_address  := ZERO_WORD
@@ -223,7 +223,7 @@ class Decoder extends Module {
     inst,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   inst_valid  | reg1_read     | reg2_read     | alusel       | aluop      | wen           | waddr     | immType */
+    Array(         /*   instValid  | reg1_ren     | reg2_ren     | alusel       | aluop      | reg_wen           | reg_waddr     | immType */
       // NOP
       NOP       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作
@@ -370,8 +370,8 @@ class Decoder extends Module {
   wraType    := csWRType
   immType    := csIMMType
 
-  reg1_read := op1_type
-  reg2_read := op2_type
+  reg1_ren := op1_type
+  reg2_ren := op2_type
 
   imm := MuxLookup(
     immType,
@@ -383,7 +383,7 @@ class Decoder extends Module {
     )
   )
 
-  waddr := MuxLookup(
+  reg_waddr := MuxLookup(
     wraType,
     "b11111".U(5.W), // 取"b11111", 即31号寄存器
     Seq(
@@ -392,10 +392,10 @@ class Decoder extends Module {
     )
   )
 
-  aluop  := csOpType
-  alusel := csInstType
-  wen    := csWReg
-  wen := MuxLookup(
+  aluop   := csOpType
+  alusel  := csInstType
+  reg_wen := csWReg
+  reg_wen := MuxLookup(
     aluop,
     csWReg, // wreg默认为查找表中的结果
     Seq(
@@ -478,25 +478,25 @@ class Decoder extends Module {
   when(reset.asBool === RST_ENABLE) {
     reg1 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.waddr === reg1_addr && reg1_read
+    pre_inst_is_load && io.fromExecute.reg_waddr === reg1_raddr && reg1_ren
   ) {
     stallreq_for_reg1_loadrelate := STOP
     reg1                         := ZERO_WORD // liphen
   }.elsewhen(
-    reg1_read && io.fromExecute.wen && io.fromExecute.waddr === reg1_addr
+    reg1_ren && io.fromExecute.reg_wen && io.fromExecute.reg_waddr === reg1_raddr
   ) {
 
     // input-execute
-    reg1 := io.fromExecute.wdata
+    reg1 := io.fromExecute.reg_wdata
   }.elsewhen(
-    reg1_read && io.fromMemory.wen && io.fromMemory.waddr === reg1_addr
+    reg1_ren && io.fromMemory.reg_wen && io.fromMemory.reg_waddr === reg1_raddr
   ) {
 
     // input-memory
-    reg1 := io.fromMemory.wdata
-  }.elsewhen(reg1_read) {
+    reg1 := io.fromMemory.reg_wdata
+  }.elsewhen(reg1_ren) {
     reg1 := reg1_data
-  }.elsewhen(!reg1_read) {
+  }.elsewhen(!reg1_ren) {
     reg1 := imm
   }.otherwise {
     reg1 := ZERO_WORD
@@ -506,25 +506,25 @@ class Decoder extends Module {
   when(reset.asBool === RST_ENABLE) {
     reg2 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.waddr === reg2_addr && reg2_read
+    pre_inst_is_load && io.fromExecute.reg_waddr === reg2_raddr && reg2_ren
   ) {
     stallreq_for_reg2_loadrelate := STOP
     reg2                         := ZERO_WORD // liphen
   }.elsewhen(
-    (reg2_read) && (io.fromExecute.wen) && (io.fromExecute.waddr === reg2_addr)
+    (reg2_ren) && (io.fromExecute.reg_wen) && (io.fromExecute.reg_waddr === reg2_raddr)
   ) {
 
     // input-execute
-    reg2 := io.fromExecute.wdata
+    reg2 := io.fromExecute.reg_wdata
   }.elsewhen(
-    (reg2_read) && (io.fromMemory.wen) && (io.fromMemory.waddr === reg2_addr)
+    (reg2_ren) && (io.fromMemory.reg_wen) && (io.fromMemory.reg_waddr === reg2_raddr)
   ) {
 
     // input-memory
-    reg2 := io.fromMemory.wdata
-  }.elsewhen(reg2_read) {
+    reg2 := io.fromMemory.reg_wdata
+  }.elsewhen(reg2_ren) {
     reg2 := reg2_data
-  }.elsewhen(!reg2_read) {
+  }.elsewhen(!reg2_ren) {
     reg2 := imm
   }.otherwise {
     reg2 := ZERO_WORD

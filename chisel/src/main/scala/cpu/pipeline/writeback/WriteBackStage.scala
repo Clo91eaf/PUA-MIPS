@@ -26,9 +26,9 @@ class WriteBackStage extends Module {
 
   // output
   val pc          = RegInit(BUS_INIT)
-  val waddr       = RegInit(ADDR_BUS_INIT)
-  val wen         = RegInit(WRITE_DISABLE)
-  val wdata       = RegInit(BUS_INIT)
+  val reg_waddr   = RegInit(ADDR_BUS_INIT)
+  val reg_wen     = RegInit(WRITE_DISABLE)
+  val reg_wdata   = RegInit(BUS_INIT)
   val hi          = RegInit(BUS_INIT)
   val lo          = RegInit(BUS_INIT)
   val whilo       = RegInit(WRITE_DISABLE)
@@ -36,12 +36,12 @@ class WriteBackStage extends Module {
   val LLbit_value = RegInit(false.B)
   val cp0_wen     = RegInit(WRITE_DISABLE)
   val cp0_waddr   = RegInit(CP0_ADDR_BUS_INIT)
-  val cp0_data    = RegInit(BUS_INIT)
+  val cp0_wdata   = RegInit(BUS_INIT)
 
   // output-reg file
-  io.regFile.waddr := waddr
-  io.regFile.wen   := wen
-  io.regFile.wdata := wdata
+  io.regFile.reg_waddr := reg_waddr
+  io.regFile.reg_wen   := reg_wen
+  io.regFile.reg_wdata := reg_wdata
 
   // output-hilo
   io.hilo.hi    := hi
@@ -54,14 +54,14 @@ class WriteBackStage extends Module {
   io.execute.whilo     := whilo
   io.execute.cp0_wen   := cp0_wen
   io.execute.cp0_waddr := cp0_waddr
-  io.execute.cp0_data  := cp0_data
+  io.execute.cp0_wdata := cp0_wdata
 
   // output-memory
   io.memory.LLbit_wen   := LLbit_wen
   io.memory.LLbit_value := LLbit_value
   io.memory.cp0_wen     := cp0_wen
   io.memory.cp0_waddr   := cp0_waddr
-  io.memory.cp0_data    := cp0_data
+  io.memory.cp0_wdata   := cp0_wdata
 
   // output-llbit reg
   io.llbitReg.LLbit_wen   := LLbit_wen
@@ -70,20 +70,20 @@ class WriteBackStage extends Module {
   // output-cp0
   io.cp0.cp0_wen   := cp0_wen
   io.cp0.cp0_waddr := cp0_waddr
-  io.cp0.cp0_data  := cp0_data
+  io.cp0.cp0_wdata := cp0_wdata
 
   // output-debug
   io.debug.pc    := pc
-  io.debug.waddr := waddr
-  io.debug.wen   := Fill(4, wen)
-  io.debug.wdata := wdata
+  io.debug.waddr := reg_waddr
+  io.debug.wen   := Fill(4, reg_wen)
+  io.debug.wdata := reg_wdata
 
   // io-finish
 
   when(io.fromControl.flush) {
-    waddr       := NOP_REG_ADDR
-    wen         := WRITE_DISABLE
-    wdata       := ZERO_WORD
+    reg_waddr   := NOP_REG_ADDR
+    reg_wen     := WRITE_DISABLE
+    reg_wdata   := ZERO_WORD
     hi          := ZERO_WORD
     lo          := ZERO_WORD
     whilo       := WRITE_DISABLE
@@ -91,11 +91,11 @@ class WriteBackStage extends Module {
     LLbit_value := false.B
     cp0_wen     := WRITE_DISABLE
     cp0_waddr   := "b00000".U
-    cp0_data    := ZERO_WORD
+    cp0_wdata   := ZERO_WORD
   }.elsewhen(stall(4) === STOP && stall(5) === NOT_STOP) {
-    waddr       := NOP_REG_ADDR
-    wen         := WRITE_DISABLE
-    wdata       := ZERO_WORD
+    reg_waddr   := NOP_REG_ADDR
+    reg_wen     := WRITE_DISABLE
+    reg_wdata   := ZERO_WORD
     hi          := ZERO_WORD
     lo          := ZERO_WORD
     whilo       := WRITE_DISABLE
@@ -103,13 +103,13 @@ class WriteBackStage extends Module {
     LLbit_value := false.B
     cp0_wen     := WRITE_DISABLE
     cp0_waddr   := 0.U
-    cp0_data    := ZERO_WORD
+    cp0_wdata   := ZERO_WORD
     pc          := pc
   }.elsewhen(stall(4) === NOT_STOP) {
     // input-memory
-    waddr       := io.fromMemory.waddr
-    wen         := io.fromMemory.wen
-    wdata       := io.fromMemory.wdata
+    reg_waddr   := io.fromMemory.reg_waddr
+    reg_wen     := io.fromMemory.reg_wen
+    reg_wdata   := io.fromMemory.reg_wdata
     hi          := io.fromMemory.hi
     lo          := io.fromMemory.lo
     whilo       := io.fromMemory.whilo
@@ -117,7 +117,7 @@ class WriteBackStage extends Module {
     LLbit_value := io.fromMemory.LLbit_value
     cp0_wen     := io.fromMemory.cp0_wen
     cp0_waddr   := io.fromMemory.cp0_waddr
-    cp0_data    := io.fromMemory.cp0_data
+    cp0_wdata   := io.fromMemory.cp0_wdata
     pc          := io.fromMemory.pc
   }
 

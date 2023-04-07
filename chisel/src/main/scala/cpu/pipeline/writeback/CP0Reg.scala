@@ -30,7 +30,7 @@ class CP0Reg extends Module {
   val timer_int = RegInit(INTERRUPT_NOT_ASSERT)
 
   // output-execute
-  io.execute.cp0_data := data
+  io.execute.cp0_rdata := data
 
   // output-out
   io.out.count   := count
@@ -60,27 +60,27 @@ class CP0Reg extends Module {
   when(io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) {
     switch(io.fromWriteBackStage.cp0_waddr) {
       is(CP0_REG_COUNT) {
-        count := io.fromWriteBackStage.cp0_data
+        count := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_COMPARE) {
-        compare := io.fromWriteBackStage.cp0_data
+        compare := io.fromWriteBackStage.cp0_wdata
         // count := `ZeroWord
         timer_int := INTERRUPT_NOT_ASSERT
       }
       is(CP0_REG_STATUS) {
-        status := io.fromWriteBackStage.cp0_data
+        status := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_EPC) {
-        epc := io.fromWriteBackStage.cp0_data
+        epc := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_CAUSE) {
         // cause寄存器只有IP(1,0)、IV、WP字段是可写的
         cause := Cat(
           cause(31, 24),
-          io.fromWriteBackStage.cp0_data(23),
-          io.fromWriteBackStage.cp0_data(22),
+          io.fromWriteBackStage.cp0_wdata(23),
+          io.fromWriteBackStage.cp0_wdata(22),
           cause(21, 10),
-          io.fromWriteBackStage.cp0_data(9, 8),
+          io.fromWriteBackStage.cp0_wdata(9, 8),
           cause(7, 0)
         )
       }
