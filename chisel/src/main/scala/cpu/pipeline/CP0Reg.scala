@@ -18,38 +18,37 @@ class CP0Reg extends Module {
   })
 
   // output
-  val data = Wire(BUS)
-  val count = RegInit(BUS_INIT)
-  val compare = RegInit(BUS_INIT)
-  val status = RegInit("b00010000000000000000000000000000".U(32.W))
-  val cause = RegInit(BUS_INIT)
-  val epc = RegInit(BUS_INIT)
-  val config = RegInit("b00000000000000001000000000000000".U(32.W))
-  val prid = RegInit("b00000000010011000000000100000010".U(32.W))
+  val data      = Wire(BUS)
+  val count     = RegInit(BUS_INIT)
+  val compare   = RegInit(BUS_INIT)
+  val status    = RegInit("b00010000000000000000000000000000".U(32.W))
+  val cause     = RegInit(BUS_INIT)
+  val epc       = RegInit(BUS_INIT)
+  val config    = RegInit("b00000000000000001000000000000000".U(32.W))
+  val prid      = RegInit("b00000000010011000000000100000010".U(32.W))
   val timer_int = RegInit(INTERRUPT_NOT_ASSERT)
-
 
   // output-execute
   io.execute.cp0_data := data
 
   // output-out
-  io.out.count := count
+  io.out.count   := count
   io.out.compare := compare
 
   // output-memory
   io.memory.status := status
-  io.memory.cause := cause
-  io.memory.epc := epc
+  io.memory.cause  := cause
+  io.memory.epc    := epc
 
   // output-out
   io.out.config := config
-  io.out.prid := prid
+  io.out.prid   := prid
 
   // output-timer_int_o := timer_int
   io.timer_int_o := timer_int
 
   // io-finish
- 
+
   count := count + 1.U
   cause := Cat(cause(31, 16), io.int_i, cause(9, 0))
 
@@ -87,7 +86,7 @@ class CP0Reg extends Module {
     }
   }
 
-  switch(io.fromMemory.excepttype) {
+  switch(io.fromMemory.except_type) {
     is("h00000001".U) {
       when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
         epc   := io.fromMemory.current_inst_addr - 4.U

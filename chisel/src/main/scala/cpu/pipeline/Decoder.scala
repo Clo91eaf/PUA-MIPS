@@ -67,7 +67,7 @@ class Decoder extends Module {
   val link_addr              = Wire(BUS)
   val is_in_delayslot        = Wire(Bool())
   val stallreq               = Wire(Bool())
-  val excepttype             = Wire(UInt(32.W))
+  val except_type            = Wire(UInt(32.W))
   val current_inst_addr      = Wire(BUS)
 
   // output-execute stage
@@ -101,7 +101,7 @@ class Decoder extends Module {
   io.control.stallreq := stallreq
 
   // output-execute stage
-  io.executeStage.excepttype        := excepttype
+  io.executeStage.except_type       := except_type
   io.executeStage.current_inst_addr := current_inst_addr
 
   // io-finish
@@ -134,15 +134,15 @@ class Decoder extends Module {
   imm16 := inst(15, 0)
 
   val imm                          = Wire(BUS)
-  val instValid                    = Wire(Bool())
+  val inst_valid                   = Wire(Bool())
   val pc_plus_4                    = Wire(BUS)
   val pc_plus_8                    = Wire(BUS)
   val imm_sll2_signedext           = Wire(BUS)
   val stallreq_for_reg1_loadrelate = Wire(Bool())
   val stallreq_for_reg2_loadrelate = Wire(Bool())
   val pre_inst_is_load             = Wire(Bool())
-  val excepttype_is_syscall        = Wire(Bool())
-  val excepttype_is_eret           = Wire(Bool())
+  val except_type_is_syscall       = Wire(Bool())
+  val except_type_is_eret          = Wire(Bool())
 
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
@@ -162,12 +162,12 @@ class Decoder extends Module {
 
   // exceptiontype的低8bit留给外部中断，第9bit表示是否是syscall指令
   // 第10bit表示是否是无效指令，第11bit表示是否是trap指令
-  excepttype := Cat(
+  except_type := Cat(
     "b0".U(19.W),
-    excepttype_is_eret,
+    except_type_is_eret,
     "b0".U(2.W),
-    instValid,
-    excepttype_is_syscall,
+    inst_valid,
+    except_type_is_syscall,
     "b0".U(8.W)
   )
 
@@ -182,7 +182,7 @@ class Decoder extends Module {
     alusel                 := EXE_RES_NOP
     waddr                  := rd // inst(15, 11)
     wen                    := WRITE_DISABLE
-    instValid              := INST_INVALID
+    inst_valid             := INST_INVALID
     reg1_read              := READ_DISABLE
     reg2_read              := READ_DISABLE
     reg1_addr              := rs // inst(25, 21)
@@ -192,15 +192,15 @@ class Decoder extends Module {
     branch_target_address  := ZERO_WORD
     branch_flag            := NOT_BRANCH
     next_inst_in_delayslot := NOT_IN_DELAY_SLOT
-    excepttype_is_syscall  := false.B
-    excepttype_is_eret     := false.B
+    except_type_is_syscall := false.B
+    except_type_is_eret    := false.B
   }
 
   aluop                  := EXE_NOP_OP
   alusel                 := EXE_RES_NOP
   waddr                  := rd // inst(15, 11)
   wen                    := WRITE_DISABLE
-  instValid              := INST_INVALID
+  inst_valid             := INST_INVALID
   reg1_read              := READ_DISABLE
   reg2_read              := READ_DISABLE
   reg1_addr              := rs // inst(25, 21)
@@ -210,20 +210,20 @@ class Decoder extends Module {
   branch_target_address  := ZERO_WORD
   branch_flag            := NOT_BRANCH
   next_inst_in_delayslot := NOT_IN_DELAY_SLOT
-  excepttype_is_syscall  := false.B
-  excepttype_is_eret     := false.B
+  except_type_is_syscall := false.B
+  except_type_is_eret    := false.B
   when(inst === SYSCALL) {
-    excepttype_is_syscall := true.B
+    except_type_is_syscall := true.B
   }
   when(inst === ERET) {
-    excepttype_is_eret := true.B
+    except_type_is_eret := true.B
   }
 
   val signals: List[UInt] = ListLookup(
     inst,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   instValid  | reg1_read     | reg2_read     | alusel       | aluop      | wen           | waddr     | immType */
+    Array(         /*   inst_valid  | reg1_read     | reg2_read     | alusel       | aluop      | wen           | waddr     | immType */
       // NOP
       NOP       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作
@@ -359,16 +359,16 @@ class Decoder extends Module {
   )
   // @formatter:on
 
-  val (csInstValid: Bool) :: (op1_type: Bool) :: (op2_type: Bool) :: csInstType :: cs0 =
+  val (csinst_valid: Bool) :: (op1_type: Bool) :: (op2_type: Bool) :: csInstType :: cs0 =
     signals
   val csOpType :: (csWReg: Bool) :: csWRType :: csIMMType :: Nil = cs0
 
   val wraType = Wire(UInt(2.W))
   val immType = Wire(UInt(3.W))
 
-  instValid := csInstValid
-  wraType   := csWRType
-  immType   := csIMMType
+  inst_valid := csinst_valid
+  wraType    := csWRType
+  immType    := csIMMType
 
   reg1_read := op1_type
   reg2_read := op2_type

@@ -9,8 +9,8 @@ class Fetch_DecoderStage extends Bundle {
 }
 
 class Fetch_InstMemory extends Bundle {
-  val pc = Output(BUS)
-  val ce = Output(Bool())
+  val pc      = Output(BUS)
+  val inst_en = Output(Bool())
 }
 
 // decoderStage
@@ -36,7 +36,7 @@ class Decoder_ExecuteStage extends Bundle {
   val wen                    = Output(Bool())
   val next_inst_in_delayslot = Output(Bool())
   val current_inst_addr      = Output(BUS)
-  val excepttype             = Output(UInt(32.W))
+  val except_type            = Output(UInt(32.W))
   val pc                     = Output(INST_ADDR_BUS)
 }
 
@@ -67,7 +67,7 @@ class ExecuteStage_Execute extends Bundle {
   val waddr             = Output(ADDR_BUS)
   val wen               = Output(Bool())
   val current_inst_addr = Output(BUS)
-  val excepttype        = Output(UInt(32.W))
+  val except_type       = Output(UInt(32.W))
   val pc                = Output(INST_ADDR_BUS)
 }
 
@@ -96,7 +96,7 @@ class Execute_MemoryStage extends Bundle {
   val cp0_data          = Output(BUS)
   val current_inst_addr = Output(BUS)
   val is_in_delayslot   = Output(Bool())
-  val excepttype        = Output(UInt(32.W))
+  val except_type       = Output(UInt(32.W))
   val pc                = Output(BUS)
 }
 
@@ -136,7 +136,7 @@ class MemoryStage_Memory extends Bundle {
   val cp0_data          = Output(BUS)
   val current_inst_addr = Output(BUS)
   val is_in_delayslot   = Output(Bool())
-  val excepttype        = Output(UInt(32.W))
+  val except_type       = Output(UInt(32.W))
   val pc                = Output(BUS)
 }
 
@@ -172,22 +172,22 @@ class Memory_Execute extends Bundle {
 }
 
 class Memory_DataMemory extends Bundle {
-  val addr = Output(BUS)
-  val wen  = Output(Bool())
-  val sel  = Output(DATA_MEMORY_SEL_BUS)
-  val data = Output(BUS)
-  val ce   = Output(Bool())
+  val addr    = Output(BUS)
+  val wen     = Output(Bool())
+  val sel     = Output(DATA_MEMORY_SEL_BUS)
+  val data    = Output(BUS)
+  val data_en = Output(Bool())
 }
 
 class Memory_CP0 extends Bundle {
   val current_inst_addr = Output(BUS)
   val is_in_delayslot   = Output(Bool())
-  val excepttype        = Output(UInt(32.W))
+  val except_type       = Output(UInt(32.W))
 }
 
 class Memory_Control extends Bundle {
-  val excepttype = Output(UInt(32.W))
-  val cp0_epc    = Output(BUS)
+  val except_type = Output(UInt(32.W))
+  val cp0_epc     = Output(BUS)
 }
 
 // writeBackStage

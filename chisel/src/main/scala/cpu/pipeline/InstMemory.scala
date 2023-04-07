@@ -11,10 +11,10 @@ class InstMemory extends Module {
     val decoder   = new InstMemory_Decoder()
   })
   // input-top
-  val ce = Wire(Bool())
-  val pc = Wire(UInt(32.W))
-  ce := io.fromFetch.ce
-  pc := io.fromFetch.pc
+  val inst_en = Wire(Bool())
+  val pc      = Wire(UInt(32.W))
+  inst_en := io.fromFetch.inst_en
+  pc      := io.fromFetch.pc
 
   // output-top
   val inst = Wire(UInt(32.W))
@@ -24,7 +24,7 @@ class InstMemory extends Module {
   loadMemoryFromFile(inst_mem, "inst_rom.data")
   val addr = pc
 
-  when(ce === CHIP_DISABLE) {
+  when(inst_en === CHIP_DISABLE) {
     inst := ZERO_WORD
   }.otherwise {
     inst := inst_mem(addr(INST_MEM_NUM_LOG2 + 1, 2))

@@ -23,17 +23,19 @@ class Fetch extends Module {
   branch_target_address := io.fromDecoder.branch_target_address
 
   // output
-  val pc = RegInit(PC_INIT)
-  val ce = Wire(Bool())
+  val pc      = RegInit(PC_INIT)
+  val inst_en = Wire(Bool()) // inst enable: inst sram使能信号
 
   // output-decoderStage
   io.decoderStage.pc := pc
 
   // output-instMemory
-  io.instMemory.pc := pc
-  io.instMemory.ce := ce
+  io.instMemory.pc      := pc
+  io.instMemory.inst_en := inst_en
 
-  when(ce === false.B) {
+  // io-finish
+
+  when(inst_en === false.B) {
     pc := PC_INIT
   }.elsewhen(io.fromControl.flush) {
     pc := io.fromControl.new_pc
@@ -45,7 +47,7 @@ class Fetch extends Module {
     }
   }
 
-  ce := ~reset.asBool() // 复位结束,使能指令存储器
+  inst_en := ~reset.asBool() // 复位结束,使能指令存储器
 
   // printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }

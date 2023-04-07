@@ -52,7 +52,7 @@ class Memory extends Module {
   val cp0_wen           = Wire(Bool())
   val cp0_waddr         = Wire(CP0_ADDR_BUS)
   val cp0_data          = Wire(BUS)
-  val excepttype        = Wire(UInt(32.W))
+  val except_type       = Wire(UInt(32.W))
   val mem_we            = Wire(Bool())
   val epc               = Wire(BUS)
   val is_in_delayslot   = Wire(Bool())
@@ -88,11 +88,11 @@ class Memory extends Module {
   io.writeBackStage.cp0_data    := cp0_data
 
   // output-data memory
-  io.dataMemory.addr := mem_addr
-  io.dataMemory.sel  := mem_sel
-  io.dataMemory.data := mem_data
-  io.dataMemory.ce   := mem_ce
-  io.dataMemory.wen  := mem_we & ~excepttype.orR()
+  io.dataMemory.addr    := mem_addr
+  io.dataMemory.sel     := mem_sel
+  io.dataMemory.data    := mem_data
+  io.dataMemory.data_en := mem_ce
+  io.dataMemory.wen     := mem_we & ~except_type.orR()
 
   // output-execute
   io.execute.cp0_wen   := cp0_wen
@@ -100,11 +100,11 @@ class Memory extends Module {
   io.execute.cp0_data  := cp0_data
 
   // output-control
-  io.control.excepttype := excepttype
-  io.control.cp0_epc    := epc
+  io.control.except_type := except_type
+  io.control.cp0_epc     := epc
 
   // output-cp0
-  io.cp0.excepttype        := excepttype
+  io.cp0.except_type       := except_type
   io.cp0.is_in_delayslot   := is_in_delayslot
   io.cp0.current_inst_addr := current_inst_addr
 
@@ -476,9 +476,9 @@ class Memory extends Module {
   }
 
   when(reset.asBool === RST_ENABLE) {
-    excepttype := ZERO_WORD
+    except_type := ZERO_WORD
   }.otherwise {
-    excepttype := ZERO_WORD
+    except_type := ZERO_WORD
 
     when(io.fromMemoryStage.current_inst_addr =/= ZERO_WORD) {
       when(
@@ -486,17 +486,17 @@ class Memory extends Module {
           (cp0_status(1) === 0.U) &&
           (cp0_status(0))
       ) {
-        excepttype := "h00000001".U // interrupt
-      }.elsewhen(io.fromMemoryStage.excepttype(8)) {
-        excepttype := "h00000008".U // syscall
-      }.elsewhen(io.fromMemoryStage.excepttype(9)) {
-        excepttype := "h0000000a".U // inst_invalid
-      }.elsewhen(io.fromMemoryStage.excepttype(10)) {
-        excepttype := "h0000000d".U // trap
-      }.elsewhen(io.fromMemoryStage.excepttype(11)) { // ov
-        excepttype := "h0000000c".U
-      }.elsewhen(io.fromMemoryStage.excepttype(12)) { // 返回指令
-        excepttype := "h0000000e".U
+        except_type := "h00000001".U // interrupt
+      }.elsewhen(io.fromMemoryStage.except_type(8)) {
+        except_type := "h00000008".U // syscall
+      }.elsewhen(io.fromMemoryStage.except_type(9)) {
+        except_type := "h0000000a".U // inst_invalid
+      }.elsewhen(io.fromMemoryStage.except_type(10)) {
+        except_type := "h0000000d".U // trap
+      }.elsewhen(io.fromMemoryStage.except_type(11)) { // ov
+        except_type := "h0000000c".U
+      }.elsewhen(io.fromMemoryStage.except_type(12)) { // 返回指令
+        except_type := "h0000000e".U
       }
     }
 

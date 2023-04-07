@@ -25,9 +25,9 @@ class Control extends Module {
   io.executeStage.stall   := stall
   io.memoryStage.stall    := stall
   io.writeBackStage.stall := stall
-  val new_pc              = RegInit(BUS_INIT)
-  io.fetch.new_pc         := new_pc
-  val flush               = RegInit(false.B)
+  val new_pc = RegInit(BUS_INIT)
+  io.fetch.new_pc := new_pc
+  val flush = RegInit(false.B)
   io.decoderStage.flush   := flush
   io.decoder.flush        := flush
   io.divider.flush        := flush
@@ -44,10 +44,10 @@ class Control extends Module {
     stall  := "b000000".U
     flush  := false.B
     new_pc := PC_INIT
-  }.elsewhen(io.fromMemory.excepttype =/= ZERO_WORD) {
+  }.elsewhen(io.fromMemory.except_type =/= ZERO_WORD) {
     flush := true.B
     stall := "b000000".U
-    switch(io.fromMemory.excepttype) {
+    switch(io.fromMemory.except_type) {
       is("h00000001".U) { // interrupt
         new_pc := "h00000020".U
       }

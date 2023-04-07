@@ -160,7 +160,7 @@ class Execute extends Module {
   io.memoryStage.cp0_data          := cp0_data
   io.memoryStage.current_inst_addr := current_inst_addr
   io.memoryStage.is_in_delayslot   := is_in_delayslot
-  io.memoryStage.excepttype        := excepttype
+  io.memoryStage.except_type        := excepttype
 
   // io-finish
 
@@ -199,10 +199,10 @@ class Execute extends Module {
   reg2 := reg2_i // 将两个操作数也传递到访存阶段，也是为记载、存储指令准备的
 
   excepttype := Cat(
-    io.fromExecuteStage.excepttype(31, 12),
+    io.fromExecuteStage.except_type(31, 12),
     ovassert,
     trapassert,
-    io.fromExecuteStage.excepttype(9, 8),
+    io.fromExecuteStage.except_type(9, 8),
     "h00".U(8.W)
   )
   is_in_delayslot := is_in_delayslot_i

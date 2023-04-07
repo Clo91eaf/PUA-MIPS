@@ -10,15 +10,15 @@ class DataMemory extends Module {
     val memory     = new DataMemory_Memory()
   })
   // input-memory
-  val ce   = Wire(Bool())
-  val wen  = Wire(Bool())
-  val addr = Wire(DATA_ADDR_BUS)
-  val sel  = Wire(DATA_MEMORY_SEL_BUS)
-  val data = RegInit(DATA_BUS_INIT)
-  ce   := io.fromMemory.ce
-  wen  := io.fromMemory.wen
-  addr := io.fromMemory.addr
-  sel  := io.fromMemory.sel
+  val data_en = Wire(Bool())
+  val wen     = Wire(Bool())
+  val addr    = Wire(DATA_ADDR_BUS)
+  val sel     = Wire(DATA_MEMORY_SEL_BUS)
+  val data    = RegInit(DATA_BUS_INIT)
+  data_en := io.fromMemory.data_en
+  wen     := io.fromMemory.wen
+  addr    := io.fromMemory.addr
+  sel     := io.fromMemory.sel
 
   // output-memory
   io.memory.data := data
@@ -28,7 +28,7 @@ class DataMemory extends Module {
   val data_mem2 = Mem(DATA_MEM_NUM, BYTE_WIDTH)
   val data_mem3 = Mem(DATA_MEM_NUM, BYTE_WIDTH)
 
-  when(ce === CHIP_DISABLE) {}.elsewhen(wen === WRITE_ENABLE) {
+  when(data_en === CHIP_DISABLE) {}.elsewhen(wen === WRITE_ENABLE) {
     when(sel(3) === true.B) {
       data_mem3(addr(DATA_MEM_NUM_LOG2 + 1, 2)) := io.fromMemory.data(31, 24)
     }
@@ -43,7 +43,7 @@ class DataMemory extends Module {
     }
   }
 
-  when(ce === CHIP_DISABLE) {
+  when(data_en === CHIP_DISABLE) {
     data := ZERO_WORD
   }.elsewhen(wen === WRITE_DISABLE) {
     data := Cat(

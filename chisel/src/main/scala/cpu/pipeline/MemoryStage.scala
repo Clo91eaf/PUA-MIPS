@@ -37,7 +37,7 @@ class MemoryStage extends Module {
   val cp0_data          = RegInit(BUS_INIT)
   val current_inst_addr = RegInit(BUS_INIT)
   val is_in_delayslot   = RegInit(NOT_IN_DELAY_SLOT)
-  val excepttype        = RegInit(0.U(32.W))
+  val except_type       = RegInit(0.U(32.W))
 
   // output-memory
   io.memory.pc    := pc
@@ -61,7 +61,7 @@ class MemoryStage extends Module {
   io.memory.cp0_data          := cp0_data
   io.memory.current_inst_addr := current_inst_addr
   io.memory.is_in_delayslot   := is_in_delayslot
-  io.memory.excepttype        := excepttype
+  io.memory.except_type       := except_type
 
   // io-finish
 
@@ -78,19 +78,19 @@ class MemoryStage extends Module {
     cp0_wen           := WRITE_DISABLE
     cp0_waddr         := "b00000".U
     cp0_data          := ZERO_WORD
-    excepttype        := ZERO_WORD
+    except_type       := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
     hilo              := ZERO_WORD
     cnt               := "b00".U
     pc                := ZERO_WORD
   }.elsewhen(stall(3) === STOP && stall(4) === NOT_STOP) {
-    waddr := NOP_REG_ADDR
-    wen   := WRITE_DISABLE
-    wdata := ZERO_WORD
-    hi    := ZERO_WORD
-    lo    := ZERO_WORD
-    whilo := WRITE_DISABLE
+    waddr             := NOP_REG_ADDR
+    wen               := WRITE_DISABLE
+    wdata             := ZERO_WORD
+    hi                := ZERO_WORD
+    lo                := ZERO_WORD
+    whilo             := WRITE_DISABLE
     hilo              := io.fromExecute.hilo
     cnt               := io.fromExecute.cnt
     aluop             := EXE_NOP_OP
@@ -99,7 +99,7 @@ class MemoryStage extends Module {
     cp0_wen           := WRITE_DISABLE
     cp0_waddr         := 0.U
     cp0_data          := ZERO_WORD
-    excepttype        := ZERO_WORD
+    except_type       := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
     pc                := pc
@@ -118,7 +118,7 @@ class MemoryStage extends Module {
     cp0_wen           := io.fromExecute.cp0_wen
     cp0_waddr         := io.fromExecute.cp0_waddr
     cp0_data          := io.fromExecute.cp0_data
-    excepttype        := io.fromExecute.excepttype
+    except_type       := io.fromExecute.except_type
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr
     pc                := io.fromExecute.pc

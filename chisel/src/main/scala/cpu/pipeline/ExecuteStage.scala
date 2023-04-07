@@ -29,17 +29,17 @@ class ExecuteStage extends Module {
   val waddr              = RegInit(ADDR_BUS_INIT)
   val wen                = RegInit(WRITE_DISABLE)
   val current_inst_addr  = RegInit(BUS_INIT)
-  val excepttype         = RegInit(0.U(32.W))
+  val except_type        = RegInit(0.U(32.W))
   val pc                 = RegInit(INST_ADDR_BUS_INIT)
 
   // output-execute
-  io.execute.aluop             := aluop
-  io.execute.alusel            := alusel
-  io.execute.inst              := inst
-  io.execute.is_in_delayslot   := ex_is_in_delayslot
+  io.execute.aluop           := aluop
+  io.execute.alusel          := alusel
+  io.execute.inst            := inst
+  io.execute.is_in_delayslot := ex_is_in_delayslot
 
   // output-decoder
-  io.decoder.is_in_delayslot   := is_in_delayslot
+  io.decoder.is_in_delayslot := is_in_delayslot
 
   // output-execute
   io.execute.link_addr         := link_addr
@@ -48,7 +48,7 @@ class ExecuteStage extends Module {
   io.execute.waddr             := waddr
   io.execute.wen               := wen
   io.execute.current_inst_addr := current_inst_addr
-  io.execute.excepttype        := excepttype
+  io.execute.except_type       := except_type
   io.execute.pc                := pc
 
   when(io.fromControl.flush) {
@@ -58,7 +58,7 @@ class ExecuteStage extends Module {
     reg2              := ZERO_WORD
     waddr             := NOP_REG_ADDR
     wen               := WRITE_DISABLE
-    excepttype        := ZERO_WORD
+    except_type       := ZERO_WORD
     link_addr         := ZERO_WORD
     inst              := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
@@ -75,7 +75,7 @@ class ExecuteStage extends Module {
     link_addr          := ZERO_WORD
     ex_is_in_delayslot := NOT_IN_DELAY_SLOT
     inst               := ZERO_WORD
-    excepttype         := ZERO_WORD
+    except_type        := ZERO_WORD
     current_inst_addr  := ZERO_WORD
     pc                 := pc
   }.elsewhen(stall(2) === NOT_STOP) {
@@ -89,7 +89,7 @@ class ExecuteStage extends Module {
     ex_is_in_delayslot := io.fromDecoder.is_in_delayslot
     is_in_delayslot    := io.fromDecoder.next_inst_in_delayslot
     inst               := io.fromDecoder.inst
-    excepttype         := io.fromDecoder.excepttype
+    except_type        := io.fromDecoder.except_type
     current_inst_addr  := io.fromDecoder.current_inst_addr
     pc                 := io.fromDecoder.pc
   }

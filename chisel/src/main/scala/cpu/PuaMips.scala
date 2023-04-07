@@ -27,13 +27,13 @@ class PuaMips extends Module {
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
-  io.inst_sram.en                := fetch.io.instMemory.ce
+  io.inst_sram.en                := fetch.io.instMemory.inst_en
   io.inst_sram.wen               := WEN_BUS_INIT
   io.inst_sram.addr              := fetch.io.instMemory.pc
   io.inst_sram.wdata             := BUS_INIT
   decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
-  io.data_sram.en := memory.io.dataMemory.ce
+  io.data_sram.en := memory.io.dataMemory.data_en
   io.data_sram.wen := memory.io.dataMemory.sel & Fill(
     4,
     memory.io.dataMemory.wen
