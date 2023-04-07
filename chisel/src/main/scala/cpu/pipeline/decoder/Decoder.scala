@@ -182,7 +182,7 @@ class Decoder extends Module {
     alusel                 := EXE_RES_NOP
     reg_waddr              := rd // inst(15, 11)
     reg_wen                := WRITE_DISABLE
-    instValid              := INST_INVALID
+    inst_valid             := INST_INVALID
     reg1_ren               := READ_DISABLE
     reg2_ren               := READ_DISABLE
     reg1_raddr             := rs // inst(25, 21)
@@ -200,7 +200,7 @@ class Decoder extends Module {
   alusel                 := EXE_RES_NOP
   reg_waddr              := rd // inst(15, 11)
   reg_wen                := WRITE_DISABLE
-  instValid              := INST_INVALID
+  inst_valid             := INST_INVALID
   reg1_ren               := READ_DISABLE
   reg2_ren               := READ_DISABLE
   reg1_raddr             := rs // inst(25, 21)
@@ -223,7 +223,7 @@ class Decoder extends Module {
     inst,
   // @formatter:off
     List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP, EXE_NOP_OP, WRITE_DISABLE, WRA_X, IMM_N),
-    Array(         /*   instValid  | reg1_ren     | reg2_ren     | alusel       | aluop      | reg_wen           | reg_waddr     | immType */
+    Array(         /*   inst_valid  | reg1_ren     | reg2_ren     | alusel       | aluop      | reg_wen           | reg_waddr     | immType */
       // NOP
       NOP       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP  , EXE_NOP_OP , WRITE_DISABLE  , WRA_X  , IMM_N),
       // 位操作

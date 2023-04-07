@@ -78,13 +78,8 @@ class MemoryStage extends Module {
     reg2              := ZERO_WORD
     cp0_wen           := WRITE_DISABLE
     cp0_waddr         := "b00000".U
-<<<<<<< HEAD:chisel/src/main/scala/cpu/pipeline/memory/MemoryStage.scala
-    cp0_data          := ZERO_WORD
-    except_type       := ZERO_WORD
-=======
     cp0_wdata         := ZERO_WORD
-    excepttype        := ZERO_WORD
->>>>>>> 049d9d1a13b8d27fc6fb5a7aef9b986b6513d488:chisel/src/main/scala/cpu/pipeline/MemoryStage.scala
+    except_type       := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
     hilo              := ZERO_WORD
@@ -104,7 +99,7 @@ class MemoryStage extends Module {
     reg2              := ZERO_WORD
     cp0_wen           := WRITE_DISABLE
     cp0_waddr         := 0.U
-    cp0_wdata          := ZERO_WORD
+    cp0_wdata         := ZERO_WORD
     except_type       := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
@@ -123,7 +118,7 @@ class MemoryStage extends Module {
     reg2              := io.fromExecute.reg2
     cp0_wen           := io.fromExecute.cp0_wen
     cp0_waddr         := io.fromExecute.cp0_waddr
-    cp0_wdata          := io.fromExecute.cp0_data
+    cp0_wdata         := io.fromExecute.cp0_wdata
     except_type       := io.fromExecute.except_type
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr

@@ -38,23 +38,23 @@ class Memory extends Module {
   mem_data_i := io.fromDataMemory.mem_rdata
 
   // output
-  val reg_waddr             = Wire(ADDR_BUS)
-  val reg_wen               = Wire(Bool())
-  val reg_wdata             = Wire(BUS)
+  val reg_waddr         = Wire(ADDR_BUS)
+  val reg_wen           = Wire(Bool())
+  val reg_wdata         = Wire(BUS)
   val hi                = Wire(BUS)
   val lo                = Wire(BUS)
   val whilo             = Wire(Bool())
   val LLbit_wen         = Wire(Bool())
   val LLbit_value       = Wire(Bool())
   val mem_addr          = Wire(BUS)
-  val mem_wsel           = Wire(DATA_MEMORY_SEL_BUS)
-  val mem_wdata          = Wire(BUS)
+  val mem_wsel          = Wire(DATA_MEMORY_SEL_BUS)
+  val mem_wdata         = Wire(BUS)
   val mem_ce            = Wire(Bool())
   val cp0_wen           = Wire(Bool())
   val cp0_waddr         = Wire(CP0_ADDR_BUS)
-  val cp0_wdata          = Wire(BUS)
+  val cp0_wdata         = Wire(BUS)
   val except_type       = Wire(UInt(32.W))
-  val mem_wen            = Wire(Bool())
+  val mem_wen           = Wire(Bool())
   val epc               = Wire(BUS)
   val is_in_delayslot   = Wire(Bool())
   val current_inst_addr = Wire(BUS)
@@ -75,10 +75,10 @@ class Memory extends Module {
   io.execute.whilo := whilo
 
   // output-write back stage
-  io.writeBackStage.reg_wen         := reg_wen
-  io.writeBackStage.reg_waddr       := reg_waddr
+  io.writeBackStage.reg_wen     := reg_wen
+  io.writeBackStage.reg_waddr   := reg_waddr
   io.writeBackStage.pc          := pc
-  io.writeBackStage.reg_wdata       := reg_wdata
+  io.writeBackStage.reg_wdata   := reg_wdata
   io.writeBackStage.hi          := hi
   io.writeBackStage.lo          := lo
   io.writeBackStage.whilo       := whilo
@@ -89,11 +89,11 @@ class Memory extends Module {
   io.writeBackStage.cp0_wdata   := cp0_wdata
 
   // output-data memory
-  io.dataMemory.mem_addr := mem_addr
+  io.dataMemory.mem_addr  := mem_addr
   io.dataMemory.mem_wsel  := mem_wsel
   io.dataMemory.mem_wdata := mem_wdata
-  io.dataMemory.mem_ce   := mem_ce
-  io.dataMemory.mem_wen  := mem_wen & ~except_type.orR()
+  io.dataMemory.mem_ce    := mem_ce
+  io.dataMemory.mem_wen   := mem_wen & ~except_type.orR()
 
   // output-execute
   io.execute.cp0_wen   := cp0_wen
@@ -133,16 +133,16 @@ class Memory extends Module {
   }
 
   when(reset.asBool === RST_ENABLE) {
-    reg_waddr       := NOP_REG_ADDR
-    reg_wen         := WRITE_DISABLE
-    reg_wdata       := ZERO_WORD
+    reg_waddr   := NOP_REG_ADDR
+    reg_wen     := WRITE_DISABLE
+    reg_wdata   := ZERO_WORD
     hi          := ZERO_WORD
     lo          := ZERO_WORD
     whilo       := WRITE_DISABLE
     mem_addr    := ZERO_WORD
     mem_wen     := WRITE_DISABLE
-    mem_wsel     := "b0000".U
-    mem_wdata    := ZERO_WORD
+    mem_wsel    := "b0000".U
+    mem_wdata   := ZERO_WORD
     mem_ce      := CHIP_DISABLE
     LLbit_wen   := false.B
     LLbit_value := false.B
@@ -151,15 +151,15 @@ class Memory extends Module {
     cp0_wdata   := ZERO_WORD
   }.otherwise {
     // input-memory stage
-    reg_waddr       := io.fromMemoryStage.reg_waddr
-    reg_wen         := io.fromMemoryStage.reg_wen
-    reg_wdata       := io.fromMemoryStage.reg_wdata
+    reg_waddr   := io.fromMemoryStage.reg_waddr
+    reg_wen     := io.fromMemoryStage.reg_wen
+    reg_wdata   := io.fromMemoryStage.reg_wdata
     hi          := io.fromMemoryStage.hi
     lo          := io.fromMemoryStage.lo
     whilo       := io.fromMemoryStage.whilo
     mem_wen     := WRITE_DISABLE
     mem_addr    := ZERO_WORD
-    mem_wsel     := "b1111".U
+    mem_wsel    := "b1111".U
     mem_ce      := CHIP_DISABLE
     LLbit_wen   := false.B
     LLbit_value := false.B
