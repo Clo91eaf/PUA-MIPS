@@ -1,7 +1,8 @@
-package cpu.pipeline
+package cpu.pipeline.decoder
 
 import chisel3._
 import chisel3.util._
+import cpu.defines._
 import cpu.defines.Const._
 
 class Regfile extends Module {

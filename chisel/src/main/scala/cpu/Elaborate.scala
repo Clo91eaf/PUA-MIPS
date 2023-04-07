@@ -1,3 +1,4 @@
+import cpu.PuaMips
 import chisel3.stage.ChiselStage
 import firrtl.options.TargetDirAnnotation
 

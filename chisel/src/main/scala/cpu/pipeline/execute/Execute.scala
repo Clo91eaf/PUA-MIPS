@@ -1,8 +1,9 @@
-package cpu.pipeline
+package cpu.pipeline.execute
 
 import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
+import cpu.defines._
 
 class Execute extends Module {
   val io = IO(new Bundle {
@@ -160,7 +161,7 @@ class Execute extends Module {
   io.memoryStage.cp0_data          := cp0_data
   io.memoryStage.current_inst_addr := current_inst_addr
   io.memoryStage.is_in_delayslot   := is_in_delayslot
-  io.memoryStage.except_type        := excepttype
+  io.memoryStage.except_type       := excepttype
 
   // io-finish
 

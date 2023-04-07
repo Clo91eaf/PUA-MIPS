@@ -1,6 +1,7 @@
-package cpu.pipeline
+package cpu.pipeline.memory
 
 import chisel3._
+import cpu.defines._
 import cpu.defines.Const._
 
 class MemoryStage extends Module {

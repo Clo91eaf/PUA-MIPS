@@ -1,9 +1,10 @@
-package cpu.pipeline
+package cpu.memory
 
 import chisel3._
 import chisel3.util._
-import cpu.defines.Const._
 import chisel3.util.experimental.loadMemoryFromFile
+import cpu.defines._
+import cpu.defines.Const._
 
 class InstMemory extends Module {
   val io = IO(new Bundle {

@@ -1,13 +1,14 @@
-package cpu.pipeline
+package cpu.pipeline.decoder
 
-import cpu.defines.Const._
 import chisel3._
+import cpu.defines._
+import cpu.defines.Const._
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
     val fromControl = Flipped(new Control_DecoderStage())
-    val fromFetch = Flipped(new Fetch_DecoderStage())
-    val decoder = new DecoderStage_Decoder()
+    val fromFetch   = Flipped(new Fetch_DecoderStage())
+    val decoder     = new DecoderStage_Decoder()
   })
   // input-control
   val stall = Wire(STALL_BUS)

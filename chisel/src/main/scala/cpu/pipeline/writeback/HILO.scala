@@ -1,9 +1,10 @@
-package cpu.pipeline
+package cpu.pipeline.writeback
 
 import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
 
+import cpu.defines._
 class HILO extends Module {
   val io = IO(new Bundle {
     val fromWriteBackStage = Flipped(new WriteBackStage_HILO())

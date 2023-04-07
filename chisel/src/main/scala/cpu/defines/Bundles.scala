@@ -1,7 +1,7 @@
-package cpu.pipeline
+package cpu.defines
 
-import cpu.defines.Const._
 import chisel3._
+import Const._
 
 // fetch
 class Fetch_DecoderStage extends Bundle {

@@ -1,9 +1,9 @@
-package cpu.pipeline
+package cpu.pipeline.decoder
 
-import cpu.defines.Const._
 import chisel3._
 import chisel3.util._
-import UInt._
+import cpu.defines._
+import cpu.defines.Const._
 
 class Decoder extends Module {
   val io = IO(new Bundle {

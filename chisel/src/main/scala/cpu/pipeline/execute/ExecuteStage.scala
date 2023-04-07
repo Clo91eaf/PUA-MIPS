@@ -1,7 +1,8 @@
-package cpu.pipeline
+package cpu.pipeline.execute
 
-import cpu.defines.Const._
 import chisel3._
+import cpu.defines._
+import cpu.defines.Const._
 
 class ExecuteStage extends Module {
   val io = IO(new Bundle {

@@ -1,8 +1,18 @@
+package cpu
+
 import chisel3._
 import chisel3.util._
-import cpu.pipeline._
-import cpu.defines.Const._
 import chisel3.internal.DontCareBinding
+
+import defines._
+import defines.Const._
+
+import pipeline._
+import pipeline.fetch._
+import pipeline.decoder._
+import pipeline.execute._
+import pipeline.memory._
+import pipeline.writeback._
 
 class PuaMips extends Module {
   val io = IO(new Bundle {

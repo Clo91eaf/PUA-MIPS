@@ -1,8 +1,9 @@
-package cpu.pipeline
+package cpu.pipeline.writeback
 
-import cpu.defines.Const._
 import chisel3._
 import chisel3.util._
+import cpu.defines._
+import cpu.defines.Const._
 
 class CP0Reg extends Module {
   val io = IO(new Bundle {

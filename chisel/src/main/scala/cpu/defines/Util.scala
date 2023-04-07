@@ -1,10 +1,9 @@
-package cpu.pipeline
+package cpu.defines
 
 import chisel3._
 import chisel3.util._
 
 object Util {
-
   def subwordModify(source: UInt, start: Int, md: UInt): UInt = {
     val ms = md.getWidth
     subwordModify(source, (start, start - ms + 1), md)
