@@ -1,8 +1,8 @@
-package cpu.puamips
+package cpu.pipeline
 
 import chisel3._
 import chisel3.util._
-import cpu.puamips.Const._
+import cpu.defines.Const._
 
 class HILO extends Module {
   val io = IO(new Bundle {

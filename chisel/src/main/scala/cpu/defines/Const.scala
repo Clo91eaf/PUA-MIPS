@@ -1,8 +1,8 @@
-package cpu.puamips
+package cpu.defines
 
 import chisel3._
 import chisel3.util._
-import cpu.puamips.defines.{Instructions}
+import cpu.defines.Instructions
 
   // @formatter:off
 trait Constants {

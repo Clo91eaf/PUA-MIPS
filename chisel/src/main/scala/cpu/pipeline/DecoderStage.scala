@@ -1,6 +1,6 @@
-package cpu.puamips
+package cpu.pipeline
 
-import Const._
+import cpu.defines.Const._
 import chisel3._
 
 class DecoderStage extends Module {

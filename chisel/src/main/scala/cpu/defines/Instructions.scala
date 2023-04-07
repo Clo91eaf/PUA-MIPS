@@ -1,4 +1,4 @@
-package cpu.puamips.defines
+package cpu.defines
 
 import chisel3._
 import chisel3.util.BitPat

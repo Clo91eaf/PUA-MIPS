@@ -1,7 +1,7 @@
-package cpu.puamips
+package cpu.pipeline
 
-import Const._
 import chisel3._
+import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {

@@ -1,4 +1,4 @@
-package cpu.puamips
+package cpu.pipeline
 
 import chisel3._
 import chisel3.util._

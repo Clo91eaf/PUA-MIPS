@@ -1,8 +1,8 @@
-package cpu.puamips
+package cpu.pipeline
 
 import chisel3._
 import chisel3.util._
-import Const._
+import cpu.defines.Const._
 import chisel3.util.experimental.loadMemoryFromFile
 
 class InstMemory extends Module {

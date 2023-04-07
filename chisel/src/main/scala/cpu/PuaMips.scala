@@ -1,42 +1,45 @@
 import chisel3._
 import chisel3.util._
-import cpu.puamips._
-import cpu.puamips.Const._
+import cpu.pipeline._
+import cpu.defines.Const._
 import chisel3.internal.DontCareBinding
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
-    val ext_int = Input(UInt(6.W))
+    val ext_int   = Input(UInt(6.W))
     val inst_sram = new INST_SRAM()
     val data_sram = new DATA_SRAM()
-    val debug = new DEBUG()
+    val debug     = new DEBUG()
   })
-  val fetch = Module(new Fetch())
-  val decoderStage = Module(new DecoderStage())
-  val decoder = Module(new Decoder())
-  val executeStage = Module(new ExecuteStage())
-  val execute = Module(new Execute())
-  val memoryStage = Module(new MemoryStage())
-  val memory = Module(new Memory())
+  val fetch          = Module(new Fetch())
+  val decoderStage   = Module(new DecoderStage())
+  val decoder        = Module(new Decoder())
+  val executeStage   = Module(new ExecuteStage())
+  val execute        = Module(new Execute())
+  val memoryStage    = Module(new MemoryStage())
+  val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
-  val regfile = Module(new Regfile())
-  val llbitReg = Module(new LLbitReg())
-  val divider = Module(new Divider())
-  val hilo = Module(new HILO())
-  val control = Module(new Control())
-  val cp0 = Module(new CP0Reg())
+  val regfile        = Module(new Regfile())
+  val llbitReg       = Module(new LLbitReg())
+  val divider        = Module(new Divider())
+  val hilo           = Module(new HILO())
+  val control        = Module(new Control())
+  val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
-  io.inst_sram.en := fetch.io.instMemory.ce
-  io.inst_sram.wen:= WEN_BUS_INIT
-  io.inst_sram.addr := fetch.io.instMemory.pc
-  io.inst_sram.wdata := BUS_INIT
+  io.inst_sram.en                := fetch.io.instMemory.ce
+  io.inst_sram.wen               := WEN_BUS_INIT
+  io.inst_sram.addr              := fetch.io.instMemory.pc
+  io.inst_sram.wdata             := BUS_INIT
   decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
   io.data_sram.en := memory.io.dataMemory.ce
-  io.data_sram.wen:= memory.io.dataMemory.sel & Fill(4, memory.io.dataMemory.wen)
-  io.data_sram.addr := memory.io.dataMemory.addr
-  io.data_sram.wdata := memory.io.dataMemory.data
+  io.data_sram.wen := memory.io.dataMemory.sel & Fill(
+    4,
+    memory.io.dataMemory.wen
+  )
+  io.data_sram.addr             := memory.io.dataMemory.addr
+  io.data_sram.wdata            := memory.io.dataMemory.data
   memory.io.fromDataMemory.data := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug
