@@ -115,6 +115,14 @@ class Execute_CP0 extends Bundle {
   val cp0_raddr = Output(CP0_ADDR_BUS)
 }
 
+class Execute_DataMemory extends Bundle {
+  val mem_addr  = Output(BUS)
+  val mem_wen   = Output(Bool())
+  val mem_wsel  = Output(DATA_MEMORY_SEL_BUS)
+  val mem_wdata = Output(BUS)
+  val mem_ce    = Output(Bool())
+}
+
 // memoryStage
 class MemoryStage_Execute extends Bundle {
   val cnt  = Output(CNT_BUS)
@@ -169,14 +177,6 @@ class Memory_Execute extends Bundle {
   val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(CP0_ADDR_BUS)
   val cp0_wdata = Output(BUS)
-}
-
-class Memory_DataMemory extends Bundle {
-  val mem_addr = Output(BUS)
-  val mem_wen  = Output(Bool())
-  val mem_wsel  = Output(DATA_MEMORY_SEL_BUS)
-  val mem_wdata = Output(BUS)
-  val mem_ce   = Output(Bool())
 }
 
 class Memory_CP0 extends Bundle {
@@ -341,7 +341,7 @@ class DATA_SRAM extends Bundle {
 }
 
 class DEBUG extends Bundle {
-  val pc        = Output(BUS)
+  val pc    = Output(BUS)
   val wen   = Output(WEN_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)

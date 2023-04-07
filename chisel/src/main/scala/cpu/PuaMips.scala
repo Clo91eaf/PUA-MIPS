@@ -33,13 +33,13 @@ class PuaMips extends Module {
   io.inst_sram.wdata             := BUS_INIT
   decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
-  io.data_sram.en := memory.io.dataMemory.mem_ce
-  io.data_sram.wen := memory.io.dataMemory.mem_wsel & Fill(
+  io.data_sram.en := execute.io.dataMemory.mem_ce
+  io.data_sram.wen := execute.io.dataMemory.mem_wsel & Fill(
     4,
-    memory.io.dataMemory.mem_wen
+    execute.io.dataMemory.mem_wen
   )
-  io.data_sram.addr                  := memory.io.dataMemory.mem_addr
-  io.data_sram.wdata                 := memory.io.dataMemory.mem_wdata
+  io.data_sram.addr                  := execute.io.dataMemory.mem_addr
+  io.data_sram.wdata                 := execute.io.dataMemory.mem_wdata
   memory.io.fromDataMemory.mem_rdata := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug
@@ -78,7 +78,7 @@ class PuaMips extends Module {
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
   memory.io.control        <> control.io.fromMemory
   memory.io.cp0            <> cp0.io.fromMemory
-//   memory.io.dataMemory  <> dataMemory.io.fromMemory
+//   execute.io.dataMemory  <> dataMemory.io.fromMemory
 
   // writeBackStage
   writeBackStage.io.execute  <> execute.io.fromWriteBackStage
