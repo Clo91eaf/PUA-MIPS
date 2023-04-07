@@ -18,38 +18,37 @@ class CP0Reg extends Module {
   })
 
   // output
-  val data = Wire(BUS)
-  val count = RegInit(BUS_INIT)
-  val compare = RegInit(BUS_INIT)
-  val status = RegInit("b00010000000000000000000000000000".U(32.W))
-  val cause = RegInit(BUS_INIT)
-  val epc = RegInit(BUS_INIT)
-  val config = RegInit("b00000000000000001000000000000000".U(32.W))
-  val prid = RegInit("b00000000010011000000000100000010".U(32.W))
+  val data      = Wire(BUS)
+  val count     = RegInit(BUS_INIT)
+  val compare   = RegInit(BUS_INIT)
+  val status    = RegInit("b00010000000000000000000000000000".U(32.W))
+  val cause     = RegInit(BUS_INIT)
+  val epc       = RegInit(BUS_INIT)
+  val config    = RegInit("b00000000000000001000000000000000".U(32.W))
+  val prid      = RegInit("b00000000010011000000000100000010".U(32.W))
   val timer_int = RegInit(INTERRUPT_NOT_ASSERT)
 
-
   // output-execute
-  io.execute.cp0_data := data
+  io.execute.cp0_rdata := data
 
   // output-out
-  io.out.count := count
+  io.out.count   := count
   io.out.compare := compare
 
   // output-memory
   io.memory.status := status
-  io.memory.cause := cause
-  io.memory.epc := epc
+  io.memory.cause  := cause
+  io.memory.epc    := epc
 
   // output-out
   io.out.config := config
-  io.out.prid := prid
+  io.out.prid   := prid
 
   // output-timer_int_o := timer_int
   io.timer_int_o := timer_int
 
   // io-finish
- 
+
   count := count + 1.U
   cause := Cat(cause(31, 16), io.int_i, cause(9, 0))
 
@@ -60,27 +59,27 @@ class CP0Reg extends Module {
   when(io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) {
     switch(io.fromWriteBackStage.cp0_waddr) {
       is(CP0_REG_COUNT) {
-        count := io.fromWriteBackStage.cp0_data
+        count := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_COMPARE) {
-        compare := io.fromWriteBackStage.cp0_data
+        compare := io.fromWriteBackStage.cp0_wdata
         // count := `ZeroWord
         timer_int := INTERRUPT_NOT_ASSERT
       }
       is(CP0_REG_STATUS) {
-        status := io.fromWriteBackStage.cp0_data
+        status := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_EPC) {
-        epc := io.fromWriteBackStage.cp0_data
+        epc := io.fromWriteBackStage.cp0_wdata
       }
       is(CP0_REG_CAUSE) {
         // cause寄存器只有IP(1,0)、IV、WP字段是可写的
         cause := Cat(
           cause(31, 24),
-          io.fromWriteBackStage.cp0_data(23),
-          io.fromWriteBackStage.cp0_data(22),
+          io.fromWriteBackStage.cp0_wdata(23),
+          io.fromWriteBackStage.cp0_wdata(22),
           cause(21, 10),
-          io.fromWriteBackStage.cp0_data(9, 8),
+          io.fromWriteBackStage.cp0_wdata(9, 8),
           cause(7, 0)
         )
       }

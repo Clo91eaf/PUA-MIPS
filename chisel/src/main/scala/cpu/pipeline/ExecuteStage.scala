@@ -26,27 +26,27 @@ class ExecuteStage extends Module {
   val link_addr          = RegInit(BUS_INIT)
   val reg1               = RegInit(BUS_INIT)
   val reg2               = RegInit(BUS_INIT)
-  val waddr              = RegInit(ADDR_BUS_INIT)
-  val wen                = RegInit(WRITE_DISABLE)
+  val reg_waddr          = RegInit(ADDR_BUS_INIT)
+  val reg_wen            = RegInit(WRITE_DISABLE)
   val current_inst_addr  = RegInit(BUS_INIT)
   val excepttype         = RegInit(0.U(32.W))
   val pc                 = RegInit(INST_ADDR_BUS_INIT)
 
   // output-execute
-  io.execute.aluop             := aluop
-  io.execute.alusel            := alusel
-  io.execute.inst              := inst
-  io.execute.is_in_delayslot   := ex_is_in_delayslot
+  io.execute.aluop           := aluop
+  io.execute.alusel          := alusel
+  io.execute.inst            := inst
+  io.execute.is_in_delayslot := ex_is_in_delayslot
 
   // output-decoder
-  io.decoder.is_in_delayslot   := is_in_delayslot
+  io.decoder.is_in_delayslot := is_in_delayslot
 
   // output-execute
   io.execute.link_addr         := link_addr
   io.execute.reg1              := reg1
   io.execute.reg2              := reg2
-  io.execute.waddr             := waddr
-  io.execute.wen               := wen
+  io.execute.reg_waddr         := reg_waddr
+  io.execute.reg_wen           := reg_wen
   io.execute.current_inst_addr := current_inst_addr
   io.execute.excepttype        := excepttype
   io.execute.pc                := pc
@@ -56,8 +56,8 @@ class ExecuteStage extends Module {
     alusel            := EXE_RES_NOP
     reg1              := ZERO_WORD
     reg2              := ZERO_WORD
-    waddr             := NOP_REG_ADDR
-    wen               := WRITE_DISABLE
+    reg_waddr         := NOP_REG_ADDR
+    reg_wen           := WRITE_DISABLE
     excepttype        := ZERO_WORD
     link_addr         := ZERO_WORD
     inst              := ZERO_WORD
@@ -70,8 +70,8 @@ class ExecuteStage extends Module {
     alusel             := EXE_RES_NOP
     reg1               := ZERO_WORD
     reg2               := ZERO_WORD
-    waddr              := NOP_REG_ADDR
-    wen                := WRITE_DISABLE
+    reg_waddr          := NOP_REG_ADDR
+    reg_wen            := WRITE_DISABLE
     link_addr          := ZERO_WORD
     ex_is_in_delayslot := NOT_IN_DELAY_SLOT
     inst               := ZERO_WORD
@@ -83,8 +83,8 @@ class ExecuteStage extends Module {
     alusel             := io.fromDecoder.alusel
     reg1               := io.fromDecoder.reg1
     reg2               := io.fromDecoder.reg2
-    waddr              := io.fromDecoder.waddr
-    wen                := io.fromDecoder.wen
+    reg_waddr          := io.fromDecoder.reg_waddr
+    reg_wen            := io.fromDecoder.reg_wen
     link_addr          := io.fromDecoder.link_addr
     ex_is_in_delayslot := io.fromDecoder.is_in_delayslot
     is_in_delayslot    := io.fromDecoder.next_inst_in_delayslot
