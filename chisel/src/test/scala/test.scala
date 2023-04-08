@@ -1,4 +1,4 @@
-package cpu.pipeline
+package cpu.pipeline.memory
 
 import chisel3.stage.ChiselGeneratorAnnotation
 
