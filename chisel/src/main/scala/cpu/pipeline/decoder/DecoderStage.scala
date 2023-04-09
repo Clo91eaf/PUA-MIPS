@@ -21,7 +21,7 @@ class DecoderStage extends Module {
   when(io.fromControl.flush) {
     pc := ZERO_WORD
   }.elsewhen(stall(1) === STOP && stall(2) === NOT_STOP) {
-    pc := pc
+    pc := ZERO_WORD
   }.elsewhen(stall(1) === NOT_STOP) {
     pc := io.fromFetchStage.pc
   }

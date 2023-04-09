@@ -26,7 +26,6 @@ class FetchStage extends Module {
   // output
   val pc      = RegInit(PC_INIT)
   val inst_en = Wire(Bool()) // inst enable: inst sram使能信号
-  val pre_pc  = RegInit(PC_INIT)
 
   // output-decoderStage
   io.decoderStage.pc := pc
@@ -37,9 +36,7 @@ class FetchStage extends Module {
 
   // io-finish
 
-  when(inst_en === false.B) {
-    pc := PC_INIT
-  }.elsewhen(io.fromControl.flush) {
+  when(io.fromControl.flush) {
     pc := io.fromControl.new_pc
   }.elsewhen(stall(0) === NOT_STOP) {
     when(branch_flag === BRANCH) {
@@ -49,7 +46,7 @@ class FetchStage extends Module {
     }
   }
 
-  inst_en := ~reset.asBool() // 复位结束,使能指令存储器
+  inst_en := !reset.asBool() && !stall(0) // 复位结束,使能指令存储器
 
   // printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
 }
