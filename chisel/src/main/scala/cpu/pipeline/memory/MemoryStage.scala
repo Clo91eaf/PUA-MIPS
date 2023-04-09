@@ -103,7 +103,7 @@ class MemoryStage extends Module {
     except_type       := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     current_inst_addr := ZERO_WORD
-    pc                := pc
+    pc                := ZERO_WORD
   }.elsewhen(stall(3) === NOT_STOP) {
     reg_waddr         := io.fromExecute.reg_waddr
     reg_wen           := io.fromExecute.reg_wen

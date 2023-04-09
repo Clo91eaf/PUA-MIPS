@@ -16,7 +16,7 @@ class Decoder extends Module {
     val fromMemory       = Flipped(new Memory_Decoder())
     val fromControl      = Flipped(new Control_Decoder())
 
-    val fetch        = new Decoder_Fetch()
+    val fetchStage   = new Decoder_FetchStage()
     val executeStage = new Decoder_ExecuteStage()
     val regfile      = new Decoder_RegFile()
     val control      = new Decoder_Control()
@@ -30,11 +30,15 @@ class Decoder extends Module {
   val reg2_data         = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
 
+  val inst_reg            = RegInit(INST_BUS_INIT)
+  val pre_inst_is_stalled = RegInit(false.B)
+  val pc_reg              = RegInit(PC_INIT)
+
   // input-decoder stage
-  pc := io.fromDecoderStage.pc
+  pc := Mux(pre_inst_is_stalled, pc_reg, io.fromDecoderStage.pc)
 
   // input-inst memory
-  inst := io.fromInstMemory.inst
+  inst := Mux(pre_inst_is_stalled, inst_reg, io.fromInstMemory.inst)
 
   // input-execute
   aluop_i := io.fromExecute.aluop
@@ -88,10 +92,11 @@ class Decoder extends Module {
   io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
+  io.executeStage.stall                  := stallreq
 
-  // output-fetch
-  io.fetch.branch_flag           := branch_flag
-  io.fetch.branch_target_address := branch_target_address
+  // output-fetchStage
+  io.fetchStage.branch_flag           := branch_flag
+  io.fetchStage.branch_target_address := branch_target_address
 
   // output-execute stage
   io.executeStage.link_addr       := link_addr
@@ -105,6 +110,14 @@ class Decoder extends Module {
   io.executeStage.current_inst_addr := current_inst_addr
 
   // io-finish
+
+  when(stallreq) {
+    inst_reg            := inst
+    pc_reg              := pc
+    pre_inst_is_stalled := true.B
+  }.otherwise {
+    pre_inst_is_stalled := false.B
+  }
 
   // flush时pc为0，此时不应该读到inst，将inst置为0
   when(io.fromControl.flush === true.B) {

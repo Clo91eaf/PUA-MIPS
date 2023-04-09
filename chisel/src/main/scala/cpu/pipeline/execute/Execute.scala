@@ -649,7 +649,7 @@ class Execute extends Module {
         EXE_SH_OP  -> CHIP_ENABLE,
         EXE_SW_OP  -> CHIP_ENABLE,
         EXE_SWL_OP -> CHIP_ENABLE,
-        EXE_SWR_OP -> CHIP_ENABLE,
+        EXE_SWR_OP -> CHIP_ENABLE
         // EXE_SC_OP  -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
       )
     ) // mem_ce
@@ -670,7 +670,7 @@ class Execute extends Module {
         EXE_SH_OP  -> mem_addr_temp,
         EXE_SW_OP  -> mem_addr_temp,
         EXE_SWL_OP -> Cat(mem_addr_temp(31, 2), 0.U(2.W)),
-        EXE_SWR_OP -> Cat(mem_addr_temp(31, 2), 0.U(2.W)),
+        EXE_SWR_OP -> Cat(mem_addr_temp(31, 2), 0.U(2.W))
         // EXE_SC_OP  -> Mux(LLbit, mem_addr_temp, ZERO_WORD)
       )
     ) // mem_addr
@@ -793,7 +793,7 @@ class Execute extends Module {
             "b10".U -> Cat(reg2_i(23, 0), zero32(7, 0)),
             "b11".U -> reg2_i
           )
-        ),
+        )
         // EXE_SC_OP -> Mux(LLbit, reg2_i, ZERO_WORD)
       )
     ) // mem_wdata

@@ -8,7 +8,7 @@ import defines._
 import defines.Const._
 
 import pipeline._
-import pipeline.fetch._
+import pipeline.fetchStage._
 import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
@@ -21,7 +21,7 @@ class PuaMips extends Module {
     val data_sram = new DATA_SRAM()
     val debug     = new DEBUG()
   })
-  val fetch          = Module(new Fetch())
+  val fetchStage     = Module(new FetchStage())
   val decoderStage   = Module(new DecoderStage())
   val decoder        = Module(new Decoder())
   val executeStage   = Module(new ExecuteStage())
@@ -37,9 +37,9 @@ class PuaMips extends Module {
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
-  io.inst_sram.en                := fetch.io.instMemory.inst_en
+  io.inst_sram.en                := fetchStage.io.instMemory.inst_en
   io.inst_sram.wen               := WEN_BUS_INIT
-  io.inst_sram.addr              := fetch.io.instMemory.pc
+  io.inst_sram.addr              := fetchStage.io.instMemory.pc
   io.inst_sram.wdata             := BUS_INIT
   decoder.io.fromInstMemory.inst := io.inst_sram.rdata
 
@@ -55,8 +55,8 @@ class PuaMips extends Module {
   io.debug <> writeBackStage.io.debug
 
   // @formatter:off
-  // fetch
-  fetch.io.decoderStage <> decoderStage.io.fromFetch
+  // fetchStage
+  fetchStage.io.decoderStage <> decoderStage.io.fromFetchStage
 
   // decoderStage
   decoderStage.io.decoder <> decoder.io.fromDecoderStage
@@ -64,7 +64,7 @@ class PuaMips extends Module {
   // decoder
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile      <> regfile.io.fromDecoder
-  decoder.io.fetch        <> fetch.io.fromDecoder
+  decoder.io.fetchStage        <> fetchStage.io.fromDecoder
   decoder.io.control      <> control.io.fromDecoder
 
   // executeStage
@@ -116,7 +116,7 @@ class PuaMips extends Module {
   control.io.decoderStage   <> decoderStage.io.fromControl
   control.io.decoder        <> decoder.io.fromControl
   control.io.executeStage   <> executeStage.io.fromControl
-  control.io.fetch          <> fetch.io.fromControl
+  control.io.fetchStage     <> fetchStage.io.fromControl
   control.io.memoryStage    <> memoryStage.io.fromControl
   control.io.writeBackStage <> writeBackStage.io.fromControl
 

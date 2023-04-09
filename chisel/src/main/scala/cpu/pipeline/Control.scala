@@ -11,7 +11,7 @@ class Control extends Module {
     val fromExecute = Flipped(new Execute_Control())
     val fromMemory  = Flipped(new Memory_Control())
 
-    val fetch          = new Control_Fetch()
+    val fetchStage     = new Control_FetchStage()
     val decoderStage   = new Control_DecoderStage()
     val decoder        = new Control_Decoder()
     val executeStage   = new Control_ExecuteStage()
@@ -21,19 +21,19 @@ class Control extends Module {
     val divider        = new Control_Divider()
   })
   val stall = RegInit(STALL_BUS_INIT)
-  io.fetch.stall          := stall
+  io.fetchStage.stall     := stall
   io.decoderStage.stall   := stall
   io.executeStage.stall   := stall
   io.memoryStage.stall    := stall
   io.writeBackStage.stall := stall
   val new_pc = RegInit(BUS_INIT)
-  io.fetch.new_pc := new_pc
+  io.fetchStage.new_pc := new_pc
   val flush = RegInit(false.B)
   io.decoderStage.flush   := flush
   io.decoder.flush        := flush
   io.divider.flush        := flush
   io.executeStage.flush   := flush
-  io.fetch.flush          := flush
+  io.fetchStage.flush     := flush
   io.llbitReg.flush       := flush
   io.memoryStage.flush    := flush
   io.writeBackStage.flush := flush

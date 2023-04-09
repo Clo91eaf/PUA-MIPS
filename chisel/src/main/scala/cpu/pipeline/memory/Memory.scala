@@ -48,7 +48,7 @@ class Memory extends Module {
   val cp0_wen           = Wire(Bool())
   val cp0_waddr         = Wire(CP0_ADDR_BUS)
   val cp0_wdata         = Wire(BUS)
-  val except_type        = Wire(UInt(32.W))
+  val except_type       = Wire(UInt(32.W))
   val epc               = Wire(BUS)
   val is_in_delayslot   = Wire(Bool())
   val current_inst_addr = Wire(BUS)

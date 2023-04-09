@@ -12,12 +12,12 @@ class Regfile extends Module {
     val decoder            = new RegFile_Decoder()
   })
   // input-decoder
-  val ren1    = Wire(Bool())
+  val ren1   = Wire(Bool())
   val raddr1 = Wire(ADDR_BUS)
-  val ren2    = Wire(Bool())
+  val ren2   = Wire(Bool())
   val raddr2 = Wire(ADDR_BUS)
-  ren1    := io.fromDecoder.reg1_ren
-  ren2    := io.fromDecoder.reg2_ren
+  ren1   := io.fromDecoder.reg1_ren
+  ren2   := io.fromDecoder.reg2_ren
   raddr1 := io.fromDecoder.reg1_raddr
   raddr2 := io.fromDecoder.reg2_raddr
 
