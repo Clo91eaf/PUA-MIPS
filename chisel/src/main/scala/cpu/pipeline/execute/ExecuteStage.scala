@@ -66,7 +66,7 @@ class ExecuteStage extends Module {
     current_inst_addr := ZERO_WORD
     is_in_delayslot   := NOT_IN_DELAY_SLOT
     pc                := ZERO_WORD
-  }.elsewhen(stall(2) === STOP && stall(3) === NOT_STOP) {
+  }.elsewhen(io.fromDecoder.stall) {
     // decoder stall req
     aluop              := EXE_NOP_OP
     alusel             := EXE_RES_NOP
@@ -80,7 +80,7 @@ class ExecuteStage extends Module {
     except_type        := ZERO_WORD
     current_inst_addr  := ZERO_WORD
     pc                 := ZERO_WORD
-  }.elsewhen(stall(2) === NOT_STOP) {
+  }.otherwise {
     aluop              := io.fromDecoder.aluop
     alusel             := io.fromDecoder.alusel
     reg1               := io.fromDecoder.reg1
