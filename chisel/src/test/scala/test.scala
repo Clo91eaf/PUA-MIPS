@@ -1,5 +1,14 @@
 package cpu.pipeline.memory
 
+import cpu.defines._
+import cpu.defines.Const._
+import cpu.pipeline._
+import cpu.pipeline.fetchStage._
+import cpu.pipeline.decoder._
+import cpu.pipeline.execute._
+import cpu.pipeline.memory._
+import cpu.pipeline.writeback._
+
 import chisel3.stage.ChiselGeneratorAnnotation
 
 object testMain extends App {
@@ -8,4 +17,3 @@ object testMain extends App {
     Seq(ChiselGeneratorAnnotation(() => new Memory))
   )
 }
-

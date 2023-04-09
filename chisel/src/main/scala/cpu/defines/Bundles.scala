@@ -4,11 +4,11 @@ import chisel3._
 import Const._
 
 // fetch
-class Fetch_DecoderStage extends Bundle {
+class FetchStage_DecoderStage extends Bundle {
   val pc = Output(BUS)
 }
 
-class Fetch_InstMemory extends Bundle {
+class FetchStage_InstMemory extends Bundle {
   val pc      = Output(BUS)
   val inst_en = Output(Bool())
 }
@@ -19,7 +19,7 @@ class DecoderStage_Decoder extends Bundle {
 }
 
 // decoder
-class Decoder_Fetch extends Bundle {
+class Decoder_FetchStage extends Bundle {
   val branch_flag           = Output(Bool()) // 是否发生转移
   val branch_target_address = Output(BUS)    // 转移到的目标地址
 }
@@ -38,6 +38,7 @@ class Decoder_ExecuteStage extends Bundle {
   val current_inst_addr      = Output(BUS)
   val except_type            = Output(UInt(32.W))
   val pc                     = Output(INST_ADDR_BUS)
+  val stall                  = Output(Bool())
 }
 
 class Decoder_RegFile extends Bundle {
@@ -234,7 +235,7 @@ class WriteBackStage_CP0 extends Bundle {
 // writeBack
 
 // control
-class Control_Fetch extends Bundle {
+class Control_FetchStage extends Bundle {
   val stall  = Output(STALL_BUS)
   val new_pc = Output(BUS)
   val flush  = Output(Bool())

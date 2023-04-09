@@ -104,7 +104,7 @@ class WriteBackStage extends Module {
     cp0_wen     := WRITE_DISABLE
     cp0_waddr   := 0.U
     cp0_wdata   := ZERO_WORD
-    pc          := pc
+    pc          := ZERO_WORD
   }.elsewhen(stall(4) === NOT_STOP) {
     // input-memory
     reg_waddr   := io.fromMemory.reg_waddr

@@ -16,7 +16,7 @@ class Decoder extends Module {
     val fromMemory       = Flipped(new Memory_Decoder())
     val fromControl      = Flipped(new Control_Decoder())
 
-    val fetch        = new Decoder_Fetch()
+    val fetchStage   = new Decoder_FetchStage()
     val executeStage = new Decoder_ExecuteStage()
     val regfile      = new Decoder_RegFile()
     val control      = new Decoder_Control()
@@ -30,11 +30,15 @@ class Decoder extends Module {
   val reg2_data         = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
 
+  val inst_reg            = RegInit(INST_BUS_INIT)
+  val pre_inst_is_stalled = RegInit(false.B)
+  val pc_reg              = RegInit(PC_INIT)
+
   // input-decoder stage
-  pc := io.fromDecoderStage.pc
+  pc := Mux(pre_inst_is_stalled, pc_reg, io.fromDecoderStage.pc)
 
   // input-inst memory
-  inst := io.fromInstMemory.inst
+  inst := Mux(pre_inst_is_stalled, inst_reg, io.fromInstMemory.inst)
 
   // input-execute
   aluop_i := io.fromExecute.aluop
@@ -88,10 +92,11 @@ class Decoder extends Module {
   io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
+  io.executeStage.stall                  := stallreq
 
-  // output-fetch
-  io.fetch.branch_flag           := branch_flag
-  io.fetch.branch_target_address := branch_target_address
+  // output-fetchStage
+  io.fetchStage.branch_flag           := branch_flag
+  io.fetchStage.branch_target_address := branch_target_address
 
   // output-execute stage
   io.executeStage.link_addr       := link_addr
@@ -105,6 +110,14 @@ class Decoder extends Module {
   io.executeStage.current_inst_addr := current_inst_addr
 
   // io-finish
+
+  when(stallreq) {
+    inst_reg            := inst
+    pc_reg              := pc
+    pre_inst_is_stalled := true.B
+  }.otherwise {
+    pre_inst_is_stalled := false.B
+  }
 
   // flush时pc为0，此时不应该读到inst，将inst置为0
   when(io.fromControl.flush === true.B) {
@@ -267,17 +280,17 @@ class Decoder extends Module {
 
       // Trap
       TEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TEQI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
       TGE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEIU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
       TGEU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
       TLT       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTIU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
       TLTU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
       TNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TNEI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
 
       // 算术指令
       ADD       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -349,7 +362,7 @@ class Decoder extends Module {
       SC        -> List(INST_VALID , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SC_OP  , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
 
 
-      SYNC      -> List(INST_VALID , READ_DISABLE    , READ_ENABLE     , EXE_RES_NOP  , EXE_SRL_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      SYNC      -> List(INST_VALID , READ_DISABLE    , READ_ENABLE     , EXE_RES_NOP  , EXE_NOP_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       PREF      -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP  , EXE_NOP_OP    , WRITE_ENABLE    , WRA_X  , IMM_N  ),
       PREFX     -> List(INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP  , EXE_NOP_OP    , WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
