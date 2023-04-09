@@ -57,8 +57,8 @@ class ExecuteStage extends Module {
     alusel            := EXE_RES_NOP
     reg1              := ZERO_WORD
     reg2              := ZERO_WORD
-    reg_waddr             := NOP_REG_ADDR
-    reg_wen               := WRITE_DISABLE
+    reg_waddr         := NOP_REG_ADDR
+    reg_wen           := WRITE_DISABLE
     except_type       := ZERO_WORD
     link_addr         := ZERO_WORD
     inst              := ZERO_WORD

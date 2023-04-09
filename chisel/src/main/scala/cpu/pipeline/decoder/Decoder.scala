@@ -16,7 +16,7 @@ class Decoder extends Module {
     val fromMemory       = Flipped(new Memory_Decoder())
     val fromControl      = Flipped(new Control_Decoder())
 
-    val fetch        = new Decoder_Fetch()
+    val fetchStage   = new Decoder_FetchStage()
     val executeStage = new Decoder_ExecuteStage()
     val regfile      = new Decoder_RegFile()
     val control      = new Decoder_Control()
@@ -89,9 +89,9 @@ class Decoder extends Module {
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
 
-  // output-fetch
-  io.fetch.branch_flag           := branch_flag
-  io.fetch.branch_target_address := branch_target_address
+  // output-fetchStage
+  io.fetchStage.branch_flag           := branch_flag
+  io.fetchStage.branch_target_address := branch_target_address
 
   // output-execute stage
   io.executeStage.link_addr       := link_addr

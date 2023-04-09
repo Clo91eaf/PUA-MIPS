@@ -6,9 +6,9 @@ import cpu.defines.Const._
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
-    val fromControl = Flipped(new Control_DecoderStage())
-    val fromFetch   = Flipped(new Fetch_DecoderStage())
-    val decoder     = new DecoderStage_Decoder()
+    val fromControl    = Flipped(new Control_DecoderStage())
+    val fromFetchStage = Flipped(new FetchStage_DecoderStage())
+    val decoder        = new DecoderStage_Decoder()
   })
   // input-control
   val stall = Wire(STALL_BUS)
@@ -23,7 +23,7 @@ class DecoderStage extends Module {
   }.elsewhen(stall(1) === STOP && stall(2) === NOT_STOP) {
     pc := pc
   }.elsewhen(stall(1) === NOT_STOP) {
-    pc := io.fromFetch.pc
+    pc := io.fromFetchStage.pc
   }
 
   // debug
