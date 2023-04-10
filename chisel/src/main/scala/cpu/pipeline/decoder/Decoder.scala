@@ -8,11 +8,11 @@ import cpu.defines.Const._
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
-    val fromDecoderStage   = Flipped(new DecoderStage_Decoder())
-    val fromExecuteStage   = Flipped(new ExecuteStage_Decoder())
-    val fromExecute        = Flipped(new Execute_Decoder())
-    val fromRegfile        = Flipped(new RegFile_Decoder())
-    val fromMemory         = Flipped(new Memory_Decoder())
+    val fromDecoderStage = Flipped(new DecoderStage_Decoder())
+    val fromExecuteStage = Flipped(new ExecuteStage_Decoder())
+    val fromExecute      = Flipped(new Execute_Decoder())
+    val fromRegfile      = Flipped(new RegFile_Decoder())
+    val fromMemory       = Flipped(new Memory_Decoder())
     // val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
 
     val decoderStage = new Decoder_DecoderStage()
@@ -162,7 +162,7 @@ class Decoder extends Module {
       aluop_i === EXE_LH_OP || aluop_i === EXE_LHU_OP ||
       aluop_i === EXE_LW_OP || aluop_i === EXE_LWR_OP ||
       aluop_i === EXE_LWL_OP || aluop_i === EXE_LL_OP ||
-      aluop_i === EXE_SC_OP
+      aluop_i === EXE_SC_OP,
   ) {
     pre_inst_is_load := true.B
   }.otherwise {
@@ -177,7 +177,7 @@ class Decoder extends Module {
     "b0".U(2.W),
     inst_valid,
     except_type_is_syscall,
-    "b0".U(8.W)
+    "b0".U(8.W),
   )
 
   current_inst_addr := pc;
@@ -256,17 +256,17 @@ class Decoder extends Module {
 
       // Trap
       TEQ       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TEQI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TEQI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TEQ_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
       TGE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEIU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TGEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TGEIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
       TGEU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TGEU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
       TLT       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
-      TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTIU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
+      TLTI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLT_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
       TLTU      -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
+      TLTIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TLTU_OP, WRITE_DISABLE , WRA_X  , IMM_LSE),
       TNE       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TNEI_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
+      TNEI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP, EXE_TNE_OP, WRITE_DISABLE  , WRA_X  , IMM_LSE),
 
       // 算术指令
       ADD       -> List(INST_VALID , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
@@ -285,8 +285,8 @@ class Decoder extends Module {
       CLO       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_CLO_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       CLZ       -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_CLZ_OP  , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
       // 立即数
-      ADDI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADDI_OP  , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
-      ADDIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADDIU_OP , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
+      ADDI      -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
+      ADDIU     -> List(INST_VALID , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADDU_OP , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
       // 跳转指令
       J         -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_J_OP     , WRITE_DISABLE  , WRA_X  , IMM_N  ),
       JAL       -> List(INST_VALID , READ_DISABLE  , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_JAL_OP   , WRITE_ENABLE   , WRA_T3 , IMM_N  ),
@@ -368,8 +368,8 @@ class Decoder extends Module {
     Seq(
       IMM_LSE -> Util.signedExtend(imm16),
       IMM_LZE -> Util.zeroExtend(imm16),
-      IMM_HZE -> Cat(imm16, Fill(16, 0.U))
-    )
+      IMM_HZE -> Cat(imm16, Fill(16, 0.U)),
+    ),
   )
 
   reg_waddr := MuxLookup(
@@ -377,8 +377,8 @@ class Decoder extends Module {
     "b11111".U(5.W), // 取"b11111", 即31号寄存器
     Seq(
       WRA_T1 -> rd, // 取inst(15,11)
-      WRA_T2 -> rt  // 取inst(20,16)
-    )
+      WRA_T2 -> rt, // 取inst(20,16)
+    ),
   )
 
   aluop   := csOpType
@@ -389,8 +389,8 @@ class Decoder extends Module {
     csWReg, // wreg默认为查找表中的结果
     Seq(
       EXE_MOVN_OP -> Mux(reg2 =/= ZERO_WORD, WRITE_ENABLE, WRITE_DISABLE),
-      EXE_MOVZ_OP -> Mux(reg2 === ZERO_WORD, WRITE_ENABLE, WRITE_DISABLE)
-    )
+      EXE_MOVZ_OP -> Mux(reg2 === ZERO_WORD, WRITE_ENABLE, WRITE_DISABLE),
+    ),
   )
 
   link_addr := MuxLookup(
@@ -405,7 +405,7 @@ class Decoder extends Module {
       EXE_BGEZAL_OP -> pc_plus_8,
       EXE_BLTZAL_OP -> pc_plus_8
       // @formatter:on
-    )
+    ),
   )
 
   branch_flag := MuxLookup(
@@ -426,7 +426,7 @@ class Decoder extends Module {
       EXE_BLTZAL_OP -> reg1(31),
       EXE_BLEZ_OP   -> (!(!reg1(31) && (reg1 =/= 0.U)))
       // @formatter:on
-    )
+    ),
   )
 
   branch_target_address := MuxLookup(
@@ -439,7 +439,7 @@ class Decoder extends Module {
       EXE_J_OP    -> JTarget,
       EXE_JAL_OP  -> JTarget
       // @formatter:on
-    )
+    ),
   )
 
   next_inst_in_delayslot := MuxLookup(
@@ -460,25 +460,25 @@ class Decoder extends Module {
       EXE_BLTZAL_OP -> reg1(31),
       EXE_BLEZ_OP   -> (!(!reg1(31) && (reg1 =/= 0.U)))
       // @formatter:on
-    )
+    ),
   )
 
   stallreq_for_reg1_loadrelate := NOT_STOP
   when(reset.asBool === RST_ENABLE) {
     reg1 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.reg_waddr === reg1_raddr && reg1_ren
+    pre_inst_is_load && io.fromExecute.reg_waddr === reg1_raddr && reg1_ren,
   ) {
     stallreq_for_reg1_loadrelate := STOP
     reg1                         := ZERO_WORD // liphen
   }.elsewhen(
-    reg1_ren && io.fromExecute.reg_wen && io.fromExecute.reg_waddr === reg1_raddr
+    reg1_ren && io.fromExecute.reg_wen && io.fromExecute.reg_waddr === reg1_raddr,
   ) {
 
     // input-execute
     reg1 := io.fromExecute.reg_wdata
   }.elsewhen(
-    reg1_ren && io.fromMemory.reg_wen && io.fromMemory.reg_waddr === reg1_raddr
+    reg1_ren && io.fromMemory.reg_wen && io.fromMemory.reg_waddr === reg1_raddr,
   ) {
 
     // input-memory
@@ -495,18 +495,18 @@ class Decoder extends Module {
   when(reset.asBool === RST_ENABLE) {
     reg2 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.reg_waddr === reg2_raddr && reg2_ren
+    pre_inst_is_load && io.fromExecute.reg_waddr === reg2_raddr && reg2_ren,
   ) {
     stallreq_for_reg2_loadrelate := STOP
     reg2                         := ZERO_WORD // liphen
   }.elsewhen(
-    (reg2_ren) && (io.fromExecute.reg_wen) && (io.fromExecute.reg_waddr === reg2_raddr)
+    (reg2_ren) && (io.fromExecute.reg_wen) && (io.fromExecute.reg_waddr === reg2_raddr),
   ) {
 
     // input-execute
     reg2 := io.fromExecute.reg_wdata
   }.elsewhen(
-    (reg2_ren) && (io.fromMemory.reg_wen) && (io.fromMemory.reg_waddr === reg2_raddr)
+    (reg2_ren) && (io.fromMemory.reg_wen) && (io.fromMemory.reg_waddr === reg2_raddr),
   ) {
 
     // input-memory
@@ -541,8 +541,8 @@ class Decoder extends Module {
       EXE_BGEZAL_OP -> true.B,
       EXE_BLTZAL_OP -> true.B,
       EXE_J_OP      -> true.B,
-      EXE_JALR_OP   -> true.B
-    )
+      EXE_JALR_OP   -> true.B,
+    ),
   )
   is_branch := is_branch_temp && ds_valid
 

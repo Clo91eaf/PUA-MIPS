@@ -6,6 +6,9 @@ EXP = "1 + 2"
 verilog:
 	sbt 'runMain Elaborate'
 
+get_trace:
+	sh $(TCL) get
+
 run:
 	sh $(TCL) run
 

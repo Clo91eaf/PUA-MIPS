@@ -139,10 +139,6 @@ trait Constants {
   val EXE_OR_OP                = "b00100101".U(8.W)
   val EXE_XOR_OP               = "b00100110".U(8.W)
   val EXE_NOR_OP               = "b00100111".U(8.W)
-  val EXE_ANDI_OP              = "b01011001".U(8.W)
-  val EXE_ORI_OP               = "b01011010".U(8.W)
-  val EXE_XORI_OP              = "b01011011".U(8.W)
-  val EXE_LUI_OP               = "b01011100".U(8.W)
 
   val EXE_SLL_OP               = "b01111100".U(8.W)
   val EXE_SLLV_OP              = "b00000100".U(8.W)
@@ -160,14 +156,10 @@ trait Constants {
 
   val EXE_SLT_OP               = "b00101010".U(8.W)
   val EXE_SLTU_OP              = "b00101011".U(8.W)
-  val EXE_SLTI_OP              = "b01010111".U(8.W)
-  val EXE_SLTIU_OP             = "b01011000".U(8.W)
   val EXE_ADD_OP               = "b00100000".U(8.W)
   val EXE_ADDU_OP              = "b00100001".U(8.W)
   val EXE_SUB_OP               = "b00100010".U(8.W)
   val EXE_SUBU_OP              = "b00100011".U(8.W)
-  val EXE_ADDI_OP              = "b01010101".U(8.W)
-  val EXE_ADDIU_OP             = "b01010110".U(8.W)
   val EXE_CLZ_OP               = "b10110000".U(8.W)
   val EXE_CLO_OP               = "b10110001".U(8.W)
 
@@ -218,17 +210,11 @@ trait Constants {
   val EXE_SYSCALL_OP           = "b00001100".U(8.W)
 
   val EXE_TEQ_OP               = "b00110100".U(8.W)
-  val EXE_TEQI_OP              = "b01001000".U(8.W)
   val EXE_TGE_OP               = "b00110000".U(8.W)
-  val EXE_TGEI_OP              = "b01000100".U(8.W)
-  val EXE_TGEIU_OP             = "b01000101".U(8.W)
   val EXE_TGEU_OP              = "b00110001".U(8.W)
   val EXE_TLT_OP               = "b00110010".U(8.W)
-  val EXE_TLTI_OP              = "b01000110".U(8.W)
-  val EXE_TLTIU_OP             = "b01000111".U(8.W)
   val EXE_TLTU_OP              = "b00110011".U(8.W)
   val EXE_TNE_OP               = "b00110110".U(8.W)
-  val EXE_TNEI_OP              = "b01001001".U(8.W)
   
   val EXE_ERET_OP              = "b01101011".U(8.W)
 
