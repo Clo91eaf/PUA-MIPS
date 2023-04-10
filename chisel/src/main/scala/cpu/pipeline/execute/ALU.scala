@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
-import os.copy
 
 class ALU extends Module {
   val io = IO(new Bundle {

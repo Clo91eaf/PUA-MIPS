@@ -104,6 +104,16 @@ class ALU_Execute extends Bundle {
   val trap = Output(Bool())
 }
 
+class Execute_Mul extends Bundle {
+  val op  = Output(ALU_OP_BUS)
+  val in1 = Output(BUS)
+  val in2 = Output(BUS)
+}
+
+class Mul_Execute extends Bundle {
+  val out = Output(DOUBLE_BUS)
+}
+
 class Execute_Decoder extends Bundle {
   val aluop     = Output(ALU_OP_BUS)
   val reg_waddr = Output(ADDR_BUS)
@@ -203,9 +213,9 @@ class Memory_WriteBackStage extends Bundle {
 }
 
 class Memory_Decoder extends Bundle {
-  val reg_waddr    = Output(ADDR_BUS)
-  val reg_wdata    = Output(BUS)
-  val reg_wen      = Output(Bool())
+  val reg_waddr = Output(ADDR_BUS)
+  val reg_wdata = Output(BUS)
+  val reg_wen   = Output(Bool())
   // val inst_is_mfc0 = Output(Bool())
 }
 
