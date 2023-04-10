@@ -5,23 +5,42 @@ import Const._
 
 // fetch
 class FetchStage_DecoderStage extends Bundle {
-  val pc = Output(BUS)
+  val pc       = Output(BUS)
+  val inst     = Output(BUS)
+  val ex       = Output(Bool())
+  val bd       = Output(Bool())
+  val badvaddr = Output(Bool())
+  val valid    = Output(Bool())
 }
 
 class FetchStage_InstMemory extends Bundle {
-  val pc      = Output(BUS)
-  val inst_en = Output(Bool())
+  val en    = Output(Bool())
+  val addr  = Output(BUS)
+  val wen   = Output(UInt(4.W))
+  val wdata = Output(BUS)
 }
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val pc = Output(INST_ADDR_BUS)
+  val pc       = Output(BUS)
+  val inst     = Output(BUS)
+  val ex       = Output(Bool())
+  val bd       = Output(Bool())
+  val badvaddr = Output(Bool())
+  val valid    = Output(Bool())
 }
 
 // decoder
 class Decoder_FetchStage extends Bundle {
+  val branch_stall          = Output(Bool())
   val branch_flag           = Output(Bool()) // 是否发生转移
   val branch_target_address = Output(BUS)    // 转移到的目标地址
+  val allowin               = Output(Bool())
+  val is_branch             = Output(Bool())
+}
+
+class Decoder_DecoderStage extends Bundle {
+  val allowin = Output(Bool())
 }
 
 class Decoder_ExecuteStage extends Bundle {
@@ -78,6 +97,12 @@ class Execute_Decoder extends Bundle {
   val reg_waddr = Output(ADDR_BUS)
   val reg_wdata = Output(BUS)
   val reg_wen   = Output(Bool())
+  // val allowin   = Output(Bool())
+  // val blk_valid = Output(Bool())
+}
+
+class Execute_ExecuteStage extends Bundle {
+  val allowin = Output(Bool())
 }
 
 class Execute_MemoryStage extends Bundle {
@@ -166,9 +191,10 @@ class Memory_WriteBackStage extends Bundle {
 }
 
 class Memory_Decoder extends Bundle {
-  val reg_waddr = Output(ADDR_BUS)
-  val reg_wdata = Output(BUS)
-  val reg_wen   = Output(Bool())
+  val reg_waddr    = Output(ADDR_BUS)
+  val reg_wdata    = Output(BUS)
+  val reg_wen      = Output(Bool())
+  // val inst_is_mfc0 = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {
@@ -192,6 +218,11 @@ class Memory_Control extends Bundle {
 }
 
 // writeBackStage
+class WriteBackStage_Decoder extends Bundle {
+  val inst_is_mfc0 = Output(Bool())
+  val reg_waddr    = Output(ADDR_BUS)
+}
+
 class WriteBackStage_LLbitReg extends Bundle {
   val LLbit_value = Output(Bool())
   val LLbit_wen   = Output(Bool())
@@ -230,6 +261,11 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_wdata = Output(BUS)
   val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(CP0_ADDR_BUS)
+}
+
+class WriteBackStage_FetchStage extends Bundle {
+  val eret = Output(Bool())
+  val ex   = Output(Bool())
 }
 
 // writeBack
@@ -274,8 +310,8 @@ class Control_LLbitReg extends Bundle {
 }
 
 // instMemory
-class InstMemory_Decoder extends Bundle {
-  val inst = Output(BUS)
+class InstMemory_FetchStage extends Bundle {
+  val rdata = Output(BUS)
 }
 
 // dataMemory
@@ -324,6 +360,9 @@ class CP0_Output extends Bundle {
   val prid    = Output(BUS)
 }
 
+class CP0_FetchStage extends Bundle {
+  val epc = Output(BUS)
+}
 // other
 class INST_SRAM extends Bundle {
   val en    = Output(Bool())

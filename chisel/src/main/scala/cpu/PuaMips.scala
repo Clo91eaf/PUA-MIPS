@@ -37,11 +37,11 @@ class PuaMips extends Module {
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
-  io.inst_sram.en                := fetchStage.io.instMemory.inst_en
-  io.inst_sram.wen               := WEN_BUS_INIT
-  io.inst_sram.addr              := fetchStage.io.instMemory.pc
-  io.inst_sram.wdata             := BUS_INIT
-  decoder.io.fromInstMemory.inst := io.inst_sram.rdata
+  io.inst_sram.en                := fetchStage.io.instMemory.en
+  io.inst_sram.wen               := fetchStage.io.instMemory.wen
+  io.inst_sram.addr              := fetchStage.io.instMemory.addr
+  io.inst_sram.wdata             := fetchStage.io.instMemory.wdata
+  fetchStage.io.fromInstMemory.rdata := io.inst_sram.rdata
 
   io.data_sram.en := execute.io.dataMemory.mem_ce
   io.data_sram.wen := execute.io.dataMemory.mem_wsel & Fill(
@@ -64,8 +64,8 @@ class PuaMips extends Module {
   // decoder
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile      <> regfile.io.fromDecoder
-  decoder.io.fetchStage        <> fetchStage.io.fromDecoder
-  decoder.io.control      <> control.io.fromDecoder
+  decoder.io.fetchStage   <> fetchStage.io.fromDecoder
+  decoder.io.decoderStage <> decoderStage.io.fromDecoder
 
   // executeStage
   executeStage.io.decoder <> decoder.io.fromExecuteStage
@@ -88,15 +88,15 @@ class PuaMips extends Module {
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
   memory.io.control        <> control.io.fromMemory
   memory.io.cp0            <> cp0.io.fromMemory
-//   execute.io.dataMemory  <> dataMemory.io.fromMemory
 
   // writeBackStage
-  writeBackStage.io.execute  <> execute.io.fromWriteBackStage
-  writeBackStage.io.regFile  <> regfile.io.fromWriteBackStage
-  writeBackStage.io.hilo     <> hilo.io.fromWriteBackStage
-  writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
-  writeBackStage.io.memory   <> memory.io.fromWriteBackStage
-  writeBackStage.io.cp0      <> cp0.io.fromWriteBackStage
+  writeBackStage.io.execute    <> execute.io.fromWriteBackStage
+  writeBackStage.io.regFile    <> regfile.io.fromWriteBackStage
+  writeBackStage.io.hilo       <> hilo.io.fromWriteBackStage
+  writeBackStage.io.llbitReg   <> llbitReg.io.fromWriteBackStage
+  writeBackStage.io.memory     <> memory.io.fromWriteBackStage
+  writeBackStage.io.cp0        <> cp0.io.fromWriteBackStage
+  writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO
@@ -113,16 +113,13 @@ class PuaMips extends Module {
   llbitReg.io.memory <> memory.io.fromLLbitReg
 
   // control
-  control.io.decoderStage   <> decoderStage.io.fromControl
-  control.io.decoder        <> decoder.io.fromControl
   control.io.executeStage   <> executeStage.io.fromControl
-  control.io.fetchStage     <> fetchStage.io.fromControl
   control.io.memoryStage    <> memoryStage.io.fromControl
   control.io.writeBackStage <> writeBackStage.io.fromControl
 
   //cp0
-  cp0.io.execute  <> execute.io.fromCP0
-  cp0.io.memory   <> memory.io.fromCP0
-  cp0.io.int_i    := Cat(0.U(5.W), cp0.io.timer_int_o)
-  // @formatter:on
+  cp0.io.execute   <> execute.io.fromCP0
+  cp0.io.fetchStage<>fetchStage.io.fromCP0
+  cp0.io.memory    <> memory.io.fromCP0
+  cp0.io.int_i     := Cat(io.ext_int(5,1), cp0.io.timer_int_o)
 }

@@ -13,6 +13,7 @@ class CP0Reg extends Module {
     val int_i              = Input(UInt(6.W))
 
     val memory      = new CP0_Memory()
+    val fetchStage  = new CP0_FetchStage()
     val execute     = new CP0_Execute()
     val timer_int_o = Output(Bool())
     val out         = new CP0_Output
@@ -40,6 +41,9 @@ class CP0Reg extends Module {
   io.memory.status := status
   io.memory.cause  := cause
   io.memory.epc    := epc
+
+  // output-fetchStage
+  io.fetchStage.epc := epc
 
   // output-out
   io.out.config := config

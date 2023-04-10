@@ -1,4 +1,4 @@
-package cpu.pipeline.memory
+package cpu
 
 import cpu.defines._
 import cpu.defines.Const._
@@ -14,6 +14,6 @@ import chisel3.stage.ChiselGeneratorAnnotation
 object testMain extends App {
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new Memory))
+    Seq(ChiselGeneratorAnnotation(() => new DecoderStage))
   )
 }
