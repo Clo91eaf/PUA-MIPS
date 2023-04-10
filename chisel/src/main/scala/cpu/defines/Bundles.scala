@@ -92,6 +92,18 @@ class ExecuteStage_Execute extends Bundle {
 }
 
 // execute
+class Execute_ALU extends Bundle {
+  val op  = Output(ALU_OP_BUS)
+  val in1 = Output(BUS)
+  val in2 = Output(BUS)
+}
+
+class ALU_Execute extends Bundle {
+  val out  = Output(BUS)
+  val ov   = Output(Bool())
+  val trap = Output(Bool())
+}
+
 class Execute_Decoder extends Bundle {
   val aluop     = Output(ALU_OP_BUS)
   val reg_waddr = Output(ADDR_BUS)

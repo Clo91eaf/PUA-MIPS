@@ -16,25 +16,26 @@ import pipeline.writeback._
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
-    val ext_int   = Input(UInt(6.W))
+    val ext_int = Input(UInt(6.W))
     val inst_sram = new INST_SRAM()
     val data_sram = new DATA_SRAM()
-    val debug     = new DEBUG()
+    val debug = new DEBUG()
   })
-  val fetchStage     = Module(new FetchStage())
-  val decoderStage   = Module(new DecoderStage())
-  val decoder        = Module(new Decoder())
-  val executeStage   = Module(new ExecuteStage())
-  val execute        = Module(new Execute())
-  val memoryStage    = Module(new MemoryStage())
-  val memory         = Module(new Memory())
+  val fetchStage = Module(new FetchStage())
+  val decoderStage = Module(new DecoderStage())
+  val decoder = Module(new Decoder())
+  val executeStage = Module(new ExecuteStage())
+  val alu = Module(new ALU())
+  val execute = Module(new Execute())
+  val memoryStage = Module(new MemoryStage())
+  val memory = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
-  val regfile        = Module(new Regfile())
-  val llbitReg       = Module(new LLbitReg())
-  val divider        = Module(new Divider())
-  val hilo           = Module(new HILO())
-  val control        = Module(new Control())
-  val cp0            = Module(new CP0Reg())
+  val regfile = Module(new Regfile())
+  val llbitReg = Module(new LLbitReg())
+  val divider = Module(new Divider())
+  val hilo = Module(new HILO())
+  val control = Module(new Control())
+  val cp0 = Module(new CP0Reg())
 
   // func_test interfacter
   io.inst_sram.en                := fetchStage.io.instMemory.en
@@ -46,15 +47,14 @@ class PuaMips extends Module {
   io.data_sram.en := execute.io.dataMemory.mem_ce
   io.data_sram.wen := execute.io.dataMemory.mem_wsel & Fill(
     4,
-    execute.io.dataMemory.mem_wen
+    execute.io.dataMemory.mem_wen,
   )
-  io.data_sram.addr                  := execute.io.dataMemory.mem_addr
-  io.data_sram.wdata                 := execute.io.dataMemory.mem_wdata
+  io.data_sram.addr := execute.io.dataMemory.mem_addr
+  io.data_sram.wdata := execute.io.dataMemory.mem_wdata
   memory.io.fromDataMemory.mem_rdata := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug
 
-  // @formatter:off
   // fetchStage
   fetchStage.io.decoderStage <> decoderStage.io.fromFetchStage
 
@@ -62,6 +62,8 @@ class PuaMips extends Module {
   decoderStage.io.decoder <> decoder.io.fromDecoderStage
 
   // decoder
+  alu.io.execute          <> execute.io.fromAlu
+  execute.io.alu          <> alu.io.fromExecute
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile      <> regfile.io.fromDecoder
   decoder.io.fetchStage   <> fetchStage.io.fromDecoder

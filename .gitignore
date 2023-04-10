@@ -10,6 +10,7 @@ chisel/.vscode/
 chisel/project/
 chisel/generated/
 chisel/target/
+chisel/vivado*
 
 # vivado file
 vivado/*.runs/
