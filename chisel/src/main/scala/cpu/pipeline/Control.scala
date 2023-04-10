@@ -7,7 +7,6 @@ import cpu.defines.Const._
 
 class Control extends Module {
   val io = IO(new Bundle {
-    val fromDecoder = Flipped(new Decoder_Control())
     val fromExecute = Flipped(new Execute_Control())
     val fromMemory  = Flipped(new Memory_Control())
 
@@ -70,9 +69,6 @@ class Control extends Module {
     }
   }.elsewhen(io.fromExecute.stallreq === STOP) {
     stall := "b001111".U
-    flush := false.B
-  }.elsewhen(io.fromDecoder.stallreq === STOP) {
-    stall := "b000111".U
     flush := false.B
   }.otherwise {
     stall  := "b000000".U

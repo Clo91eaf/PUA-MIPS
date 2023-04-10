@@ -3,27 +3,40 @@ package cpu.pipeline.decoder
 import chisel3._
 import cpu.defines._
 import cpu.defines.Const._
+import chisel3.util.experimental.decode.decoder
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
-    val fromControl    = Flipped(new Control_DecoderStage())
     val fromFetchStage = Flipped(new FetchStage_DecoderStage())
+    val fromDecoder    = Flipped(new Decoder_DecoderStage())
     val decoder        = new DecoderStage_Decoder()
   })
-  // input-control
-  val stall = Wire(STALL_BUS)
-  stall := io.fromControl.stall
+
+  val pc       = RegInit(BUS_INIT)
+  val inst     = RegInit(BUS_INIT)
+  val ex       = RegInit(false.B)
+  val bd       = RegInit(false.B)
+  val badvaddr = RegInit(false.B)
+  val ds_valid = RegInit(false.B)
 
   // output-decoder
-  val pc = RegInit(INST_ADDR_BUS_INIT)
-  io.decoder.pc := pc
+  io.decoder.pc       := pc
+  io.decoder.inst     := inst
+  io.decoder.ex       := ex
+  io.decoder.bd       := bd
+  io.decoder.badvaddr := badvaddr
+  io.decoder.valid    := ds_valid
 
-  when(io.fromControl.flush) {
-    pc := ZERO_WORD
-  }.elsewhen(stall(1) === STOP && stall(2) === NOT_STOP) {
-    pc := ZERO_WORD
-  }.elsewhen(stall(1) === NOT_STOP) {
-    pc := io.fromFetchStage.pc
+  when(io.fromDecoder.allowin) {
+    ds_valid := io.fromFetchStage.valid
+  }
+
+  when(io.fromFetchStage.valid && io.fromDecoder.allowin) {
+    pc       := io.fromFetchStage.pc
+    inst     := io.fromFetchStage.inst
+    ex       := io.fromFetchStage.ex
+    bd       := io.fromFetchStage.bd
+    badvaddr := io.fromFetchStage.badvaddr
   }
 
   // debug

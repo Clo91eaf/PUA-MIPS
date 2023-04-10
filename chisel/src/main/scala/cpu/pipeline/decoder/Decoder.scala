@@ -8,18 +8,17 @@ import cpu.defines.Const._
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
-    val fromInstMemory   = Flipped(new InstMemory_Decoder())
-    val fromDecoderStage = Flipped(new DecoderStage_Decoder())
-    val fromExecuteStage = Flipped(new ExecuteStage_Decoder())
-    val fromExecute      = Flipped(new Execute_Decoder())
-    val fromRegfile      = Flipped(new RegFile_Decoder())
-    val fromMemory       = Flipped(new Memory_Decoder())
-    val fromControl      = Flipped(new Control_Decoder())
+    val fromDecoderStage   = Flipped(new DecoderStage_Decoder())
+    val fromExecuteStage   = Flipped(new ExecuteStage_Decoder())
+    val fromExecute        = Flipped(new Execute_Decoder())
+    val fromRegfile        = Flipped(new RegFile_Decoder())
+    val fromMemory         = Flipped(new Memory_Decoder())
+    // val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
 
+    val decoderStage = new Decoder_DecoderStage()
     val fetchStage   = new Decoder_FetchStage()
     val executeStage = new Decoder_ExecuteStage()
     val regfile      = new Decoder_RegFile()
-    val control      = new Decoder_Control()
   })
   // input
   val pc                = Wire(INST_ADDR_BUS)
@@ -29,16 +28,12 @@ class Decoder extends Module {
   val reg1_data         = Wire(BUS)
   val reg2_data         = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
-
-  val inst_reg            = RegInit(INST_BUS_INIT)
-  val pre_inst_is_stalled = RegInit(false.B)
-  val pc_reg              = RegInit(PC_INIT)
+  val ds_valid          = Wire(Bool())
 
   // input-decoder stage
-  pc := Mux(pre_inst_is_stalled, pc_reg, io.fromDecoderStage.pc)
-
-  // input-inst memory
-  inst := Mux(pre_inst_is_stalled, inst_reg, io.fromInstMemory.inst)
+  pc       := io.fromDecoderStage.pc
+  inst     := io.fromDecoderStage.inst
+  ds_valid := io.fromDecoderStage.valid
 
   // input-execute
   aluop_i := io.fromExecute.aluop
@@ -73,6 +68,8 @@ class Decoder extends Module {
   val stallreq               = Wire(Bool())
   val except_type            = Wire(UInt(32.W))
   val current_inst_addr      = Wire(BUS)
+  val allowin                = Wire(Bool())
+  val is_branch              = Wire(Bool())
 
   // output-execute stage
   io.executeStage.pc := pc
@@ -95,34 +92,24 @@ class Decoder extends Module {
   io.executeStage.stall                  := stallreq
 
   // output-fetchStage
+  io.fetchStage.branch_stall          := false.B
   io.fetchStage.branch_flag           := branch_flag
   io.fetchStage.branch_target_address := branch_target_address
+  io.fetchStage.allowin               := allowin
+  io.fetchStage.is_branch             := is_branch
+
+  // output-decoderStage
+  io.decoderStage.allowin := allowin
 
   // output-execute stage
   io.executeStage.link_addr       := link_addr
   io.executeStage.is_in_delayslot := is_in_delayslot
-
-  // output-control
-  io.control.stallreq := stallreq
 
   // output-execute stage
   io.executeStage.except_type       := except_type
   io.executeStage.current_inst_addr := current_inst_addr
 
   // io-finish
-
-  when(stallreq) {
-    inst_reg            := inst
-    pc_reg              := pc
-    pre_inst_is_stalled := true.B
-  }.otherwise {
-    pre_inst_is_stalled := false.B
-  }
-
-  // flush时pc为0，此时不应该读到inst，将inst置为0
-  when(io.fromControl.flush === true.B) {
-    inst := ZERO_WORD
-  }
 
   // 取得的指令码功能码
   val op  = Wire(UInt(6.W))
@@ -157,6 +144,15 @@ class Decoder extends Module {
   val except_type_is_syscall       = Wire(Bool())
   val except_type_is_eret          = Wire(Bool())
 
+  // val ready_go   = Wire(Bool())
+  // val mfc0_block = Wire(Bool())
+  // mfc0_block := (io.fromExecute.aluop === EXE_MFC0_OP && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)) ||
+  //   (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
+  //   (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
+  // ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr == rt)))
+  // allowin := !ds_valid || ready_go && io.fromExecute.allowin
+  allowin := !ds_valid || !stallreq
+
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
   imm_sll2_signedext := Cat(Util.signedExtend(imm16, to = 30), 0.U(2.W))
@@ -190,24 +186,6 @@ class Decoder extends Module {
   val JTarget = Cat(pc_plus_4(31, 28), inst(25, 0), 0.U(2.W))
 
   // 对指令进行译码
-  when(reset.asBool === RST_ENABLE) {
-    aluop                  := EXE_NOP_OP
-    alusel                 := EXE_RES_NOP
-    reg_waddr              := rd // inst(15, 11)
-    reg_wen                := WRITE_DISABLE
-    inst_valid             := INST_INVALID
-    reg1_ren               := READ_DISABLE
-    reg2_ren               := READ_DISABLE
-    reg1_raddr             := rs // inst(25, 21)
-    reg2_raddr             := rt // inst(20, 16)
-    imm                    := ZERO_WORD
-    link_addr              := ZERO_WORD
-    branch_target_address  := ZERO_WORD
-    branch_flag            := NOT_BRANCH
-    next_inst_in_delayslot := NOT_IN_DELAY_SLOT
-    except_type_is_syscall := false.B
-    except_type_is_eret    := false.B
-  }
 
   aluop                  := EXE_NOP_OP
   alusel                 := EXE_RES_NOP
@@ -220,8 +198,6 @@ class Decoder extends Module {
   reg2_raddr             := rt // inst(20, 16)
   imm                    := ZERO_WORD
   link_addr              := ZERO_WORD
-  branch_target_address  := ZERO_WORD
-  branch_flag            := NOT_BRANCH
   next_inst_in_delayslot := NOT_IN_DELAY_SLOT
   except_type_is_syscall := false.B
   except_type_is_eret    := false.B
@@ -548,6 +524,27 @@ class Decoder extends Module {
   }.otherwise {
     is_in_delayslot := is_in_delayslot_i
   }
+
+  val is_branch_temp = Wire(Bool())
+  is_branch_temp := MuxLookup(
+    aluop,
+    false.B,
+    Seq(
+      EXE_BEQ_OP    -> true.B,
+      EXE_BNE_OP    -> true.B,
+      EXE_JAL_OP    -> true.B,
+      EXE_JR_OP     -> true.B,
+      EXE_BGEZ_OP   -> true.B,
+      EXE_BGTZ_OP   -> true.B,
+      EXE_BLEZ_OP   -> true.B,
+      EXE_BLTZ_OP   -> true.B,
+      EXE_BGEZAL_OP -> true.B,
+      EXE_BLTZAL_OP -> true.B,
+      EXE_J_OP      -> true.B,
+      EXE_JALR_OP   -> true.B
+    )
+  )
+  is_branch := is_branch_temp && ds_valid
 
   // debug
   // printf(p"decoder :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")

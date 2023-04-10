@@ -10,13 +10,14 @@ class WriteBackStage extends Module {
     val fromControl = Flipped(new Control_WriteBackStage())
     val fromMemory  = Flipped(new Memory_WriteBackStage())
 
-    val llbitReg = new WriteBackStage_LLbitReg()
-    val memory   = new WriteBackStage_Memory()
-    val regFile  = new WriteBackStage_RegFile()
-    val execute  = new WriteBackStage_Execute()
-    val hilo     = new WriteBackStage_HILO()
-    val cp0      = new WriteBackStage_CP0()
-    val debug    = new DEBUG()
+    val llbitReg   = new WriteBackStage_LLbitReg()
+    val memory     = new WriteBackStage_Memory()
+    val regFile    = new WriteBackStage_RegFile()
+    val execute    = new WriteBackStage_Execute()
+    val hilo       = new WriteBackStage_HILO()
+    val cp0        = new WriteBackStage_CP0()
+    val fetchStage = new WriteBackStage_FetchStage()
+    val debug      = new DEBUG()
   })
   // input
   val stall = Wire(STALL_BUS)
@@ -47,6 +48,11 @@ class WriteBackStage extends Module {
   io.hilo.hi    := hi
   io.hilo.lo    := lo
   io.hilo.whilo := whilo
+
+  // output-fetchStage
+  //TODO
+  io.fetchStage.eret := false.B
+  io.fetchStage.ex   := false.B
 
   // output-execute
   io.execute.hi        := hi
