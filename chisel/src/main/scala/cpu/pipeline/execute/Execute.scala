@@ -24,67 +24,43 @@ class Execute extends Module {
     val cp0         = new Execute_CP0()
     val dataMemory  = new Execute_DataMemory()
   })
-
-  // input
-  val aluop           = Wire(ALU_OP_BUS)
-  val alusel          = Wire(ALU_SEL_BUS)
-  val reg1            = Wire(BUS)
-  val reg2            = Wire(BUS)
-  val reg_waddr       = Wire(ADDR_BUS)
-  val wreg_i          = Wire(Bool())
-  val inst            = Wire(BUS)
-  val hi_i            = Wire(BUS)
-  val lo_i            = Wire(BUS)
-  val wb_hi_i         = Wire(BUS)
-  val wb_lo_i         = Wire(BUS)
-  val wb_whilo_i      = Wire(Bool())
-  val mem_hi_i        = Wire(BUS)
-  val mem_lo_i        = Wire(BUS)
-  val mem_whilo_i     = Wire(Bool())
-  val hilo_temp_i     = Wire(DOUBLE_BUS)
-  val cnt_i           = Wire(CNT_BUS)
-  val div_result_i    = Wire(DOUBLE_BUS)
-  val div_ready_i     = Wire(Bool())
-  val link_addr       = Wire(BUS)
-  val is_in_delayslot = Wire(Bool())
-
   // input-execute stage
-  aluop     := io.fromExecuteStage.aluop
-  alusel    := io.fromExecuteStage.alusel
-  reg1      := io.fromExecuteStage.reg1
-  reg2      := io.fromExecuteStage.reg2
-  reg_waddr := io.fromExecuteStage.reg_waddr
-  wreg_i    := io.fromExecuteStage.reg_wen
-  inst      := io.fromExecuteStage.inst
+  val pc        = io.fromExecuteStage.pc
+  val aluop     = io.fromExecuteStage.aluop
+  val alusel    = io.fromExecuteStage.alusel
+  val reg1      = io.fromExecuteStage.reg1
+  val reg2      = io.fromExecuteStage.reg2
+  val reg_waddr = io.fromExecuteStage.reg_waddr
+  val wreg_i    = io.fromExecuteStage.reg_wen
+  val inst      = io.fromExecuteStage.inst
 
   // input-hilo
-  hi_i := io.fromHILO.hi
-  lo_i := io.fromHILO.lo
+  val hi_i = io.fromHILO.hi
+  val lo_i = io.fromHILO.lo
 
   // input-write back stage
-  wb_hi_i    := io.fromWriteBackStage.hi
-  wb_lo_i    := io.fromWriteBackStage.lo
-  wb_whilo_i := io.fromWriteBackStage.whilo
+  val wb_hi_i    = io.fromWriteBackStage.hi
+  val wb_lo_i    = io.fromWriteBackStage.lo
+  val wb_whilo_i = io.fromWriteBackStage.whilo
 
   // input-memory
-  mem_hi_i    := io.fromMemory.hi
-  mem_lo_i    := io.fromMemory.lo
-  mem_whilo_i := io.fromMemory.whilo
+  val mem_hi_i    = io.fromMemory.hi
+  val mem_lo_i    = io.fromMemory.lo
+  val mem_whilo_i = io.fromMemory.whilo
 
   // input-memory stage
-  hilo_temp_i := io.fromMemoryStage.hilo
-  cnt_i       := io.fromMemoryStage.cnt
+  val hilo_temp_i = io.fromMemoryStage.hilo
+  val cnt_i       = io.fromMemoryStage.cnt
 
   // input-divider
-  div_result_i := io.fromDivider.result
-  div_ready_i  := io.fromDivider.ready
+  val div_result_i = io.fromDivider.result
+  val div_ready_i  = io.fromDivider.ready
 
   // input-execute stage
-  link_addr       := io.fromExecuteStage.link_addr
-  is_in_delayslot := io.fromExecuteStage.is_in_delayslot
+  val link_addr       = io.fromExecuteStage.link_addr
+  val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val pc                = Wire(BUS)
   val reg_wen           = Wire(Bool())
   val reg_wdata         = Wire(BUS)
   val hi                = Wire(BUS)
@@ -110,27 +86,18 @@ class Execute extends Module {
   val mem_ce            = Wire(Bool())
   val mem_wen           = Wire(Bool())
 
-  pc := io.fromExecuteStage.pc
-
   // output-memory stage
   io.memoryStage.pc := pc
 
   // output-decoder
+  io.decoder.reg_wen   := reg_wen
   io.decoder.reg_waddr := reg_waddr
-
-  // output-memory stage
-  io.memoryStage.reg_waddr := reg_waddr
-
-  // output-decoder
-  io.decoder.reg_wen := reg_wen
-
-  // output-memory stage
-  io.memoryStage.reg_wen := reg_wen
-
-  // output-decoder
   io.decoder.reg_wdata := reg_wdata
+  io.decoder.aluop := aluop
 
   // output-memory stage
+  io.memoryStage.reg_wen   := reg_wen
+  io.memoryStage.reg_waddr := reg_waddr
   io.memoryStage.reg_wdata := reg_wdata
   io.memoryStage.hi        := hi
   io.memoryStage.lo        := lo
@@ -147,8 +114,6 @@ class Execute extends Module {
   // output-memory stage
   io.memoryStage.aluop := aluop
 
-  // output-decoder
-  io.decoder.aluop := aluop
 
   // output-memory stage
   io.memoryStage.mem_addr := mem_addr
@@ -482,11 +447,6 @@ class Execute extends Module {
     mem_ce    := CHIP_DISABLE
   }.otherwise {
     // input-memory stage
-    mem_wen  := WRITE_DISABLE
-    mem_addr := ZERO_WORD
-    mem_wsel := "b1111".U
-    mem_ce   := CHIP_DISABLE
-
     mem_wen := MuxLookup(
       aluop,
       WRITE_DISABLE,
@@ -499,7 +459,6 @@ class Execute extends Module {
         EXE_SC_OP  -> WRITE_ENABLE,
       ),
     )
-
     mem_ce := MuxLookup(
       aluop,
       CHIP_DISABLE,
@@ -520,7 +479,6 @@ class Execute extends Module {
         // EXE_SC_OP  -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
       ),
     ) // mem_ce
-
     mem_addr := MuxLookup(
       aluop,
       ZERO_WORD,
@@ -543,7 +501,6 @@ class Execute extends Module {
     ) // mem_addr
 
     val addrLowBit2 = mem_addr_temp(1, 0)
-
     mem_wsel := MuxLookup(
       aluop,
       "b1111".U,
