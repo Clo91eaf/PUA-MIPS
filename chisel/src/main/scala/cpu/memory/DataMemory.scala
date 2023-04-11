@@ -154,44 +154,48 @@ class DataMemory extends Module {
 
   val read_mask = MuxLookup(
     aluop,
-    "b1111".U,
+    "hffffffff".U,
     Seq(
       EXE_LB_OP -> MuxLookup(
         addrLowBit2,
-        "b1111".U,
+        "hffffffff".U,
         Seq(
-          "b00".U -> "hf000".U,
-          "b01".U -> "h0f00".U,
-          "b10".U -> "h00f0".U,
-          "b11".U -> "h000f".U,
+          "b00".U -> "hff000000".U,
+          "b01".U -> "h00ff0000".U,
+          "b10".U -> "h0000ff00".U,
+          "b11".U -> "h000000ff".U,
         ),
       ),
       EXE_LBU_OP -> MuxLookup(
         addrLowBit2,
-        "b1111".U,
+        "hffffffff".U,
         Seq(
-          "b00".U -> "hf000".U,
-          "b01".U -> "h0f00".U,
-          "b10".U -> "h00f0".U,
-          "b11".U -> "h000f".U,
+          "b00".U -> "hff000000".U,
+          "b01".U -> "h00ff0000".U,
+          "b10".U -> "h0000ff00".U,
+          "b11".U -> "h000000ff".U,
         ),
       ),
       EXE_LH_OP -> MuxLookup(
         addrLowBit2,
-        "b1111".U,
+        "hffffffff".U,
         Seq(
-          "b00".U -> "hff00".U,
-          "b10".U -> "h00ff".U,
+          "b00".U -> "hffff0000".U,
+          "b10".U -> "h0000ffff".U,
         ),
       ),
       EXE_LHU_OP -> MuxLookup(
         addrLowBit2,
-        "b1111".U,
+        "hffffffff".U,
         Seq(
-          "b00".U -> "hff00".U,
-          "b10".U -> "h00ff".U,
+          "b00".U -> "hffff0000".U,
+          "b10".U -> "h0000ffff".U,
         ),
       ),
+      EXE_LW_OP  -> "hffffffff".U,
+      EXE_LWL_OP -> "hffffffff".U,
+      EXE_LWR_OP -> "hffffffff".U,
+      EXE_LL_OP  -> "hffffffff".U,
     ),
   )
 
