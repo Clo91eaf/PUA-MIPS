@@ -26,7 +26,7 @@ class Div extends Module {
     ZERO_WORD,
     Seq(
       EXE_DIV_OP  -> (divisor.asSInt() / dividend.asSInt()).asUInt(),
-      EXE_DIVU_OP -> divisor / dividend,
+      EXE_DIVU_OP -> (divisor.asUInt() / dividend.asUInt()),
     ),
   )
   remainder := MuxLookup(
@@ -34,7 +34,7 @@ class Div extends Module {
     ZERO_WORD,
     Seq(
       EXE_DIV_OP  -> (divisor.asSInt() % dividend.asSInt()).asUInt(),
-      EXE_DIVU_OP -> divisor % dividend,
+      EXE_DIVU_OP -> (divisor.asUInt() % dividend.asUInt()),
     ),
   )
 }

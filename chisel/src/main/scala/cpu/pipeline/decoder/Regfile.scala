@@ -38,71 +38,20 @@ class Regfile extends Module {
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(BUS_INIT)))
 
+  // write
   when(wen === WRITE_ENABLE && waddr.orR) {
     regs(waddr) := wdata
   }
 
-  // when(ren1 === READ_ENABLE && raddr1.orR) {
-  //   rdata1 := Mux(
-  //     (wen === WRITE_ENABLE),
-  //     wdata,
-  //     regs(raddr1),
-  //   )
-  // }.otherwise {
-  //   rdata1 := ZERO_WORD
-  // }
-
-  // when(ren2 === READ_ENABLE && raddr2.orR) {
-  //   rdata2 := Mux(
-  //     (wen === WRITE_ENABLE),
-  //     wdata,
-  //     regs(raddr2),
-  //   )
-  // }.otherwise {
-  //   rdata2 := ZERO_WORD
-  // }
-
-  when(reset.asBool === RST_ENABLE) {
-    rdata1 := ZERO_WORD
-  }.elsewhen(raddr1 === 0.U) {
-    rdata1 := ZERO_WORD
-  }.elsewhen(
-    (raddr1 === waddr) && (wen === WRITE_ENABLE)
-      && (ren1 === READ_ENABLE),
-  ) {
-    rdata1 := wdata
-  }.elsewhen(ren1 === READ_ENABLE) {
-    rdata1 := regs(raddr1)
-  }.otherwise {
-    rdata1 := ZERO_WORD
-  }
-
-  when(reset.asBool === RST_ENABLE) {
-    rdata2 := ZERO_WORD
-  }.elsewhen(raddr2 === 0.U) {
-    rdata2 := ZERO_WORD
-  }.elsewhen(
-    (raddr2 === waddr) && (wen === WRITE_ENABLE)
-      && (ren2 === READ_ENABLE),
-  ) {
-    rdata2 := wdata
-  }.elsewhen(ren2 === READ_ENABLE) {
-    rdata2 := regs(raddr2)
-  }.otherwise {
-    rdata2 := ZERO_WORD
-  }
-  // debug
-  // when(wen === WRITE_ENABLE) {
-  //   printf(
-  //     p"regfile :waddr 0x${Hexadecimal(waddr)}, wdata 0x${Hexadecimal(wdata)}\n"
-  //   )
-  // }.otherwise {
-  //   printf(
-  //     p"regfile :raddr1 0x${Hexadecimal(raddr1)}, rdata1 0x${Hexadecimal(rdata1)}\n"
-  //   )
-  //   printf(
-  //     p"regfile :raddr2 0x${Hexadecimal(raddr2)}, rdata2 0x${Hexadecimal(rdata2)}\n"
-  //   )
-  // }
-
+  // read and read after write 
+  rdata1 := Mux(
+    (wen === WRITE_ENABLE && waddr === raddr1 && waddr.orR),
+    wdata,
+    regs(raddr1),
+  )
+  rdata2 := Mux(
+    (wen === WRITE_ENABLE && waddr === raddr2 && waddr.orR),
+    wdata,
+    regs(raddr2),
+  )
 }
