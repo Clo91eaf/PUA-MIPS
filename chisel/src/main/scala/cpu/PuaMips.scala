@@ -51,9 +51,9 @@ class PuaMips extends Module {
     4,
     dataMemory.io.dataSram.mem_wen,
   )
-  io.data_sram.addr                  := dataMemory.io.dataSram.mem_addr
-  io.data_sram.wdata                 := dataMemory.io.dataSram.mem_wdata
-  memory.io.fromDataMemory.mem_rdata := io.data_sram.rdata
+  io.data_sram.addr                    := dataMemory.io.dataSram.mem_addr
+  io.data_sram.wdata                   := dataMemory.io.dataSram.mem_wdata
+  dataMemory.io.fromDataSram.mem_rdata := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug
 
@@ -78,6 +78,7 @@ class PuaMips extends Module {
   executeStage.io.execute <> execute.io.fromExecuteStage
 
   // execute
+  execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
   execute.io.div <> div.io.fromExecute
@@ -87,6 +88,10 @@ class PuaMips extends Module {
   // memoryStage
   memoryStage.io.execute <> execute.io.fromMemoryStage
   memoryStage.io.memory <> memory.io.fromMemoryStage
+
+  // datasram
+  dataMemory.io.memoryStage <> memoryStage.io.fromDataMemory
+  dataMemory.io.memory <> memory.io.fromDataMemory
 
   // memory
   memory.io.decoder <> decoder.io.fromMemory

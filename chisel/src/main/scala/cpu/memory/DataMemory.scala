@@ -9,12 +9,14 @@ class DataMemory extends Module {
   val io = IO(new Bundle {
     val fromExecute  = Flipped(new Execute_DataMemory())
     val fromDataSram = Flipped(new DataSram_DataMemory())
+    val memoryStage  = new DataMemory_DataStage()
     val memory       = new DataMemory_Memory()
     val dataSram     = new DataMemory_DataSram()
   })
   val aluop = io.fromExecute.op
   val addr  = io.fromExecute.addr
   val data  = io.fromExecute.data
+  val rdata = io.fromDataSram.mem_rdata
 
   val mem_wen = MuxLookup(
     aluop,
@@ -74,46 +76,6 @@ class DataMemory extends Module {
     aluop,
     "b1111".U,
     Seq(
-      EXE_LB_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U,
-        ),
-      ),
-      EXE_LBU_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U,
-        ),
-      ),
-      EXE_LH_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U,
-        ),
-      ),
-      EXE_LHU_OP -> MuxLookup(
-        addrLowBit2,
-        "b1111".U,
-        Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U,
-        ),
-      ),
-      EXE_LW_OP  -> "b1111".U,
-      EXE_LWL_OP -> "b1111".U,
-      EXE_LWR_OP -> "b1111".U,
-      EXE_LL_OP  -> "b1111".U,
       EXE_SB_OP -> MuxLookup(
         addrLowBit2,
         "b0000".U,
@@ -159,7 +121,6 @@ class DataMemory extends Module {
 
   val zero32 = Wire(BUS)
   zero32 := 0.U(32.W)
-
   val mem_wdata = MuxLookup(
     aluop,
     ZERO_WORD,
@@ -191,9 +152,54 @@ class DataMemory extends Module {
     ),
   ) // mem_wdata
 
-  io.dataSram.mem_addr  := Cat(mem_addr(31, 2), 0.U(2.W))
-  io.dataSram.mem_wsel  := mem_wsel
-  io.dataSram.mem_wdata := mem_wdata
-  io.dataSram.mem_ce    := mem_ce
-  io.dataSram.mem_wen   := mem_wen & io.fromExecute.valid
+  val read_mask = MuxLookup(
+    aluop,
+    "b1111".U,
+    Seq(
+      EXE_LB_OP -> MuxLookup(
+        addrLowBit2,
+        "b1111".U,
+        Seq(
+          "b00".U -> "hf000".U,
+          "b01".U -> "h0f00".U,
+          "b10".U -> "h00f0".U,
+          "b11".U -> "h000f".U,
+        ),
+      ),
+      EXE_LBU_OP -> MuxLookup(
+        addrLowBit2,
+        "b1111".U,
+        Seq(
+          "b00".U -> "hf000".U,
+          "b01".U -> "h0f00".U,
+          "b10".U -> "h00f0".U,
+          "b11".U -> "h000f".U,
+        ),
+      ),
+      EXE_LH_OP -> MuxLookup(
+        addrLowBit2,
+        "b1111".U,
+        Seq(
+          "b00".U -> "hff00".U,
+          "b10".U -> "h00ff".U,
+        ),
+      ),
+      EXE_LHU_OP -> MuxLookup(
+        addrLowBit2,
+        "b1111".U,
+        Seq(
+          "b00".U -> "hff00".U,
+          "b10".U -> "h00ff".U,
+        ),
+      ),
+    ),
+  )
+
+  io.dataSram.mem_addr    := Cat(mem_addr(31, 2), 0.U(2.W))
+  io.dataSram.mem_wsel    := mem_wsel
+  io.dataSram.mem_wdata   := mem_wdata
+  io.dataSram.mem_ce      := mem_ce
+  io.dataSram.mem_wen     := mem_wen & io.fromExecute.valid
+  io.memory.mem_rdata     := rdata & read_mask 
+  io.memoryStage.mem_addr := mem_addr
 }

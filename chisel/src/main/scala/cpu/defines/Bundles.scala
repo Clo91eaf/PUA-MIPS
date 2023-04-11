@@ -147,7 +147,6 @@ class Execute_MemoryStage extends Bundle {
   val hi                = Output(BUS)
   val hilo              = Output(DOUBLE_BUS)
   val lo                = Output(BUS)
-  val mem_addr          = Output(BUS)
   val reg2              = Output(BUS)
   val reg_waddr         = Output(ADDR_BUS)
   val reg_wdata         = Output(BUS)
@@ -189,6 +188,10 @@ class DataSram_DataMemory extends Bundle {
 
 class DataMemory_Memory extends Bundle {
   val mem_rdata = Output(BUS)
+}
+
+class DataMemory_DataStage extends Bundle {
+  val mem_addr = Output(BUS)
 }
 
 // memoryStage

@@ -75,11 +75,6 @@ class Execute extends Module {
   val cp0_wdata         = Wire(BUS)
   val current_inst_addr = Wire(BUS)
   val except_type       = Wire(UInt(32.W))
-  val mem_addr          = Wire(BUS)
-  val mem_wsel          = Wire(DATA_MEMORY_SEL_BUS)
-  val mem_wdata         = Wire(BUS)
-  val mem_ce            = Wire(Bool())
-  val mem_wen           = Wire(Bool())
   val allowin           = Wire(Bool())
   val valid             = Wire(Bool())
   val blk_valid         = Wire(Bool())
@@ -109,8 +104,7 @@ class Execute extends Module {
   io.memoryStage.cnt       := cnt
 
   // output-memory stage
-  io.memoryStage.aluop := aluop
-  io.memoryStage.mem_addr := mem_addr
+  io.memoryStage.aluop    := aluop
   io.memoryStage.reg2     := reg2
   io.memoryStage.valid    := valid
 
@@ -130,9 +124,9 @@ class Execute extends Module {
 
   // output-data memory
   io.dataMemory.valid := ~except_type.orR() & es_valid
-  io.dataMemory.op := aluop
-  io.dataMemory.data := reg2 
-  io.dataMemory.addr := mem_addr_temp 
+  io.dataMemory.op    := aluop
+  io.dataMemory.data  := reg2
+  io.dataMemory.addr  := mem_addr_temp
 
   // io-finish
 
@@ -380,8 +374,6 @@ class Execute extends Module {
     cp0_wen   := WRITE_DISABLE
     cp0_wdata := ZERO_WORD
   }
-
-
 
   // debug
   // printf(p"execute :pc 0x${Hexadecimal(pc)}\n")

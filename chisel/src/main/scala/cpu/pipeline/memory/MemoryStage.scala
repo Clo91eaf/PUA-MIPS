@@ -6,8 +6,9 @@ import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromExecute = Flipped(new Execute_MemoryStage())
-    val fromMemory  = Flipped(new Memory_MemoryStage())
+    val fromDataMemory = Flipped(new DataMemory_DataStage())
+    val fromExecute    = Flipped(new Execute_MemoryStage())
+    val fromMemory     = Flipped(new Memory_MemoryStage())
 
     val execute = new MemoryStage_Execute()
     val memory  = new MemoryStage_Memory()
@@ -74,7 +75,6 @@ class MemoryStage extends Module {
     hilo              := ZERO_WORD
     cnt               := 0.U
     aluop             := io.fromExecute.aluop
-    mem_addr          := io.fromExecute.mem_addr
     reg2              := io.fromExecute.reg2
     cp0_wen           := io.fromExecute.cp0_wen
     cp0_waddr         := io.fromExecute.cp0_waddr
@@ -83,6 +83,7 @@ class MemoryStage extends Module {
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr
     pc                := io.fromExecute.pc
+    mem_addr          := io.fromDataMemory.mem_addr
   }
 
   // debug
