@@ -13,28 +13,18 @@ class Memory extends Module {
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
     val fromCP0            = Flipped(new CP0_Memory())
 
+    val memoryStage    = new Memory_MemoryStage()
     val decoder        = new Memory_Decoder()
     val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
     val cp0            = new Memory_CP0()
-    val control        = new Memory_Control()
-
   })
   // input
-  val aluop      = Wire(ALU_OP_BUS)
-  val pc         = Wire(BUS)
-  val reg2_i     = Wire(BUS)
-  val mem_data_i = Wire(BUS)
-
-  // input-execute
-  aluop := io.fromMemoryStage.aluop
-
-  // input-memory stage
-  pc     := io.fromMemoryStage.pc
-  reg2_i := io.fromMemoryStage.reg2
-
-  // input-data memory
-  mem_data_i := io.fromDataMemory.mem_rdata
+  val aluop      = io.fromMemoryStage.aluop
+  val pc         = io.fromMemoryStage.pc
+  val reg2_i     = io.fromMemoryStage.reg2
+  val mem_data_i = io.fromDataMemory.mem_rdata
+  val ms_valid   = io.fromMemoryStage.valid
 
   // output
   val reg_waddr         = Wire(ADDR_BUS)
@@ -57,39 +47,47 @@ class Memory extends Module {
   val cp0_status        = Wire(BUS)
   val cp0_cause         = Wire(BUS)
   val cp0_epc           = Wire(BUS)
+  val allowin           = Wire(Bool())
+  val valid             = Wire(Bool())
+  val inst_is_mfc0      = Wire(Bool())
+  val ms_fwd_valid      = Wire(Bool())
 
   // output-decoder
-  io.decoder.reg_waddr := reg_waddr
-  io.decoder.reg_wen   := reg_wen
-  io.decoder.reg_wdata := reg_wdata
+  io.decoder.reg_waddr    := reg_waddr
+  io.decoder.reg_wen      := reg_wen
+  io.decoder.reg_wdata    := reg_wdata
+  io.decoder.inst_is_mfc0 := inst_is_mfc0
+  io.decoder.ms_fwd_valid := ms_fwd_valid
 
   // output-execute
-  io.execute.hi    := hi
-  io.execute.lo    := lo
-  io.execute.whilo := whilo
+  io.execute.hi      := hi
+  io.execute.lo      := lo
+  io.execute.whilo   := whilo
+  io.execute.allowin := allowin
+
+  // output-memory stage
+  io.memoryStage.allowin := allowin
 
   // output-write back stage
-  io.writeBackStage.reg_wen     := reg_wen
-  io.writeBackStage.reg_waddr   := reg_waddr
-  io.writeBackStage.pc          := pc
-  io.writeBackStage.reg_wdata   := reg_wdata
-  io.writeBackStage.hi          := hi
-  io.writeBackStage.lo          := lo
-  io.writeBackStage.whilo       := whilo
-  io.writeBackStage.LLbit_wen   := LLbit_wen
-  io.writeBackStage.LLbit_value := LLbit_value
-  io.writeBackStage.cp0_wen     := cp0_wen
-  io.writeBackStage.cp0_waddr   := cp0_waddr
-  io.writeBackStage.cp0_wdata   := cp0_wdata
+  io.writeBackStage.reg_wen      := reg_wen
+  io.writeBackStage.reg_waddr    := reg_waddr
+  io.writeBackStage.pc           := pc
+  io.writeBackStage.reg_wdata    := reg_wdata
+  io.writeBackStage.hi           := hi
+  io.writeBackStage.lo           := lo
+  io.writeBackStage.whilo        := whilo
+  io.writeBackStage.LLbit_wen    := LLbit_wen
+  io.writeBackStage.LLbit_value  := LLbit_value
+  io.writeBackStage.cp0_wen      := cp0_wen
+  io.writeBackStage.cp0_waddr    := cp0_waddr
+  io.writeBackStage.cp0_wdata    := cp0_wdata
+  io.writeBackStage.valid        := valid
+  io.writeBackStage.inst_is_mfc0 := inst_is_mfc0
 
   // output-execute
   io.execute.cp0_wen   := cp0_wen
   io.execute.cp0_waddr := cp0_waddr
   io.execute.cp0_wdata := cp0_wdata
-
-  // output-control
-  io.control.except_type := except_type
-  io.control.cp0_epc     := epc
 
   // output-cp0
   io.cp0.except_type       := except_type
@@ -102,6 +100,15 @@ class Memory extends Module {
   epc               := cp0_epc
 
   // io-finish
+  inst_is_mfc0 := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
+
+  ms_fwd_valid := ms_valid
+
+  val ready_go = true.B
+  allowin := !ms_valid || ready_go && io.fromWriteBackStage.allowin
+  val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  valid := ms_valid && ready_go && ws_not_eret_ex
+
   zero32 := 0.U(32.W)
 
   // 获取最新的LLbit的值
@@ -156,8 +163,8 @@ class Memory extends Module {
             "b00".U -> Util.signedExtend(mem_data_i(31, 24)),
             "b01".U -> Util.signedExtend(mem_data_i(23, 16)),
             "b10".U -> Util.signedExtend(mem_data_i(15, 8)),
-            "b11".U -> Util.signedExtend(mem_data_i(7, 0))
-          )
+            "b11".U -> Util.signedExtend(mem_data_i(7, 0)),
+          ),
         ),
         EXE_LBU_OP -> MuxLookup(
           addrLowBit2,
@@ -166,24 +173,24 @@ class Memory extends Module {
             "b00".U -> Util.zeroExtend(mem_data_i(31, 24)),
             "b01".U -> Util.zeroExtend(mem_data_i(23, 16)),
             "b10".U -> Util.zeroExtend(mem_data_i(15, 8)),
-            "b11".U -> Util.zeroExtend(mem_data_i(7, 0))
-          )
+            "b11".U -> Util.zeroExtend(mem_data_i(7, 0)),
+          ),
         ),
         EXE_LH_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
             "b00".U -> Util.signedExtend(mem_data_i(31, 16)),
-            "b10".U -> Util.signedExtend(mem_data_i(15, 0))
-          )
+            "b10".U -> Util.signedExtend(mem_data_i(15, 0)),
+          ),
         ),
         EXE_LHU_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
             "b00".U -> Util.zeroExtend(mem_data_i(31, 16)),
-            "b10".U -> Util.zeroExtend(mem_data_i(15, 0))
-          )
+            "b10".U -> Util.zeroExtend(mem_data_i(15, 0)),
+          ),
         ),
         EXE_LW_OP -> mem_data_i,
         EXE_LWL_OP -> MuxLookup(
@@ -193,8 +200,8 @@ class Memory extends Module {
             "b00".U -> mem_data_i(31, 0),
             "b01".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
             "b10".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
-            "b11".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0))
-          )
+            "b11".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0)),
+          ),
         ),
         EXE_LWR_OP -> MuxLookup(
           addrLowBit2,
@@ -203,12 +210,12 @@ class Memory extends Module {
             "b00".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
             "b01".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
             "b10".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
-            "b11".U -> mem_data_i
-          )
+            "b11".U -> mem_data_i,
+          ),
         ),
         EXE_LL_OP -> mem_data_i,
-        EXE_SC_OP -> Mux(LLbit, 1.U, ZERO_WORD)
-      )
+        EXE_SC_OP -> Mux(LLbit, 1.U, ZERO_WORD),
+      ),
     ) // reg_wdata
 
     LLbit_wen := MuxLookup(
@@ -216,8 +223,8 @@ class Memory extends Module {
       false.B,
       Seq(
         EXE_LL_OP -> true.B,
-        EXE_SC_OP -> LLbit
-      )
+        EXE_SC_OP -> LLbit,
+      ),
     ) // LLbit_wen
 
     LLbit_value := MuxLookup(
@@ -225,8 +232,8 @@ class Memory extends Module {
       false.B,
       Seq(
         EXE_LL_OP -> true.B,
-        EXE_SC_OP -> (!LLbit)
-      )
+        EXE_SC_OP -> (!LLbit),
+      ),
     ) // LLbit_value
   }
 
@@ -234,7 +241,7 @@ class Memory extends Module {
     cp0_status := ZERO_WORD
   }.elsewhen(
     (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_STATUS)
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_STATUS),
   ) {
 
     // input-write back stage
@@ -249,7 +256,7 @@ class Memory extends Module {
     cp0_epc := ZERO_WORD
   }.elsewhen(
     (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_EPC)
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_EPC),
   ) {
 
     // input-write back stage
@@ -264,7 +271,7 @@ class Memory extends Module {
     cp0_cause := ZERO_WORD
   }.elsewhen(
     (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_CAUSE)
+      (io.fromWriteBackStage.cp0_waddr === CP0_REG_CAUSE),
   ) {
     cp0_cause := Cat(
       io.fromCP0.cause(31, 24),
@@ -272,7 +279,7 @@ class Memory extends Module {
       io.fromWriteBackStage.cp0_wdata(22),
       io.fromCP0.cause(21, 10),
       io.fromWriteBackStage.cp0_wdata(9, 8),
-      io.fromCP0.cause(7, 0)
+      io.fromCP0.cause(7, 0),
     )
 
   }.otherwise {
@@ -288,7 +295,7 @@ class Memory extends Module {
       when(
         ((cp0_cause(15, 8) & (cp0_status(15, 8))) =/= 0.U) &&
           (cp0_status(1) === 0.U) &&
-          (cp0_status(0))
+          (cp0_status(0)),
       ) {
         except_type := "h00000001".U // interrupt
       }.elsewhen(io.fromMemoryStage.except_type(8)) {

@@ -1,4 +1,4 @@
-package cpu.pipeline.fetchStage
+package cpu.pipeline.fetch
 
 import chisel3._
 import chisel3.util._
@@ -63,11 +63,15 @@ class FetchStage extends Module {
   to_fs_ready_go := !branch_stall
   to_fs_valid    := !reset.asBool && to_fs_ready_go
   seq_pc         := fs_pc + 4.U
-  // @formatter:off
-  next_pc:=Mux(io.fromWriteBackStage.ex, "hbfc00380".U,
-            Mux(io.fromWriteBackStage.eret, io.fromCP0.epc,
-             Mux(branch_flag, branch_target_address, seq_pc)))
-  // @formatter:on
+
+  next_pc := MuxCase(
+    seq_pc,
+    Seq(
+      io.fromWriteBackStage.ex   -> "hbfc00380".U,
+      io.fromWriteBackStage.eret -> io.fromCP0.epc,
+      branch_flag                -> branch_target_address,
+    ),
+  )
 
   // FetchStage
   fs_ready_go := true.B

@@ -17,14 +17,14 @@ class Execute extends Module {
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
     val fromCP0            = Flipped(new CP0_Execute())
 
-    val alu         = new Execute_ALU()
-    val mul         = new Execute_Mul()
-    val memoryStage = new Execute_MemoryStage()
-    val decoder     = new Execute_Decoder()
-    val div         = new Execute_Div()
-    val control     = new Execute_Control()
-    val cp0         = new Execute_CP0()
-    val dataMemory  = new Execute_DataMemory()
+    val alu          = new Execute_ALU()
+    val mul          = new Execute_Mul()
+    val memoryStage  = new Execute_MemoryStage()
+    val decoder      = new Execute_Decoder()
+    val divider      = new Execute_Divider()
+    val cp0          = new Execute_CP0()
+    val dataMemory   = new Execute_DataMemory()
+    val executeStage = new Execute_ExecuteStage()
   })
   // input-execute stage
   val pc        = io.fromExecuteStage.pc
@@ -35,6 +35,7 @@ class Execute extends Module {
   val reg_waddr = io.fromExecuteStage.reg_waddr
   val wreg_i    = io.fromExecuteStage.reg_wen
   val inst      = io.fromExecuteStage.inst
+  val es_valid  = io.fromExecuteStage.valid
 
   // input-hilo
   val hi_i = io.fromHILO.hi
@@ -83,6 +84,10 @@ class Execute extends Module {
   val mem_wdata         = Wire(BUS)
   val mem_ce            = Wire(Bool())
   val mem_wen           = Wire(Bool())
+  val allowin           = Wire(Bool())
+  val valid             = Wire(Bool())
+  val blk_valid         = Wire(Bool())
+  val es_fwd_valid      = Wire(Bool())
 
   // output-memory stage
   io.memoryStage.pc := pc
@@ -92,6 +97,10 @@ class Execute extends Module {
   io.decoder.reg_waddr := reg_waddr
   io.decoder.reg_wdata := reg_wdata
   io.decoder.aluop     := aluop
+  io.decoder.blk_valid := blk_valid
+  io.decoder.allowin   := allowin
+  io.decoder.inst_is_mfc0 := io.fromExecuteStage.valid && (aluop === EXE_MFC0_OP)
+  io.decoder.es_fwd_valid := es_fwd_valid
 
   // output-memory stage
   io.memoryStage.reg_wen   := reg_wen
@@ -115,9 +124,10 @@ class Execute extends Module {
   // output-memory stage
   io.memoryStage.mem_addr := mem_addr
   io.memoryStage.reg2     := reg2
+  io.memoryStage.valid    := valid
 
-  // output-control
-  io.control.stallreq := stallreq
+  // output-execute stage
+  io.executeStage.allowin := allowin
 
   // output-cp0
   io.cp0.cp0_raddr := cp0_raddr
@@ -131,13 +141,49 @@ class Execute extends Module {
   io.memoryStage.except_type       := except_type
 
   // output-data memory
-  io.dataMemory.mem_addr  := mem_addr
+  io.dataMemory.mem_addr  := Cat(mem_addr(31, 2), 0.U(2.W))
   io.dataMemory.mem_wsel  := mem_wsel
   io.dataMemory.mem_wdata := mem_wdata
   io.dataMemory.mem_ce    := mem_ce
-  io.dataMemory.mem_wen   := mem_wen & ~except_type.orR()
+  io.dataMemory.mem_wen   := mem_wen & ~except_type.orR() & es_valid
 
   // io-finish
+
+  val ready_go = Wire(Bool())
+  val load_op  = Wire(Bool())
+
+  when(
+    aluop === EXE_LB_OP || aluop === EXE_LBU_OP ||
+      aluop === EXE_LH_OP || aluop === EXE_LHU_OP ||
+      aluop === EXE_LW_OP || aluop === EXE_LWR_OP ||
+      aluop === EXE_LWL_OP || aluop === EXE_LL_OP ||
+      aluop === EXE_SC_OP,
+  ) {
+    load_op := true.B
+  }.otherwise {
+    load_op := false.B
+  }
+
+  // TODO
+  // val signed_dout_tvalid    = Wire(Bool())
+  // val signed_divider_done   = Wire(Bool())
+  // val unsigned_dout_tvalid  = Wire(Bool())
+  // val unsigned_divider_done = Wire(Bool())
+
+  val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  blk_valid := es_valid && load_op && ws_not_eret_ex
+  // ready_go := MuxCase(
+  //   true.B,
+  //   Seq(
+  //     (aluop === EXE_DIV_OP && ws_not_eret_ex) -> (signed_dout_tvalid || signed_divider_done),
+  //     (aluop === EXE_DIVU_OP && ws_not_eret_ex) -> (unsigned_dout_tvalid || unsigned_divider_done),
+  //   ),
+  // )
+  ready_go := !stallreq
+  valid    := es_valid && ready_go && ws_not_eret_ex
+  allowin  := !es_valid || ready_go && io.fromMemory.allowin
+
+  es_fwd_valid := es_valid
 
   // 保存逻辑运算的结果
   val alures                 = Wire(BUS)

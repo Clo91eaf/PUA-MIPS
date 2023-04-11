@@ -8,7 +8,7 @@ import defines._
 import defines.Const._
 
 import pipeline._
-import pipeline.fetchStage._
+import pipeline.fetch._
 import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
@@ -35,7 +35,6 @@ class PuaMips extends Module {
   val regfile        = Module(new Regfile())
   val llbitReg       = Module(new LLbitReg())
   val hilo           = Module(new HILO())
-  val control        = Module(new Control())
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
@@ -77,11 +76,11 @@ class PuaMips extends Module {
   executeStage.io.execute <> execute.io.fromExecuteStage
 
   // execute
-  execute.io.control <> control.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
   execute.io.div <> div.io.fromExecute
   execute.io.cp0 <> cp0.io.fromExecute
+  execute.io.executeStage <> executeStage.io.fromExecute
 
   // memoryStage
   memoryStage.io.execute <> execute.io.fromMemoryStage
@@ -91,8 +90,8 @@ class PuaMips extends Module {
   memory.io.decoder <> decoder.io.fromMemory
   memory.io.execute <> execute.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
-  memory.io.control <> control.io.fromMemory
   memory.io.cp0 <> cp0.io.fromMemory
+  memory.io.memoryStage <> memoryStage.io.fromMemory
 
   // writeBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage
@@ -102,6 +101,7 @@ class PuaMips extends Module {
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
+  writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO
@@ -115,11 +115,6 @@ class PuaMips extends Module {
   // llbitReg
   llbitReg.io.flush := DontCare
   llbitReg.io.memory <> memory.io.fromLLbitReg
-
-  // control
-  control.io.executeStage <> executeStage.io.fromControl
-  control.io.memoryStage <> memoryStage.io.fromControl
-  control.io.writeBackStage <> writeBackStage.io.fromControl
 
   // cp0
   cp0.io.execute <> execute.io.fromCP0
