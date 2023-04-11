@@ -1,6 +1,6 @@
 # config your tcl script here.
 test_top="/f/NSCSCC/func_test_v0.01"
-test_source="func_lab6"
+test_source="func_test"
 tcl_top="/f/NSCSCC/PUA-MIPS/chisel/src/utils/tcl"
 
 while [ $# -gt 0 ]; do

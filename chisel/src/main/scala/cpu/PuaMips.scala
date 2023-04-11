@@ -7,6 +7,7 @@ import chisel3.internal.DontCareBinding
 import defines._
 import defines.Const._
 
+import memory._
 import pipeline._
 import pipeline.fetch._
 import pipeline.decoder._
@@ -25,10 +26,11 @@ class PuaMips extends Module {
   val decoderStage   = Module(new DecoderStage())
   val decoder        = Module(new Decoder())
   val executeStage   = Module(new ExecuteStage())
+  val execute        = Module(new Execute())
   val alu            = Module(new ALU())
   val mul            = Module(new Mul())
   val div            = Module(new Div())
-  val execute        = Module(new Execute())
+  val dataMemory     = Module(new DataMemory())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
@@ -44,13 +46,13 @@ class PuaMips extends Module {
   io.inst_sram.wdata                 := fetchStage.io.instMemory.wdata
   fetchStage.io.fromInstMemory.rdata := io.inst_sram.rdata
 
-  io.data_sram.en := execute.io.dataMemory.mem_ce
-  io.data_sram.wen := execute.io.dataMemory.mem_wsel & Fill(
+  io.data_sram.en := dataMemory.io.dataSram.mem_ce
+  io.data_sram.wen := dataMemory.io.dataSram.mem_wsel & Fill(
     4,
-    execute.io.dataMemory.mem_wen,
+    dataMemory.io.dataSram.mem_wen,
   )
-  io.data_sram.addr                  := execute.io.dataMemory.mem_addr
-  io.data_sram.wdata                 := execute.io.dataMemory.mem_wdata
+  io.data_sram.addr                  := dataMemory.io.dataSram.mem_addr
+  io.data_sram.wdata                 := dataMemory.io.dataSram.mem_wdata
   memory.io.fromDataMemory.mem_rdata := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug

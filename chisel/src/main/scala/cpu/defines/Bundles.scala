@@ -116,8 +116,8 @@ class Mul_Execute extends Bundle {
 }
 
 class Execute_Div extends Bundle {
-  val op  = Output(Bool())
-  val divisor = Output(BUS)
+  val op       = Output(ALU_OP_BUS)
+  val divisor  = Output(BUS)
   val dividend = Output(BUS)
 }
 
@@ -163,23 +163,32 @@ class Execute_MemoryStage extends Bundle {
   val valid             = Output(Bool())
 }
 
-// class Execute_Divider extends Bundle {
-//   val opdata1    = Output(BUS)
-//   val opdata2    = Output(BUS)
-//   val start      = Output(Bool())
-//   val signed_div = Output(Bool())
-// }
-
 class Execute_CP0 extends Bundle {
   val cp0_raddr = Output(CP0_ADDR_BUS)
 }
 
+// dataMemory
 class Execute_DataMemory extends Bundle {
+  val valid = Output(Bool())
+  val op = Output(ALU_OP_BUS)
+  val addr = Output(BUS)
+  val data = Output(BUS)
+}
+
+class DataMemory_DataSram extends Bundle {
   val mem_addr  = Output(BUS)
   val mem_wen   = Output(Bool())
   val mem_wsel  = Output(DATA_MEMORY_SEL_BUS)
   val mem_wdata = Output(BUS)
   val mem_ce    = Output(Bool())
+}
+
+class DataSram_DataMemory extends Bundle {
+  val mem_rdata = Output(BUS)
+}
+
+class DataMemory_Memory extends Bundle {
+  val mem_rdata = Output(BUS)
 }
 
 // memoryStage
@@ -351,7 +360,7 @@ class Control_WriteBackStage extends Bundle {
   val flush = Output(Bool())
 }
 
-class Control_Divider extends Bundle {
+class Control_Div extends Bundle {
   val flush = Output(Bool())
 }
 
@@ -364,10 +373,7 @@ class InstMemory_FetchStage extends Bundle {
   val rdata = Output(BUS)
 }
 
-// dataMemory
-class DataMemory_Memory extends Bundle {
-  val mem_rdata = Output(BUS)
-}
+
 
 // regFile
 class RegFile_Decoder extends Bundle {
@@ -380,12 +386,6 @@ class HILO_Execute extends Bundle {
   val hi = Output(BUS)
   val lo = Output(BUS)
 }
-
-// divider
-// class Divider_Execute extends Bundle {
-//   val ready  = Output(Bool())
-//   val result = Output(DOUBLE_BUS)
-// }
 
 // LLbitReg
 class LLbitReg_Memory extends Bundle {
