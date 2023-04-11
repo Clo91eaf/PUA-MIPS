@@ -3,7 +3,6 @@ package cpu.pipeline.decoder
 import chisel3._
 import cpu.defines._
 import cpu.defines.Const._
-import chisel3.util.experimental.decode.decoder
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
