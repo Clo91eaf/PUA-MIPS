@@ -1,0 +1,75 @@
+package cpu.pipeline.execute
+
+import chisel3._
+import cpu.defines._
+import cpu.defines.Const._
+import chisel3.util.Decoupled
+import chisel3.util.log2Ceil
+
+class Div extends Module {
+  val io = IO(new Bundle {
+    val fromExecute = Flipped(Decoupled(new Execute_Div()))
+    val execute     = Decoupled(new Div_Execute())
+  })
+
+  val op       = io.fromExecute.bits.op
+  val dividend = io.fromExecute.bits.dividend
+  val divisor  = io.fromExecute.bits.divisor
+
+  val quotient  = Wire(BUS)
+  val remainder = Wire(BUS)
+
+  val dividendReg  = RegInit(BUS_INIT)
+  val divisorReg   = RegInit(BUS_INIT)
+  val quotientReg  = RegInit(BUS_INIT)
+  val remainderReg = RegInit(BUS_INIT)
+
+  val quotientZero = Wire(Bool())
+  val dividendZero = Wire(Bool())
+
+  quotientZero := (quotientReg === 0.U)
+  dividendZero := (dividendReg === 0.U)
+
+  when(io.fromExecute.ready && io.fromExecute.valid) {
+    dividendReg  := dividend
+    divisorReg   := divisor
+    quotientReg  := 0.U
+    remainderReg := dividend
+  }
+
+  when(dividendZero) {
+    quotientReg  := 0.U
+    remainderReg := 0.U
+  }.otherwise {
+    when(divisorReg === 0.U) {
+      quotientReg  := (quotientZero << 1) | 1.U
+      remainderReg := 0.U
+    }.otherwise {
+      val shiftedDivisor = Wire(DOUBLE_BUS)
+      shiftedDivisor := divisorReg
+      val numBits = Wire(UInt(log2Ceil(2 * 32).W))
+      numBits := 0.U
+      for (i <- (2 *  - 1) to 0 by -1) {
+        when(shiftedDivisor >= dividendReg) {
+          remainderReg := dividendReg - shiftedDivisor
+          quotientReg  := (quotientReg << 1) | 1.U
+          dividendReg  := remainderReg
+        }.otherwise {
+          quotientReg := quotientReg << 1
+        }
+        shiftedDivisor := shiftedDivisor >> 1
+        numBits        := numBits + 1.U
+      }
+      when(remainderReg >= divisorReg) {
+        remainderReg := remainderReg - divisorReg
+        quotientReg  := quotientReg | (1.U << numBits)
+      }
+    }
+  }
+
+  io.execute.valid     := io.fromExecute.valid
+  io.fromExecute.ready := io.execute.ready
+
+  io.execute.bits.quotient  := quotientReg
+  io.execute.bits.remainder := remainderReg
+}

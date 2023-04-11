@@ -11,7 +11,7 @@ class Execute extends Module {
     val fromMul            = Flipped(new Mul_Execute())
     val fromExecuteStage   = Flipped(new ExecuteStage_Execute())
     val fromMemoryStage    = Flipped(new MemoryStage_Execute())
-    val fromDivider        = Flipped(new Divider_Execute())
+    val fromDiv            = Flipped(new Div_Execute())
     val fromHILO           = Flipped(new HILO_Execute())
     val fromMemory         = Flipped(new Memory_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
@@ -21,7 +21,7 @@ class Execute extends Module {
     val mul         = new Execute_Mul()
     val memoryStage = new Execute_MemoryStage()
     val decoder     = new Execute_Decoder()
-    val divider     = new Execute_Divider()
+    val div         = new Execute_Div()
     val control     = new Execute_Control()
     val cp0         = new Execute_CP0()
     val dataMemory  = new Execute_DataMemory()
@@ -55,8 +55,8 @@ class Execute extends Module {
   val cnt_i       = io.fromMemoryStage.cnt
 
   // input-divider
-  val div_result_i = io.fromDivider.result
-  val div_ready_i  = io.fromDivider.ready
+  // val div_result_i = io.fromDiv.result
+  // val div_ready_i  = io.fromDiv.ready
 
   // input-execute stage
   val link_addr       = io.fromExecuteStage.link_addr
@@ -70,10 +70,6 @@ class Execute extends Module {
   val whilo             = Wire(Bool())
   val hilo_temp_o       = Wire(DOUBLE_BUS)
   val cnt               = Wire(CNT_BUS)
-  val div_opdata1       = Wire(BUS)
-  val div_opdata2       = Wire(BUS)
-  val div_start         = Wire(Bool())
-  val signed_div        = Wire(Bool())
   val mem_addr_temp     = Wire(BUS)
   val stallreq          = Wire(Bool())
   val cp0_raddr         = Wire(CP0_ADDR_BUS)
@@ -108,10 +104,10 @@ class Execute extends Module {
   io.memoryStage.cnt       := cnt
 
   // output-divider
-  io.divider.opdata1    := div_opdata1
-  io.divider.opdata2    := div_opdata2
-  io.divider.start      := div_start
-  io.divider.signed_div := signed_div
+  // io.div.opdata1    :=divisor
+  // io.div.opdata2    :=dividend
+  // io.div.start      := div_start
+  // io.div.signed_div := signed_div
 
   // output-memory stage
   io.memoryStage.aluop := aluop
@@ -151,7 +147,6 @@ class Execute extends Module {
   val LO                     = Wire(BUS)
   val hilo_temp1             = Wire(DOUBLE_BUS)
   val stallreq_for_madd_msub = Wire(Bool())
-  val stallreq_for_div       = Wire(Bool())
   val trapassert             = Wire(Bool())
   val ovassert               = Wire(Bool())
 
@@ -188,6 +183,12 @@ class Execute extends Module {
   io.mul.in2 := reg2
   mulres     := io.fromMul.out
 
+  io.div.op       := aluop
+  io.div.divisor  := reg1
+  io.div.dividend := reg2
+  val quotient  = io.fromDiv.quotient
+  val remainder = io.fromDiv.remainder
+
   // 得到最新的HI、LO寄存器的值，此处要解决指令数据相关问题
   when(reset.asBool === RST_ENABLE) {
     HI := ZERO_WORD
@@ -203,7 +204,7 @@ class Execute extends Module {
     LO := lo_i
   }
 
-  stallreq := stallreq_for_madd_msub || stallreq_for_div
+  stallreq := stallreq_for_madd_msub
 
   // MADD、MADDU、MSUB、MSUBU指令
   // default
@@ -246,63 +247,63 @@ class Execute extends Module {
   }
 
   // DIV、DIVU指令
-  when(reset.asBool === RST_ENABLE) {
-    stallreq_for_div := NOT_STOP
-    div_opdata1      := ZERO_WORD
-    div_opdata2      := ZERO_WORD
-    div_start        := DIV_STOP
-    signed_div       := NOT_SIGNED
-  }.otherwise {
-    stallreq_for_div := NOT_STOP
-    div_opdata1      := ZERO_WORD
-    div_opdata2      := ZERO_WORD
-    div_start        := DIV_STOP
-    signed_div       := NOT_SIGNED
-    switch(aluop) {
-      is(EXE_DIV_OP) {
-        when(div_ready_i === DIV_RESULT_NOT_READY) {
-          div_opdata1      := reg1
-          div_opdata2      := reg2
-          div_start        := DIV_START
-          signed_div       := SIGNED
-          stallreq_for_div := STOP
-        }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-          div_opdata1      := reg1
-          div_opdata2      := reg2
-          div_start        := DIV_STOP
-          signed_div       := SIGNED
-          stallreq_for_div := NOT_STOP
-        }.otherwise {
-          div_opdata1      := ZERO_WORD
-          div_opdata2      := ZERO_WORD
-          div_start        := DIV_STOP
-          signed_div       := NOT_SIGNED
-          stallreq_for_div := NOT_STOP
-        }
-      }
-      is(EXE_DIVU_OP) {
-        when(div_ready_i === DIV_RESULT_NOT_READY) {
-          div_opdata1      := reg1
-          div_opdata2      := reg2
-          div_start        := DIV_START
-          signed_div       := NOT_SIGNED
-          stallreq_for_div := STOP
-        }.elsewhen(div_ready_i === DIV_RESULT_READY) {
-          div_opdata1      := reg1
-          div_opdata2      := reg2
-          div_start        := DIV_STOP
-          signed_div       := NOT_SIGNED
-          stallreq_for_div := NOT_STOP
-        }.otherwise {
-          div_opdata1      := ZERO_WORD
-          div_opdata2      := ZERO_WORD
-          div_start        := DIV_STOP
-          signed_div       := NOT_SIGNED
-          stallreq_for_div := NOT_STOP
-        }
-      }
-    }
-  }
+  // when(reset.asBool === RST_ENABLE) {
+  //   stallreq_for_div := NOT_STOP
+  //   divisor      := ZERO_WORD
+  //   dividend      := ZERO_WORD
+  //   div_start        := DIV_STOP
+  //   signed_div       := NOT_SIGNED
+  // }.otherwise {
+  //   stallreq_for_div := NOT_STOP
+  //   divisor      := ZERO_WORD
+  //   dividend      := ZERO_WORD
+  //   div_start        := DIV_STOP
+  //   signed_div       := NOT_SIGNED
+  //   switch(aluop) {
+  //     is(EXE_DIV_OP) {
+  //       when(div_ready_i === DIV_RESULT_NOT_READY) {
+  //         divisor      := reg1
+  //         dividend      := reg2
+  //         div_start        := DIV_START
+  //         signed_div       := SIGNED
+  //         stallreq_for_div := STOP
+  //       }.elsewhen(div_ready_i === DIV_RESULT_READY) {
+  //         divisor      := reg1
+  //         dividend      := reg2
+  //         div_start        := DIV_STOP
+  //         signed_div       := SIGNED
+  //         stallreq_for_div := NOT_STOP
+  //       }.otherwise {
+  //         divisor      := ZERO_WORD
+  //         dividend      := ZERO_WORD
+  //         div_start        := DIV_STOP
+  //         signed_div       := NOT_SIGNED
+  //         stallreq_for_div := NOT_STOP
+  //       }
+  //     }
+  //     is(EXE_DIVU_OP) {
+  //       when(div_ready_i === DIV_RESULT_NOT_READY) {
+  //         divisor      := reg1
+  //         dividend      := reg2
+  //         div_start        := DIV_START
+  //         signed_div       := NOT_SIGNED
+  //         stallreq_for_div := STOP
+  //       }.elsewhen(div_ready_i === DIV_RESULT_READY) {
+  //         divisor      := reg1
+  //         dividend      := reg2
+  //         div_start        := DIV_STOP
+  //         signed_div       := NOT_SIGNED
+  //         stallreq_for_div := NOT_STOP
+  //       }.otherwise {
+  //         divisor      := ZERO_WORD
+  //         dividend      := ZERO_WORD
+  //         div_start        := DIV_STOP
+  //         signed_div       := NOT_SIGNED
+  //         stallreq_for_div := NOT_STOP
+  //       }
+  //     }
+  //   }
+  // }
 
   // MFHI、MFLO、MOVN、MOVZ指令
   when(reset.asBool === RST_ENABLE) {
@@ -373,8 +374,8 @@ class Execute extends Module {
     lo    := hilo_temp1(31, 0)
   }.elsewhen((aluop === EXE_DIV_OP) || (aluop === EXE_DIVU_OP)) {
     whilo := WRITE_ENABLE
-    hi    := div_result_i(63, 32)
-    lo    := div_result_i(31, 0)
+    hi    := remainder
+    lo    := quotient
   }.elsewhen(aluop === EXE_MTHI_OP) {
     whilo := WRITE_ENABLE
     hi    := reg1

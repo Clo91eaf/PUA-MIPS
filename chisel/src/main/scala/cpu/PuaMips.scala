@@ -27,13 +27,13 @@ class PuaMips extends Module {
   val executeStage   = Module(new ExecuteStage())
   val alu            = Module(new ALU())
   val mul            = Module(new Mul())
+  val div            = Module(new Div())
   val execute        = Module(new Execute())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
   val regfile        = Module(new Regfile())
   val llbitReg       = Module(new LLbitReg())
-  val divider        = Module(new Divider())
   val hilo           = Module(new HILO())
   val control        = Module(new Control())
   val cp0            = Module(new CP0Reg())
@@ -80,7 +80,7 @@ class PuaMips extends Module {
   execute.io.control <> control.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
-  execute.io.divider <> divider.io.fromExecute
+  execute.io.div <> div.io.fromExecute
   execute.io.cp0 <> cp0.io.fromExecute
 
   // memoryStage
@@ -109,9 +109,8 @@ class PuaMips extends Module {
   // reg file
   regfile.io.decoder <> decoder.io.fromRegfile
 
-  // divider
-  divider.io.annul := DontCare
-  divider.io.execute <> execute.io.fromDivider
+  // div
+  div.io.execute <> execute.io.fromDiv
 
   // llbitReg
   llbitReg.io.flush := DontCare

@@ -114,6 +114,17 @@ class Mul_Execute extends Bundle {
   val out = Output(DOUBLE_BUS)
 }
 
+class Execute_Div extends Bundle {
+  val op  = Output(Bool())
+  val divisor = Output(BUS)
+  val dividend = Output(BUS)
+}
+
+class Div_Execute extends Bundle {
+  val quotient  = Output(BUS)
+  val remainder = Output(BUS)
+}
+
 class Execute_Decoder extends Bundle {
   val aluop     = Output(ALU_OP_BUS)
   val reg_waddr = Output(ADDR_BUS)
@@ -152,12 +163,12 @@ class Execute_Control extends Bundle {
   val stallreq = Output(Bool())
 }
 
-class Execute_Divider extends Bundle {
-  val opdata1    = Output(BUS)
-  val opdata2    = Output(BUS)
-  val start      = Output(Bool())
-  val signed_div = Output(Bool())
-}
+// class Execute_Divider extends Bundle {
+//   val opdata1    = Output(BUS)
+//   val opdata2    = Output(BUS)
+//   val start      = Output(Bool())
+//   val signed_div = Output(Bool())
+// }
 
 class Execute_CP0 extends Bundle {
   val cp0_raddr = Output(CP0_ADDR_BUS)
@@ -354,10 +365,10 @@ class HILO_Execute extends Bundle {
 }
 
 // divider
-class Divider_Execute extends Bundle {
-  val ready  = Output(Bool())
-  val result = Output(DOUBLE_BUS)
-}
+// class Divider_Execute extends Bundle {
+//   val ready  = Output(Bool())
+//   val result = Output(DOUBLE_BUS)
+// }
 
 // LLbitReg
 class LLbitReg_Memory extends Bundle {

@@ -38,11 +38,29 @@ class Regfile extends Module {
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(BUS_INIT)))
 
-  when(reset.asBool === RST_DISABLE) {
-    when(wen === WRITE_ENABLE && waddr =/= 0.U) {
-      regs(waddr) := wdata
-    }
+  when(wen === WRITE_ENABLE && waddr.orR) {
+    regs(waddr) := wdata
   }
+
+  // when(ren1 === READ_ENABLE && raddr1.orR) {
+  //   rdata1 := Mux(
+  //     (wen === WRITE_ENABLE),
+  //     wdata,
+  //     regs(raddr1),
+  //   )
+  // }.otherwise {
+  //   rdata1 := ZERO_WORD
+  // }
+
+  // when(ren2 === READ_ENABLE && raddr2.orR) {
+  //   rdata2 := Mux(
+  //     (wen === WRITE_ENABLE),
+  //     wdata,
+  //     regs(raddr2),
+  //   )
+  // }.otherwise {
+  //   rdata2 := ZERO_WORD
+  // }
 
   when(reset.asBool === RST_ENABLE) {
     rdata1 := ZERO_WORD
@@ -50,7 +68,7 @@ class Regfile extends Module {
     rdata1 := ZERO_WORD
   }.elsewhen(
     (raddr1 === waddr) && (wen === WRITE_ENABLE)
-      && (ren1 === READ_ENABLE)
+      && (ren1 === READ_ENABLE),
   ) {
     rdata1 := wdata
   }.elsewhen(ren1 === READ_ENABLE) {
@@ -65,7 +83,7 @@ class Regfile extends Module {
     rdata2 := ZERO_WORD
   }.elsewhen(
     (raddr2 === waddr) && (wen === WRITE_ENABLE)
-      && (ren2 === READ_ENABLE)
+      && (ren2 === READ_ENABLE),
   ) {
     rdata2 := wdata
   }.elsewhen(ren2 === READ_ENABLE) {
@@ -73,7 +91,6 @@ class Regfile extends Module {
   }.otherwise {
     rdata2 := ZERO_WORD
   }
-
   // debug
   // when(wen === WRITE_ENABLE) {
   //   printf(
