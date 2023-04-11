@@ -6,19 +6,12 @@ import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromControl = Flipped(new Control_MemoryStage())
     val fromExecute = Flipped(new Execute_MemoryStage())
+    val fromMemory  = Flipped(new Memory_MemoryStage())
 
     val execute = new MemoryStage_Execute()
     val memory  = new MemoryStage_Memory()
   })
-  // input
-  val stall = Wire(STALL_BUS)
-  val flush = Wire(Bool())
-
-  // input-control
-  stall := io.fromControl.stall
-  flush := io.fromControl.flush
 
   // output
   val pc                = RegInit(BUS_INIT)
@@ -39,6 +32,7 @@ class MemoryStage extends Module {
   val current_inst_addr = RegInit(BUS_INIT)
   val is_in_delayslot   = RegInit(NOT_IN_DELAY_SLOT)
   val except_type       = RegInit(0.U(32.W))
+  val valid             = RegInit(false.B)
 
   // output-memory
   io.memory.pc        := pc
@@ -63,48 +57,14 @@ class MemoryStage extends Module {
   io.memory.current_inst_addr := current_inst_addr
   io.memory.is_in_delayslot   := is_in_delayslot
   io.memory.except_type       := except_type
+  io.memory.valid             := valid
 
   // io-finish
+  when(io.fromMemory.allowin) {
+    valid := io.fromExecute.valid
+  }
 
-  when(flush === true.B) {
-    reg_waddr         := NOP_REG_ADDR
-    reg_wen           := WRITE_DISABLE
-    reg_wdata         := ZERO_WORD
-    hi                := ZERO_WORD
-    lo                := ZERO_WORD
-    whilo             := WRITE_DISABLE
-    aluop             := EXE_NOP_OP
-    mem_addr          := ZERO_WORD
-    reg2              := ZERO_WORD
-    cp0_wen           := WRITE_DISABLE
-    cp0_waddr         := "b00000".U
-    cp0_wdata         := ZERO_WORD
-    except_type       := ZERO_WORD
-    is_in_delayslot   := NOT_IN_DELAY_SLOT
-    current_inst_addr := ZERO_WORD
-    hilo              := ZERO_WORD
-    cnt               := "b00".U
-    pc                := ZERO_WORD
-  }.elsewhen(stall(3) === STOP && stall(4) === NOT_STOP) {
-    reg_waddr         := NOP_REG_ADDR
-    reg_wen           := WRITE_DISABLE
-    reg_wdata         := ZERO_WORD
-    hi                := ZERO_WORD
-    lo                := ZERO_WORD
-    whilo             := WRITE_DISABLE
-    hilo              := io.fromExecute.hilo
-    cnt               := io.fromExecute.cnt
-    aluop             := EXE_NOP_OP
-    mem_addr          := ZERO_WORD
-    reg2              := ZERO_WORD
-    cp0_wen           := WRITE_DISABLE
-    cp0_waddr         := 0.U
-    cp0_wdata         := ZERO_WORD
-    except_type       := ZERO_WORD
-    is_in_delayslot   := NOT_IN_DELAY_SLOT
-    current_inst_addr := ZERO_WORD
-    pc                := ZERO_WORD
-  }.elsewhen(stall(3) === NOT_STOP) {
+  when(io.fromExecute.valid && io.fromMemory.allowin) {
     reg_waddr         := io.fromExecute.reg_waddr
     reg_wen           := io.fromExecute.reg_wen
     reg_wdata         := io.fromExecute.reg_wdata
@@ -123,9 +83,6 @@ class MemoryStage extends Module {
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr
     pc                := io.fromExecute.pc
-  }.otherwise {
-    hilo := io.fromExecute.hilo
-    cnt  := io.fromExecute.cnt
   }
 
   // debug

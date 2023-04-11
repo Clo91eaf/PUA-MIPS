@@ -8,12 +8,12 @@ import cpu.defines.Const._
 class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
-    val fromDecoderStage = Flipped(new DecoderStage_Decoder())
-    val fromExecuteStage = Flipped(new ExecuteStage_Decoder())
-    val fromExecute      = Flipped(new Execute_Decoder())
-    val fromRegfile      = Flipped(new RegFile_Decoder())
-    val fromMemory       = Flipped(new Memory_Decoder())
-    // val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
+    val fromDecoderStage   = Flipped(new DecoderStage_Decoder())
+    val fromExecuteStage   = Flipped(new ExecuteStage_Decoder())
+    val fromExecute        = Flipped(new Execute_Decoder())
+    val fromRegfile        = Flipped(new RegFile_Decoder())
+    val fromMemory         = Flipped(new Memory_Decoder())
+    val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
 
     val decoderStage = new Decoder_DecoderStage()
     val fetchStage   = new Decoder_FetchStage()
@@ -24,7 +24,6 @@ class Decoder extends Module {
   val pc                = Wire(INST_ADDR_BUS)
   val inst              = Wire(INST_BUS)
   val aluop_i           = Wire(ALU_OP_BUS)
-  val waddr_i           = Wire(ADDR_BUS) // TODO:未被使用
   val reg1_data         = Wire(BUS)
   val reg2_data         = Wire(BUS)
   val is_in_delayslot_i = Wire(Bool())
@@ -37,10 +36,8 @@ class Decoder extends Module {
 
   // input-execute
   aluop_i := io.fromExecute.aluop
-  waddr_i := io.fromExecute.reg_waddr // TODO:未被使用
 
   // input-memory
-  waddr_i := io.fromMemory.reg_waddr // TODO:未被使用
 
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
@@ -65,11 +62,11 @@ class Decoder extends Module {
   val branch_target_address  = Wire(BUS)
   val link_addr              = Wire(BUS)
   val is_in_delayslot        = Wire(Bool())
-  val stallreq               = Wire(Bool())
   val except_type            = Wire(UInt(32.W))
   val current_inst_addr      = Wire(BUS)
   val allowin                = Wire(Bool())
   val is_branch              = Wire(Bool())
+  val valid                  = Wire(Bool())
 
   // output-execute stage
   io.executeStage.pc := pc
@@ -89,7 +86,6 @@ class Decoder extends Module {
   io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
-  io.executeStage.stall                  := stallreq
 
   // output-fetchStage
   io.fetchStage.branch_stall          := false.B
@@ -104,6 +100,7 @@ class Decoder extends Module {
   // output-execute stage
   io.executeStage.link_addr       := link_addr
   io.executeStage.is_in_delayslot := is_in_delayslot
+  io.executeStage.valid           := valid
 
   // output-execute stage
   io.executeStage.except_type       := except_type
@@ -133,41 +130,27 @@ class Decoder extends Module {
   rs    := inst(25, 21)
   imm16 := inst(15, 0)
 
-  val imm                          = Wire(BUS)
-  val inst_valid                   = Wire(Bool())
-  val pc_plus_4                    = Wire(BUS)
-  val pc_plus_8                    = Wire(BUS)
-  val imm_sll2_signedext           = Wire(BUS)
-  val stallreq_for_reg1_loadrelate = Wire(Bool())
-  val stallreq_for_reg2_loadrelate = Wire(Bool())
-  val pre_inst_is_load             = Wire(Bool())
-  val except_type_is_syscall       = Wire(Bool())
-  val except_type_is_eret          = Wire(Bool())
+  val imm                    = Wire(BUS)
+  val inst_valid             = Wire(Bool())
+  val pc_plus_4              = Wire(BUS)
+  val pc_plus_8              = Wire(BUS)
+  val imm_sll2_signedext     = Wire(BUS)
+  val except_type_is_syscall = Wire(Bool())
+  val except_type_is_eret    = Wire(Bool())
 
-  // val ready_go   = Wire(Bool())
-  // val mfc0_block = Wire(Bool())
-  // mfc0_block := (io.fromExecute.aluop === EXE_MFC0_OP && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)) ||
-  //   (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
-  //   (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
-  // ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr == rt)))
-  // allowin := !ds_valid || ready_go && io.fromExecute.allowin
-  allowin := !ds_valid || !stallreq
+  // TODO
+  val ready_go   = Wire(Bool())
+  val mfc0_block = Wire(Bool())
+  mfc0_block := (io.fromExecute.inst_is_mfc0 && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)) ||
+    (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
+    (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
+  ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)))
+  allowin := !ds_valid || ready_go && io.fromExecute.allowin
+  valid := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
   imm_sll2_signedext := Cat(Util.signedExtend(imm16, to = 30), 0.U(2.W))
-  stallreq := stallreq_for_reg1_loadrelate || stallreq_for_reg2_loadrelate
-  when(
-    aluop_i === EXE_LB_OP || aluop_i === EXE_LBU_OP ||
-      aluop_i === EXE_LH_OP || aluop_i === EXE_LHU_OP ||
-      aluop_i === EXE_LW_OP || aluop_i === EXE_LWR_OP ||
-      aluop_i === EXE_LWL_OP || aluop_i === EXE_LL_OP ||
-      aluop_i === EXE_SC_OP,
-  ) {
-    pre_inst_is_load := true.B
-  }.otherwise {
-    pre_inst_is_load := false.B
-  }
 
   // exceptiontype的低8bit留给外部中断，第9bit表示是否是syscall指令
   // 第10bit表示是否是无效指令，第11bit表示是否是trap指令
@@ -458,24 +441,16 @@ class Decoder extends Module {
     ),
   )
 
-  stallreq_for_reg1_loadrelate := NOT_STOP
   when(reset.asBool === RST_ENABLE) {
     reg1 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.reg_waddr === reg1_raddr && reg1_ren,
+    reg1_ren && io.fromExecute.reg_wen && (io.fromExecute.reg_waddr === reg1_raddr) && io.fromExecute.es_fwd_valid,
   ) {
-    stallreq_for_reg1_loadrelate := STOP
-    reg1                         := ZERO_WORD // liphen
-  }.elsewhen(
-    reg1_ren && io.fromExecute.reg_wen && io.fromExecute.reg_waddr === reg1_raddr,
-  ) {
-
     // input-execute
     reg1 := io.fromExecute.reg_wdata
   }.elsewhen(
-    reg1_ren && io.fromMemory.reg_wen && io.fromMemory.reg_waddr === reg1_raddr,
+    reg1_ren && io.fromMemory.reg_wen && (io.fromMemory.reg_waddr === reg1_raddr) && io.fromMemory.ms_fwd_valid,
   ) {
-
     // input-memory
     reg1 := io.fromMemory.reg_wdata
   }.elsewhen(reg1_ren) {
@@ -486,24 +461,16 @@ class Decoder extends Module {
     reg1 := ZERO_WORD
   }
 
-  stallreq_for_reg2_loadrelate := NOT_STOP
   when(reset.asBool === RST_ENABLE) {
     reg2 := ZERO_WORD
   }.elsewhen(
-    pre_inst_is_load && io.fromExecute.reg_waddr === reg2_raddr && reg2_ren,
+    (reg2_ren) && (io.fromExecute.reg_wen) && (io.fromExecute.reg_waddr === reg2_raddr) && io.fromExecute.es_fwd_valid,
   ) {
-    stallreq_for_reg2_loadrelate := STOP
-    reg2                         := ZERO_WORD // liphen
-  }.elsewhen(
-    (reg2_ren) && (io.fromExecute.reg_wen) && (io.fromExecute.reg_waddr === reg2_raddr),
-  ) {
-
     // input-execute
     reg2 := io.fromExecute.reg_wdata
   }.elsewhen(
-    (reg2_ren) && (io.fromMemory.reg_wen) && (io.fromMemory.reg_waddr === reg2_raddr),
+    (reg2_ren) && (io.fromMemory.reg_wen) && (io.fromMemory.reg_waddr === reg2_raddr) && io.fromMemory.ms_fwd_valid,
   ) {
-
     // input-memory
     reg2 := io.fromMemory.reg_wdata
   }.elsewhen(reg2_ren) {

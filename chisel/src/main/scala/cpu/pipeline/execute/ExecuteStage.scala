@@ -7,16 +7,12 @@ import cpu.defines.Const._
 class ExecuteStage extends Module {
   val io = IO(new Bundle {
     val fromDecoder = Flipped(new Decoder_ExecuteStage())
-    val fromControl = Flipped(new Control_ExecuteStage())
+    val fromExecute = Flipped(new Execute_ExecuteStage())
 
     val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()
   })
   // input
-  val stall = Wire(STALL_BUS)
-
-  // input-control
-  stall := io.fromControl.stall
 
   // output
   val aluop              = RegInit(ALU_OP_BUS_INIT)
@@ -32,17 +28,13 @@ class ExecuteStage extends Module {
   val current_inst_addr  = RegInit(BUS_INIT)
   val except_type        = RegInit(0.U(32.W))
   val pc                 = RegInit(INST_ADDR_BUS_INIT)
+  val es_valid           = RegInit(false.B)
 
   // output-execute
-  io.execute.aluop           := aluop
-  io.execute.alusel          := alusel
-  io.execute.inst            := inst
-  io.execute.is_in_delayslot := ex_is_in_delayslot
-
-  // output-decoder
-  io.decoder.is_in_delayslot := is_in_delayslot
-
-  // output-execute
+  io.execute.aluop             := aluop
+  io.execute.alusel            := alusel
+  io.execute.inst              := inst
+  io.execute.is_in_delayslot   := ex_is_in_delayslot
   io.execute.link_addr         := link_addr
   io.execute.reg1              := reg1
   io.execute.reg2              := reg2
@@ -51,36 +43,16 @@ class ExecuteStage extends Module {
   io.execute.current_inst_addr := current_inst_addr
   io.execute.except_type       := except_type
   io.execute.pc                := pc
+  io.execute.valid             := es_valid
 
-  when(io.fromControl.flush) {
-    aluop             := EXE_NOP_OP
-    alusel            := EXE_RES_NOP
-    reg1              := ZERO_WORD
-    reg2              := ZERO_WORD
-    reg_waddr         := NOP_REG_ADDR
-    reg_wen           := WRITE_DISABLE
-    except_type       := ZERO_WORD
-    link_addr         := ZERO_WORD
-    inst              := ZERO_WORD
-    is_in_delayslot   := NOT_IN_DELAY_SLOT
-    current_inst_addr := ZERO_WORD
-    is_in_delayslot   := NOT_IN_DELAY_SLOT
-    pc                := ZERO_WORD
-  }.elsewhen(io.fromDecoder.stall) {
-    // decoder stall req
-    aluop              := EXE_NOP_OP
-    alusel             := EXE_RES_NOP
-    reg1               := ZERO_WORD
-    reg2               := ZERO_WORD
-    reg_waddr          := NOP_REG_ADDR
-    reg_wen            := WRITE_DISABLE
-    link_addr          := ZERO_WORD
-    ex_is_in_delayslot := NOT_IN_DELAY_SLOT
-    inst               := ZERO_WORD
-    except_type        := ZERO_WORD
-    current_inst_addr  := ZERO_WORD
-    pc                 := ZERO_WORD
-  }.otherwise {
+  // output-decoder
+  io.decoder.is_in_delayslot := is_in_delayslot
+
+  when(io.fromExecute.allowin) {
+    es_valid := io.fromDecoder.valid
+  }
+
+  when(io.fromDecoder.valid && io.fromExecute.allowin) {
     aluop              := io.fromDecoder.aluop
     alusel             := io.fromDecoder.alusel
     reg1               := io.fromDecoder.reg1
