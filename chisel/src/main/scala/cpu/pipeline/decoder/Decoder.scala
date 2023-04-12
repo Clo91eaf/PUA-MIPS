@@ -37,8 +37,6 @@ class Decoder extends Module {
   // input-execute
   aluop_i := io.fromExecute.aluop
 
-  // input-memory
-
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
   reg2_data := io.fromRegfile.reg2_data
