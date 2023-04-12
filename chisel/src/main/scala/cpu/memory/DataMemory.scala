@@ -80,18 +80,18 @@ class DataMemory extends Module {
         addrLowBit2,
         "b0000".U,
         Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b0100".U,
-          "b10".U -> "b0010".U,
-          "b11".U -> "b0001".U,
+          "b00".U -> "b0001".U,
+          "b01".U -> "b0010".U,
+          "b10".U -> "b0100".U,
+          "b11".U -> "b1000".U,
         ),
       ),
       EXE_SH_OP -> MuxLookup(
         addrLowBit2,
         "b0000".U,
         Seq(
-          "b00".U -> "b1100".U,
-          "b10".U -> "b0011".U,
+          "b00".U -> "b0011".U,
+          "b10".U -> "b1100".U,
         ),
       ),
       EXE_SW_OP -> "b1111".U,
@@ -160,36 +160,36 @@ class DataMemory extends Module {
         addrLowBit2,
         "hffffffff".U,
         Seq(
-          "b00".U -> "hff000000".U,
-          "b01".U -> "h00ff0000".U,
-          "b10".U -> "h0000ff00".U,
-          "b11".U -> "h000000ff".U,
+          "b00".U -> "h000000ff".U,
+          "b01".U -> "h0000ff00".U,
+          "b10".U -> "h00ff0000".U,
+          "b11".U -> "hff000000".U,
         ),
       ),
       EXE_LBU_OP -> MuxLookup(
         addrLowBit2,
         "hffffffff".U,
         Seq(
-          "b00".U -> "hff000000".U,
-          "b01".U -> "h00ff0000".U,
-          "b10".U -> "h0000ff00".U,
-          "b11".U -> "h000000ff".U,
+          "b00".U -> "h000000ff".U,
+          "b01".U -> "h0000ff00".U,
+          "b10".U -> "h00ff0000".U,
+          "b11".U -> "hff000000".U,
         ),
       ),
       EXE_LH_OP -> MuxLookup(
         addrLowBit2,
         "hffffffff".U,
         Seq(
-          "b00".U -> "hffff0000".U,
-          "b10".U -> "h0000ffff".U,
+          "b00".U -> "h0000ffff".U,
+          "b10".U -> "hffff0000".U,
         ),
       ),
       EXE_LHU_OP -> MuxLookup(
         addrLowBit2,
         "hffffffff".U,
         Seq(
-          "b00".U -> "hffff0000".U,
-          "b10".U -> "h0000ffff".U,
+          "b00".U -> "h0000ffff".U,
+          "b10".U -> "hffff0000".U,
         ),
       ),
       EXE_LW_OP  -> "hffffffff".U,
@@ -198,12 +198,13 @@ class DataMemory extends Module {
       EXE_LL_OP  -> "hffffffff".U,
     ),
   )
+  val read_mask_next = RegNext(read_mask, BUS_INIT)
 
   io.dataSram.mem_addr    := Cat(mem_addr(31, 2), 0.U(2.W))
   io.dataSram.mem_wsel    := mem_wsel
   io.dataSram.mem_wdata   := mem_wdata
   io.dataSram.mem_ce      := mem_ce
   io.dataSram.mem_wen     := mem_wen & io.fromExecute.valid
-  io.memory.mem_rdata     := rdata & read_mask 
+  io.memory.mem_rdata     := rdata & read_mask_next
   io.memoryStage.mem_addr := mem_addr
 }
