@@ -221,10 +221,8 @@ trait Constants {
   val EXE_NOP_OP               = "b00000000".U(8.W)
 
   // AluSel
-  val EXE_RES_LOGIC            = "b001".U(3.W)
-  val EXE_RES_SHIFT            = "b010".U(3.W)
-  val EXE_RES_MOVE             = "b011".U(3.W)
-  val EXE_RES_ARITHMETIC       = "b100".U(3.W)
+  val EXE_RES_ALU              = "b001".U(3.W)
+  val EXE_RES_MOV              = "b011".U(3.W)
   val EXE_RES_MUL              = "b101".U(3.W)
   val EXE_RES_JUMP_BRANCH      = "b110".U(3.W)
   val EXE_RES_LOAD_STORE       = "b111".U(3.W)

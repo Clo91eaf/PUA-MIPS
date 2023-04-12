@@ -14,9 +14,9 @@ class CP0Reg extends Module {
 
     val memory      = new CP0_Memory()
     val fetchStage  = new CP0_FetchStage()
-    val execute     = new CP0_Execute()
+    val mov         = new CP0_Mov()
     val timer_int_o = Output(Bool())
-    val out         = new CP0_Output
+    val out         = new CP0_Output()
   })
 
   // output
@@ -31,7 +31,7 @@ class CP0Reg extends Module {
   val timer_int = RegInit(INTERRUPT_NOT_ASSERT)
 
   // output-execute
-  io.execute.cp0_rdata := data
+  io.mov.cp0_rdata := data
 
   // output-out
   io.out.count   := count
@@ -85,7 +85,7 @@ class CP0Reg extends Module {
           io.fromWriteBackStage.cp0_wdata(22),
           cause(21, 10),
           io.fromWriteBackStage.cp0_wdata(9, 8),
-          cause(7, 0)
+          cause(7, 0),
         )
       }
     }

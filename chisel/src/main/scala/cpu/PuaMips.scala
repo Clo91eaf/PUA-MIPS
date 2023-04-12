@@ -30,6 +30,7 @@ class PuaMips extends Module {
   val alu            = Module(new ALU())
   val mul            = Module(new Mul())
   val div            = Module(new Div())
+  val mov            = Module(new Mov())
   val dataMemory     = Module(new DataMemory())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
@@ -61,10 +62,6 @@ class PuaMips extends Module {
   decoderStage.io.decoder <> decoder.io.fromDecoderStage
 
   // decoder
-  alu.io.execute <> execute.io.fromAlu
-  mul.io.execute <> execute.io.fromMul
-  execute.io.alu <> alu.io.fromExecute
-  execute.io.mul <> mul.io.fromExecute
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile <> regfile.io.fromDecoder
   decoder.io.fetchStage <> fetchStage.io.fromDecoder
@@ -75,10 +72,18 @@ class PuaMips extends Module {
   executeStage.io.execute <> execute.io.fromExecuteStage
 
   // execute
+  execute.io.alu <> alu.io.fromExecute
+  execute.io.mul <> mul.io.fromExecute
+  execute.io.div <> div.io.fromExecute
+  execute.io.mov <> mov.io.fromExecute
+  alu.io.execute <> execute.io.fromAlu
+  mul.io.execute <> execute.io.fromMul
+  div.io.execute <> execute.io.fromDiv
+  mov.io.execute <> execute.io.fromMov
+
   execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
-  execute.io.div <> div.io.fromExecute
   execute.io.cp0 <> cp0.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
 
@@ -93,35 +98,34 @@ class PuaMips extends Module {
   // memory
   memory.io.decoder <> decoder.io.fromMemory
   memory.io.execute <> execute.io.fromMemory
+  memory.io.mov <> mov.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
   memory.io.cp0 <> cp0.io.fromMemory
   memory.io.memoryStage <> memoryStage.io.fromMemory
 
   // writeBackStage
+  writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage
+  writeBackStage.io.mov <> mov.io.fromWriteBackStage
   writeBackStage.io.regFile <> regfile.io.fromWriteBackStage
   writeBackStage.io.hilo <> hilo.io.fromWriteBackStage
   writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
-  writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO
 
-  // reg file
+  // regfile
   regfile.io.decoder <> decoder.io.fromRegfile
-
-  // div
-  div.io.execute <> execute.io.fromDiv
 
   // llbitReg
   llbitReg.io.flush := DontCare
   llbitReg.io.memory <> memory.io.fromLLbitReg
 
   // cp0
-  cp0.io.execute <> execute.io.fromCP0
+  cp0.io.mov <> mov.io.fromCP0
   cp0.io.fetchStage <> fetchStage.io.fromCP0
   cp0.io.memory <> memory.io.fromCP0
   cp0.io.int_i := Cat(io.ext_int(5, 1), cp0.io.timer_int_o)

@@ -13,6 +13,7 @@ class Memory extends Module {
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
     val fromCP0            = Flipped(new CP0_Memory())
 
+    val mov            = new Memory_Mov()
     val memoryStage    = new Memory_MemoryStage()
     val decoder        = new Memory_Decoder()
     val execute        = new Memory_Execute()
@@ -85,9 +86,9 @@ class Memory extends Module {
   io.writeBackStage.inst_is_mfc0 := inst_is_mfc0
 
   // output-execute
-  io.execute.cp0_wen   := cp0_wen
-  io.execute.cp0_waddr := cp0_waddr
-  io.execute.cp0_wdata := cp0_wdata
+  io.mov.cp0_wen   := cp0_wen
+  io.mov.cp0_waddr := cp0_waddr
+  io.mov.cp0_wdata := cp0_wdata
 
   // output-cp0
   io.cp0.except_type       := except_type

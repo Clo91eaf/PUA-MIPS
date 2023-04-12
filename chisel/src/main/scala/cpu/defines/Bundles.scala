@@ -126,6 +126,34 @@ class Div_Execute extends Bundle {
   val remainder = Output(BUS)
 }
 
+class CP0_Mov extends Bundle {
+  val cp0_rdata = Output(BUS)
+}
+
+class Memory_Mov extends Bundle {
+  val cp0_wen   = Output(Bool())
+  val cp0_waddr = Output(Bool())
+  val cp0_wdata = Output(Bool())
+}
+
+class WriteBackStage_Mov extends Bundle {
+  val cp0_wen   = Output(Bool())
+  val cp0_waddr = Output(Bool())
+  val cp0_wdata = Output(Bool())
+}
+
+class Execute_Mov extends Bundle {
+  val op   = Output(ALU_OP_BUS)
+  val inst = Output(BUS)
+  val in   = Output(BUS)
+  val hi   = Output(BUS)
+  val lo   = Output(BUS)
+}
+
+class Mov_Execute extends Bundle {
+  val out = Output(BUS)
+}
+
 class Execute_Decoder extends Bundle {
   val aluop        = Output(ALU_OP_BUS)
   val reg_waddr    = Output(ADDR_BUS)
@@ -169,9 +197,9 @@ class Execute_CP0 extends Bundle {
 // dataMemory
 class Execute_DataMemory extends Bundle {
   val valid = Output(Bool())
-  val op = Output(ALU_OP_BUS)
-  val addr = Output(BUS)
-  val data = Output(BUS)
+  val op    = Output(ALU_OP_BUS)
+  val addr  = Output(BUS)
+  val data  = Output(BUS)
 }
 
 class DataMemory_DataSram extends Bundle {
@@ -252,9 +280,6 @@ class Memory_Execute extends Bundle {
   val whilo     = Output(Bool())
   val hi        = Output(BUS)
   val lo        = Output(BUS)
-  val cp0_wen   = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_wdata = Output(BUS)
   val allowin   = Output(Bool())
   // val eret      = Output(Bool())
   // val ex        = Output(Bool())
@@ -288,9 +313,6 @@ class WriteBackStage_Execute extends Bundle {
   val whilo     = Output(Bool())
   val hi        = Output(BUS)
   val lo        = Output(BUS)
-  val cp0_wen   = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
-  val cp0_wdata = Output(BUS)
   val eret      = Output(Bool())
   val ex        = Output(Bool())
 }
@@ -374,8 +396,6 @@ class Control_LLbitReg extends Bundle {
 class InstMemory_FetchStage extends Bundle {
   val rdata = Output(BUS)
 }
-
-
 
 // regFile
 class RegFile_Decoder extends Bundle {

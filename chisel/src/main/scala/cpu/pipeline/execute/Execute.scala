@@ -10,16 +10,17 @@ class Execute extends Module {
     val fromAlu            = Flipped(new ALU_Execute())
     val fromMul            = Flipped(new Mul_Execute())
     val fromDiv            = Flipped(new Div_Execute())
+    val fromMov            = Flipped(new Mov_Execute())
     val fromExecuteStage   = Flipped(new ExecuteStage_Execute())
     val fromMemoryStage    = Flipped(new MemoryStage_Execute())
     val fromHILO           = Flipped(new HILO_Execute())
     val fromMemory         = Flipped(new Memory_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
-    val fromCP0            = Flipped(new CP0_Execute())
 
     val alu          = new Execute_ALU()
     val mul          = new Execute_Mul()
     val div          = new Execute_Div()
+    val mov          = new Execute_Mov()
     val memoryStage  = new Execute_MemoryStage()
     val decoder      = new Execute_Decoder()
     val cp0          = new Execute_CP0()
@@ -104,9 +105,9 @@ class Execute extends Module {
   io.memoryStage.cnt       := cnt
 
   // output-memory stage
-  io.memoryStage.aluop    := aluop
-  io.memoryStage.reg2     := reg2
-  io.memoryStage.valid    := valid
+  io.memoryStage.aluop := aluop
+  io.memoryStage.reg2  := reg2
+  io.memoryStage.valid := valid
 
   // output-execute stage
   io.executeStage.allowin := allowin
@@ -216,6 +217,12 @@ class Execute extends Module {
   val quotient  = io.fromDiv.quotient
   val remainder = io.fromDiv.remainder
 
+  io.mov.op   := aluop
+  io.mov.in   := reg1
+  io.mov.inst := inst
+  io.mov.hi   := HI
+  io.mov.lo   := LO
+  moveres     := io.fromMov.out
   // 得到最新的HI、LO寄存器的值，此处要解决指令数据相关问题
   when(reset.asBool === RST_ENABLE) {
     HI := ZERO_WORD
@@ -273,54 +280,16 @@ class Execute extends Module {
     }
   }
 
-  // MFHI、MFLO、MOVN、MOVZ指令
-  when(reset.asBool === RST_ENABLE) {
-    moveres := ZERO_WORD
-  }.otherwise {
-    moveres := ZERO_WORD
-    switch(aluop) {
-      is(EXE_MFHI_OP) {
-        moveres := HI
-      }
-      is(EXE_MFLO_OP) {
-        moveres := LO
-      }
-      is(EXE_MOVZ_OP) {
-        moveres := reg1
-      }
-      is(EXE_MOVN_OP) {
-        moveres := reg1
-      }
-      is(EXE_MFC0_OP) {
-        cp0_raddr := inst(15, 11)
-
-        // input-cp0
-        moveres := io.fromCP0.cp0_rdata
-        when(
-          io.fromMemory.cp0_wen === WRITE_ENABLE &&
-            io.fromMemory.cp0_waddr === inst(15, 11),
-        ) {
-          moveres := io.fromMemory.cp0_wdata
-        }.elsewhen(
-          io.fromWriteBackStage.cp0_wen === WRITE_ENABLE &&
-            io.fromWriteBackStage.cp0_waddr === inst(15, 11),
-        ) {
-          moveres := io.fromWriteBackStage.cp0_wdata
-        }
-      }
-    }
-  }
-
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
   reg_wen := Mux(ovassert, WRITE_DISABLE, wreg_i)
   reg_wdata := MuxLookup(
     alusel,
     ZERO_WORD,
     Seq(
-      EXE_RES_LOGIC       -> alures,
-      EXE_RES_SHIFT       -> alures,
-      EXE_RES_MOVE        -> moveres,
-      EXE_RES_ARITHMETIC  -> alures,
+      EXE_RES_ALU         -> alures,
+      EXE_RES_ALU         -> alures,
+      EXE_RES_MOV         -> moveres,
+      EXE_RES_ALU         -> alures,
       EXE_RES_MUL         -> mulres(31, 0),
       EXE_RES_JUMP_BRANCH -> link_addr,
     ),

@@ -197,79 +197,79 @@ class Decoder extends Module {
                    List(INST_INVALID, READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP    , EXE_NOP_OP , WRITE_DISABLE     , WRA_X     , IMM_N),
     Array(         /*   inst_valid  | reg1_ren      | reg2_ren      | alusel         | aluop      | reg_wen           | reg_waddr | immType */
       // NOP
-      NOP       -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP    , EXE_NOP_OP , WRITE_DISABLE     , WRA_X  , IMM_N),
+      NOP       -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_NOP    , EXE_NOP_OP , WRITE_DISABLE     , WRA_X  , IMM_N  ),
       // 位操作    
-      OR        -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC  , EXE_OR_OP  , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      AND       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC  , EXE_AND_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      XOR       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC  , EXE_XOR_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      NOR       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_LOGIC  , EXE_NOR_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      OR        -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_OR_OP  , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      AND       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_AND_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      XOR       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_XOR_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      NOR       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_NOR_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
       // 移位    
-      SLLV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SLL_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      SRLV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SRL_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      SRAV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SRA_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
-      SLL       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SLL_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
-      SRL       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SRL_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
-      SRA       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_SHIFT  , EXE_SRA_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
+      SLLV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_SLL_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      SRLV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_SRL_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      SRAV      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU    , EXE_SRA_OP , WRITE_ENABLE      , WRA_T1 , IMM_N  ),
+      SLL       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_ALU    , EXE_SLL_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
+      SRL       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_ALU    , EXE_SRL_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
+      SRA       -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_ALU    , EXE_SRA_OP , WRITE_ENABLE      , WRA_T1 , IMM_SHT),
       // 立即数    
-      ORI       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_LOGIC  , EXE_OR_OP  , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
-      ANDI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_LOGIC  , EXE_AND_OP , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
-      XORI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_LOGIC  , EXE_XOR_OP , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
-      LUI       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_LOGIC  , EXE_OR_OP  , WRITE_ENABLE      , WRA_T2 , IMM_HZE),
+      ORI       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU    , EXE_OR_OP  , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
+      ANDI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU    , EXE_AND_OP , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
+      XORI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU    , EXE_XOR_OP , WRITE_ENABLE      , WRA_T2 , IMM_LZE),
+      LUI       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU    , EXE_OR_OP  , WRITE_ENABLE      , WRA_T2 , IMM_HZE),
 
       // Move  
-      MOVN      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MOVE   , EXE_MOVN_OP , WRITE_ENABLE     , WRA_T1 , IMM_N  ),
-      MOVZ      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MOVE   , EXE_MOVZ_OP , WRITE_ENABLE     , WRA_T1 , IMM_N  ),
+      MOVN      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MOV   , EXE_MOVN_OP , WRITE_ENABLE     , WRA_T1  , IMM_N  ),
+      MOVZ      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MOV   , EXE_MOVZ_OP , WRITE_ENABLE     , WRA_T1  , IMM_N  ),
 
       // HI，LO的Move指令 
-      MFHI      -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE    , EXE_RES_MOVE , EXE_MFHI_OP , WRITE_ENABLE     , WRA_T1 , IMM_N  ),
-      MFLO      -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE    , EXE_RES_MOVE , EXE_MFLO_OP , WRITE_ENABLE     , WRA_T1 , IMM_N  ),
-      MTHI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE    , EXE_RES_NOP  , EXE_MTHI_OP , WRITE_DISABLE    , WRA_X  , IMM_N  ),
-      MTLO      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE    , EXE_RES_NOP  , EXE_MTLO_OP , WRITE_DISABLE    , WRA_X  , IMM_N  ),
+      MFHI      -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_MOV   , EXE_MFHI_OP , WRITE_ENABLE     , WRA_T1  , IMM_N  ),
+      MFLO      -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_MOV   , EXE_MFLO_OP , WRITE_ENABLE     , WRA_T1  , IMM_N  ),
+      MTHI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_MTHI_OP , WRITE_DISABLE    , WRA_X   , IMM_N  ),
+      MTLO      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_MTLO_OP , WRITE_DISABLE    , WRA_X   , IMM_N  ),
       
       // C0的Move指令 
-      MFC0      -> List(INST_VALID  , READ_DISABLE    , READ_DISABLE    , EXE_RES_MOVE , EXE_MFC0_OP , WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      MTC0      -> List(INST_VALID  , READ_DISABLE    , READ_ENABLE     , EXE_RES_NOP  , EXE_MTC0_OP , WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      MFC0      -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_MOV   , EXE_MFC0_OP , WRITE_ENABLE   , WRA_T2    , IMM_N  ),
+      MTC0      -> List(INST_VALID  , READ_DISABLE  , READ_ENABLE   , EXE_RES_NOP   , EXE_MTC0_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
 
-      // 比较指令 
-      SLT       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_SLT_OP , WRITE_ENABLE   , WRA_T1 , IMM_N  ),
-      SLTU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_SLTU_OP, WRITE_ENABLE   , WRA_T1 , IMM_N  ),
-      // 立即数 
-      SLTI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_SLT_OP , WRITE_ENABLE   , WRA_T2 , IMM_LSE),
-      SLTIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_SLTU_OP, WRITE_ENABLE   , WRA_T2 , IMM_LSE),
+      // 比较指令   
+      SLT       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_SLT_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      SLTU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_SLTU_OP , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      // 立即数   
+      SLTI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU   , EXE_SLT_OP  , WRITE_ENABLE   , WRA_T2    , IMM_LSE),
+      SLTIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU   , EXE_SLTU_OP , WRITE_ENABLE   , WRA_T2    , IMM_LSE),
 
-      // Trap 
-      TEQ       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TEQ_OP  , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TEQI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TEQ_OP  , WRITE_DISABLE , WRA_X  , IMM_LSE),
-      TGE       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TGE_OP  , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TGEI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TGE_OP  , WRITE_DISABLE , WRA_X  , IMM_LSE),
-      TGEIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TGEU_OP , WRITE_DISABLE , WRA_X  , IMM_LSE),
-      TGEU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TGEU_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TLT       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TLT_OP  , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TLTI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TLT_OP  , WRITE_DISABLE , WRA_X  , IMM_LSE),
-      TLTU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TLTU_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TLTIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TLTU_OP , WRITE_DISABLE , WRA_X  , IMM_LSE),
-      TNE       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_TNE_OP  , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      TNEI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP       , EXE_TNE_OP  , WRITE_DISABLE , WRA_X  , IMM_LSE),
+      // Trap  
+      TEQ       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TEQ_OP  , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TEQI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TEQ_OP  , WRITE_DISABLE  , WRA_X     , IMM_LSE),
+      TGE       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TGE_OP  , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TGEI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TGE_OP  , WRITE_DISABLE  , WRA_X     , IMM_LSE),
+      TGEIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TGEU_OP , WRITE_DISABLE  , WRA_X     , IMM_LSE),
+      TGEU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TGEU_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TLT       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TLT_OP  , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TLTI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TLT_OP  , WRITE_DISABLE  , WRA_X     , IMM_LSE),
+      TLTU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TLTU_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TLTIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TLTU_OP , WRITE_DISABLE  , WRA_X     , IMM_LSE),
+      TNE       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_TNE_OP  , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      TNEI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_NOP   , EXE_TNE_OP  , WRITE_DISABLE  , WRA_X     , IMM_LSE),
 
       // 算术指令 
-      ADD       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      ADDU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_ADDU_OP , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      SUB       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_SUB_OP  , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      SUBU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ARITHMETIC, EXE_SUBU_OP , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      MUL       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL       , EXE_MUL_OP  , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      MULT      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_MULT_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      MULTU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_MULTU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
-      MADD      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL       , EXE_MADD_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      MADDU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL       , EXE_MADDU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
-      MSUB      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL       , EXE_MSUB_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      MSUBU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL       , EXE_MSUBU_OP, WRITE_DISABLE , WRA_X  , IMM_N  ),
-      DIV       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_DIV_OP  , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      DIVU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP       , EXE_DIVU_OP , WRITE_DISABLE , WRA_X  , IMM_N  ),
-      CLO       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_CLO_OP  , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
-      CLZ       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_CLZ_OP  , WRITE_ENABLE  , WRA_T1 , IMM_N  ),
+      ADD       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_ADD_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      ADDU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_ADDU_OP , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      SUB       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_SUB_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      SUBU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_ALU   , EXE_SUBU_OP , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      MUL       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL   , EXE_MUL_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      MULT      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_MULT_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      MULTU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_MULTU_OP, WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      MADD      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL   , EXE_MADD_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      MADDU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL   , EXE_MADDU_OP, WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      MSUB      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL   , EXE_MSUB_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      MSUBU     -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_MUL   , EXE_MSUBU_OP, WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      DIV       -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_DIV_OP  , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      DIVU      -> List(INST_VALID  , READ_ENABLE   , READ_ENABLE   , EXE_RES_NOP   , EXE_DIVU_OP , WRITE_DISABLE  , WRA_X     , IMM_N  ),
+      CLO       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU   , EXE_CLO_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
+      CLZ       -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU   , EXE_CLZ_OP  , WRITE_ENABLE   , WRA_T1    , IMM_N  ),
       // 立即数 
-      ADDI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADD_OP  , WRITE_ENABLE  , WRA_T2 , IMM_LSE),
-      ADDIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ARITHMETIC, EXE_ADDU_OP , WRITE_ENABLE  , WRA_T2 , IMM_LSE),
+      ADDI      -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU, EXE_ADD_OP  , WRITE_ENABLE  , WRA_T2 , IMM_LSE),
+      ADDIU     -> List(INST_VALID  , READ_ENABLE   , READ_DISABLE  , EXE_RES_ALU, EXE_ADDU_OP , WRITE_ENABLE  , WRA_T2 , IMM_LSE),
       // 跳转指令 
       J         -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_JUMP_BRANCH , EXE_J_OP     , WRITE_DISABLE, WRA_X , IMM_N ),
       JAL       -> List(INST_VALID  , READ_DISABLE  , READ_DISABLE  , EXE_RES_JUMP_BRANCH , EXE_JAL_OP   , WRITE_ENABLE , WRA_T3, IMM_N ),
@@ -331,11 +331,8 @@ class Decoder extends Module {
   )
   // @formatter:on
 
-  val (csinst_valid: Bool) :: (op1_type: Bool) :: (op2_type: Bool) :: csInstType :: csOpType :: (csWReg: Bool) :: csWRType :: csIMMType :: Nil =
+  val (csinst_valid: Bool) :: (op1_type: Bool) :: (op2_type: Bool) :: csInstType :: csOpType :: (csWReg: Bool) :: wraType :: immType :: Nil =
     signals
-
-  val wraType = csWRType
-  val immType = csIMMType
 
   inst_valid := csinst_valid
   reg1_ren   := op1_type
