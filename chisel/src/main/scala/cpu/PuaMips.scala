@@ -46,14 +46,11 @@ class PuaMips extends Module {
   io.inst_sram.wdata                 := fetchStage.io.instMemory.wdata
   fetchStage.io.fromInstMemory.rdata := io.inst_sram.rdata
 
-  io.data_sram.en := dataMemory.io.dataSram.mem_ce
-  io.data_sram.wen := dataMemory.io.dataSram.mem_wsel & Fill(
-    4,
-    dataMemory.io.dataSram.mem_wen,
-  )
-  io.data_sram.addr                    := dataMemory.io.dataSram.mem_addr
-  io.data_sram.wdata                   := dataMemory.io.dataSram.mem_wdata
-  dataMemory.io.fromDataSram.mem_rdata := io.data_sram.rdata
+  io.data_sram.en                  := dataMemory.io.dataSram.en
+  io.data_sram.wen                 := dataMemory.io.dataSram.wen
+  io.data_sram.addr                := dataMemory.io.dataSram.addr
+  io.data_sram.wdata               := dataMemory.io.dataSram.wdata
+  dataMemory.io.fromDataSram.rdata := io.data_sram.rdata
 
   io.debug <> writeBackStage.io.debug
 

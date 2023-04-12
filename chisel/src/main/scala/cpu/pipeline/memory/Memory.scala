@@ -23,7 +23,7 @@ class Memory extends Module {
   val aluop      = io.fromMemoryStage.aluop
   val pc         = io.fromMemoryStage.pc
   val reg2_i     = io.fromMemoryStage.reg2
-  val mem_data_i = io.fromDataMemory.mem_rdata
+  val mem_data_i = io.fromDataMemory.rdata
   val ms_valid   = io.fromMemoryStage.valid
 
   // output

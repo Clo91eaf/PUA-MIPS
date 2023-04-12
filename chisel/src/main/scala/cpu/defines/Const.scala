@@ -258,6 +258,7 @@ trait Constants {
   val PC_INIT                  = "hbfc00000".U(32.W)
   val WEN_BUS                  = UInt(4.W)
   val WEN_BUS_INIT             = 0.U(4.W)
+  val WRITE_SELECT_INIT        = "b1111".U(4.W)
   val REG_WIDTH                = 32
   val DOUBLE_BUS               = UInt(64.W)
   val DOUBLE_BUS_INIT          = 0.U(64.W)

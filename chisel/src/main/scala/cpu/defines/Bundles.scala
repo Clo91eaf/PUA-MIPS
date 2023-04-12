@@ -175,23 +175,22 @@ class Execute_DataMemory extends Bundle {
 }
 
 class DataMemory_DataSram extends Bundle {
-  val mem_addr  = Output(BUS)
-  val mem_wen   = Output(Bool())
-  val mem_wsel  = Output(DATA_MEMORY_SEL_BUS)
-  val mem_wdata = Output(BUS)
-  val mem_ce    = Output(Bool())
+  val en    = Output(Bool())
+  val wen   = Output(WEN_BUS)
+  val addr  = Output(BUS)
+  val wdata = Output(BUS)
 }
 
 class DataSram_DataMemory extends Bundle {
-  val mem_rdata = Output(BUS)
+  val rdata = Output(BUS)
 }
 
 class DataMemory_Memory extends Bundle {
-  val mem_rdata = Output(BUS)
+  val rdata = Output(BUS)
 }
 
 class DataMemory_DataStage extends Bundle {
-  val mem_addr = Output(BUS)
+  val addr = Output(BUS)
 }
 
 // memoryStage

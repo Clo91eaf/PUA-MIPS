@@ -83,7 +83,7 @@ class MemoryStage extends Module {
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr
     pc                := io.fromExecute.pc
-    mem_addr          := io.fromDataMemory.mem_addr
+    mem_addr          := io.fromDataMemory.addr
   }
 
   // debug

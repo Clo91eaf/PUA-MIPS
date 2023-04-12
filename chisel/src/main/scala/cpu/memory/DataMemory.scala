@@ -16,9 +16,9 @@ class DataMemory extends Module {
   val aluop = io.fromExecute.op
   val addr  = io.fromExecute.addr
   val data  = io.fromExecute.data
-  val rdata = io.fromDataSram.mem_rdata
+  val rdata = io.fromDataSram.rdata
 
-  val mem_wen = MuxLookup(
+  val wen = MuxLookup(
     aluop,
     WRITE_DISABLE,
     Seq(
@@ -30,7 +30,7 @@ class DataMemory extends Module {
       EXE_SC_OP  -> WRITE_ENABLE,
     ),
   )
-  val mem_ce = MuxLookup(
+  val en = MuxLookup(
     aluop,
     CHIP_DISABLE,
     Seq(
@@ -49,7 +49,7 @@ class DataMemory extends Module {
       EXE_SWR_OP -> CHIP_ENABLE,
       // EXE_SC_OP  -> Mux(LLbit, CHIP_ENABLE, CHIP_DISABLE)
     ),
-  ) // mem_ce
+  ) // en
   val mem_addr = MuxLookup(
     aluop,
     ZERO_WORD,
@@ -69,10 +69,10 @@ class DataMemory extends Module {
       EXE_SWR_OP -> Cat(addr(31, 2), 0.U(2.W)),
       // EXE_SC_OP  -> Mux(LLbit, addr, ZERO_WORD)
     ),
-  ) // mem_addr
+  ) // addr
 
   val addrLowBit2 = addr(1, 0)
-  val mem_wsel = MuxLookup(
+  val wsel = MuxLookup(
     aluop,
     "b1111".U,
     Seq(
@@ -94,7 +94,6 @@ class DataMemory extends Module {
           "b10".U -> "b1100".U,
         ),
       ),
-      EXE_SW_OP -> "b1111".U,
       EXE_SWL_OP -> MuxLookup(
         addrLowBit2,
         "b0000".U,
@@ -115,13 +114,12 @@ class DataMemory extends Module {
           "b11".U -> "b1111".U,
         ),
       ),
-      EXE_SC_OP -> "b1111".U,
     ),
-  ) // mem_wsel
+  ) // wsel
 
   val zero32 = Wire(BUS)
   zero32 := 0.U(32.W)
-  val mem_wdata = MuxLookup(
+  val wdata = MuxLookup(
     aluop,
     ZERO_WORD,
     Seq(
@@ -150,7 +148,7 @@ class DataMemory extends Module {
       ),
       // EXE_SC_OP -> Mux(LLbit, data, ZERO_WORD)
     ),
-  ) // mem_wdata
+  ) // wdata
 
   val read_mask = MuxLookup(
     aluop,
@@ -192,19 +190,14 @@ class DataMemory extends Module {
           "b10".U -> "hffff0000".U,
         ),
       ),
-      EXE_LW_OP  -> "hffffffff".U,
-      EXE_LWL_OP -> "hffffffff".U,
-      EXE_LWR_OP -> "hffffffff".U,
-      EXE_LL_OP  -> "hffffffff".U,
     ),
   )
-  val read_mask_next = RegNext(read_mask, BUS_INIT)
+  val read_mask_next = RegNext(read_mask)
 
-  io.dataSram.mem_addr    := Cat(mem_addr(31, 2), 0.U(2.W))
-  io.dataSram.mem_wsel    := mem_wsel
-  io.dataSram.mem_wdata   := mem_wdata
-  io.dataSram.mem_ce      := mem_ce
-  io.dataSram.mem_wen     := mem_wen & io.fromExecute.valid
-  io.memory.mem_rdata     := rdata & read_mask_next
-  io.memoryStage.mem_addr := mem_addr
+  io.dataSram.addr    := Cat(addr(31, 2), 0.U(2.W))
+  io.dataSram.wen     := Fill(4, wen && io.fromExecute.valid) & wsel
+  io.dataSram.wdata   := wdata
+  io.dataSram.en      := en
+  io.memory.rdata     := rdata & read_mask_next
+  io.memoryStage.addr := mem_addr
 }
