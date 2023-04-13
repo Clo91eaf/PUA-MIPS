@@ -40,7 +40,7 @@ class DataMemory extends Module {
       EXE_LHU_OP -> CHIP_ENABLE,
       EXE_LW_OP  -> CHIP_ENABLE,
       EXE_LWL_OP -> CHIP_ENABLE,
-      EXE_LWL_OP -> CHIP_ENABLE,
+      EXE_LWR_OP -> CHIP_ENABLE,
       EXE_LL_OP  -> CHIP_ENABLE,
       EXE_SB_OP  -> CHIP_ENABLE,
       EXE_SH_OP  -> CHIP_ENABLE,
@@ -74,7 +74,7 @@ class DataMemory extends Module {
   val addrLowBit2 = addr(1, 0)
   val wsel = MuxLookup(
     aluop,
-    "b1111".U,
+    "b1111".U, // default SW,SC
     Seq(
       EXE_SB_OP -> MuxLookup(
         addrLowBit2,
@@ -98,20 +98,20 @@ class DataMemory extends Module {
         addrLowBit2,
         "b0000".U,
         Seq(
-          "b00".U -> "b1111".U,
-          "b01".U -> "b0111".U,
-          "b10".U -> "b0011".U,
-          "b11".U -> "b0001".U,
+          "b11".U -> "b1111".U,
+          "b10".U -> "b0111".U,
+          "b01".U -> "b0011".U,
+          "b00".U -> "b0001".U,
         ),
       ),
       EXE_SWR_OP -> MuxLookup(
         addrLowBit2,
         "b0000".U,
         Seq(
-          "b00".U -> "b1000".U,
-          "b01".U -> "b1100".U,
-          "b10".U -> "b1110".U,
-          "b11".U -> "b1111".U,
+          "b11".U -> "b1000".U,
+          "b10".U -> "b1100".U,
+          "b01".U -> "b1110".U,
+          "b00".U -> "b1111".U,
         ),
       ),
     ),
@@ -121,7 +121,7 @@ class DataMemory extends Module {
   zero32 := 0.U(32.W)
   val wdata = MuxLookup(
     aluop,
-    ZERO_WORD,
+    data,
     Seq(
       EXE_SB_OP -> Fill(4, data(7, 0)),
       EXE_SH_OP -> Fill(2, data(15, 0)),
@@ -130,20 +130,20 @@ class DataMemory extends Module {
         addrLowBit2,
         ZERO_WORD,
         Seq(
-          "b00".U -> data,
-          "b01".U -> Util.zeroExtend(data(31, 8)),
-          "b10".U -> Util.zeroExtend(data(31, 16)),
-          "b11".U -> Util.zeroExtend(data(31, 24)),
+          "b11".U -> data,
+          "b10".U -> Util.zeroExtend(data(31, 8)),
+          "b01".U -> Util.zeroExtend(data(31, 16)),
+          "b00".U -> Util.zeroExtend(data(31, 24)),
         ),
       ),
       EXE_SWR_OP -> MuxLookup(
         addrLowBit2,
         ZERO_WORD,
         Seq(
-          "b00".U -> Cat(data(7, 0), zero32(23, 0)),
-          "b01".U -> Cat(data(15, 0), zero32(15, 0)),
-          "b10".U -> Cat(data(23, 0), zero32(7, 0)),
-          "b11".U -> data,
+          "b11".U -> Cat(data(7, 0), zero32(23, 0)),
+          "b10".U -> Cat(data(15, 0), zero32(15, 0)),
+          "b01".U -> Cat(data(23, 0), zero32(7, 0)),
+          "b00".U -> data,
         ),
       ),
       // EXE_SC_OP -> Mux(LLbit, data, ZERO_WORD)

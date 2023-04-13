@@ -17,7 +17,7 @@ class MemoryStage extends Module {
   // output
   val pc                = RegInit(BUS_INIT)
   val reg_waddr         = RegInit(ADDR_BUS_INIT)
-  val reg_wen           = RegInit(WRITE_DISABLE)
+  val reg_wen           = RegInit(REG_WRITE_DISABLE)
   val reg_wdata         = RegInit(BUS_INIT)
   val hi                = RegInit(BUS_INIT)
   val lo                = RegInit(BUS_INIT)
