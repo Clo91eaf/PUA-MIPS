@@ -122,6 +122,7 @@ class Execute extends Module {
   io.memoryStage.current_inst_addr := current_inst_addr
   io.memoryStage.is_in_delayslot   := is_in_delayslot
   io.memoryStage.except_type       := except_type
+  io.memoryStage.mem_addr          := mem_addr_temp
 
   // output-data memory
   io.dataMemory.valid := ~except_type.orR() & es_valid

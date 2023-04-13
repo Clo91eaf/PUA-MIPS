@@ -188,6 +188,7 @@ class Execute_MemoryStage extends Bundle {
   val except_type       = Output(UInt(32.W))
   val pc                = Output(BUS)
   val valid             = Output(Bool())
+  val mem_addr          = Output(BUS)
 }
 
 class Execute_CP0 extends Bundle {
@@ -277,10 +278,10 @@ class Memory_Decoder extends Bundle {
 }
 
 class Memory_Execute extends Bundle {
-  val whilo     = Output(Bool())
-  val hi        = Output(BUS)
-  val lo        = Output(BUS)
-  val allowin   = Output(Bool())
+  val whilo   = Output(Bool())
+  val hi      = Output(BUS)
+  val lo      = Output(BUS)
+  val allowin = Output(Bool())
   // val eret      = Output(Bool())
   // val ex        = Output(Bool())
 }
@@ -310,11 +311,11 @@ class WriteBackStage_LLbitReg extends Bundle {
 }
 
 class WriteBackStage_Execute extends Bundle {
-  val whilo     = Output(Bool())
-  val hi        = Output(BUS)
-  val lo        = Output(BUS)
-  val eret      = Output(Bool())
-  val ex        = Output(Bool())
+  val whilo = Output(Bool())
+  val hi    = Output(BUS)
+  val lo    = Output(BUS)
+  val eret  = Output(Bool())
+  val ex    = Output(Bool())
 }
 
 class WriteBackStage_HILO extends Bundle {

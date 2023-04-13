@@ -3,7 +3,7 @@ package cpu
 import cpu.defines._
 import cpu.defines.Const._
 import cpu.pipeline._
-import cpu.pipeline.fetchStage._
+import cpu.pipeline.fetch._
 import cpu.pipeline.decoder._
 import cpu.pipeline.execute._
 import cpu.pipeline.memory._
