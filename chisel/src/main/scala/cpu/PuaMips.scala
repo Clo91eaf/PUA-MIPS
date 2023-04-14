@@ -124,9 +124,4 @@ class PuaMips extends Module {
   llbitReg.io.flush := DontCare
   llbitReg.io.memory <> memory.io.fromLLbitReg
 
-  // cp0
-  cp0.io.mov <> mov.io.fromCP0
-  cp0.io.fetchStage <> fetchStage.io.fromCP0
-  cp0.io.memory <> memory.io.fromCP0
-  cp0.io.int_i := Cat(io.ext_int(5, 1), cp0.io.timer_int_o)
 }

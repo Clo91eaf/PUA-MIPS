@@ -342,9 +342,16 @@ class WriteBackStage_RegFile extends Bundle {
 }
 
 class WriteBackStage_CP0 extends Bundle {
-  val cp0_wdata = Output(BUS)
-  val cp0_wen   = Output(Bool())
-  val cp0_waddr = Output(CP0_ADDR_BUS)
+  val wb_ex       = Output(Bool())
+  val wb_bd       = Output(Bool())
+  val eret_flush  = Output(Bool())
+  val wb_excode   = Output(UInt(5.W))
+  val wb_pc       = Output(UInt(32.W))
+  val wb_badvaddr = Output(UInt(32.W))
+  val ext_int_in  = Output(UInt(6.W))
+  val cp0_addr    = Output(UInt(8.W))
+  val mtc0_we     = Output(Bool())
+  val cp0_wdata   = Output(UInt(32.W))
 }
 
 class WriteBackStage_FetchStage extends Bundle {
@@ -353,45 +360,6 @@ class WriteBackStage_FetchStage extends Bundle {
 }
 
 // writeBack
-
-// control
-class Control_FetchStage extends Bundle {
-  val stall  = Output(STALL_BUS)
-  val new_pc = Output(BUS)
-  val flush  = Output(Bool())
-}
-
-class Control_DecoderStage extends Bundle {
-  val stall = Output(STALL_BUS)
-  val flush = Output(Bool())
-}
-
-class Control_Decoder extends Bundle {
-  val flush = Output(Bool())
-}
-
-class Control_ExecuteStage extends Bundle {
-  val stall = Output(STALL_BUS)
-  val flush = Output(Bool())
-}
-
-class Control_MemoryStage extends Bundle {
-  val stall = Output(STALL_BUS)
-  val flush = Output(Bool())
-}
-
-class Control_WriteBackStage extends Bundle {
-  val stall = Output(STALL_BUS)
-  val flush = Output(Bool())
-}
-
-class Control_Div extends Bundle {
-  val flush = Output(Bool())
-}
-
-class Control_LLbitReg extends Bundle {
-  val flush = Output(Bool())
-}
 
 // instMemory
 class InstMemory_FetchStage extends Bundle {
@@ -416,25 +384,14 @@ class LLbitReg_Memory extends Bundle {
 }
 
 // CP0
-class CP0_Execute extends Bundle {
-  val cp0_rdata = Output(BUS)
-}
-
-class CP0_Memory extends Bundle {
-  val cause  = Output(BUS)
-  val epc    = Output(BUS)
-  val status = Output(BUS)
-}
-
-class CP0_Output extends Bundle {
-  val count   = Output(BUS)
-  val compare = Output(BUS)
-  val config  = Output(BUS)
-  val prid    = Output(BUS)
-}
-
-class CP0_FetchStage extends Bundle {
-  val epc = Output(BUS)
+class CP0_WriteBackStage extends Bundle {
+  val cp0_rdata    = Output(UInt(32.W))
+  val cp0_status   = Output(UInt(32.W))
+  val cp0_cause    = Output(UInt(32.W))
+  val cp0_epc      = Output(UInt(32.W))
+  val cp0_badvaddr = Output(UInt(32.W))
+  val cp0_count    = Output(UInt(32.W))
+  val cp0_compare  = Output(UInt(32.W))
 }
 // other
 class INST_SRAM extends Bundle {
@@ -442,7 +399,7 @@ class INST_SRAM extends Bundle {
   val wen   = Output(WEN_BUS)
   val addr  = Output(BUS)
   val wdata = Output(BUS)
-  val rdata = Input(BUS)
+  val rdata = Output(BUS)
 }
 
 class DATA_SRAM extends Bundle {
@@ -450,7 +407,7 @@ class DATA_SRAM extends Bundle {
   val wen   = Output(WEN_BUS)
   val addr  = Output(BUS)
   val wdata = Output(BUS)
-  val rdata = Input(BUS)
+  val rdata = Output(BUS)
 }
 
 class DEBUG extends Bundle {

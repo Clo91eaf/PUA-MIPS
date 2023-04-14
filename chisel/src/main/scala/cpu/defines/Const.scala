@@ -293,6 +293,9 @@ trait Constants {
   val CP0_CAUSE_ADDR  = "b01101000".U(8.W)
   val CP0_EPC_ADDR    = "b01110000".U(8.W)
   val CP0_CONFIG_ADDR = "b10000000".U(8.W)
+
+  val CP0_ADDR_BUS      = UInt(8.W)
+  val CP0_ADDR_BUS_INIT = 0.U(8.W)
 }
 trait OptionConst {
 
