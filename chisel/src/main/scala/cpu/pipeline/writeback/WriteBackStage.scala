@@ -25,7 +25,7 @@ class WriteBackStage extends Module {
   // output
   val pc           = RegInit(BUS_INIT)
   val reg_waddr    = RegInit(ADDR_BUS_INIT)
-  val reg_wen      = RegInit(WRITE_DISABLE)
+  val reg_wen      = RegInit(REG_WRITE_DISABLE)
   val reg_wdata    = RegInit(BUS_INIT)
   val hi           = RegInit(BUS_INIT)
   val lo           = RegInit(BUS_INIT)
@@ -43,7 +43,7 @@ class WriteBackStage extends Module {
 
   // output-reg file
   io.regFile.reg_waddr := reg_waddr
-  io.regFile.reg_wen   := reg_wen && ws_valid
+  io.regFile.reg_wen   := reg_wen & Fill(4, ws_valid)
   io.regFile.reg_wdata := reg_wdata
 
   // output-hilo
@@ -95,7 +95,7 @@ class WriteBackStage extends Module {
   // output-debug
   io.debug.pc    := pc
   io.debug.waddr := io.regFile.reg_waddr
-  io.debug.wen   := Fill(4, io.regFile.reg_wen)
+  io.debug.wen   := Fill(4, io.regFile.reg_wen.orR)
   io.debug.wdata := io.regFile.reg_wdata
 
   // io-finish

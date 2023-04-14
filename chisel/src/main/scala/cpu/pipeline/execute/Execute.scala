@@ -61,7 +61,7 @@ class Execute extends Module {
   val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg_wen           = Wire(Bool())
+  val reg_wen           = Wire(REG_WRITE_BUS)
   val reg_wdata         = Wire(BUS)
   val hi                = Wire(BUS)
   val lo                = Wire(BUS)
@@ -122,6 +122,7 @@ class Execute extends Module {
   io.memoryStage.current_inst_addr := current_inst_addr
   io.memoryStage.is_in_delayslot   := is_in_delayslot
   io.memoryStage.except_type       := except_type
+  io.memoryStage.mem_addr          := mem_addr_temp
 
   // output-data memory
   io.dataMemory.valid := ~except_type.orR() & es_valid
@@ -281,7 +282,7 @@ class Execute extends Module {
   }
 
   // 根据alusel指示的运算类型，选择一个运算结果作为最终结果
-  reg_wen := Mux(ovassert, WRITE_DISABLE, wreg_i)
+  reg_wen := Mux(ovassert, REG_WRITE_DISABLE, wreg_i)
   reg_wdata := MuxLookup(
     alusel,
     ZERO_WORD,

@@ -24,7 +24,7 @@ class ExecuteStage extends Module {
   val reg1               = RegInit(BUS_INIT)
   val reg2               = RegInit(BUS_INIT)
   val reg_waddr          = RegInit(ADDR_BUS_INIT)
-  val reg_wen            = RegInit(WRITE_DISABLE)
+  val reg_wen            = RegInit(REG_WRITE_DISABLE)
   val current_inst_addr  = RegInit(BUS_INIT)
   val except_type        = RegInit(0.U(32.W))
   val pc                 = RegInit(INST_ADDR_BUS_INIT)

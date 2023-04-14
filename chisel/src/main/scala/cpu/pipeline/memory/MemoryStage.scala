@@ -17,7 +17,7 @@ class MemoryStage extends Module {
   // output
   val pc                = RegInit(BUS_INIT)
   val reg_waddr         = RegInit(ADDR_BUS_INIT)
-  val reg_wen           = RegInit(WRITE_DISABLE)
+  val reg_wen           = RegInit(REG_WRITE_DISABLE)
   val reg_wdata         = RegInit(BUS_INIT)
   val hi                = RegInit(BUS_INIT)
   val lo                = RegInit(BUS_INIT)
@@ -83,7 +83,7 @@ class MemoryStage extends Module {
     is_in_delayslot   := io.fromExecute.is_in_delayslot
     current_inst_addr := io.fromExecute.current_inst_addr
     pc                := io.fromExecute.pc
-    mem_addr          := io.fromDataMemory.addr
+    mem_addr          := io.fromExecute.mem_addr
   }
 
   // debug

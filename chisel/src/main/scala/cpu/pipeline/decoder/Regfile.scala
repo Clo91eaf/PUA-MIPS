@@ -22,7 +22,7 @@ class Regfile extends Module {
   raddr2 := io.fromDecoder.reg2_raddr
 
   // input-write back
-  val wen   = Wire(Bool())
+  val wen   = Wire(REG_WRITE_BUS)
   val waddr = Wire(ADDR_BUS)
   val wdata = Wire(BUS)
   wen   := io.fromWriteBackStage.reg_wen
@@ -37,21 +37,39 @@ class Regfile extends Module {
 
   // 定义32个32位寄存器
   val regs = RegInit(VecInit(Seq.fill(REG_NUM)(BUS_INIT)))
-
   // write
-  when(wen === WRITE_ENABLE && waddr.orR) {
-    regs(waddr) := wdata
+  when(wen.orR && waddr.orR) {
+    regs(waddr) := Cat(
+      Mux(wen(3), wdata(31, 24), regs(waddr)(31, 24)),
+      Mux(wen(2), wdata(23, 16), regs(waddr)(23, 16)),
+      Mux(wen(1), wdata(15, 8), regs(waddr)(15, 8)),
+      Mux(wen(0), wdata(7, 0), regs(waddr)(7, 0)),
+    )
   }
 
-  // read and read after write 
-  rdata1 := Mux(
-    (wen === WRITE_ENABLE && waddr === raddr1 && waddr.orR),
-    wdata,
-    regs(raddr1),
-  )
-  rdata2 := Mux(
-    (wen === WRITE_ENABLE && waddr === raddr2 && waddr.orR),
-    wdata,
-    regs(raddr2),
-  )
+  val rdata1_value = Wire(Vec(4, UInt(8.W)))
+  val rdata2_value = Wire(Vec(4, UInt(8.W)))
+
+  // 解决wb的数据前递问题
+  rdata1 := rdata1_value.asUInt
+  for (i <- 0 until 4) {
+    when(
+      wen(i) && waddr === raddr1 && waddr.orR,
+    ) {
+      rdata1_value(i) := wdata(i * 8 + 7, i * 8)
+    }.otherwise {
+      rdata1_value(i) := regs(raddr1)(i * 8 + 7, i * 8)
+    }
+  }
+
+  rdata2 := rdata2_value.asUInt
+  for (i <- 0 until 4) {
+    when(
+      wen(i) && waddr === raddr2 && waddr.orR,
+    ) {
+      rdata2_value(i) := wdata(i * 8 + 7, i * 8)
+    }.otherwise {
+      rdata2_value(i) := regs(raddr2)(i * 8 + 7, i * 8)
+    }
+  }
 }

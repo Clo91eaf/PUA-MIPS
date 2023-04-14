@@ -29,7 +29,7 @@ class Memory extends Module {
 
   // output
   val reg_waddr         = Wire(ADDR_BUS)
-  val reg_wen           = Wire(Bool())
+  val reg_wen           = Wire(REG_WRITE_BUS)
   val reg_wdata         = Wire(BUS)
   val hi                = Wire(BUS)
   val lo                = Wire(BUS)
@@ -127,7 +127,7 @@ class Memory extends Module {
 
   when(reset.asBool === RST_ENABLE) {
     reg_waddr   := NOP_REG_ADDR
-    reg_wen     := WRITE_DISABLE
+    reg_wen     := REG_WRITE_DISABLE
     reg_wdata   := ZERO_WORD
     hi          := ZERO_WORD
     lo          := ZERO_WORD
@@ -140,8 +140,6 @@ class Memory extends Module {
   }.otherwise {
     // input-memory stage
     reg_waddr   := io.fromMemoryStage.reg_waddr
-    reg_wen     := io.fromMemoryStage.reg_wen
-    reg_wdata   := io.fromMemoryStage.reg_wdata
     hi          := io.fromMemoryStage.hi
     lo          := io.fromMemoryStage.lo
     whilo       := io.fromMemoryStage.whilo
@@ -152,6 +150,33 @@ class Memory extends Module {
     cp0_wdata   := io.fromMemoryStage.cp0_wdata
 
     val addrLowBit2 = io.fromMemoryStage.mem_addr(1, 0)
+
+    reg_wen := MuxLookup(
+      aluop,
+      io.fromMemoryStage.reg_wen,
+      Seq(
+        EXE_LWL_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> "b1000".U,
+            "b01".U -> "b1100".U,
+            "b10".U -> "b1110".U,
+            "b11".U -> "b1111".U,
+          ),
+        ),
+        EXE_LWR_OP -> MuxLookup(
+          addrLowBit2,
+          ZERO_WORD,
+          Seq(
+            "b00".U -> "b1111".U,
+            "b01".U -> "b0111".U,
+            "b10".U -> "b0011".U,
+            "b11".U -> "b0001".U,
+          ),
+        ),
+      ),
+    )
 
     reg_wdata := MuxLookup(
       aluop,
@@ -198,20 +223,20 @@ class Memory extends Module {
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> mem_data_i(31, 0),
-            "b01".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
-            "b10".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
-            "b11".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0)),
+            "b00".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0)),
+            "b01".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
+            "b10".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
+            "b11".U -> mem_data_i,
           ),
         ),
         EXE_LWR_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
-            "b01".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
-            "b10".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
-            "b11".U -> mem_data_i,
+            "b00".U -> mem_data_i,
+            "b01".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
+            "b10".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
+            "b11".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
           ),
         ),
         EXE_LL_OP -> mem_data_i,
