@@ -286,16 +286,13 @@ trait Constants {
   val NOT_SIGNED           = false.B
 
   // CP0寄存器
-  val CP0_REG_COUNT   = "b01001".U(5.W)
-  val CP0_REG_COMPARE = "b01011".U(5.W)
-  val CP0_REG_STATUS  = "b01100".U(5.W)
-  val CP0_REG_CAUSE   = "b01101".U(5.W)
-  val CP0_REG_EPC     = "b01110".U(5.W)
-  val CP0_REG_PRID    = "b01111".U(5.W)
-  val CP0_REG_CONFIG  = "b10000".U(5.W)
-
-  val CP0_ADDR_BUS      = UInt(5.W)
-  val CP0_ADDR_BUS_INIT = 0.U(5.W)
+  val CP0_BADV_ADDR   = "b01000000".U(8.W)
+  val CP0_COUNT_ADDR  = "b01001000".U(8.W)
+  val CP0_COMP_ADDR   = "b01011000".U(8.W)
+  val CP0_STATUS_ADDR = "b01100000".U(8.W)
+  val CP0_CAUSE_ADDR  = "b01101000".U(8.W)
+  val CP0_EPC_ADDR    = "b01110000".U(8.W)
+  val CP0_CONFIG_ADDR = "b10000000".U(8.W)
 }
 trait OptionConst {
 
