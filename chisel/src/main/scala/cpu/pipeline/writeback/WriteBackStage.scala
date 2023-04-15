@@ -77,9 +77,6 @@ class WriteBackStage extends Module {
   // output-memory
   io.memory.LLbit_wen   := LLbit_wen
   io.memory.LLbit_value := LLbit_value
-  io.memory.cp0_wen     := cp0_wen
-  io.memory.cp0_waddr   := cp0_waddr
-  io.memory.cp0_wdata   := cp0_wdata
   io.memory.allowin     := allowin
   io.memory.eret        := eret
   io.memory.ex          := ex
@@ -113,9 +110,6 @@ class WriteBackStage extends Module {
     whilo        := io.fromMemory.whilo
     LLbit_wen    := io.fromMemory.LLbit_wen
     LLbit_value  := io.fromMemory.LLbit_value
-    cp0_wen      := io.fromMemory.cp0_wen
-    cp0_waddr    := io.fromMemory.cp0_waddr
-    cp0_wdata    := io.fromMemory.cp0_wdata
     pc           := io.fromMemory.pc
     inst_is_mfc0 := io.fromMemory.inst_is_mfc0
   }
