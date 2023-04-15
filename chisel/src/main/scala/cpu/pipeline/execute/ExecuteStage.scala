@@ -47,13 +47,13 @@ class ExecuteStage extends Module {
   io.execute.reg_wen         := reg_wen
   io.execute.pc              := pc
   io.execute.valid           := es_valid
-  io.execute.ex              := ex
   io.execute.bd              := bd
   io.execute.badvaddr        := badvaddr
   io.execute.cp0_addr        := cp0_addr
   io.execute.excode          := excode
   io.execute.overflow_inst   := overflow_inst
   io.execute.fs_to_ds_ex     := fs_to_ds_ex
+  io.execute.ds_to_es_ex     := ex
 
   // output-decoder
   io.decoder.is_in_delayslot := is_in_delayslot
