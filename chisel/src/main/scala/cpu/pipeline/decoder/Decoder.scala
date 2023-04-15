@@ -67,14 +67,16 @@ class Decoder extends Module {
   val valid                  = Wire(Bool())
   val ex                     = Wire(Bool())
   val excode                 = Wire(UInt(5.W))
+  val overflow_inst          = Wire(Bool())
 
   // output-execute stage
-  io.executeStage.pc          := pc
-  io.executeStage.fs_to_ds_ex := io.fromDecoderStage.ex
-  io.executeStage.bd          := io.fromDecoderStage.bd
-  io.executeStage.badvaddr    := io.fromDecoderStage.badvaddr
-  io.executeStage.cp0_addr    := Cat(inst(15, 11), inst(2, 0))
-  io.executeStage.ex          := ex
+  io.executeStage.pc            := pc
+  io.executeStage.fs_to_ds_ex   := io.fromDecoderStage.ex
+  io.executeStage.bd            := io.fromDecoderStage.bd
+  io.executeStage.badvaddr      := io.fromDecoderStage.badvaddr
+  io.executeStage.cp0_addr      := Cat(inst(15, 11), inst(2, 0))
+  io.executeStage.ex            := ex
+  io.executeStage.overflow_inst := overflow_inst
 
   // output-regfile
   io.regfile.reg1_ren   := reg1_ren
@@ -131,11 +133,11 @@ class Decoder extends Module {
   rs    := inst(25, 21)
   imm16 := inst(15, 0)
 
-  val imm                    = Wire(BUS)
-  val inst_valid             = Wire(Bool())
-  val pc_plus_4              = Wire(BUS)
-  val pc_plus_8              = Wire(BUS)
-  val imm_sll2_signedext     = Wire(BUS)
+  val imm                = Wire(BUS)
+  val inst_valid         = Wire(Bool())
+  val pc_plus_4          = Wire(BUS)
+  val pc_plus_8          = Wire(BUS)
+  val imm_sll2_signedext = Wire(BUS)
 
   val ready_go   = Wire(Bool())
   val mfc0_block = Wire(Bool())
@@ -516,6 +518,8 @@ class Decoder extends Module {
       (aluop === EXE_BREAK_OP)   -> EX_BP,
     ),
   )
+
+  overflow_inst := (aluop === EXE_ADD_OP) || (aluop === EXE_SUB_OP)
   // debug
   // printf(p"decoder :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }

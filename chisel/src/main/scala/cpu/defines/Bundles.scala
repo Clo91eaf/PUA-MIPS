@@ -22,12 +22,12 @@ class FetchStage_InstMemory extends Bundle {
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val pc          = Output(BUS)
-  val inst        = Output(BUS)
-  val ex = Output(Bool())
-  val bd          = Output(Bool())
-  val badvaddr    = Output(Bool())
-  val valid       = Output(Bool())
+  val pc       = Output(BUS)
+  val inst     = Output(BUS)
+  val ex       = Output(Bool())
+  val bd       = Output(Bool())
+  val badvaddr = Output(Bool())
+  val valid    = Output(Bool())
 }
 
 // decoder
@@ -54,8 +54,6 @@ class Decoder_ExecuteStage extends Bundle {
   val reg_waddr              = Output(ADDR_BUS)
   val reg_wen                = Output(REG_WRITE_BUS)
   val next_inst_in_delayslot = Output(Bool())
-  val current_inst_addr      = Output(BUS)
-  val except_type            = Output(UInt(32.W))
   val pc                     = Output(INST_ADDR_BUS)
   val valid                  = Output(Bool())
   val ex                     = Output(Bool())
@@ -65,7 +63,6 @@ class Decoder_ExecuteStage extends Bundle {
   val excode                 = Output(UInt(5.W))
   val overflow_inst          = Output(Bool())
   val fs_to_ds_ex            = Output(Bool())
-
 }
 
 class Decoder_RegFile extends Bundle {
@@ -98,6 +95,13 @@ class ExecuteStage_Execute extends Bundle {
   val except_type       = Output(UInt(32.W))
   val pc                = Output(INST_ADDR_BUS)
   val valid             = Output(Bool())
+  val ex                = Output(Bool())
+  val bd                = Output(Bool())
+  val badvaddr          = Output(Bool())
+  val cp0_addr          = Output(UInt(8.W))
+  val excode            = Output(UInt(5.W))
+  val overflow_inst     = Output(Bool())
+  val fs_to_ds_ex       = Output(Bool())
 }
 
 // execute
