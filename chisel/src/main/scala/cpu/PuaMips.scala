@@ -84,7 +84,6 @@ class PuaMips extends Module {
   execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
-  execute.io.cp0 <> cp0.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
 
   // memoryStage
@@ -100,7 +99,6 @@ class PuaMips extends Module {
   memory.io.execute <> execute.io.fromMemory
   memory.io.mov <> mov.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
-  memory.io.cp0 <> cp0.io.fromMemory
   memory.io.memoryStage <> memoryStage.io.fromMemory
 
   // writeBackStage
@@ -113,6 +111,9 @@ class PuaMips extends Module {
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
+
+  // cp0
+  cp0.io.writeBackStage <> writeBackStage.io.fromCP0
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO

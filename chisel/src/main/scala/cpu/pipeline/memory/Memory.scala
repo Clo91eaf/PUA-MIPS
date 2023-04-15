@@ -11,7 +11,6 @@ class Memory extends Module {
     val fromMemoryStage    = Flipped(new MemoryStage_Memory())
     val fromDataMemory     = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
-    val fromCP0            = Flipped(new CP0_Memory())
 
     val mov            = new Memory_Mov()
     val memoryStage    = new Memory_MemoryStage()

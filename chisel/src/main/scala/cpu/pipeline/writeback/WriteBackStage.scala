@@ -8,6 +8,7 @@ import cpu.defines.Const._
 class WriteBackStage extends Module {
   val io = IO(new Bundle {
     val fromMemory = Flipped(new Memory_WriteBackStage())
+    val fromCP0    = Flipped(new CP0_WriteBackStage())
 
     val llbitReg   = new WriteBackStage_LLbitReg()
     val memory     = new WriteBackStage_Memory()
@@ -86,11 +87,6 @@ class WriteBackStage extends Module {
   // output-llbit reg
   io.llbitReg.LLbit_wen   := LLbit_wen
   io.llbitReg.LLbit_value := LLbit_value
-
-  // output-cp0
-  io.cp0.cp0_wen   := cp0_wen
-  io.cp0.cp0_waddr := cp0_waddr
-  io.cp0.cp0_wdata := cp0_wdata
 
   // output-debug
   io.debug.pc    := pc

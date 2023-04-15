@@ -22,12 +22,12 @@ class FetchStage_InstMemory extends Bundle {
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val pc       = Output(BUS)
-  val inst     = Output(BUS)
-  val ex       = Output(Bool())
-  val bd       = Output(Bool())
-  val badvaddr = Output(Bool())
-  val valid    = Output(Bool())
+  val pc          = Output(BUS)
+  val inst        = Output(BUS)
+  val ex = Output(Bool())
+  val bd          = Output(Bool())
+  val badvaddr    = Output(Bool())
+  val valid       = Output(Bool())
 }
 
 // decoder
@@ -58,6 +58,14 @@ class Decoder_ExecuteStage extends Bundle {
   val except_type            = Output(UInt(32.W))
   val pc                     = Output(INST_ADDR_BUS)
   val valid                  = Output(Bool())
+  val ex                     = Output(Bool())
+  val bd                     = Output(Bool())
+  val badvaddr               = Output(Bool())
+  val cp0_addr               = Output(UInt(8.W))
+  val excode                 = Output(UInt(5.W))
+  val overflow_inst          = Output(Bool())
+  val fs_to_ds_ex            = Output(Bool())
+
 }
 
 class Decoder_RegFile extends Bundle {
@@ -303,6 +311,8 @@ class WriteBackStage_Decoder extends Bundle {
   val reg_waddr    = Output(ADDR_BUS)
   val eret         = Output(Bool())
   val ex           = Output(Bool())
+  val cp0_cause    = Output(UInt(32.W))
+  val cp0_status   = Output(UInt(32.W))
 }
 
 class WriteBackStage_LLbitReg extends Bundle {
@@ -355,8 +365,9 @@ class WriteBackStage_CP0 extends Bundle {
 }
 
 class WriteBackStage_FetchStage extends Bundle {
-  val eret = Output(Bool())
-  val ex   = Output(Bool())
+  val eret    = Output(Bool())
+  val ex      = Output(Bool())
+  val cp0_epc = Output(UInt(32.W))
 }
 
 // writeBack
