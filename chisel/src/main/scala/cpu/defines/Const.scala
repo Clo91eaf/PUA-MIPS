@@ -197,6 +197,16 @@ trait Constants {
 
   val CP0_ADDR_BUS      = UInt(8.W)
   val CP0_ADDR_BUS_INIT = 0.U(8.W)
+
+  // 例外类型
+  val EX_INT  = "b00000".U(5.W)
+  val EX_ADEL = "b00100".U(5.W)
+  val EX_ADES = "b00101".U(5.W)
+  val EX_SYS  = "b01000".U(5.W)
+  val EX_BP   = "b01001".U(5.W)
+  val EX_RI   = "b01010".U(5.W)
+  val EX_OV   = "b01100".U(5.W)
+  val EX_NO   = "b11111".U(5.W)
 }
 trait OptionConst {
 
