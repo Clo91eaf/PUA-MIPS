@@ -16,7 +16,7 @@ class Mul extends Module {
 
   // output
   io.execute.out := Mux(
-    (op === EXE_MULT_OP || op === EXE_MUL_OP || op === EXE_MADD_OP || op === EXE_MSUB),
+    (op === EXE_MULT_OP || op === EXE_MUL_OP || op === EXE_MADD_OP || op === EXE_MSUB_OP),
     (in1.asSInt() * in2.asSInt()).asUInt(),
     in1 * in2,
   )
