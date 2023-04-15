@@ -9,7 +9,6 @@ class FetchStage extends Module {
   val io = IO(new Bundle {
     val fromDecoder        = Flipped(new Decoder_FetchStage())
     val fromInstMemory     = Flipped(new InstMemory_FetchStage())
-    val fromCP0            = Flipped(new CP0_FetchStage())
     val fromWriteBackStage = Flipped(new WriteBackStage_FetchStage())
     val decoderStage       = new FetchStage_DecoderStage()
     val instMemory         = new FetchStage_InstMemory()
@@ -68,7 +67,7 @@ class FetchStage extends Module {
     seq_pc,
     Seq(
       io.fromWriteBackStage.ex   -> "hbfc00380".U,
-      io.fromWriteBackStage.eret -> io.fromCP0.epc,
+      io.fromWriteBackStage.eret -> io.fromWriteBackStage.cp0_epc,
       branch_flag                -> branch_target_address,
     ),
   )
