@@ -257,6 +257,11 @@ class MemoryStage_Memory extends Bundle {
   val except_type       = Output(UInt(32.W))
   val pc                = Output(BUS)
   val valid             = Output(Bool())
+  val bd                = Output(Bool())
+  val badvaddr          = Output(Bool())
+  val cp0_addr          = Output(UInt(8.W))
+  val excode            = Output(UInt(5.W))
+  val ex                = Output(Bool())
 }
 
 // memory
