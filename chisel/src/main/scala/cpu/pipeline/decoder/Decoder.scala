@@ -62,8 +62,6 @@ class Decoder extends Module {
   val branch_target_address  = Wire(BUS)
   val link_addr              = Wire(BUS)
   val is_in_delayslot        = Wire(Bool())
-  val except_type            = Wire(UInt(32.W))
-  val current_inst_addr      = Wire(BUS)
   val allowin                = Wire(Bool())
   val is_branch              = Wire(Bool())
   val valid                  = Wire(Bool())
@@ -109,10 +107,6 @@ class Decoder extends Module {
   io.executeStage.is_in_delayslot := is_in_delayslot
   io.executeStage.valid           := valid
 
-  // output-execute stage
-  io.executeStage.except_type       := except_type
-  io.executeStage.current_inst_addr := current_inst_addr
-
   // io-finish
 
   // 取得的指令码功能码
@@ -142,8 +136,6 @@ class Decoder extends Module {
   val pc_plus_4              = Wire(BUS)
   val pc_plus_8              = Wire(BUS)
   val imm_sll2_signedext     = Wire(BUS)
-  val except_type_is_syscall = Wire(Bool())
-  val except_type_is_eret    = Wire(Bool())
 
   val ready_go   = Wire(Bool())
   val mfc0_block = Wire(Bool())
@@ -157,19 +149,6 @@ class Decoder extends Module {
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
   imm_sll2_signedext := Cat(Util.signedExtend(imm16, to = 30), 0.U(2.W))
-
-  // exceptiontype的低8bit留给外部中断，第9bit表示是否是syscall指令
-  // 第10bit表示是否是无效指令，第11bit表示是否是trap指令
-  except_type := Cat(
-    "b0".U(19.W),
-    except_type_is_eret,
-    "b0".U(2.W),
-    inst_valid,
-    except_type_is_syscall,
-    "b0".U(8.W),
-  )
-
-  current_inst_addr := pc;
 
   val BTarget = pc_plus_4 + imm_sll2_signedext
   val JTarget = Cat(pc_plus_4(31, 28), inst(25, 0), 0.U(2.W))
@@ -188,14 +167,6 @@ class Decoder extends Module {
   imm                    := ZERO_WORD
   link_addr              := ZERO_WORD
   next_inst_in_delayslot := NOT_IN_DELAY_SLOT
-  except_type_is_syscall := false.B
-  except_type_is_eret    := false.B
-  when(inst === SYSCALL) {
-    except_type_is_syscall := true.B
-  }
-  when(inst === ERET) {
-    except_type_is_eret := true.B
-  }
 
   val signals: List[UInt] = ListLookup(
     inst,
