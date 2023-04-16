@@ -65,7 +65,7 @@ class WriteBackStage extends Module {
   // output-hilo
   io.hilo.hi    := ws_hi
   io.hilo.lo    := ws_lo
-  io.hilo.whilo := ws_whilo
+  io.hilo.whilo := ws_whilo & ws_valid
 
   // output-fetchStage
   io.fetchStage.eret    := eret
