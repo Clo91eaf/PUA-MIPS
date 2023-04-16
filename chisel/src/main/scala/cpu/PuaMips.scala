@@ -41,6 +41,7 @@ class PuaMips extends Module {
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
+  
   io.inst_sram.en                    := fetchStage.io.instMemory.en
   io.inst_sram.wen                   := fetchStage.io.instMemory.wen
   io.inst_sram.addr                  := fetchStage.io.instMemory.addr
@@ -111,6 +112,7 @@ class PuaMips extends Module {
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
+  writeBackStage.io.ext_int := io.ext_int
 
   // cp0
   cp0.io.writeBackStage <> writeBackStage.io.fromCP0

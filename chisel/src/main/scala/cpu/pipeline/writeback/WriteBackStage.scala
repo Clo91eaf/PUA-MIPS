@@ -77,6 +77,8 @@ class WriteBackStage extends Module {
   io.decoder.ex           := ex
   io.decoder.inst_is_mfc0 := inst_is_mfc0
   io.decoder.reg_waddr    := ws_reg_waddr
+  io.decoder.cp0_cause    := cp0_cause
+  io.decoder.cp0_status   := cp0_status
 
   // output-execute
   io.execute.hi    := ws_hi
@@ -89,6 +91,7 @@ class WriteBackStage extends Module {
   io.mov.cp0_wen   := cp0_we
   io.mov.cp0_waddr := ws_cp0_addr
   io.mov.cp0_wdata := cp0_wdata
+  io.mov.cp0_rdata := cp0_rdata
 
   // output-memory
   io.memory.LLbit_wen   := ws_LLbit_wen

@@ -77,7 +77,6 @@ class Execute extends Module {
   val es_fwd_valid  = Wire(Bool())
   val badvaddr      = Wire(Bool())
   val excode        = Wire(UInt(5.W))
-  val overflow_inst = Wire(Bool())
   val ex            = Wire(Bool())
 
   // output-memory stage
@@ -87,7 +86,6 @@ class Execute extends Module {
   io.memoryStage.badvaddr      := badvaddr
   io.memoryStage.cp0_addr      := cp0_addr
   io.memoryStage.excode        := excode
-  io.memoryStage.overflow_inst := overflow_inst
 
   // output-decoder
   io.decoder.reg_wen   := reg_wen

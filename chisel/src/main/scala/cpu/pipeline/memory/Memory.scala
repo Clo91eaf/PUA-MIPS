@@ -26,30 +26,27 @@ class Memory extends Module {
   val ms_valid   = io.fromMemoryStage.valid
 
   // output
-  val reg_waddr         = Wire(ADDR_BUS)
-  val reg_wen           = Wire(REG_WRITE_BUS)
-  val reg_wdata         = Wire(BUS)
-  val hi                = Wire(BUS)
-  val lo                = Wire(BUS)
-  val whilo             = Wire(Bool())
-  val LLbit_wen         = Wire(Bool())
-  val LLbit_value       = Wire(Bool())
-  val cp0_wen           = Wire(Bool())
-  val cp0_waddr         = Wire(CP0_ADDR_BUS)
-  val cp0_wdata         = Wire(BUS)
-  val except_type       = Wire(UInt(32.W))
-  val epc               = Wire(BUS)
-  val is_in_delayslot   = Wire(Bool())
-  val current_inst_addr = Wire(BUS)
-  val LLbit             = Wire(Bool())
-  val zero32            = Wire(BUS)
-  val allowin           = Wire(Bool())
-  val valid             = Wire(Bool())
-  val inst_is_mfc0      = Wire(Bool())
-  val inst_is_mtc0      = Wire(Bool())
-  val inst_is_eret      = Wire(Bool())
-  val inst_is_syscall   = Wire(Bool())
-  val ms_fwd_valid      = Wire(Bool())
+  val reg_waddr       = Wire(ADDR_BUS)
+  val reg_wen         = Wire(REG_WRITE_BUS)
+  val reg_wdata       = Wire(BUS)
+  val hi              = Wire(BUS)
+  val lo              = Wire(BUS)
+  val whilo           = Wire(Bool())
+  val LLbit_wen       = Wire(Bool())
+  val LLbit_value     = Wire(Bool())
+  val cp0_wen         = Wire(Bool())
+  val cp0_waddr       = Wire(CP0_ADDR_BUS)
+  val cp0_wdata       = Wire(BUS)
+  val is_in_delayslot = Wire(Bool())
+  val LLbit           = Wire(Bool())
+  val zero32          = Wire(BUS)
+  val allowin         = Wire(Bool())
+  val valid           = Wire(Bool())
+  val inst_is_mfc0    = Wire(Bool())
+  val inst_is_mtc0    = Wire(Bool())
+  val inst_is_eret    = Wire(Bool())
+  val inst_is_syscall = Wire(Bool())
+  val ms_fwd_valid    = Wire(Bool())
 
   // output-decoder
   io.decoder.reg_waddr    := reg_waddr
@@ -99,10 +96,10 @@ class Memory extends Module {
   is_in_delayslot := io.fromMemoryStage.is_in_delayslot
 
   // io-finish
-  inst_is_mfc0 := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
-  inst_is_mtc0 := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
-  inst_is_eret := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
-  inst_is_eret := io.fromMemoryStage.valid && (aluop === EXE_SYSCALL_OP)
+  inst_is_mfc0    := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
+  inst_is_mtc0    := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
+  inst_is_eret    := io.fromMemoryStage.valid && (aluop === EXE_ERET_OP)
+  inst_is_syscall := io.fromMemoryStage.valid && (aluop === EXE_SYSCALL_OP)
 
   ms_fwd_valid := ms_valid
 
@@ -136,7 +133,7 @@ class Memory extends Module {
     LLbit_wen   := false.B
     LLbit_value := false.B
     cp0_wen     := WRITE_DISABLE
-    cp0_waddr   := "b00000".U
+    cp0_waddr   := 0.U
     cp0_wdata   := ZERO_WORD
   }.otherwise {
     // input-memory stage
@@ -146,6 +143,10 @@ class Memory extends Module {
     whilo       := io.fromMemoryStage.whilo
     LLbit_wen   := false.B
     LLbit_value := false.B
+
+    cp0_waddr := io.fromMemoryStage.cp0_addr
+    cp0_wen   := (aluop === EXE_MTC0_OP) && ms_valid
+    cp0_wdata := reg_wdata
 
     val addrLowBit2 = io.fromMemoryStage.mem_addr(1, 0)
 

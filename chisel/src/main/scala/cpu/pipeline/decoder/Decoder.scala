@@ -93,6 +93,7 @@ class Decoder extends Module {
   io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
+  io.executeStage.excode                 := excode
 
   // output-fetchStage
   io.fetchStage.branch_stall          := false.B

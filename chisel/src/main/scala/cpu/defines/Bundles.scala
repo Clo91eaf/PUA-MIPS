@@ -136,10 +136,6 @@ class Div_Execute extends Bundle {
   val remainder = Output(BUS)
 }
 
-class CP0_Mov extends Bundle {
-  val cp0_rdata = Output(BUS)
-}
-
 class Memory_Mov extends Bundle {
   val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(Bool())
@@ -150,6 +146,7 @@ class WriteBackStage_Mov extends Bundle {
   val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(Bool())
   val cp0_wdata = Output(Bool())
+  val cp0_rdata = Output(BUS)
 }
 
 class Execute_Mov extends Bundle {
@@ -198,7 +195,6 @@ class Execute_MemoryStage extends Bundle {
   val badvaddr        = Output(Bool())
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
-  val overflow_inst   = Output(Bool())
   val ex              = Output(Bool())
 }
 
@@ -415,7 +411,7 @@ class INST_SRAM extends Bundle {
   val wen   = Output(WEN_BUS)
   val addr  = Output(BUS)
   val wdata = Output(BUS)
-  val rdata = Output(BUS)
+  val rdata = Input(BUS)
 }
 
 class DATA_SRAM extends Bundle {
@@ -423,7 +419,7 @@ class DATA_SRAM extends Bundle {
   val wen   = Output(WEN_BUS)
   val addr  = Output(BUS)
   val wdata = Output(BUS)
-  val rdata = Output(BUS)
+  val rdata = Input(BUS)
 }
 
 class DEBUG extends Bundle {
