@@ -78,6 +78,7 @@ class Execute extends Module {
   val badvaddr      = Wire(Bool())
   val excode        = Wire(UInt(5.W))
   val ex            = Wire(Bool())
+  val no_store      = Wire(Bool())
 
   // output-memory stage
   io.memoryStage.pc       := pc
@@ -120,12 +121,15 @@ class Execute extends Module {
   io.memoryStage.mem_addr        := mem_addr_temp
 
   // output-data memory
-  io.dataMemory.valid := es_valid
+  io.dataMemory.valid := es_valid && !no_store
   io.dataMemory.op    := aluop
   io.dataMemory.data  := reg2
   io.dataMemory.addr  := mem_addr_temp
 
   // io-finish
+
+  no_store := io.fromMemory.ex | io.fromWriteBackStage.ex |
+    ex | io.fromMemory.eret | io.fromWriteBackStage.eret
 
   val ready_go = Wire(Bool())
   val load_op  = Wire(Bool())
@@ -256,8 +260,10 @@ class Execute extends Module {
   reg_wen := Mux(ovassert, REG_WRITE_DISABLE, wreg_i)
   reg_wdata := MuxLookup(
     alusel,
-    alures,
+    ZERO_WORD,
     Seq(
+      EXE_RES_NOP         -> alures,
+      EXE_RES_ALU         -> alures,
       EXE_RES_MOV         -> moveres,
       EXE_RES_MUL         -> mulres(31, 0),
       EXE_RES_JUMP_BRANCH -> link_addr,
