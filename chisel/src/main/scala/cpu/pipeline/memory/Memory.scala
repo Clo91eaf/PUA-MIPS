@@ -58,7 +58,7 @@ class Memory extends Module {
   // output-execute
   io.execute.hi      := hi
   io.execute.lo      := lo
-  io.execute.whilo   := whilo
+  io.execute.whilo   := whilo && valid
   io.execute.allowin := allowin
   io.execute.ex      := ms_valid && io.fromMemoryStage.ex
   io.execute.eret    := ms_valid && inst_is_eret

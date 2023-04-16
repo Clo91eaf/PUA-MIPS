@@ -83,7 +83,7 @@ class WriteBackStage extends Module {
   // output-execute
   io.execute.hi    := ws_hi
   io.execute.lo    := ws_lo
-  io.execute.whilo := ws_whilo
+  io.execute.whilo := ws_whilo && ws_valid
   io.execute.eret  := eret
   io.execute.ex    := ex
 
