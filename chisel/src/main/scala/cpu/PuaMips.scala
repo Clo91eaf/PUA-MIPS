@@ -41,6 +41,7 @@ class PuaMips extends Module {
   val cp0            = Module(new CP0Reg())
 
   // func_test interfacter
+  
   io.inst_sram.en                    := fetchStage.io.instMemory.en
   io.inst_sram.wen                   := fetchStage.io.instMemory.wen
   io.inst_sram.addr                  := fetchStage.io.instMemory.addr
@@ -84,7 +85,6 @@ class PuaMips extends Module {
   execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
-  execute.io.cp0 <> cp0.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
 
   // memoryStage
@@ -100,7 +100,6 @@ class PuaMips extends Module {
   memory.io.execute <> execute.io.fromMemory
   memory.io.mov <> mov.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
-  memory.io.cp0 <> cp0.io.fromMemory
   memory.io.memoryStage <> memoryStage.io.fromMemory
 
   // writeBackStage
@@ -113,6 +112,10 @@ class PuaMips extends Module {
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
+  writeBackStage.io.ext_int := io.ext_int
+
+  // cp0
+  cp0.io.writeBackStage <> writeBackStage.io.fromCP0
 
   // hilo
   hilo.io.execute <> execute.io.fromHILO
@@ -124,9 +127,4 @@ class PuaMips extends Module {
   llbitReg.io.flush := DontCare
   llbitReg.io.memory <> memory.io.fromLLbitReg
 
-  // cp0
-  cp0.io.mov <> mov.io.fromCP0
-  cp0.io.fetchStage <> fetchStage.io.fromCP0
-  cp0.io.memory <> memory.io.fromCP0
-  cp0.io.int_i := Cat(io.ext_int(5, 1), cp0.io.timer_int_o)
 }

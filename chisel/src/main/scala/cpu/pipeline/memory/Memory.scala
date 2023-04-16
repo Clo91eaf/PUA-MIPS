@@ -11,14 +11,12 @@ class Memory extends Module {
     val fromMemoryStage    = Flipped(new MemoryStage_Memory())
     val fromDataMemory     = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
-    val fromCP0            = Flipped(new CP0_Memory())
 
     val mov            = new Memory_Mov()
     val memoryStage    = new Memory_MemoryStage()
     val decoder        = new Memory_Decoder()
     val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
-    val cp0            = new Memory_CP0()
   })
   // input
   val aluop      = io.fromMemoryStage.aluop
@@ -28,30 +26,27 @@ class Memory extends Module {
   val ms_valid   = io.fromMemoryStage.valid
 
   // output
-  val reg_waddr         = Wire(ADDR_BUS)
-  val reg_wen           = Wire(REG_WRITE_BUS)
-  val reg_wdata         = Wire(BUS)
-  val hi                = Wire(BUS)
-  val lo                = Wire(BUS)
-  val whilo             = Wire(Bool())
-  val LLbit_wen         = Wire(Bool())
-  val LLbit_value       = Wire(Bool())
-  val cp0_wen           = Wire(Bool())
-  val cp0_waddr         = Wire(CP0_ADDR_BUS)
-  val cp0_wdata         = Wire(BUS)
-  val except_type       = Wire(UInt(32.W))
-  val epc               = Wire(BUS)
-  val is_in_delayslot   = Wire(Bool())
-  val current_inst_addr = Wire(BUS)
-  val LLbit             = Wire(Bool())
-  val zero32            = Wire(BUS)
-  val cp0_status        = Wire(BUS)
-  val cp0_cause         = Wire(BUS)
-  val cp0_epc           = Wire(BUS)
-  val allowin           = Wire(Bool())
-  val valid             = Wire(Bool())
-  val inst_is_mfc0      = Wire(Bool())
-  val ms_fwd_valid      = Wire(Bool())
+  val reg_waddr       = Wire(ADDR_BUS)
+  val reg_wen         = Wire(REG_WRITE_BUS)
+  val reg_wdata       = Wire(BUS)
+  val hi              = Wire(BUS)
+  val lo              = Wire(BUS)
+  val whilo           = Wire(Bool())
+  val LLbit_wen       = Wire(Bool())
+  val LLbit_value     = Wire(Bool())
+  val cp0_wen         = Wire(Bool())
+  val cp0_waddr       = Wire(CP0_ADDR_BUS)
+  val cp0_wdata       = Wire(BUS)
+  val is_in_delayslot = Wire(Bool())
+  val LLbit           = Wire(Bool())
+  val zero32          = Wire(BUS)
+  val allowin         = Wire(Bool())
+  val valid           = Wire(Bool())
+  val inst_is_mfc0    = Wire(Bool())
+  val inst_is_mtc0    = Wire(Bool())
+  val inst_is_eret    = Wire(Bool())
+  val inst_is_syscall = Wire(Bool())
+  val ms_fwd_valid    = Wire(Bool())
 
   // output-decoder
   io.decoder.reg_waddr    := reg_waddr
@@ -63,45 +58,48 @@ class Memory extends Module {
   // output-execute
   io.execute.hi      := hi
   io.execute.lo      := lo
-  io.execute.whilo   := whilo
+  io.execute.whilo   := whilo && valid
   io.execute.allowin := allowin
+  io.execute.ex      := ms_valid && io.fromMemoryStage.ex
+  io.execute.eret    := ms_valid && inst_is_eret
 
   // output-memory stage
   io.memoryStage.allowin := allowin
 
   // output-write back stage
-  io.writeBackStage.reg_wen      := reg_wen
-  io.writeBackStage.reg_waddr    := reg_waddr
-  io.writeBackStage.pc           := pc
-  io.writeBackStage.reg_wdata    := reg_wdata
-  io.writeBackStage.hi           := hi
-  io.writeBackStage.lo           := lo
-  io.writeBackStage.whilo        := whilo
-  io.writeBackStage.LLbit_wen    := LLbit_wen
-  io.writeBackStage.LLbit_value  := LLbit_value
-  io.writeBackStage.cp0_wen      := cp0_wen
-  io.writeBackStage.cp0_waddr    := cp0_waddr
-  io.writeBackStage.cp0_wdata    := cp0_wdata
-  io.writeBackStage.valid        := valid
-  io.writeBackStage.inst_is_mfc0 := inst_is_mfc0
+  io.writeBackStage.reg_wen         := reg_wen
+  io.writeBackStage.reg_waddr       := reg_waddr
+  io.writeBackStage.pc              := pc
+  io.writeBackStage.reg_wdata       := reg_wdata
+  io.writeBackStage.hi              := hi
+  io.writeBackStage.lo              := lo
+  io.writeBackStage.whilo           := whilo
+  io.writeBackStage.LLbit_wen       := LLbit_wen
+  io.writeBackStage.LLbit_value     := LLbit_value
+  io.writeBackStage.valid           := valid
+  io.writeBackStage.inst_is_mfc0    := inst_is_mfc0
+  io.writeBackStage.inst_is_mtc0    := inst_is_mtc0
+  io.writeBackStage.inst_is_eret    := inst_is_eret
+  io.writeBackStage.inst_is_syscall := inst_is_syscall
+  io.writeBackStage.cp0_addr        := io.fromMemoryStage.cp0_addr
+  io.writeBackStage.excode          := io.fromMemoryStage.excode
+  io.writeBackStage.badvaddr        := io.fromMemoryStage.badvaddr
+  io.writeBackStage.ex              := io.fromMemoryStage.ex
+  io.writeBackStage.bd              := io.fromMemoryStage.bd
 
   // output-execute
   io.mov.cp0_wen   := cp0_wen
   io.mov.cp0_waddr := cp0_waddr
   io.mov.cp0_wdata := cp0_wdata
 
-  // output-cp0
-  io.cp0.except_type       := except_type
-  io.cp0.is_in_delayslot   := is_in_delayslot
-  io.cp0.current_inst_addr := current_inst_addr
-
   // input-memory stage
-  is_in_delayslot   := io.fromMemoryStage.is_in_delayslot
-  current_inst_addr := io.fromMemoryStage.current_inst_addr
-  epc               := cp0_epc
+  is_in_delayslot := io.fromMemoryStage.is_in_delayslot
 
   // io-finish
-  inst_is_mfc0 := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
+  inst_is_mfc0    := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
+  inst_is_mtc0    := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
+  inst_is_eret    := io.fromMemoryStage.valid && (aluop === EXE_ERET_OP)
+  inst_is_syscall := io.fromMemoryStage.valid && (aluop === EXE_SYSCALL_OP)
 
   ms_fwd_valid := ms_valid
 
@@ -135,7 +133,7 @@ class Memory extends Module {
     LLbit_wen   := false.B
     LLbit_value := false.B
     cp0_wen     := WRITE_DISABLE
-    cp0_waddr   := "b00000".U
+    cp0_waddr   := 0.U
     cp0_wdata   := ZERO_WORD
   }.otherwise {
     // input-memory stage
@@ -145,9 +143,10 @@ class Memory extends Module {
     whilo       := io.fromMemoryStage.whilo
     LLbit_wen   := false.B
     LLbit_value := false.B
-    cp0_wen     := io.fromMemoryStage.cp0_wen
-    cp0_waddr   := io.fromMemoryStage.cp0_waddr
-    cp0_wdata   := io.fromMemoryStage.cp0_wdata
+
+    cp0_waddr := io.fromMemoryStage.cp0_addr
+    cp0_wen   := (aluop === EXE_MTC0_OP) && ms_valid
+    cp0_wdata := reg_wdata
 
     val addrLowBit2 = io.fromMemoryStage.mem_addr(1, 0)
 
@@ -261,82 +260,6 @@ class Memory extends Module {
         EXE_SC_OP -> (!LLbit),
       ),
     ) // LLbit_value
-  }
-
-  when(reset.asBool === RST_ENABLE) {
-    cp0_status := ZERO_WORD
-  }.elsewhen(
-    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_STATUS),
-  ) {
-
-    // input-write back stage
-    cp0_status := io.fromWriteBackStage.cp0_wdata
-  }.otherwise {
-
-    // input-c p0
-    cp0_status := io.fromCP0.status
-  }
-
-  when(reset.asBool === RST_ENABLE) {
-    cp0_epc := ZERO_WORD
-  }.elsewhen(
-    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_EPC),
-  ) {
-
-    // input-write back stage
-    cp0_epc := io.fromWriteBackStage.cp0_wdata
-  }.otherwise {
-
-    // input-c p0
-    cp0_epc := io.fromCP0.epc
-  }
-
-  when(reset.asBool === RST_ENABLE) {
-    cp0_cause := ZERO_WORD
-  }.elsewhen(
-    (io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) &&
-      (io.fromWriteBackStage.cp0_waddr === CP0_REG_CAUSE),
-  ) {
-    cp0_cause := Cat(
-      io.fromCP0.cause(31, 24),
-      io.fromWriteBackStage.cp0_wdata(23),
-      io.fromWriteBackStage.cp0_wdata(22),
-      io.fromCP0.cause(21, 10),
-      io.fromWriteBackStage.cp0_wdata(9, 8),
-      io.fromCP0.cause(7, 0),
-    )
-
-  }.otherwise {
-    cp0_cause := io.fromCP0.cause
-  }
-
-  when(reset.asBool === RST_ENABLE) {
-    except_type := ZERO_WORD
-  }.otherwise {
-    except_type := ZERO_WORD
-
-    when(io.fromMemoryStage.current_inst_addr =/= ZERO_WORD) {
-      when(
-        ((cp0_cause(15, 8) & (cp0_status(15, 8))) =/= 0.U) &&
-          (cp0_status(1) === 0.U) &&
-          (cp0_status(0)),
-      ) {
-        except_type := "h00000001".U // interrupt
-      }.elsewhen(io.fromMemoryStage.except_type(8)) {
-        except_type := "h00000008".U // syscall
-      }.elsewhen(io.fromMemoryStage.except_type(9)) {
-        except_type := "h0000000a".U // inst_invalid
-      }.elsewhen(io.fromMemoryStage.except_type(10)) {
-        except_type := "h0000000d".U // trap
-      }.elsewhen(io.fromMemoryStage.except_type(11)) { // ov
-        except_type := "h0000000c".U
-      }.elsewhen(io.fromMemoryStage.except_type(12)) { // 返回指令
-        except_type := "h0000000e".U
-      }
-    }
-
   }
 
   // debug

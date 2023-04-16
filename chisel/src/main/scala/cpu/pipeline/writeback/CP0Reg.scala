@@ -8,184 +8,163 @@ import cpu.defines.Const._
 class CP0Reg extends Module {
   val io = IO(new Bundle {
     val fromWriteBackStage = Flipped(new WriteBackStage_CP0())
-    val fromExecute        = Flipped(new Execute_CP0())
-    val fromMemory         = Flipped(new Memory_CP0())
-    val int_i              = Input(UInt(6.W))
 
-    val memory      = new CP0_Memory()
-    val fetchStage  = new CP0_FetchStage()
-    val mov         = new CP0_Mov()
-    val timer_int_o = Output(Bool())
-    val out         = new CP0_Output()
+    val writeBackStage = new CP0_WriteBackStage()
   })
+  // input-writeBack stage
+  val wb_ex       = io.fromWriteBackStage.wb_ex
+  val wb_bd       = io.fromWriteBackStage.wb_bd
+  val eret_flush  = io.fromWriteBackStage.eret_flush
+  val wb_excode   = io.fromWriteBackStage.wb_excode
+  val wb_pc       = io.fromWriteBackStage.wb_pc
+  val wb_badvaddr = io.fromWriteBackStage.wb_badvaddr
+  val ext_int_in  = io.fromWriteBackStage.ext_int_in
+  val cp0_addr    = io.fromWriteBackStage.cp0_addr
+  val mtc0_we     = io.fromWriteBackStage.mtc0_we
+  val cp0_wdata   = io.fromWriteBackStage.cp0_wdata
 
-  // output
-  val data      = Wire(BUS)
-  val count     = RegInit(BUS_INIT)
-  val compare   = RegInit(BUS_INIT)
-  val status    = RegInit("b00010000000000000000000000000000".U(32.W))
-  val cause     = RegInit(BUS_INIT)
-  val epc       = RegInit(BUS_INIT)
-  val config    = RegInit("b00000000000000001000000000000000".U(32.W))
-  val prid      = RegInit("b00000000010011000000000100000010".U(32.W))
-  val timer_int = RegInit(INTERRUPT_NOT_ASSERT)
+  // output-writeBack stage
+  val cp0_rdata    = Wire(UInt(32.W))
+  val cp0_status   = Wire(UInt(32.W))
+  val cp0_cause    = Wire(UInt(32.W))
+  val cp0_epc      = Wire(UInt(32.W))
+  val cp0_badvaddr = Wire(UInt(32.W))
+  val cp0_count    = Wire(UInt(32.W))
+  val cp0_compare  = Wire(UInt(32.W))
+  io.writeBackStage.cp0_rdata    := cp0_rdata
+  io.writeBackStage.cp0_status   := cp0_status
+  io.writeBackStage.cp0_cause    := cp0_cause
+  io.writeBackStage.cp0_epc      := cp0_epc
+  io.writeBackStage.cp0_badvaddr := cp0_badvaddr
+  io.writeBackStage.cp0_count    := cp0_count
+  io.writeBackStage.cp0_compare  := cp0_compare
 
-  // output-execute
-  io.mov.cp0_rdata := data
+  // CP0_STATUS
+  val cp0_status_bev = true.B
 
-  // output-out
-  io.out.count   := count
-  io.out.compare := compare
-
-  // output-memory
-  io.memory.status := status
-  io.memory.cause  := cause
-  io.memory.epc    := epc
-
-  // output-fetchStage
-  io.fetchStage.epc := epc
-
-  // output-out
-  io.out.config := config
-  io.out.prid   := prid
-
-  // output-timer_int_o := timer_int
-  io.timer_int_o := timer_int
-
-  // io-finish
-
-  count := count + 1.U
-  cause := Cat(cause(31, 16), io.int_i, cause(9, 0))
-
-  when(compare =/= ZERO_WORD && count === compare) {
-    timer_int := INTERRUPT_ASSERT
+  val cp0_status_im = RegInit(0.U(8.W))
+  when(mtc0_we && cp0_addr === CP0_STATUS_ADDR) {
+    cp0_status_im := cp0_wdata(15, 8)
   }
 
-  when(io.fromWriteBackStage.cp0_wen === WRITE_ENABLE) {
-    switch(io.fromWriteBackStage.cp0_waddr) {
-      is(CP0_REG_COUNT) {
-        count := io.fromWriteBackStage.cp0_wdata
-      }
-      is(CP0_REG_COMPARE) {
-        compare := io.fromWriteBackStage.cp0_wdata
-        // count := `ZeroWord
-        timer_int := INTERRUPT_NOT_ASSERT
-      }
-      is(CP0_REG_STATUS) {
-        status := io.fromWriteBackStage.cp0_wdata
-      }
-      is(CP0_REG_EPC) {
-        epc := io.fromWriteBackStage.cp0_wdata
-      }
-      is(CP0_REG_CAUSE) {
-        // cause寄存器只有IP(1,0)、IV、WP字段是可写的
-        cause := Cat(
-          cause(31, 24),
-          io.fromWriteBackStage.cp0_wdata(23),
-          io.fromWriteBackStage.cp0_wdata(22),
-          cause(21, 10),
-          io.fromWriteBackStage.cp0_wdata(9, 8),
-          cause(7, 0),
-        )
-      }
-    }
+  val cp0_status_exl = RegInit(false.B)
+  when(wb_ex) {
+    cp0_status_exl := true.B
+  }.elsewhen(eret_flush) {
+    cp0_status_exl := false.B
+  }.elsewhen(
+    mtc0_we && (cp0_addr === CP0_STATUS_ADDR),
+  ) {
+    cp0_status_exl := cp0_wdata(1)
   }
 
-  switch(io.fromMemory.except_type) {
-    is("h00000001".U) {
-      when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
-        epc   := io.fromMemory.current_inst_addr - 4.U
-        cause := Cat(1.U(1.W), cause(30, 0))
-      }.otherwise {
-        epc   := io.fromMemory.current_inst_addr
-        cause := Cat(0.U(1.W), cause(30, 0))
-      }
-      status := Cat(status(31, 2), 1.U(1.W), status(0))
-      cause  := Cat(cause(31, 7), "b00000".U(5.W), cause(1, 0))
-    }
-    is("h00000008".U) {
-      when(status(1) === 0.U) {
-        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
-          epc   := io.fromMemory.current_inst_addr - 4.U
-          cause := Cat(1.U(1.W), cause(30, 0))
-        }.otherwise {
-          epc   := io.fromMemory.current_inst_addr
-          cause := Cat(0.U(1.W), cause(30, 0))
-        }
-      }
-      status := Cat(status(31, 2), 1.U(1.W), status(0))
-      cause  := Cat(cause(31, 7), "b01000".U(5.W), cause(1, 0))
-    }
-    is("h0000000a".U) {
-      when(status(1) === 0.U) {
-        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
-          epc   := io.fromMemory.current_inst_addr - 4.U
-          cause := Cat(1.U(1.W), cause(30, 0))
-        }.otherwise {
-          epc   := io.fromMemory.current_inst_addr
-          cause := Cat(0.U(1.W), cause(30, 0))
-        }
-      }
-      status := Cat(status(31, 2), 1.U(1.W), status(0))
-      cause  := Cat(cause(31, 7), "b01010".U(5.W), cause(1, 0))
-    }
-    is("h0000000d".U) {
-      when(status(1) === 0.U) {
-        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
-          epc   := io.fromMemory.current_inst_addr - 4.U
-          cause := Cat(1.U(1.W), cause(30, 0))
-        }.otherwise {
-          epc   := io.fromMemory.current_inst_addr
-          cause := Cat(0.U(1.W), cause(30, 0))
-        }
-      }
-      status := Cat(status(31, 2), 1.U(1.W), status(0))
-      cause  := Cat(cause(31, 7), "b01101".U(5.W), cause(1, 0))
-    }
-    is("h0000000c".U) {
-      when(status(1) === 0.U) {
-        when(io.fromMemory.is_in_delayslot === IN_DELAY_SLOT) {
-          epc   := io.fromMemory.current_inst_addr - 4.U
-          cause := Cat(1.U(1.W), cause(30, 0))
-        }.otherwise {
-          epc   := io.fromMemory.current_inst_addr
-          cause := Cat(0.U(1.W), cause(30, 0))
-        }
-      }
-      status := Cat(status(31, 2), 1.U(1.W), status(0))
-      cause  := Cat(cause(31, 7), "b01100".U(5.W), cause(1, 0))
-    }
-    is("h0000000e".U) {
-      status := Cat(status(31, 2), 0.U(1.W), status(0))
-    }
+  val cp0_status_ie = RegInit(false.B)
+  when(mtc0_we && (cp0_addr === CP0_STATUS_ADDR)) {
+    cp0_status_ie := cp0_wdata(0)
   }
 
-  when(reset.asBool === RST_ENABLE) {
-    data := ZERO_WORD
-  }.otherwise {
-    data := ZERO_WORD // defalut
-    switch(io.fromExecute.cp0_raddr) {
-      is(CP0_REG_COUNT) {
-        data := count
-      }
-      is(CP0_REG_COMPARE) {
-        data := compare
-      }
-      is(CP0_REG_STATUS) {
-        data := status
-      }
-      is(CP0_REG_CAUSE) {
-        data := cause
-      }
-      is(CP0_REG_EPC) {
-        data := epc
-      }
-      is(CP0_REG_PRID) {
-        data := prid
-      }
-      is(CP0_REG_CONFIG) {
-        data := config
-      }
-    }
+  cp0_status := Cat(
+    0.U(9.W),       // 31:23
+    cp0_status_bev, // 22:22
+    0.U(6.W),       // 21:16
+    cp0_status_im,  // 15:8
+    0.U(6.W),       // 7:2
+    cp0_status_exl, // 1:1
+    cp0_status_ie,  // 0:0
+  )
+
+  val cp0_cause_bd = RegInit(false.B)
+  when(wb_ex && !cp0_status_exl) {
+    cp0_cause_bd := wb_bd
   }
+
+  val cp0_cause_ti     = RegInit(false.B)
+  val count_eq_compare = (cp0_count === cp0_compare)
+
+  when(mtc0_we && (cp0_addr === CP0_COMP_ADDR)) {
+    cp0_cause_ti := false.B
+  }.elsewhen(count_eq_compare) {
+    cp0_cause_ti := true.B
+  }
+
+  val cp0_cause_ip = RegInit(0.U(8.W))
+  cp0_cause_ip := Cat(
+    (ext_int_in(5) || cp0_cause_ti), // 7:7
+    ext_int_in(4, 0),                // 6:2
+    cp0_cause_ip(1, 0),              // 1:0
+  )
+
+  when(mtc0_we && cp0_addr === CP0_CAUSE_ADDR) {
+    cp0_cause_ip := Cat(
+      cp0_cause_ip(7, 2), // 7:2
+      cp0_wdata(9, 8),    // 1:0
+    )
+  }
+
+  val cp0_cause_excode = RegInit(0.U(5.W))
+  when(wb_ex) {
+    cp0_cause_excode := wb_excode
+  }
+
+  cp0_cause := Cat(
+    cp0_cause_bd,     // 31:31
+    cp0_cause_ti,     // 30:30
+    0.U(14.W),        // 29:16
+    cp0_cause_ip,     // 15:8
+    false.B,          // 7:7
+    cp0_cause_excode, // 6:2
+    0.U(2.W),         // 1:0
+  )
+
+  // EPC
+  val c0_epc = RegInit(0.U(32.W))
+  when(wb_ex && !cp0_status_exl) {
+    c0_epc := Mux(wb_bd, wb_pc - 4.U, wb_pc)
+  }.elsewhen(mtc0_we && cp0_addr === CP0_EPC_ADDR) {
+    c0_epc := cp0_wdata
+  }
+
+  cp0_epc := c0_epc
+
+  // BADVADDR
+  val c0_badvaddr = RegInit(0.U(32.W))
+  when(wb_ex && wb_excode === CP0_BADV_ADDR) {
+    c0_badvaddr := wb_badvaddr
+  }
+
+  cp0_badvaddr := c0_badvaddr
+
+  // COUNT
+  val tick = RegInit(false.B)
+  tick := !tick
+
+  val c0_count = RegInit(0.U(32.W))
+  when(mtc0_we && cp0_addr === CP0_COUNT_ADDR) {
+    c0_count := cp0_wdata
+  }.elsewhen(tick) {
+    c0_count := c0_count + 1.U
+  }
+
+  cp0_count := c0_count
+
+  // COMPARE
+  val c0_compare = RegInit(0.U(32.W))
+  when(mtc0_we && cp0_addr === CP0_COMP_ADDR) {
+    c0_compare := cp0_wdata
+  }
+
+  cp0_compare := c0_compare
+
+  cp0_rdata := MuxLookup(
+    cp0_addr,
+    ZERO_WORD,
+    Seq(
+      CP0_STATUS_ADDR -> cp0_status,
+      CP0_CAUSE_ADDR  -> cp0_cause,
+      CP0_EPC_ADDR    -> cp0_epc,
+      CP0_BADV_ADDR   -> cp0_badvaddr,
+      CP0_COUNT_ADDR  -> cp0_count,
+      CP0_COMP_ADDR   -> cp0_compare,
+    ),
+  )
 }

@@ -25,25 +25,35 @@ class ExecuteStage extends Module {
   val reg2               = RegInit(BUS_INIT)
   val reg_waddr          = RegInit(ADDR_BUS_INIT)
   val reg_wen            = RegInit(REG_WRITE_DISABLE)
-  val current_inst_addr  = RegInit(BUS_INIT)
-  val except_type        = RegInit(0.U(32.W))
   val pc                 = RegInit(INST_ADDR_BUS_INIT)
   val es_valid           = RegInit(false.B)
+  val ex                 = RegInit(false.B)
+  val bd                 = RegInit(false.B)
+  val badvaddr           = RegInit(false.B)
+  val cp0_addr           = RegInit(0.U(8.W))
+  val excode             = RegInit(0.U(5.W))
+  val overflow_inst      = RegInit(false.B)
+  val fs_to_ds_ex        = RegInit(false.B)
 
   // output-execute
-  io.execute.aluop             := aluop
-  io.execute.alusel            := alusel
-  io.execute.inst              := inst
-  io.execute.is_in_delayslot   := ex_is_in_delayslot
-  io.execute.link_addr         := link_addr
-  io.execute.reg1              := reg1
-  io.execute.reg2              := reg2
-  io.execute.reg_waddr         := reg_waddr
-  io.execute.reg_wen           := reg_wen
-  io.execute.current_inst_addr := current_inst_addr
-  io.execute.except_type       := except_type
-  io.execute.pc                := pc
-  io.execute.valid             := es_valid
+  io.execute.aluop           := aluop
+  io.execute.alusel          := alusel
+  io.execute.inst            := inst
+  io.execute.is_in_delayslot := ex_is_in_delayslot
+  io.execute.link_addr       := link_addr
+  io.execute.reg1            := reg1
+  io.execute.reg2            := reg2
+  io.execute.reg_waddr       := reg_waddr
+  io.execute.reg_wen         := reg_wen
+  io.execute.pc              := pc
+  io.execute.valid           := es_valid
+  io.execute.bd              := bd
+  io.execute.badvaddr        := badvaddr
+  io.execute.cp0_addr        := cp0_addr
+  io.execute.excode          := excode
+  io.execute.overflow_inst   := overflow_inst
+  io.execute.fs_to_ds_ex     := fs_to_ds_ex
+  io.execute.ds_to_es_ex     := ex
 
   // output-decoder
   io.decoder.is_in_delayslot := is_in_delayslot
@@ -63,9 +73,14 @@ class ExecuteStage extends Module {
     ex_is_in_delayslot := io.fromDecoder.is_in_delayslot
     is_in_delayslot    := io.fromDecoder.next_inst_in_delayslot
     inst               := io.fromDecoder.inst
-    except_type        := io.fromDecoder.except_type
-    current_inst_addr  := io.fromDecoder.current_inst_addr
     pc                 := io.fromDecoder.pc
+    ex                 := io.fromDecoder.ex
+    bd                 := io.fromDecoder.bd
+    badvaddr           := io.fromDecoder.badvaddr
+    cp0_addr           := io.fromDecoder.cp0_addr
+    excode             := io.fromDecoder.excode
+    overflow_inst      := io.fromDecoder.overflow_inst
+    fs_to_ds_ex        := io.fromDecoder.fs_to_ds_ex
   }
 
   // debug

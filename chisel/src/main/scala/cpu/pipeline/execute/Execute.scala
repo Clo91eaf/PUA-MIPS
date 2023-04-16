@@ -23,7 +23,6 @@ class Execute extends Module {
     val mov          = new Execute_Mov()
     val memoryStage  = new Execute_MemoryStage()
     val decoder      = new Execute_Decoder()
-    val cp0          = new Execute_CP0()
     val dataMemory   = new Execute_DataMemory()
     val executeStage = new Execute_ExecuteStage()
   })
@@ -37,6 +36,8 @@ class Execute extends Module {
   val wreg_i    = io.fromExecuteStage.reg_wen
   val inst      = io.fromExecuteStage.inst
   val es_valid  = io.fromExecuteStage.valid
+  val cp0_addr  = io.fromExecuteStage.cp0_addr
+  val bd        = io.fromExecuteStage.bd
 
   // input-hilo
   val hi_i = io.fromHILO.hi
@@ -61,28 +62,31 @@ class Execute extends Module {
   val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg_wen           = Wire(REG_WRITE_BUS)
-  val reg_wdata         = Wire(BUS)
-  val hi                = Wire(BUS)
-  val lo                = Wire(BUS)
-  val whilo             = Wire(Bool())
-  val hilo_temp_o       = Wire(DOUBLE_BUS)
-  val cnt               = Wire(CNT_BUS)
-  val mem_addr_temp     = Wire(BUS)
-  val stallreq          = Wire(Bool())
-  val cp0_raddr         = Wire(CP0_ADDR_BUS)
-  val cp0_wen           = Wire(Bool())
-  val cp0_waddr         = Wire(CP0_ADDR_BUS)
-  val cp0_wdata         = Wire(BUS)
-  val current_inst_addr = Wire(BUS)
-  val except_type       = Wire(UInt(32.W))
-  val allowin           = Wire(Bool())
-  val valid             = Wire(Bool())
-  val blk_valid         = Wire(Bool())
-  val es_fwd_valid      = Wire(Bool())
+  val reg_wen       = Wire(REG_WRITE_BUS)
+  val reg_wdata     = Wire(BUS)
+  val hi            = Wire(BUS)
+  val lo            = Wire(BUS)
+  val whilo         = Wire(Bool())
+  val hilo_temp_o   = Wire(DOUBLE_BUS)
+  val cnt           = Wire(CNT_BUS)
+  val mem_addr_temp = Wire(BUS)
+  val stallreq      = Wire(Bool())
+  val allowin       = Wire(Bool())
+  val valid         = Wire(Bool())
+  val blk_valid     = Wire(Bool())
+  val es_fwd_valid  = Wire(Bool())
+  val badvaddr      = Wire(Bool())
+  val excode        = Wire(UInt(5.W))
+  val ex            = Wire(Bool())
+  val no_store      = Wire(Bool())
 
   // output-memory stage
-  io.memoryStage.pc := pc
+  io.memoryStage.pc       := pc
+  io.memoryStage.ex       := ex
+  io.memoryStage.bd       := bd
+  io.memoryStage.badvaddr := badvaddr
+  io.memoryStage.cp0_addr := cp0_addr
+  io.memoryStage.excode   := excode
 
   // output-decoder
   io.decoder.reg_wen   := reg_wen
@@ -112,25 +116,20 @@ class Execute extends Module {
   // output-execute stage
   io.executeStage.allowin := allowin
 
-  // output-cp0
-  io.cp0.cp0_raddr := cp0_raddr
-
   // output-memory stage
-  io.memoryStage.cp0_wen           := cp0_wen
-  io.memoryStage.cp0_waddr         := cp0_waddr
-  io.memoryStage.cp0_wdata         := cp0_wdata
-  io.memoryStage.current_inst_addr := current_inst_addr
-  io.memoryStage.is_in_delayslot   := is_in_delayslot
-  io.memoryStage.except_type       := except_type
-  io.memoryStage.mem_addr          := mem_addr_temp
+  io.memoryStage.is_in_delayslot := is_in_delayslot
+  io.memoryStage.mem_addr        := mem_addr_temp
 
   // output-data memory
-  io.dataMemory.valid := ~except_type.orR() & es_valid
+  io.dataMemory.valid := es_valid && !no_store
   io.dataMemory.op    := aluop
   io.dataMemory.data  := reg2
   io.dataMemory.addr  := mem_addr_temp
 
   // io-finish
+
+  no_store := io.fromMemory.ex | io.fromWriteBackStage.ex |
+    ex | io.fromMemory.eret | io.fromWriteBackStage.eret
 
   val ready_go = Wire(Bool())
   val load_op  = Wire(Bool())
@@ -147,21 +146,9 @@ class Execute extends Module {
     load_op := false.B
   }
 
-  // TODO
-  // val signed_dout_tvalid    = Wire(Bool())
-  // val signed_divider_done   = Wire(Bool())
-  // val unsigned_dout_tvalid  = Wire(Bool())
-  // val unsigned_divider_done = Wire(Bool())
-
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   blk_valid := es_valid && load_op && ws_not_eret_ex
-  // ready_go := MuxCase(
-  //   true.B,
-  //   Seq(
-  //     (aluop === EXE_DIV_OP && ws_not_eret_ex) -> (signed_dout_tvalid || signed_divider_done),
-  //     (aluop === EXE_DIVU_OP && ws_not_eret_ex) -> (unsigned_dout_tvalid || unsigned_divider_done),
-  //   ),
-  // )
+
   ready_go := !stallreq
   valid    := es_valid && ready_go && ws_not_eret_ex
   allowin  := !es_valid || ready_go && io.fromMemory.allowin
@@ -180,24 +167,12 @@ class Execute extends Module {
   val ovassert               = Wire(Bool())
 
   // liphen
-  cp0_raddr  := ZERO_WORD
   hilo_temp1 := ZERO_WORD
   //
 
   mem_addr_temp := reg1 + Util.signedExtend(
     inst(15, 0),
   ) // mem_addr传递到访存阶段，是加载、存储指令对应的存储器地址
-
-  except_type := Cat(
-    io.fromExecuteStage.except_type(31, 12),
-    ovassert,
-    trapassert,
-    io.fromExecuteStage.except_type(9, 8),
-    "h00".U(8.W),
-  )
-
-  // input-execute stage
-  current_inst_addr := io.fromExecuteStage.current_inst_addr
 
   // 根据aluop指示的运算子类型进行运算
   io.alu.op  := aluop
@@ -287,10 +262,9 @@ class Execute extends Module {
     alusel,
     ZERO_WORD,
     Seq(
-      EXE_RES_ALU         -> alures,
+      EXE_RES_NOP         -> alures,
       EXE_RES_ALU         -> alures,
       EXE_RES_MOV         -> moveres,
-      EXE_RES_ALU         -> alures,
       EXE_RES_MUL         -> mulres(31, 0),
       EXE_RES_JUMP_BRANCH -> link_addr,
     ),
@@ -331,20 +305,29 @@ class Execute extends Module {
     lo    := ZERO_WORD
   }
 
-  when(reset.asBool === RST_ENABLE) {
-    cp0_waddr := 0.U
-    cp0_wen   := WRITE_DISABLE
-    cp0_wdata := ZERO_WORD
-  }.elsewhen(aluop === EXE_MTC0_OP) {
-    cp0_waddr := inst(15, 11)
-    cp0_wen   := WRITE_ENABLE
-    cp0_wdata := reg1
-  }.otherwise {
-    cp0_waddr := 0.U
-    cp0_wen   := WRITE_DISABLE
-    cp0_wdata := ZERO_WORD
-  }
+  val overflow_ex = io.fromExecuteStage.overflow_inst && io.fromAlu.ov
+  val st_addr     = mem_addr_temp(1, 0)
+  val load_ex = ((aluop === EXE_LW_OP) && (st_addr =/= 0.U)) ||
+    ((aluop === EXE_LH_OP || aluop === EXE_LHU_OP) && st_addr(0) =/= 0.U)
+  val store_ex = (aluop === EXE_SW_OP && (st_addr =/= 0.U)) ||
+    (aluop === EXE_SH_OP && (st_addr(0) =/= 0.U))
+  val mem_ex = load_ex || store_ex
 
+  ex := (overflow_ex | mem_ex | io.fromExecuteStage.ds_to_es_ex) & es_valid
+  badvaddr := Mux(
+    io.fromExecuteStage.fs_to_ds_ex,
+    io.fromExecuteStage.badvaddr,
+    io.fromAlu.out,
+  )
+  excode := MuxCase(
+    io.fromExecuteStage.excode,
+    Seq(
+      io.fromExecuteStage.ds_to_es_ex -> io.fromExecuteStage.excode,
+      overflow_ex                     -> EX_OV,
+      load_ex                         -> EX_ADEL,
+      store_ex                        -> EX_ADES,
+    ),
+  )
   // debug
   // printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
 }

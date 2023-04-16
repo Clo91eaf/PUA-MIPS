@@ -7,7 +7,6 @@ import cpu.defines.Const._
 
 class Mov extends Module {
   val io = IO(new Bundle {
-    val fromCP0            = Flipped(new CP0_Mov())
     val fromMemory         = Flipped(new Memory_Mov())
     val fromWriteBackStage = Flipped(new WriteBackStage_Mov())
     val fromExecute        = Flipped(new Execute_Mov())
@@ -35,7 +34,7 @@ class Mov extends Module {
       EXE_MOVZ_OP -> in,
       EXE_MOVN_OP -> in,
       EXE_MFC0_OP -> MuxCase(
-        io.fromCP0.cp0_rdata,
+        io.fromWriteBackStage.cp0_rdata,
         Seq(
           (mem_cp0) -> io.fromMemory.cp0_wdata,
           (wbs_cp0) -> io.fromWriteBackStage.cp0_wdata,
