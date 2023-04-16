@@ -369,7 +369,11 @@ class Decoder extends Module {
     ),
   )
 
-  branch_flag := MuxLookup(
+  val branch_flag_temp = Wire(Bool())
+
+  branch_flag := ds_valid && branch_flag_temp
+
+  branch_flag_temp := MuxLookup(
     aluop,
     NOT_BRANCH,
     Seq(
