@@ -80,12 +80,12 @@ class Execute extends Module {
   val ex            = Wire(Bool())
 
   // output-memory stage
-  io.memoryStage.pc            := pc
-  io.memoryStage.ex            := ex
-  io.memoryStage.bd            := bd
-  io.memoryStage.badvaddr      := badvaddr
-  io.memoryStage.cp0_addr      := cp0_addr
-  io.memoryStage.excode        := excode
+  io.memoryStage.pc       := pc
+  io.memoryStage.ex       := ex
+  io.memoryStage.bd       := bd
+  io.memoryStage.badvaddr := badvaddr
+  io.memoryStage.cp0_addr := cp0_addr
+  io.memoryStage.excode   := excode
 
   // output-decoder
   io.decoder.reg_wen   := reg_wen
@@ -142,21 +142,9 @@ class Execute extends Module {
     load_op := false.B
   }
 
-  // TODO
-  // val signed_dout_tvalid    = Wire(Bool())
-  // val signed_divider_done   = Wire(Bool())
-  // val unsigned_dout_tvalid  = Wire(Bool())
-  // val unsigned_divider_done = Wire(Bool())
-
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   blk_valid := es_valid && load_op && ws_not_eret_ex
-  // ready_go := MuxCase(
-  //   true.B,
-  //   Seq(
-  //     (aluop === EXE_DIV_OP && ws_not_eret_ex) -> (signed_dout_tvalid || signed_divider_done),
-  //     (aluop === EXE_DIVU_OP && ws_not_eret_ex) -> (unsigned_dout_tvalid || unsigned_divider_done),
-  //   ),
-  // )
+
   ready_go := !stallreq
   valid    := es_valid && ready_go && ws_not_eret_ex
   allowin  := !es_valid || ready_go && io.fromMemory.allowin
@@ -268,12 +256,9 @@ class Execute extends Module {
   reg_wen := Mux(ovassert, REG_WRITE_DISABLE, wreg_i)
   reg_wdata := MuxLookup(
     alusel,
-    ZERO_WORD,
+    alures,
     Seq(
-      EXE_RES_ALU         -> alures,
-      EXE_RES_ALU         -> alures,
       EXE_RES_MOV         -> moveres,
-      EXE_RES_ALU         -> alures,
       EXE_RES_MUL         -> mulres(31, 0),
       EXE_RES_JUMP_BRANCH -> link_addr,
     ),

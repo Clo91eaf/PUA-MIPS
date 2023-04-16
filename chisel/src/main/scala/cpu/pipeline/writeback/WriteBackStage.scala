@@ -151,7 +151,6 @@ class WriteBackStage extends Module {
     ws_cp0_addr        := io.fromMemory.cp0_addr
     ws_ex              := io.fromMemory.ex
     ws_bd              := io.fromMemory.bd
-
   }
 
   cp0_epc    := Fill(32, ws_valid) & io.fromCP0.cp0_epc
