@@ -34,3 +34,10 @@ wave:
 	@echo "get wave"
 	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_wave.tcl -tclargs $(test_top)
 
+count:
+	@echo "count the lines"
+	find . -name "*.scala" | xargs wc -l
+
+count_commit:
+	@echo "count the commits"
+	git log --format=oneline | wc -l

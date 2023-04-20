@@ -11,10 +11,11 @@ class Execute extends Module {
     val fromMul            = Flipped(new Mul_Execute())
     val fromDiv            = Flipped(new Div_Execute())
     val fromMov            = Flipped(new Mov_Execute())
+    val fromDataMemory     = Flipped(new DataMemory_Execute())
     val fromExecuteStage   = Flipped(new ExecuteStage_Execute())
     val fromMemoryStage    = Flipped(new MemoryStage_Execute())
-    val fromHILO           = Flipped(new HILO_Execute())
     val fromMemory         = Flipped(new Memory_Execute())
+    val fromHILO           = Flipped(new HILO_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
 
     val alu          = new Execute_ALU()
@@ -89,42 +90,59 @@ class Execute extends Module {
   io.memoryStage.excode   := excode
 
   // output-decoder
-  io.decoder.reg_wen   := reg_wen
-  io.decoder.reg_waddr := reg_waddr
-  io.decoder.reg_wdata := reg_wdata
-  io.decoder.aluop     := aluop
-  io.decoder.blk_valid := blk_valid
-  io.decoder.allowin   := allowin
+  io.decoder.reg_wen      := reg_wen
+  io.decoder.reg_waddr    := reg_waddr
+  io.decoder.reg_wdata    := reg_wdata
+  io.decoder.aluop        := aluop
+  io.decoder.blk_valid    := blk_valid
+  io.decoder.allowin      := allowin
   io.decoder.inst_is_mfc0 := io.fromExecuteStage.valid && (aluop === EXE_MFC0_OP)
   io.decoder.es_fwd_valid := es_fwd_valid
 
   // output-memory stage
-  io.memoryStage.reg_wen   := reg_wen
-  io.memoryStage.reg_waddr := reg_waddr
-  io.memoryStage.reg_wdata := reg_wdata
-  io.memoryStage.hi        := hi
-  io.memoryStage.lo        := lo
-  io.memoryStage.whilo     := whilo
-  io.memoryStage.hilo      := hilo_temp_o
-  io.memoryStage.cnt       := cnt
-
-  // output-memory stage
-  io.memoryStage.aluop := aluop
-  io.memoryStage.reg2  := reg2
-  io.memoryStage.valid := valid
+  io.memoryStage.reg_wen         := reg_wen
+  io.memoryStage.reg_waddr       := reg_waddr
+  io.memoryStage.reg_wdata       := reg_wdata
+  io.memoryStage.hi              := hi
+  io.memoryStage.lo              := lo
+  io.memoryStage.whilo           := whilo
+  io.memoryStage.hilo            := hilo_temp_o
+  io.memoryStage.cnt             := cnt
+  io.memoryStage.aluop           := aluop
+  io.memoryStage.reg2            := reg2
+  io.memoryStage.valid           := valid
+  io.memoryStage.is_in_delayslot := is_in_delayslot
+  io.memoryStage.mem_addr        := mem_addr_temp
+  io.memoryStage.data_ok         := es_data_ok
+  io.memoryStage.data            := Mux(data_buff.orR, data_buff, io.fromDataMemory.rdata)
+  io.memoryStage.wait_mem        := es_valid && io.fromDataMemory.addr_ok
 
   // output-execute stage
   io.executeStage.allowin := allowin
 
-  // output-memory stage
-  io.memoryStage.is_in_delayslot := is_in_delayslot
-  io.memoryStage.mem_addr        := mem_addr_temp
-
   // output-data memory
-  io.dataMemory.valid := es_valid && !no_store
-  io.dataMemory.op    := aluop
-  io.dataMemory.data  := reg2
-  io.dataMemory.addr  := mem_addr_temp
+  val addr_ok_r       = RegInit(false.B)
+  val data_sram_req   = es_valid && !addr_ok_r && !no_store
+  val data_buff       = RegInit(BUS_INIT)
+  val es_addr_ok      = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
+  val es_data_sram_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
+  val es_data_ok      = data_buff.orR || (es_addr_ok && es_data_sram_ok)
+  io.dataMemory.req     := data_sram_req
+  io.dataMemory.op      := aluop
+  io.dataMemory.data    := reg2
+  io.dataMemory.addr    := mem_addr_temp
+  io.dataMemory.waiting := es_valid && es_addr_ok && !es_data_ok
+
+  when(data_sram_req && io.fromDataMemory.addr_ok && !io.fromMemory.allowin) {
+    addr_ok_r := true.B
+  }.elsewhen(io.fromMemory.allowin) {
+    addr_ok_r := false.B
+  }
+  when(io.fromMemory.allowin || no_store) {
+    data_buff := BUS_INIT
+  }.elsewhen(io.fromDataMemory.addr_ok && io.fromDataMemory.data_ok && io.fromMemory.inst_unable) {
+    data_buff := io.fromDataMemory.rdata
+  }
 
   // io-finish
 

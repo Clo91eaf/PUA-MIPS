@@ -6,7 +6,7 @@ import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromDataMemory = Flipped(new DataMemory_DataStage())
+    val fromDataMemory = Flipped(new DataMemory_MemoryStage())
     val fromExecute    = Flipped(new Execute_MemoryStage())
     val fromMemory     = Flipped(new Memory_MemoryStage())
 
@@ -34,6 +34,7 @@ class MemoryStage extends Module {
   val badvaddr        = RegInit(false.B)
   val cp0_addr        = RegInit(0.U(8.W))
   val excode          = RegInit(0.U(5.W))
+  val data_ok         = RegInit(false.B)
 
   // output-memory
   io.memory.pc        := pc
@@ -51,6 +52,7 @@ class MemoryStage extends Module {
   io.memory.badvaddr  := badvaddr
   io.memory.cp0_addr  := cp0_addr
   io.memory.excode    := excode
+  io.memory.data_ok   := data_ok
 
   // output-execute
   io.execute.hilo := hilo
@@ -60,7 +62,7 @@ class MemoryStage extends Module {
   io.memory.is_in_delayslot := is_in_delayslot
   io.memory.valid           := valid
 
-  // io-finish
+  /*--------------------io finish--------------------*/
   when(io.fromMemory.allowin) {
     valid := io.fromExecute.valid
   }
@@ -84,6 +86,7 @@ class MemoryStage extends Module {
     badvaddr        := io.fromExecute.badvaddr
     cp0_addr        := io.fromExecute.cp0_addr
     excode          := io.fromExecute.excode
+    data_ok         := io.fromExecute.data_ok
   }
 
   // debug

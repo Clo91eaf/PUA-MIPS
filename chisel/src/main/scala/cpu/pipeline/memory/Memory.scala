@@ -56,12 +56,20 @@ class Memory extends Module {
   io.decoder.ms_fwd_valid := ms_fwd_valid
 
   // output-execute
+  val ms_data_buff = RegInit(BUS_INIT)
   io.execute.hi      := hi
   io.execute.lo      := lo
   io.execute.whilo   := whilo && valid
   io.execute.allowin := allowin
   io.execute.ex      := ms_valid && io.fromMemoryStage.ex
   io.execute.eret    := ms_valid && inst_is_eret
+  io.execute.inst_unable := !ms_valid || ms_data_buff.orR || io.fromMemoryStage.data_ok
+
+  when (!ms_data_buff.orR && ms_valid && io.fromDataMemory.data_ok) {
+    ms_data_buff := io.fromDataMemory.rdata
+  }.elsewhen(io.fromWriteBackStage.allowin && io.fromWriteBackStage.eret && io.fromWriteBackStage.ex) {
+    ms_data_buff := BUS_INIT
+  }
 
   // output-memory stage
   io.memoryStage.allowin := allowin
@@ -95,7 +103,7 @@ class Memory extends Module {
   // input-memory stage
   is_in_delayslot := io.fromMemoryStage.is_in_delayslot
 
-  // io-finish
+  /*-------------------------------io finish-------------------------------*/
   inst_is_mfc0    := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
   inst_is_mtc0    := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
   inst_is_eret    := io.fromMemoryStage.valid && (aluop === EXE_ERET_OP)

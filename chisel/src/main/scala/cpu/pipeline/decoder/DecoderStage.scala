@@ -16,25 +16,23 @@ class DecoderStage extends Module {
   val ex       = RegInit(false.B)
   val bd       = RegInit(false.B)
   val badvaddr = RegInit(false.B)
-  val ds_valid = RegInit(false.B)
+  val valid    = RegInit(false.B)
 
   // output-decoder
   io.decoder.pc       := pc
   io.decoder.inst     := inst
   io.decoder.ex       := ex
-  io.decoder.bd       := bd
   io.decoder.badvaddr := badvaddr
-  io.decoder.valid    := ds_valid
+  io.decoder.valid    := valid
 
   when(io.fromDecoder.allowin) {
-    ds_valid := io.fromFetchStage.valid
+    valid := io.fromFetchStage.valid
   }
 
   when(io.fromFetchStage.valid && io.fromDecoder.allowin) {
     pc       := io.fromFetchStage.pc
     inst     := io.fromFetchStage.inst
     ex       := io.fromFetchStage.ex
-    bd       := io.fromFetchStage.bd
     badvaddr := io.fromFetchStage.badvaddr
   }
 

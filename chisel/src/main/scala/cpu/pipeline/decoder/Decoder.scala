@@ -15,13 +15,13 @@ class Decoder extends Module {
     val fromMemory         = Flipped(new Memory_Decoder())
     val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
 
-    val decoderStage = new Decoder_DecoderStage()
-    val fetchStage   = new Decoder_FetchStage()
-    val executeStage = new Decoder_ExecuteStage()
-    val regfile      = new Decoder_RegFile()
+    val preFetchStage = new Decoder_PreFetchStage()
+    val fetchStage    = new Decoder_FetchStage()
+    val decoderStage  = new Decoder_DecoderStage()
+    val executeStage  = new Decoder_ExecuteStage()
+    val regfile       = new Decoder_RegFile()
   })
   // input
-
   val aluop_i           = Wire(ALU_OP_BUS)
   val reg1_data         = Wire(BUS)
   val reg2_data         = Wire(BUS)
@@ -32,15 +32,15 @@ class Decoder extends Module {
   val inst     = io.fromDecoderStage.inst
   val ds_valid = io.fromDecoderStage.valid
 
-  // input-execute
-  aluop_i := io.fromExecute.aluop
-
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
   reg2_data := io.fromRegfile.reg2_data
 
   // input-execute stage
   is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
+
+  // input-execute
+  aluop_i := io.fromExecute.aluop
 
   // input-writeBack stage
   val cp0_cause  = io.fromWriteBackStage.cp0_cause
@@ -63,16 +63,28 @@ class Decoder extends Module {
   val link_addr              = Wire(BUS)
   val is_in_delayslot        = Wire(Bool())
   val allowin                = Wire(Bool())
-  val is_branch              = Wire(Bool())
   val valid                  = Wire(Bool())
   val ex                     = Wire(Bool())
   val excode                 = Wire(UInt(5.W))
   val overflow_inst          = Wire(Bool())
+  val bd                     = RegInit(false.B)
+
+  // output-preFetchStage
+  io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
+  io.preFetchStage.branch_stall          := branch_flag && !ready_go
+  io.preFetchStage.branch_flag           := branch_flag
+  io.preFetchStage.branch_target_address := branch_target_address
+
+  // output-fetchStage
+  io.fetchStage.allowin := allowin
+
+  // output-decoderStage
+  io.decoderStage.allowin := allowin
 
   // output-execute stage
   io.executeStage.pc            := pc
   io.executeStage.fs_to_ds_ex   := io.fromDecoderStage.ex
-  io.executeStage.bd            := io.fromDecoderStage.bd
+  io.executeStage.bd            := ds_valid && bd
   io.executeStage.badvaddr      := io.fromDecoderStage.badvaddr
   io.executeStage.cp0_addr      := Cat(inst(15, 11), inst(2, 0))
   io.executeStage.ex            := ex
@@ -94,23 +106,11 @@ class Decoder extends Module {
   io.executeStage.inst                   := inst
   io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
   io.executeStage.excode                 := excode
+  io.executeStage.link_addr              := link_addr
+  io.executeStage.is_in_delayslot        := is_in_delayslot
+  io.executeStage.valid                  := valid
 
-  // output-fetchStage
-  io.fetchStage.branch_stall          := false.B
-  io.fetchStage.branch_flag           := branch_flag
-  io.fetchStage.branch_target_address := branch_target_address
-  io.fetchStage.allowin               := allowin
-  io.fetchStage.is_branch             := is_branch
-
-  // output-decoderStage
-  io.decoderStage.allowin := allowin
-
-  // output-execute stage
-  io.executeStage.link_addr       := link_addr
-  io.executeStage.is_in_delayslot := is_in_delayslot
-  io.executeStage.valid           := valid
-
-  // io-finish
+  /*-------------------------------io finish-------------------------------*/
 
   // 取得的指令码功能码
   val op  = Wire(UInt(6.W))
@@ -147,7 +147,7 @@ class Decoder extends Module {
     (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
   ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)))
   allowin := !ds_valid || ready_go && io.fromExecute.allowin
-  valid := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  valid   := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
@@ -369,11 +369,7 @@ class Decoder extends Module {
     ),
   )
 
-  val branch_flag_temp = Wire(Bool())
-
-  branch_flag := ds_valid && branch_flag_temp
-
-  branch_flag_temp := MuxLookup(
+  val branch_flag_temp = MuxLookup(
     aluop,
     NOT_BRANCH,
     Seq(
@@ -393,6 +389,7 @@ class Decoder extends Module {
       // @formatter:on
     ),
   )
+  branch_flag := ds_valid && branch_flag_temp
 
   branch_target_address := MuxLookup(
     aluop,
@@ -427,6 +424,12 @@ class Decoder extends Module {
       // @formatter:on
     ),
   )
+
+  when(io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
+    bd := false.B
+  }.elsewhen(valid && io.fromExecute.allowin) {
+    bd := true.B
+  }
 
   val es_reg_wen   = io.fromExecute.reg_wen
   val es_reg_waddr = io.fromExecute.reg_waddr
@@ -485,27 +488,6 @@ class Decoder extends Module {
   }.otherwise {
     is_in_delayslot := is_in_delayslot_i
   }
-
-  val is_branch_temp = Wire(Bool())
-  is_branch_temp := MuxLookup(
-    aluop,
-    false.B,
-    Seq(
-      EXE_BEQ_OP    -> true.B,
-      EXE_BNE_OP    -> true.B,
-      EXE_JAL_OP    -> true.B,
-      EXE_JR_OP     -> true.B,
-      EXE_BGEZ_OP   -> true.B,
-      EXE_BGTZ_OP   -> true.B,
-      EXE_BLEZ_OP   -> true.B,
-      EXE_BLTZ_OP   -> true.B,
-      EXE_BGEZAL_OP -> true.B,
-      EXE_BLTZAL_OP -> true.B,
-      EXE_J_OP      -> true.B,
-      EXE_JALR_OP   -> true.B,
-    ),
-  )
-  is_branch := is_branch_temp && ds_valid
 
   val interrupt = ((cp0_cause(15, 8) & cp0_status(15, 8)) =/= 0.U) &&
     (cp0_status(1, 0) === 1.U)

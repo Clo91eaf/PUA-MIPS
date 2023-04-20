@@ -3,21 +3,37 @@ package cpu.defines
 import chisel3._
 import Const._
 
-// fetch
+// pre fetch stage
+class PreFetchStage_FetchStage extends Bundle {
+  val valid   = Output(Bool())
+  val inst_ok = Output(Bool())
+  val inst    = Output(BUS)
+  val pc      = Output(BUS)
+}
+
+class PreFetchStage_InstMemory extends Bundle {
+  val req     = Output(Bool())
+  val addr    = Output(BUS)
+  val waiting = Output(Bool())
+}
+
+// fetch stage
+class FetchStage_PreFetchStage extends Bundle {
+  val valid       = Output(Bool())
+  val allowin     = Output(Bool())
+  val inst_unable = Output(Bool())
+}
+
 class FetchStage_DecoderStage extends Bundle {
+  val valid    = Output(Bool())
   val pc       = Output(BUS)
   val inst     = Output(BUS)
   val ex       = Output(Bool())
-  val bd       = Output(Bool())
   val badvaddr = Output(Bool())
-  val valid    = Output(Bool())
 }
 
 class FetchStage_InstMemory extends Bundle {
-  val en    = Output(Bool())
-  val addr  = Output(BUS)
-  val wen   = Output(UInt(4.W))
-  val wdata = Output(BUS)
+  val waiting = Output(Bool())
 }
 
 // decoderStage
@@ -25,18 +41,20 @@ class DecoderStage_Decoder extends Bundle {
   val pc       = Output(BUS)
   val inst     = Output(BUS)
   val ex       = Output(Bool())
-  val bd       = Output(Bool())
   val badvaddr = Output(Bool())
   val valid    = Output(Bool())
 }
 
 // decoder
-class Decoder_FetchStage extends Bundle {
+class Decoder_PreFetchStage extends Bundle {
+  val br_leaving_ds         = Output(Bool())
   val branch_stall          = Output(Bool())
   val branch_flag           = Output(Bool()) // 是否发生转移
   val branch_target_address = Output(BUS)    // 转移到的目标地址
-  val allowin               = Output(Bool())
-  val is_branch             = Output(Bool())
+}
+
+class Decoder_FetchStage extends Bundle {
+  val allowin = Output(Bool())
 }
 
 class Decoder_DecoderStage extends Bundle {
@@ -109,44 +127,16 @@ class Execute_ALU extends Bundle {
   val in2 = Output(BUS)
 }
 
-class ALU_Execute extends Bundle {
-  val out  = Output(BUS)
-  val ov   = Output(Bool())
-  val trap = Output(Bool())
-}
-
 class Execute_Mul extends Bundle {
   val op  = Output(ALU_OP_BUS)
   val in1 = Output(BUS)
   val in2 = Output(BUS)
 }
 
-class Mul_Execute extends Bundle {
-  val out = Output(DOUBLE_BUS)
-}
-
 class Execute_Div extends Bundle {
   val op       = Output(ALU_OP_BUS)
   val divisor  = Output(BUS)
   val dividend = Output(BUS)
-}
-
-class Div_Execute extends Bundle {
-  val quotient  = Output(BUS)
-  val remainder = Output(BUS)
-}
-
-class Memory_Mov extends Bundle {
-  val cp0_wen   = Output(Bool())
-  val cp0_waddr = Output(Bool())
-  val cp0_wdata = Output(Bool())
-}
-
-class WriteBackStage_Mov extends Bundle {
-  val cp0_wen   = Output(Bool())
-  val cp0_waddr = Output(Bool())
-  val cp0_wdata = Output(Bool())
-  val cp0_rdata = Output(BUS)
 }
 
 class Execute_Mov extends Bundle {
@@ -157,6 +147,21 @@ class Execute_Mov extends Bundle {
   val lo   = Output(BUS)
 }
 
+// execute and its component
+class ALU_Execute extends Bundle {
+  val out  = Output(BUS)
+  val ov   = Output(Bool())
+  val trap = Output(Bool())
+}
+
+class Mul_Execute extends Bundle {
+  val out = Output(DOUBLE_BUS)
+}
+
+class Div_Execute extends Bundle {
+  val quotient  = Output(BUS)
+  val remainder = Output(BUS)
+}
 class Mov_Execute extends Bundle {
   val out = Output(BUS)
 }
@@ -196,6 +201,9 @@ class Execute_MemoryStage extends Bundle {
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
+  val data_ok         = Output(Bool())
+  val data            = Output(BUS)
+  val wait_mem        = Output(Bool())
 }
 
 class Execute_CP0 extends Bundle {
@@ -204,28 +212,41 @@ class Execute_CP0 extends Bundle {
 
 // dataMemory
 class Execute_DataMemory extends Bundle {
-  val valid = Output(Bool())
-  val op    = Output(ALU_OP_BUS)
-  val addr  = Output(BUS)
-  val data  = Output(BUS)
+  val req     = Output(Bool())
+  val op      = Output(ALU_OP_BUS)
+  val addr    = Output(BUS)
+  val data    = Output(BUS)
+  val waiting = Output(Bool())
 }
 
 class DataMemory_DataSram extends Bundle {
-  val en    = Output(Bool())
-  val wen   = Output(WEN_BUS)
+  val req   = Output(Bool())
+  val wr    = Output(Bool())
+  val size  = Output(UInt(2.W))
   val addr  = Output(BUS)
+  val wstrb = Output(UInt(4.W))
   val wdata = Output(BUS)
 }
 
 class DataSram_DataMemory extends Bundle {
-  val rdata = Output(BUS)
+  val addr_ok = Output(Bool())
+  val data_ok = Output(Bool())
+  val rdata   = Output(BUS)
+}
+
+class DataMemory_Execute extends Bundle {
+  val addr_ok = Output(Bool())
+  val rdata   = Output(BUS)
+  val data_ok = Output(Bool())
 }
 
 class DataMemory_Memory extends Bundle {
-  val rdata = Output(BUS)
+  val data_ok = Output(Bool())
+  val rdata   = Output(BUS)
+  val waiting = Output(Bool())
 }
 
-class DataMemory_DataStage extends Bundle {
+class DataMemory_MemoryStage extends Bundle {
   val addr = Output(BUS)
 }
 
@@ -253,12 +274,20 @@ class MemoryStage_Memory extends Bundle {
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
+  val data_ok         = Output(Bool())
 }
 
 // memory
+class Memory_Mov extends Bundle {
+  val cp0_wen   = Output(Bool())
+  val cp0_waddr = Output(Bool())
+  val cp0_wdata = Output(Bool())
+}
+
 class Memory_MemoryStage extends Bundle {
   val allowin = Output(Bool())
 }
+
 class Memory_WriteBackStage extends Bundle {
   val pc              = Output(BUS)
   val LLbit_value     = Output(Bool())
@@ -290,12 +319,13 @@ class Memory_Decoder extends Bundle {
 }
 
 class Memory_Execute extends Bundle {
-  val whilo   = Output(Bool())
-  val hi      = Output(BUS)
-  val lo      = Output(BUS)
-  val allowin = Output(Bool())
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
+  val whilo       = Output(Bool())
+  val hi          = Output(BUS)
+  val lo          = Output(BUS)
+  val allowin     = Output(Bool())
+  val eret        = Output(Bool())
+  val ex          = Output(Bool())
+  val inst_unable = Output(Bool())
 }
 
 class Memory_CP0 extends Bundle {
@@ -310,6 +340,13 @@ class Memory_Control extends Bundle {
 }
 
 // writeBackStage
+class WriteBackStage_Mov extends Bundle {
+  val cp0_wen   = Output(Bool())
+  val cp0_waddr = Output(Bool())
+  val cp0_wdata = Output(Bool())
+  val cp0_rdata = Output(BUS)
+}
+
 class WriteBackStage_Decoder extends Bundle {
   val inst_is_mfc0 = Output(Bool())
   val reg_waddr    = Output(ADDR_BUS)
@@ -365,17 +402,45 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_wdata   = Output(UInt(32.W))
 }
 
+class WriteBackStage_PreFetchStage extends Bundle {
+  val eret    = Output(Bool())
+  val ex      = Output(Bool())
+  val cp0_epc = Output(UInt(32.W))
+}
+
 class WriteBackStage_FetchStage extends Bundle {
   val eret    = Output(Bool())
   val ex      = Output(Bool())
   val cp0_epc = Output(UInt(32.W))
 }
 
-// writeBack
-
 // instMemory
+
+class InstMemory_PreFetchStage extends Bundle {
+  val addr_ok = Output(Bool())
+  val rdata   = Output(BUS)
+  val data_ok = Output(Bool())
+}
+
 class InstMemory_FetchStage extends Bundle {
-  val rdata = Output(BUS)
+  val data_ok = Output(Bool())
+  val rdata   = Output(BUS)
+}
+
+class InstMemory_InstSram extends Bundle {
+  val req   = Output(Bool())
+  val wr    = Output(Bool())
+  val size  = Output(UInt(2.W))
+  val addr  = Output(BUS)
+  val wstrb = Output(UInt(4.W))
+  val wdata = Output(BUS)
+}
+
+// inst sram
+class InstSram_InstMemory extends Bundle {
+  val data_ok = Output(Bool())
+  val addr_ok = Output(Bool())
+  val rdata   = Output(BUS)
 }
 
 // regFile
@@ -407,19 +472,27 @@ class CP0_WriteBackStage extends Bundle {
 }
 // other
 class INST_SRAM extends Bundle {
-  val en    = Output(Bool())
-  val wen   = Output(WEN_BUS)
-  val addr  = Output(BUS)
-  val wdata = Output(BUS)
-  val rdata = Input(BUS)
+  val req     = Output(Bool())
+  val wr      = Output(Bool())
+  val size    = Output(UInt(2.W))
+  val addr    = Output(BUS)
+  val wstrb   = Output(UInt(4.W))
+  val wdata   = Output(BUS)
+  val addr_ok = Input(Bool())
+  val data_ok = Input(Bool())
+  val rdata   = Input(BUS)
 }
 
 class DATA_SRAM extends Bundle {
-  val en    = Output(Bool())
-  val wen   = Output(WEN_BUS)
-  val addr  = Output(BUS)
-  val wdata = Output(BUS)
-  val rdata = Input(BUS)
+  val req     = Output(Bool())
+  val wr      = Output(Bool())
+  val size    = Output(UInt(2.W))
+  val addr    = Output(BUS)
+  val wstrb   = Output(UInt(4.W))
+  val wdata   = Output(BUS)
+  val addr_ok = Input(Bool())
+  val data_ok = Input(Bool())
+  val rdata   = Input(BUS)
 }
 
 class DEBUG extends Bundle {

@@ -7,89 +7,69 @@ import cpu.defines.Const._
 
 class FetchStage extends Module {
   val io = IO(new Bundle {
-    val fromDecoder        = Flipped(new Decoder_FetchStage())
+    val fromPreFetchStage  = Flipped(new PreFetchStage_FetchStage())
     val fromInstMemory     = Flipped(new InstMemory_FetchStage())
+    val fromDecoder        = Flipped(new Decoder_FetchStage())
     val fromWriteBackStage = Flipped(new WriteBackStage_FetchStage())
-    val decoderStage       = new FetchStage_DecoderStage()
+    val preFetchStage      = new FetchStage_PreFetchStage()
+    val decoderStage       = new FetchStage_DecoderStage
     val instMemory         = new FetchStage_InstMemory()
   })
-  // input
-  val branch_stall          = Wire(STALL_BUS)
-  val branch_flag           = Wire(Bool())
-  val branch_target_address = Wire(BUS)
-  val fs_inst               = Wire(INST_BUS)
-  val fs_allowin            = Wire(Bool())
 
-  // input-decoder
-  branch_stall          := io.fromDecoder.branch_stall
-  branch_flag           := io.fromDecoder.branch_flag
-  branch_target_address := io.fromDecoder.branch_target_address
-  fs_allowin            := io.fromDecoder.allowin
-
-  // input-inst rom
-  fs_inst := io.fromInstMemory.rdata
+  val valid             = RegInit(false.B)
+  val ready_go          = Wire(Bool())
+  val pfs_to_fs_inst_ok = RegInit(false.B)
+  val pfs_to_fs_inst    = RegInit(BUS_INIT)
+  val pc                = RegInit(BUS_INIT)
+  val inst_buff         = RegInit(BUS_INIT)
+  val inst_ok           = Wire(Bool())
+  val inst              = Wire(BUS)
+  val ex                = Wire(Bool())
+  val badvaddr          = Wire(BUS)
 
   // output
-  val fs_to_ds_valid = Wire(Bool())
-  val fs_pc          = RegInit(PC_INIT - 4.U)
-  val fs_ex          = Wire(Bool())
-  val fs_bd          = Wire(Bool())
-  val fs_badvaddr    = Wire(Bool())
-  val fs_valid       = RegInit(false.B)
-  val fs_ready_go    = Wire(Bool())
-  val to_fs_valid    = Wire(Bool())
-  val to_fs_ready_go = Wire(Bool())
-  val seq_pc         = Wire(INST_ADDR_BUS)
-  val next_pc        = Wire(INST_ADDR_BUS)
+  io.preFetchStage.valid       := valid
+  io.preFetchStage.allowin     := !valid || (ready_go && io.fromDecoder.allowin)
+  io.preFetchStage.inst_unable := !valid || inst_buff.orR || pfs_to_fs_inst_ok
 
-  // output-decoderStage
-  io.decoderStage.pc       := fs_pc
-  io.decoderStage.inst     := fs_inst
-  io.decoderStage.ex       := fs_ex
-  io.decoderStage.bd       := fs_bd
-  io.decoderStage.badvaddr := fs_badvaddr
-  io.decoderStage.valid    := fs_to_ds_valid
+  io.decoderStage.valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  io.decoderStage.pc       := pc
+  io.decoderStage.inst     := inst
+  io.decoderStage.ex       := ex
+  io.decoderStage.badvaddr := badvaddr
 
-  // output-instMemory
-  io.instMemory.en    := to_fs_valid && fs_allowin
-  io.instMemory.wen   := 0.U
-  io.instMemory.addr  := Cat(next_pc(31, 2), 0.U(2.W))
-  io.instMemory.wdata := 0.U
+  io.instMemory.waiting := valid && !inst_ok
 
-  // io-finish
+  /*-------------------------------io finish------------------------------*/
+  val addr_error = (pc(1, 0) =/= "b00".U)
+  ex       := valid && addr_error
+  badvaddr := pc
 
-  // pre-FetchStage
-  to_fs_ready_go := !branch_stall
-  to_fs_valid    := !reset.asBool && to_fs_ready_go
-  seq_pc         := fs_pc + 4.U
+  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    valid := false.B
+  }.elsewhen(io.fromDecoder.allowin && io.fromPreFetchStage.valid) {
+    valid := io.fromPreFetchStage.valid
+  }
 
-  next_pc := MuxCase(
-    seq_pc,
+  when(io.fromPreFetchStage.valid && io.fromDecoder.allowin) {
+    pfs_to_fs_inst_ok := io.fromPreFetchStage.inst_ok
+    pfs_to_fs_inst    := io.fromPreFetchStage.inst
+    pc                := io.fromPreFetchStage.pc
+  }
+
+  when(!inst_buff.orR && valid && io.fromInstMemory.data_ok && !io.fromDecoder.allowin) {
+    inst_buff := io.fromInstMemory.rdata
+  }.elsewhen(io.fromDecoder.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
+    inst_buff := 0.U
+  }
+
+  inst_ok := pfs_to_fs_inst_ok || inst_buff.orR || (valid && io.fromInstMemory.data_ok)
+  inst := MuxCase(
+    io.fromInstMemory.rdata,
     Seq(
-      io.fromWriteBackStage.ex   -> "hbfc00380".U,
-      io.fromWriteBackStage.eret -> io.fromWriteBackStage.cp0_epc,
-      branch_flag                -> branch_target_address,
+      pfs_to_fs_inst_ok -> pfs_to_fs_inst,
+      inst_buff.orR     -> inst_buff,
     ),
   )
-
-  // FetchStage
-  fs_ready_go := true.B
-  fs_allowin  := !fs_valid || fs_ready_go && io.fromDecoder.allowin
-  fs_to_ds_valid := fs_valid && fs_ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
-
-  when(fs_allowin) {
-    fs_valid := to_fs_valid
-  }
-
-  when(to_fs_valid && fs_allowin) {
-    fs_pc := next_pc
-  }
-
-  val addr_error = Wire(Bool())
-  addr_error  := fs_pc(1, 0) =/= 0.U
-  fs_ex       := addr_error && fs_valid
-  fs_bd       := io.fromDecoder.is_branch
-  fs_badvaddr := fs_pc
-
-  // printf(p"fetch :pc 0x${Hexadecimal(pc)}\n")
+  ready_go := inst_ok
 }

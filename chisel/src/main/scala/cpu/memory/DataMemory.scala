@@ -9,7 +9,7 @@ class DataMemory extends Module {
   val io = IO(new Bundle {
     val fromExecute  = Flipped(new Execute_DataMemory())
     val fromDataSram = Flipped(new DataSram_DataMemory())
-    val memoryStage  = new DataMemory_DataStage()
+    val memoryStage  = new DataMemory_MemoryStage()
     val memory       = new DataMemory_Memory()
     val dataSram     = new DataMemory_DataSram()
   })
@@ -195,9 +195,11 @@ class DataMemory extends Module {
   val read_mask_next = RegNext(read_mask)
 
   io.dataSram.addr    := Cat(addr(31, 2), 0.U(2.W))
-  io.dataSram.wen     := Fill(4, wen && io.fromExecute.valid) & wsel
+  io.dataSram.size    := 
+  io.dataSram.wr      := wen
   io.dataSram.wdata   := wdata
-  io.dataSram.en      := en
+  io.dataSram.req     := en && io.fromExecute.req
   io.memory.rdata     := rdata & read_mask_next
   io.memoryStage.addr := mem_addr
+  // data sram
 }
