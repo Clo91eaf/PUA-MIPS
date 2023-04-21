@@ -12,9 +12,10 @@ class Memory extends Module {
     val fromDataMemory     = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
 
+    val decoder        = new Memory_Decoder()
     val mov            = new Memory_Mov()
     val memoryStage    = new Memory_MemoryStage()
-    val decoder        = new Memory_Decoder()
+    val dataMemory     = new Memory_DataMemory()
     val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
   })
@@ -57,19 +58,32 @@ class Memory extends Module {
 
   // output-execute
   val ms_data_buff = RegInit(BUS_INIT)
-  io.execute.hi      := hi
-  io.execute.lo      := lo
-  io.execute.whilo   := whilo && valid
-  io.execute.allowin := allowin
-  io.execute.ex      := ms_valid && io.fromMemoryStage.ex
-  io.execute.eret    := ms_valid && inst_is_eret
+  io.execute.hi          := hi
+  io.execute.lo          := lo
+  io.execute.whilo       := whilo && valid
+  io.execute.allowin     := allowin
+  io.execute.ex          := ms_valid && io.fromMemoryStage.ex
+  io.execute.eret        := ms_valid && inst_is_eret
   io.execute.inst_unable := !ms_valid || ms_data_buff.orR || io.fromMemoryStage.data_ok
 
-  when (!ms_data_buff.orR && ms_valid && io.fromDataMemory.data_ok) {
+  when(!ms_data_buff.orR && ms_valid && io.fromDataMemory.data_ok) {
     ms_data_buff := io.fromDataMemory.rdata
-  }.elsewhen(io.fromWriteBackStage.allowin && io.fromWriteBackStage.eret && io.fromWriteBackStage.ex) {
+  }.elsewhen(
+    io.fromWriteBackStage.allowin && io.fromWriteBackStage.eret && io.fromWriteBackStage.ex,
+  ) {
     ms_data_buff := BUS_INIT
   }
+
+  val data_ok =
+    io.fromMemoryStage.data_ok || (io.fromMemoryStage.wait_mem && io.fromDataMemory.data_ok)
+  val data = MuxCase(
+    io.fromDataMemory.rdata,
+    Seq(
+      io.fromMemoryStage.data_ok -> io.fromMemoryStage.data,
+      ms_data_buff.orR           -> ms_data_buff,
+    ),
+  )
+  io.dataMemory.waiting := ms_valid && io.fromMemoryStage.wait_mem && !data_ok
 
   // output-memory stage
   io.memoryStage.allowin := allowin

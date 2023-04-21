@@ -6,12 +6,10 @@ import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromDataMemory = Flipped(new DataMemory_MemoryStage())
-    val fromExecute    = Flipped(new Execute_MemoryStage())
-    val fromMemory     = Flipped(new Memory_MemoryStage())
-
-    val execute = new MemoryStage_Execute()
-    val memory  = new MemoryStage_Memory()
+    val fromExecute = Flipped(new Execute_MemoryStage())
+    val fromMemory  = Flipped(new Memory_MemoryStage())
+    val execute     = new MemoryStage_Execute()
+    val memory      = new MemoryStage_Memory()
   })
 
   // output
@@ -35,32 +33,34 @@ class MemoryStage extends Module {
   val cp0_addr        = RegInit(0.U(8.W))
   val excode          = RegInit(0.U(5.W))
   val data_ok         = RegInit(false.B)
+  val data            = RegInit(BUS_INIT)
+  val wait_mem        = RegInit(false.B)
 
   // output-memory
-  io.memory.pc        := pc
-  io.memory.reg_waddr := reg_waddr
-  io.memory.reg_wen   := reg_wen
-  io.memory.reg_wdata := reg_wdata
-  io.memory.hi        := hi
-  io.memory.lo        := lo
-  io.memory.whilo     := whilo
-  io.memory.aluop     := aluop
-  io.memory.mem_addr  := mem_addr
-  io.memory.reg2      := reg2
-  io.memory.ex        := ex
-  io.memory.bd        := bd
-  io.memory.badvaddr  := badvaddr
-  io.memory.cp0_addr  := cp0_addr
-  io.memory.excode    := excode
-  io.memory.data_ok   := data_ok
+  io.memory.pc              := pc
+  io.memory.reg_waddr       := reg_waddr
+  io.memory.reg_wen         := reg_wen
+  io.memory.reg_wdata       := reg_wdata
+  io.memory.hi              := hi
+  io.memory.lo              := lo
+  io.memory.whilo           := whilo
+  io.memory.aluop           := aluop
+  io.memory.mem_addr        := mem_addr
+  io.memory.reg2            := reg2
+  io.memory.ex              := ex
+  io.memory.bd              := bd
+  io.memory.badvaddr        := badvaddr
+  io.memory.cp0_addr        := cp0_addr
+  io.memory.excode          := excode
+  io.memory.data_ok         := data_ok
+  io.memory.data            := data
+  io.memory.wait_mem        := wait_mem
+  io.memory.is_in_delayslot := is_in_delayslot
+  io.memory.valid           := valid
 
   // output-execute
   io.execute.hilo := hilo
   io.execute.cnt  := cnt
-
-  // output-memory
-  io.memory.is_in_delayslot := is_in_delayslot
-  io.memory.valid           := valid
 
   /*--------------------io finish--------------------*/
   when(io.fromMemory.allowin) {
@@ -87,6 +87,8 @@ class MemoryStage extends Module {
     cp0_addr        := io.fromExecute.cp0_addr
     excode          := io.fromExecute.excode
     data_ok         := io.fromExecute.data_ok
+    data            := io.fromExecute.data
+    wait_mem        := io.fromExecute.wait_mem
   }
 
   // debug

@@ -14,6 +14,7 @@ import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
 import pipeline.writeback._
+import os.write
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
@@ -22,6 +23,7 @@ class PuaMips extends Module {
     val data_sram = new DATA_SRAM()
     val debug     = new DEBUG()
   })
+  val preFetchStage  = Module(new PreFetchStage())
   val fetchStage     = Module(new FetchStage())
   val decoderStage   = Module(new DecoderStage())
   val decoder        = Module(new Decoder())
@@ -32,6 +34,7 @@ class PuaMips extends Module {
   val div            = Module(new Div())
   val mov            = Module(new Mov())
   val dataMemory     = Module(new DataMemory())
+  val instMemory     = Module(new InstMemory())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
@@ -40,32 +43,37 @@ class PuaMips extends Module {
   val hilo           = Module(new HILO())
   val cp0            = Module(new CP0Reg())
 
-  // func_test interfacter
-  
-  io.inst_sram.en                    := fetchStage.io.instMemory.en
-  io.inst_sram.wen                   := fetchStage.io.instMemory.wen
-  io.inst_sram.addr                  := fetchStage.io.instMemory.addr
-  io.inst_sram.wdata                 := fetchStage.io.instMemory.wdata
-  fetchStage.io.fromInstMemory.rdata := io.inst_sram.rdata
+  // sram
+  io.data_sram <> dataMemory.io.dataSram
+  io.inst_sram <> instMemory.io.instSram
 
-  io.data_sram.en                  := dataMemory.io.dataSram.en
-  io.data_sram.wen                 := dataMemory.io.dataSram.wen
-  io.data_sram.addr                := dataMemory.io.dataSram.addr
-  io.data_sram.wdata               := dataMemory.io.dataSram.wdata
-  dataMemory.io.fromDataSram.rdata := io.data_sram.rdata
+  // inst memory
+  instMemory.io.preFetchStage <> preFetchStage.io.fromInstMemory
+  instMemory.io.fetchStage <> fetchStage.io.fromInstMemory
+
+  // data memory
+  dataMemory.io.execute <> execute.io.fromDataMemory
+  dataMemory.io.memory <> memory.io.fromDataMemory
 
   io.debug <> writeBackStage.io.debug
 
+  // preFetchStage
+  preFetchStage.io.fetchStage <> fetchStage.io.fromPreFetchStage
+  preFetchStage.io.instMemory <> instMemory.io.fromPreFetchStage
+
   // fetchStage
+  fetchStage.io.preFetchStage <> preFetchStage.io.fromFetchStage
   fetchStage.io.decoderStage <> decoderStage.io.fromFetchStage
+  fetchStage.io.instMemory <> instMemory.io.fromFetchStage
 
   // decoderStage
   decoderStage.io.decoder <> decoder.io.fromDecoderStage
 
   // decoder
+  decoder.io.preFetchStage <> preFetchStage.io.fromDecoder
+  decoder.io.fetchStage <> fetchStage.io.fromDecoder
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile <> regfile.io.fromDecoder
-  decoder.io.fetchStage <> fetchStage.io.fromDecoder
   decoder.io.decoderStage <> decoderStage.io.fromDecoder
 
   // executeStage
@@ -82,27 +90,31 @@ class PuaMips extends Module {
   div.io.execute <> execute.io.fromDiv
   mov.io.execute <> execute.io.fromMov
 
-  execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
+  execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
 
   // memoryStage
   memoryStage.io.execute <> execute.io.fromMemoryStage
   memoryStage.io.memory <> memory.io.fromMemoryStage
 
-  // datasram
-  dataMemory.io.memoryStage <> memoryStage.io.fromDataMemory
+  // data memory
   dataMemory.io.memory <> memory.io.fromDataMemory
+  dataMemory.io.execute <> execute.io.fromDataMemory
 
   // memory
   memory.io.decoder <> decoder.io.fromMemory
-  memory.io.execute <> execute.io.fromMemory
   memory.io.mov <> mov.io.fromMemory
-  memory.io.writeBackStage <> writeBackStage.io.fromMemory
   memory.io.memoryStage <> memoryStage.io.fromMemory
+  memory.io.dataMemory <> dataMemory.io.fromMemory
+  memory.io.execute <> execute.io.fromMemory
+  memory.io.writeBackStage <> writeBackStage.io.fromMemory
 
   // writeBackStage
+  writeBackStage.io.preFetchStage <> preFetchStage.io.fromWriteBackStage
+  writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
+  writeBackStage.io.dataMemory <> dataMemory.io.fromWriteBackStage
   writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage
   writeBackStage.io.mov <> mov.io.fromWriteBackStage
@@ -126,5 +138,4 @@ class PuaMips extends Module {
   // llbitReg
   llbitReg.io.flush := DontCare
   llbitReg.io.memory <> memory.io.fromLLbitReg
-
 }

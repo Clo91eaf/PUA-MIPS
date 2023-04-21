@@ -22,8 +22,8 @@ class Execute extends Module {
     val mul          = new Execute_Mul()
     val div          = new Execute_Div()
     val mov          = new Execute_Mov()
-    val memoryStage  = new Execute_MemoryStage()
     val decoder      = new Execute_Decoder()
+    val memoryStage  = new Execute_MemoryStage()
     val dataMemory   = new Execute_DataMemory()
     val executeStage = new Execute_ExecuteStage()
   })
@@ -63,23 +63,29 @@ class Execute extends Module {
   val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg_wen       = Wire(REG_WRITE_BUS)
-  val reg_wdata     = Wire(BUS)
-  val hi            = Wire(BUS)
-  val lo            = Wire(BUS)
-  val whilo         = Wire(Bool())
-  val hilo_temp_o   = Wire(DOUBLE_BUS)
-  val cnt           = Wire(CNT_BUS)
-  val mem_addr_temp = Wire(BUS)
-  val stallreq      = Wire(Bool())
-  val allowin       = Wire(Bool())
-  val valid         = Wire(Bool())
-  val blk_valid     = Wire(Bool())
-  val es_fwd_valid  = Wire(Bool())
-  val badvaddr      = Wire(Bool())
-  val excode        = Wire(UInt(5.W))
-  val ex            = Wire(Bool())
-  val no_store      = Wire(Bool())
+  val reg_wen         = Wire(REG_WRITE_BUS)
+  val reg_wdata       = Wire(BUS)
+  val hi              = Wire(BUS)
+  val lo              = Wire(BUS)
+  val whilo           = Wire(Bool())
+  val hilo_temp_o     = Wire(DOUBLE_BUS)
+  val cnt             = Wire(CNT_BUS)
+  val mem_addr_temp   = Wire(BUS)
+  val stallreq        = Wire(Bool())
+  val allowin         = Wire(Bool())
+  val valid           = Wire(Bool())
+  val blk_valid       = Wire(Bool())
+  val es_fwd_valid    = Wire(Bool())
+  val badvaddr        = Wire(Bool())
+  val excode          = Wire(UInt(5.W))
+  val ex              = Wire(Bool())
+  val no_store        = Wire(Bool())
+  val addr_ok_r       = RegInit(false.B)
+  val data_sram_req   = es_valid && !addr_ok_r && !no_store
+  val data_buff       = RegInit(BUS_INIT)
+  val es_addr_ok      = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
+  val es_data_sram_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
+  val es_data_ok      = data_buff.orR || (es_addr_ok && es_data_sram_ok)
 
   // output-memory stage
   io.memoryStage.pc       := pc
@@ -121,12 +127,6 @@ class Execute extends Module {
   io.executeStage.allowin := allowin
 
   // output-data memory
-  val addr_ok_r       = RegInit(false.B)
-  val data_sram_req   = es_valid && !addr_ok_r && !no_store
-  val data_buff       = RegInit(BUS_INIT)
-  val es_addr_ok      = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
-  val es_data_sram_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
-  val es_data_ok      = data_buff.orR || (es_addr_ok && es_data_sram_ok)
   io.dataMemory.req     := data_sram_req
   io.dataMemory.op      := aluop
   io.dataMemory.data    := reg2

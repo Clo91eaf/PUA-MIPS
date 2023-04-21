@@ -1,32 +1,45 @@
-// package cpu.pipeline
+package cpu.pipeline
 
-// import chisel3._
-// import chisel3.util._
-// import cpu.defines.Const._
-// import chisel3.util.experimental.loadMemoryFromFile
+import chisel3._
+import chisel3.util._
+import cpu.defines._
+import cpu.defines.Const._
 
-// class InstMemory extends Module {
-//   val io = IO(new Bundle {
-//     val fromFetch = Flipped(new Fetch_InstMemory())
-//     val decoder   = new InstMemory_Decoder()
-//   })
-//   // input-top
-//   val ce = Wire(Bool())
-//   val pc = Wire(UInt(32.W))
-//   ce := io.fromFetch.ce
-//   pc := io.fromFetch.pc
+class InstMemory extends Module {
+  val io = IO(new Bundle {
+    val fromPreFetchStage  = Flipped(new PreFetchStage_InstMemory())
+    val fromFetchStage     = Flipped(new FetchStage_InstMemory())
+    val fromWriteBackStage = Flipped(new WriteBackStage_InstMemory())
+    val preFetchStage      = new InstMemory_PreFetchStage()
+    val fetchStage         = new InstMemory_FetchStage()
+    val instSram           = new InstMemory_InstSram()
+  })
+  val inst_sram_discard = RegInit(0.U(2.W))
+  val inst_sram_data_ok_discard = io.instSram.addr_ok && ~(inst_sram_discard.orR)
 
-//   // output-top
-//   val inst = Wire(UInt(32.W))
-//   io.decoder.inst := inst
+  io.preFetchStage.addr_ok := io.instSram.addr_ok
+  io.preFetchStage.rdata   := io.instSram.rdata
+  io.preFetchStage.data_ok := inst_sram_data_ok_discard
 
-//   val inst_mem = Mem(INST_MEM_NUM, INST_BUS)
-//   loadMemoryFromFile(inst_mem, "inst_rom.data")
-//   val addr = pc
+  io.fetchStage.rdata := io.instSram.rdata
+  io.fetchStage.data_ok := inst_sram_data_ok_discard
 
-//   when(ce === CHIP_DISABLE) {
-//     inst := ZERO_WORD
-//   }.otherwise {
-//     inst := inst_mem(addr(INST_MEM_NUM_LOG2 + 1, 2))
-//   }
-// }
+  io.instSram.req   := io.fromPreFetchStage.req
+  io.instSram.wr    := false.B
+  io.instSram.size  := 2.U
+  io.instSram.addr  := io.fromPreFetchStage.addr
+  io.instSram.wstrb := 0.U(4.W)
+  io.instSram.wdata := BUS_INIT
+
+  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    inst_sram_discard := Cat(io.fromPreFetchStage.waiting, io.fromFetchStage.waiting)
+  }.elsewhen(io.instSram.data_ok) {
+    when (inst_sram_discard === 3.U) {
+      inst_sram_discard := 1.U
+    }.elsewhen(inst_sram_discard === 1.U) {
+      inst_sram_discard := 0.U
+    }.elsewhen(inst_sram_discard === 2.U) {
+      inst_sram_discard := 0.U
+    }
+  }
+}

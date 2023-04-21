@@ -68,6 +68,7 @@ class Decoder extends Module {
   val excode                 = Wire(UInt(5.W))
   val overflow_inst          = Wire(Bool())
   val bd                     = RegInit(false.B)
+  val ready_go               = Wire(Bool())
 
   // output-preFetchStage
   io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
@@ -140,7 +141,6 @@ class Decoder extends Module {
   val pc_plus_8          = Wire(BUS)
   val imm_sll2_signedext = Wire(BUS)
 
-  val ready_go   = Wire(Bool())
   val mfc0_block = Wire(Bool())
   mfc0_block := (io.fromExecute.inst_is_mfc0 && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)) ||
     (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
