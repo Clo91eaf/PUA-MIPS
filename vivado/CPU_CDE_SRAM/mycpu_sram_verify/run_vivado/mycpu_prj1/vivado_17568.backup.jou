@@ -1,0 +1,39 @@
+#-----------------------------------------------------------
+# Vivado v2019.2 (64-bit)
+# SW Build 2708876 on Wed Nov  6 21:40:23 MST 2019
+# IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+# Start of session at: Fri Apr 21 21:15:06 2023
+# Process ID: 17568
+# Current directory: F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent17748 F:\NSCSCC\CPU_CDE_SRAM\mycpu_sram_verify\run_vivado\mycpu_prj1\mycpu.xpr
+# Log file: F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/vivado.log
+# Journal file: F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.xpr
+update_compile_order -fileset sources_1
+add_files -norecurse -scan_for_includes {F:/NSCSCC/PUA-MIPS/chisel/src/main/resources/mycpu_top.v F:/NSCSCC/PUA-MIPS/chisel/generated/PuaMips.v}
+update_compile_order -fileset sources_1
+generate_target all [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/clk_pll/clk_pll.xci]
+export_ip_user_files -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/clk_pll/clk_pll.xci] -no_script -sync -force -quiet
+export_simulation -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/clk_pll/clk_pll.xci] -directory F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/sim_scripts -ip_user_files_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files -ipstatic_source_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ipstatic -lib_map_path [list {modelsim=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/modelsim} {questa=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/questa} {riviera=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/riviera} {activehdl=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/activehdl}] -force -quiet
+generate_target all [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/data_ram/data_ram.xci]
+export_ip_user_files -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/data_ram/data_ram.xci] -no_script -sync -force -quiet
+export_simulation -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/data_ram/data_ram.xci] -directory F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/sim_scripts -ip_user_files_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files -ipstatic_source_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ipstatic -lib_map_path [list {modelsim=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/modelsim} {questa=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/questa} {riviera=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/riviera} {activehdl=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/activehdl}] -force -quiet
+generate_target all [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci]
+export_ip_user_files -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci] -no_script -sync -force -quiet
+export_simulation -of_objects [get_files F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci] -directory F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/sim_scripts -ip_user_files_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files -ipstatic_source_dir F:/NSCSCC/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ipstatic -lib_map_path [list {modelsim=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/modelsim} {questa=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/questa} {riviera=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/riviera} {activehdl=F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/activehdl}] -force -quiet
+launch_run {clk_pll_synth_1 data_ram_synth_1 inst_ram_synth_1}
+wait_on_run clk_pll_synth_1
+
+wait_on_run clk_pll_synth_1
+wait_on_run data_ram_synth_1
+
+wait_on_run clk_pll_synth_1
+wait_on_run data_ram_synth_1
+wait_on_run inst_ram_synth_1
+
+launch_simulation
+source tb_top.tcl
+run all
+close_sim

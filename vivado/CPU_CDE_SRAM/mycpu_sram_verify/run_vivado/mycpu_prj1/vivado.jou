@@ -1,0 +1,19 @@
+#-----------------------------------------------------------
+# Vivado v2019.2 (64-bit)
+# SW Build 2708876 on Wed Nov  6 21:40:23 MST 2019
+# IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+# Start of session at: Sat Apr 22 15:44:53 2023
+# Process ID: 6236
+# Current directory: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent18768 F:\NSCSCC\PUA-MIPS\vivado\CPU_CDE_SRAM\mycpu_sram_verify\run_vivado\mycpu_prj1\mycpu.xpr
+# Log file: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/vivado.log
+# Journal file: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.xpr
+update_compile_order -fileset sources_1
+launch_simulation
+source tb_top.tcl
+run 1 ms
+run 1 ms
+close_sim

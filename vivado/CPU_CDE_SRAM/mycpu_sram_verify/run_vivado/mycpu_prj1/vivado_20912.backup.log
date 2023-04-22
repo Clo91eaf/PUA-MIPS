@@ -1,0 +1,287 @@
+#-----------------------------------------------------------
+# Vivado v2019.2 (64-bit)
+# SW Build 2708876 on Wed Nov  6 21:40:23 MST 2019
+# IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+# Start of session at: Sat Apr 22 13:27:14 2023
+# Process ID: 20912
+# Current directory: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent9704 F:\NSCSCC\PUA-MIPS\vivado\CPU_CDE_SRAM\mycpu_sram_verify\run_vivado\mycpu_prj1\mycpu.xpr
+# Log file: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/vivado.log
+# Journal file: F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.xpr
+INFO: [Project 1-313] Project file moved from 'F:/NSCSCC/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1' since last save.
+WARNING: [Project 1-312] File not found as 'F:/NSCSCC/PUA-MIPS/vivado/PUA-MIPS/chisel/generated/PuaMips.v'; using path 'F:/NSCSCC/PUA-MIPS/chisel/generated/PuaMips.v' instead.
+WARNING: [Project 1-312] File not found as 'F:/NSCSCC/PUA-MIPS/vivado/PUA-MIPS/chisel/src/main/resources/mycpu_top.v'; using path 'F:/NSCSCC/PUA-MIPS/chisel/src/main/resources/mycpu_top.v' instead.
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'F:/vivado/Vivado/2019.2/data/ip'.
+update_compile_order -fileset sources_1
+generate_target Simulation [get_files F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci]
+INFO: [IP_Flow 19-1686] Generating 'Simulation' target for IP 'inst_ram'...
+generate_target: Time (s): cpu = 00:00:14 ; elapsed = 00:00:14 . Memory (MB): peak = 855.414 ; gain = 1.230
+export_ip_user_files -of_objects [get_files F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci] -no_script -sync -force -quiet
+export_simulation -of_objects [get_files F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xci] -directory F:/NSCSCC/PUA-MIPS/vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/sim_scripts -ip_user_files_dir F:/NSCSCC/PUA-MIPS/vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files -ipstatic_source_dir F:/NSCSCC/PUA-MIPS/vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ipstatic -lib_map_path [list {modelsim=F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/modelsim} {questa=F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/questa} {riviera=F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/riviera} {activehdl=F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.cache/compile_simlib/activehdl}] -force -quiet
+launch_simulation
+Command: launch_simulation 
+INFO: [Vivado 12-5698] Checking validity of IPs in the design for the 'XSim' simulator...
+INFO: [Vivado 12-5682] Launching behavioral simulation in 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim'
+INFO: [SIM-utils-51] Simulation object is 'sim_1'
+INFO: [SIM-utils-54] Inspecting design source files for 'tb_top' in fileset 'sim_1'...
+INFO: [SIM-utils-43] Exported 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim/inst_ram.mif'
+INFO: [SIM-utils-43] Exported 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim/inst_ram.coe'
+INFO: [USF-XSim-97] Finding global include files...
+INFO: [USF-XSim-98] Fetching design files from 'sim_1'...
+INFO: [USF-XSim-2] XSim::Compile design
+INFO: [USF-XSim-61] Executing 'COMPILE and ANALYZE' step in 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim'
+"xvlog --incr --relax -prj tb_top_vlog.prj"
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/clk_pll/clk_pll_clk_wiz.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module clk_pll_clk_wiz
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/clk_pll/clk_pll.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module clk_pll
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ipstatic/simulation/blk_mem_gen_v8_4.v" into library blk_mem_gen_v8_4_4
+INFO: [VRFC 10-311] analyzing module STATE_LOGIC_v8_4
+INFO: [VRFC 10-311] analyzing module beh_vlog_muxf7_v8_4
+INFO: [VRFC 10-311] analyzing module beh_vlog_ff_clr_v8_4
+INFO: [VRFC 10-311] analyzing module beh_vlog_ff_pre_v8_4
+INFO: [VRFC 10-311] analyzing module beh_vlog_ff_ce_clr_v8_4
+INFO: [VRFC 10-311] analyzing module write_netlist_v8_4
+INFO: [VRFC 10-311] analyzing module read_netlist_v8_4
+INFO: [VRFC 10-311] analyzing module blk_mem_axi_write_wrapper_beh_v8_4
+INFO: [VRFC 10-311] analyzing module blk_mem_axi_read_wrapper_beh_v8_4
+INFO: [VRFC 10-311] analyzing module blk_mem_axi_regs_fwd_v8_4
+INFO: [VRFC 10-311] analyzing module blk_mem_gen_v8_4_4_output_stage
+INFO: [VRFC 10-311] analyzing module blk_mem_gen_v8_4_4_softecc_output_reg_stage
+INFO: [VRFC 10-311] analyzing module blk_mem_gen_v8_4_4_mem_module
+INFO: [VRFC 10-311] analyzing module blk_mem_gen_v8_4_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/data_ram/sim/data_ram.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module data_ram
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/sim/inst_ram.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module inst_ram
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/BRIDGE/bridge_1x2.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module bridge_1x2
+WARNING: [VRFC 10-3380] identifier 'is_doing' is used before its declaration [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/BRIDGE/bridge_1x2.v:88]
+WARNING: [VRFC 10-3380] identifier 'is_doing' is used before its declaration [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/BRIDGE/bridge_1x2.v:89]
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/CONFREG/confreg.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module confreg
+INFO: [VRFC 10-2458] undeclared symbol conf_we, assumed default net type wire [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/CONFREG/confreg.v:171]
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/soc_sram_lite_top.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module soc_sram_lite_top
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/ram_wrap/sram_wrap.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module sram_wrap
+INFO: [VRFC 10-2458] undeclared symbol addr_and, assumed default net type wire [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/ram_wrap/sram_wrap.v:64]
+INFO: [VRFC 10-2458] undeclared symbol data_and, assumed default net type wire [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/ram_wrap/sram_wrap.v:65]
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/testbench/mycpu_tb.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module tb_top
+INFO: [VRFC 10-2263] Analyzing Verilog file "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim/glbl.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module glbl
+"xvhdl --incr --relax -prj tb_top_vhdl.prj"
+INFO: [USF-XSim-69] 'compile' step finished in '4' seconds
+INFO: [USF-XSim-3] XSim::Elaborate design
+INFO: [USF-XSim-61] Executing 'ELABORATE' step in 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim'
+"xelab -wto 8de8692e6f7648c084645fde77f29b66 --incr --debug typical --relax --mt 2 -L xpm -L xil_defaultlib -L blk_mem_gen_v8_4_4 -L unisims_ver -L unimacro_ver -L secureip --snapshot tb_top_behav xil_defaultlib.tb_top xil_defaultlib.glbl -log elaborate.log"
+Vivado Simulator 2019.2
+Copyright 1986-1999, 2001-2019 Xilinx, Inc. All Rights Reserved.
+Running: F:/vivado/Vivado/2019.2/bin/unwrapped/win64.o/xelab.exe -wto 8de8692e6f7648c084645fde77f29b66 --incr --debug typical --relax --mt 2 -L xpm -L xil_defaultlib -L blk_mem_gen_v8_4_4 -L unisims_ver -L unimacro_ver -L secureip --snapshot tb_top_behav xil_defaultlib.tb_top xil_defaultlib.glbl -log elaborate.log 
+Using 2 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+WARNING: [VRFC 10-5021] port 'ext_int' is not connected on this instance [F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/soc_sram_lite_top.v:156]
+Completed static elaboration
+Starting simulation data flow analysis
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module xil_defaultlib.PreFetchStage
+Compiling module xil_defaultlib.FetchStage
+Compiling module xil_defaultlib.DecoderStage
+Compiling module xil_defaultlib.Decoder
+Compiling module xil_defaultlib.ExecuteStage
+Compiling module xil_defaultlib.Execute
+Compiling module xil_defaultlib.ALU
+Compiling module xil_defaultlib.Mul
+Compiling module xil_defaultlib.Div
+Compiling module xil_defaultlib.Mov
+Compiling module xil_defaultlib.DataMemory
+Compiling module xil_defaultlib.InstMemory
+Compiling module xil_defaultlib.MemoryStage
+Compiling module xil_defaultlib.Memory
+Compiling module xil_defaultlib.WriteBackStage
+Compiling module xil_defaultlib.Regfile
+Compiling module xil_defaultlib.LLbitReg
+Compiling module xil_defaultlib.HILO
+Compiling module xil_defaultlib.CP0Reg
+Compiling module xil_defaultlib.PuaMips
+Compiling module xil_defaultlib.mycpu_top
+Compiling module xil_defaultlib.sram_wrap
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_softecc_outpu...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_mem_module(C_...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4(C_FAMILY="art...
+Compiling module xil_defaultlib.inst_ram
+Compiling module xil_defaultlib.bridge_1x2
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_softecc_outpu...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_mem_module(C_...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4(C_FAMILY="art...
+Compiling module xil_defaultlib.data_ram
+Compiling module xil_defaultlib.confreg(SIMULATION=1'b1)
+Compiling module xil_defaultlib.soc_sram_lite_top(SIMULATION=1'b...
+Compiling module xil_defaultlib.tb_top
+WARNING: [XSIM 43-3373] "F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/testbench/mycpu_tb.v" Line 124. System function $fscanf is used as system task. This system function should have a LHS e.g. x=$fscanf().
+Compiling module xil_defaultlib.glbl
+Built simulation snapshot tb_top_behav
+INFO: [USF-XSim-69] 'elaborate' step finished in '4' seconds
+INFO: [USF-XSim-4] XSim::Simulate design
+INFO: [USF-XSim-61] Executing 'SIMULATE' step in 'F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.sim/sim_1/behav/xsim'
+INFO: [USF-XSim-98] *** Running xsim
+   with args "tb_top_behav -key {Behavioral:sim_1:Functional:tb_top} -tclbatch {tb_top.tcl} -log {simulate.log}"
+INFO: [USF-XSim-8] Loading simulator feature
+Vivado Simulator 2019.2
+Time resolution is 1 ps
+source tb_top.tcl
+# set curr_wave [current_wave_config]
+# if { [string length $curr_wave] == 0 } {
+#   if { [llength [get_objects]] > 0} {
+#     add_wave /
+#     set_property needs_save false [current_wave_config]
+#   } else {
+#      send_msg_id Add_Wave-1 WARNING "No top level signals found. Simulator will start without a wave window. If you want to open a wave window go to 'File->New Waveform Configuration' or type 'create_wave_config' in the TCL console."
+#   }
+# }
+# log_wave -r /
+WARNING: [Simtcl 6-197] One or more HDL objects could not be logged because of object type or size limitations.  To see details please rerun the command with -verbose (-v).
+# run 1000ns
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_top.soc_lite.inst_ram.inst.native_mem_module.blk_mem_gen_v8_4_4_inst is using a behavioral model for simulation which will not precisely model memory collision behavior.
+Block Memory Generator module tb_top.soc_lite.data_ram.inst.native_mem_module.blk_mem_gen_v8_4_4_inst is using a behavioral model for simulation which will not precisely model memory collision behavior.
+xsim: Time (s): cpu = 00:00:08 ; elapsed = 00:00:05 . Memory (MB): peak = 978.246 ; gain = 101.305
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'tb_top_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+launch_simulation: Time (s): cpu = 00:00:10 ; elapsed = 00:00:14 . Memory (MB): peak = 978.246 ; gain = 101.305
+run all
+==============================================================
+Test begin!
+        [  22000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  32000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  42000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  52000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  62000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  72000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  82000 ns] Test is running, debug_wb_pc = 0x00000000
+        [  92000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 102000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 112000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 122000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 132000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 142000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 152000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 162000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 172000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 182000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 192000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 202000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 212000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 222000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 232000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 242000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 252000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 262000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 272000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 282000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 292000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 302000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 312000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 322000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 332000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 342000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 352000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 362000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 372000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 382000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 392000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 402000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 412000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 422000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 432000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 442000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 452000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 462000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 472000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 482000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 492000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 502000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 512000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 522000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 532000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 542000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 552000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 562000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 572000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 582000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 592000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 602000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 612000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 622000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 632000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 642000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 652000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 662000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 672000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 682000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 692000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 702000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 712000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 722000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 732000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 742000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 752000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 762000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 772000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 782000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 792000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 802000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 812000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 822000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 832000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 842000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 852000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 862000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 872000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 882000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 892000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 902000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 912000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 922000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 932000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 942000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 952000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 962000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 972000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 982000 ns] Test is running, debug_wb_pc = 0x00000000
+        [ 992000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1002000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1012000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1022000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1032000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1042000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1052000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1062000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1072000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1082000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1092000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1102000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1112000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1122000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1132000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1142000 ns] Test is running, debug_wb_pc = 0x00000000
+        [1152000 ns] Test is running, debug_wb_pc = 0x00000000
+close_sim
+INFO: [Simtcl 6-16] Simulation closed
+exit
+INFO: [Common 17-206] Exiting Vivado at Sat Apr 22 13:29:02 2023...

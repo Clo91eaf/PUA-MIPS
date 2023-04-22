@@ -2,11 +2,13 @@ PY=src/utils/python
 PYSCRIPT=calculater.py
 EXP="1 + 2"
 
-test_top=F:\NSCSCC\func_test_v0.01
-test_source=func_test
-tcl_top=src/utils/tcl
+test_top=../vivado/CPU_CDE_SRAM
+tcl_top=./src/utils/tcl
 cpu_dir=src/main/scala/cpu
-func=lab7
+puamips=F:\\NSCSCC\\PUA-MIPS\\chisel\\generated\\PuaMips.v
+mycpu_top=F:\\NSCSCC\\PUA-MIPS\\chisel\\src\\main\\resources\\mycpu_top.v
+
+func=lab9
 
 verilog: $(shell find $(cpu_dir) -name '*.scala')
 	@echo "make verilog"
@@ -22,6 +24,8 @@ python:
 # get trace target
 get:
 	@echo "get trace"
+	rm -rf $(test_top)/soft/func_lab9
+	cp -r $(test_top)/soft_src/func_$(func) $(test_top)/soft/func_lab9
 	vivado -mode batch -nojournal -nolog -source $(tcl_top)/get_trace.tcl -tclargs $(test_top) func_$(func)
 
 # run trace target
