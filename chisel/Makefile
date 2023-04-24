@@ -36,7 +36,8 @@ run: verilog
 # wave target
 wave:
 	@echo "get wave"
-	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_wave.tcl -tclargs $(test_top)
+	rm -rf *.str
+	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_wave.tcl
 
 count:
 	@echo "count the lines"

@@ -15,7 +15,7 @@ class InstMemory extends Module {
     val instSram           = new InstMemory_InstSram()
   })
   val inst_sram_discard = RegInit(0.U(2.W))
-  val inst_sram_data_ok_discard = io.instSram.addr_ok && ~(inst_sram_discard.orR)
+  val inst_sram_data_ok_discard = io.instSram.data_ok && ~(inst_sram_discard.orR)
 
   io.preFetchStage.addr_ok := io.instSram.addr_ok
   io.preFetchStage.rdata   := io.instSram.rdata

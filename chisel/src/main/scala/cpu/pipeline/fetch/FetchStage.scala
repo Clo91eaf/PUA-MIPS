@@ -15,8 +15,8 @@ class FetchStage extends Module {
     val decoderStage       = new FetchStage_DecoderStage
     val instMemory         = new FetchStage_InstMemory()
   })
-
   val valid             = RegInit(false.B)
+  val allowin           = Wire(Bool())
   val ready_go          = Wire(Bool())
   val pfs_to_fs_inst_ok = RegInit(false.B)
   val pfs_to_fs_inst    = RegInit(BUS_INIT)
@@ -29,7 +29,7 @@ class FetchStage extends Module {
 
   // output
   io.preFetchStage.valid       := valid
-  io.preFetchStage.allowin     := !valid || (ready_go && io.fromDecoder.allowin)
+  io.preFetchStage.allowin     := allowin
   io.preFetchStage.inst_unable := !valid || inst_buff.orR || pfs_to_fs_inst_ok
 
   io.decoderStage.valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
@@ -45,13 +45,13 @@ class FetchStage extends Module {
   ex       := valid && addr_error
   badvaddr := pc
 
+  allowin := !valid || ready_go && io.fromDecoder.allowin
   when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
     valid := false.B
-  }.elsewhen(io.fromDecoder.allowin && io.fromPreFetchStage.valid) {
+  }.elsewhen(allowin) {
     valid := io.fromPreFetchStage.valid
   }
-
-  when(io.fromPreFetchStage.valid && io.fromDecoder.allowin) {
+  when(io.fromPreFetchStage.valid && allowin) {
     pfs_to_fs_inst_ok := io.fromPreFetchStage.inst_ok
     pfs_to_fs_inst    := io.fromPreFetchStage.inst
     pc                := io.fromPreFetchStage.pc

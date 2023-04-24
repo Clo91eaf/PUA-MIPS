@@ -12,8 +12,6 @@ class ExecuteStage extends Module {
     val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()
   })
-  // input
-
   // output
   val aluop              = RegInit(ALU_OP_BUS_INIT)
   val alusel             = RegInit(ALU_SEL_BUS_INIT)

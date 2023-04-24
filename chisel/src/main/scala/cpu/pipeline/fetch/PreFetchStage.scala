@@ -31,7 +31,7 @@ class PreFetchStage extends Module {
   val br_target     = Wire(BUS)
   val bd_done       = Wire(Bool())
 
-  val seq_pc = RegInit("h_bfc00000".U(32.W))
+  val seq_pc = RegInit(PC_INIT)
   val pc     = Mux(br_taken && bd_done, br_target, seq_pc)
 
   val inst_sram_req     = Wire(Bool())
@@ -67,21 +67,21 @@ class PreFetchStage extends Module {
   br_target_w := io.fromDecoder.branch_target_address
   bd_done_w   := io.fromFetchStage.valid
 
+  when(br_taken && valid && ready_go || io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    br_taken_r := false.B
+    br_target_r := BUS_INIT
+    bd_done_r := false.B
+  }.elsewhen(br_leaving_ds) {
+    br_taken_r := br_taken_w
+    br_target_r := br_taken_w
+    bd_done_r := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
+  }.elsewhen(br_taken && to_fs_valid && io.fromFetchStage.allowin && !bd_done) {
+    bd_done_r := true.B
+  }
+
   br_taken  := br_taken_r || br_taken_w
   br_target := Mux(br_taken_r, br_target_r, br_target_w)
   bd_done   := bd_done_r || bd_done_w
-
-  when(br_leaving_ds) {
-    br_taken_r  := br_taken_w
-    br_target_r := br_target_w
-    bd_done_r   := io.fromFetchStage.valid || (valid && io.fromFetchStage.allowin && !bd_done)
-  }.elsewhen(
-    !br_leaving_ds && (io.fromWriteBackStage.eret || io.fromWriteBackStage.ex || io.fromFetchStage.allowin),
-  ) {
-    br_taken_r  := false.B
-    br_target_r := 0.U
-    bd_done_r   := false.B
-  }
 
   // pc
   when(io.fromWriteBackStage.ex) {
@@ -94,7 +94,7 @@ class PreFetchStage extends Module {
 
   // inst sram
   inst_sram_req := valid &&
-    !io.fromInstMemory.addr_ok &&
+    !addr_ok_r &&
     !(bd_done && br_stall) &&
     !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   inst_sram_addr := Cat(pc(31, 2), 0.U(2.W))

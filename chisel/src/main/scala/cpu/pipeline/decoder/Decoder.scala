@@ -156,20 +156,8 @@ class Decoder extends Module {
   val BTarget = pc_plus_4 + imm_sll2_signedext
   val JTarget = Cat(pc_plus_4(31, 28), inst(25, 0), 0.U(2.W))
 
-  // 对指令进行译码
-
-  aluop                  := EXE_NOP_OP
-  alusel                 := EXE_RES_NOP
-  reg_waddr              := rd // inst(15, 11)
-  reg_wen                := REG_WRITE_DISABLE
-  inst_valid             := INST_INVALID
-  reg1_ren               := READ_DISABLE
-  reg2_ren               := READ_DISABLE
   reg1_raddr             := rs // inst(25, 21)
   reg2_raddr             := rt // inst(20, 16)
-  imm                    := ZERO_WORD
-  link_addr              := ZERO_WORD
-  next_inst_in_delayslot := NOT_IN_DELAY_SLOT
 
   val signals: List[UInt] = ListLookup(
     inst,
