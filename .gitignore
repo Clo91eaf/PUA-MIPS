@@ -1,4 +1,3 @@
-.metals/
 .vscode/
 .workflow/
 
@@ -30,3 +29,13 @@ vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/*.ip_user_files
 vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/*.sim
 vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/*.runs
 vivado/CPU_CDE_SRAM/mycpu_sram_verify/*
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/ram_wrap/sram_wrap.v
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram_sim_netlist.v
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram_sim_netlist.vhdl
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram_stub.v
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram_stub.vhdl
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.dcp
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram.xml
+vivado/CPU_CDE_SRAM/mycpu_sram_verify/run_vivado/mycpu_prj1/mycpu.xpr
+vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ip/inst_ram/inst_ram_stub.v
+vivado/ucas_CDE_axi_ref/mycpu_axi_verify/run_vivado/mycpu_prj1/mycpu.ip_user_files/ip/inst_ram/inst_ram_stub.vhdl

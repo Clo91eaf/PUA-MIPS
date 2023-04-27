@@ -98,16 +98,7 @@ class PreFetchStage extends Module {
     !(bd_done && br_stall) &&
     !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   inst_sram_addr := Cat(pc(31, 2), 0.U(2.W))
-  inst_waiting   := ready_go && !inst_ok
-
-  when(io.fromFetchStage.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
-    inst_buff := 0.U
-  }.elsewhen(ready_go && io.fromInstMemory.data_ok && !io.fromFetchStage.allowin) {
-    inst_buff := io.fromInstMemory.rdata
-  }
-
-  inst_ok := inst_buff.orR || (ready_go && io.fromInstMemory.data_ok)
-  inst    := Mux(inst_buff.orR, inst_buff, io.fromInstMemory.rdata)
+  inst_waiting   := addr_ok && !inst_ok
 
   inst_sram_data_ok := io.fromInstMemory.data_ok && io.fromFetchStage.inst_unable
 
@@ -118,4 +109,13 @@ class PreFetchStage extends Module {
   }
 
   addr_ok := (inst_sram_req && io.fromInstMemory.addr_ok) || addr_ok_r
+
+  when(io.fromFetchStage.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
+    inst_buff := 0.U
+  }.elsewhen(addr_ok && inst_sram_data_ok && !io.fromFetchStage.allowin) {
+    inst_buff := io.fromInstMemory.rdata
+  }
+
+  inst_ok := inst_buff.orR || (addr_ok && inst_sram_data_ok)
+  inst    := Mux(inst_buff.orR, inst_buff, io.fromInstMemory.rdata)
 }

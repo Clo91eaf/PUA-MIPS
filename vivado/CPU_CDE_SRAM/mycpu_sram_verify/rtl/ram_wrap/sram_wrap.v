@@ -57,13 +57,13 @@ module sram_wrap(
   input  [1 :0] ram_random_mask
 );
 //mask
-`ifdef RUN_PERF_TEST
+// `ifdef RUN_PERF_TEST
     assign addr_and = 1'b1;
     assign data_and = 1'b1;
-`else
-    assign addr_and = ram_random_mask[1];
-    assign data_and = ram_random_mask[0];
-`endif
+// `else
+//     assign addr_and = ram_random_mask[1];
+//     assign data_and = ram_random_mask[0];
+// `endif
      
 //to ram
 wire [3:0] size_decode = size==2'd0 ? {addr[1:0]==2'd3,addr[1:0]==2'd2,addr[1:0]==2'd1,addr[1:0]==2'd0} :

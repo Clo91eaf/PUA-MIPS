@@ -1,7 +1,7 @@
 -- Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2019.2 (win64) Build 2708876 Wed Nov  6 21:40:23 MST 2019
--- Date        : Thu Apr 27 17:04:12 2023
+-- Date        : Thu Apr 27 19:33:02 2023
 -- Host        : LAPTOP-11DLFJ4S running 64-bit major release  (build 9200)
 -- Command     : write_vhdl -force -mode synth_stub
 --               F:/NSCSCC/PUA-MIPS/vivado/CPU_CDE_SRAM/mycpu_sram_verify/rtl/xilinx_ip/inst_ram/inst_ram_stub.vhdl
