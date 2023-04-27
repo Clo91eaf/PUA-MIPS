@@ -39,6 +39,10 @@ wave:
 	rm -rf *.str
 	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_wave.tcl
 
+example:
+	@echo "get example wave"
+	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_example.tcl
+
 count:
 	@echo "count the lines"
 	find . -name "*.scala" | xargs wc -l
