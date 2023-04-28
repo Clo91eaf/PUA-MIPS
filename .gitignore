@@ -12,5 +12,3 @@ chisel/target/
 chisel/vivado*
 chisel/.Xil/
 
-# vivado file
-vivado/

@@ -1,3 +1,4 @@
+set test_top [lindex $argv 0]
 start_gui
-open_wave_database {F:\\NSCSCC\\PUA-MIPS\\vivado\\CPU_CDE_SRAM\\mycpu_sram_verify\\run_vivado\\mycpu_prj1\\mycpu.sim\\sim_1\\behav\\xsim\\tb_top_behav.wdb}
-open_wave_config {F:\\NSCSCC\\PUA-MIPS\\vivado\\tb_top_behav.wcfg}
+open_wave_database ${test_top}\\mycpu_sram_verify\\run_vivado\\PUA-MIPS\\mycpu.sim\\sim_1\\behav\\xsim\\tb_top_behav.wdb
+open_wave_config ${test_top}\\mycpu_sram_verify\\run_vivado\\PUA-MIPS\\tb_top_behav.wcfg
