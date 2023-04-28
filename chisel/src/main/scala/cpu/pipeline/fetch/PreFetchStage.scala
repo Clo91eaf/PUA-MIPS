@@ -86,7 +86,7 @@ class PreFetchStage extends Module {
 
   // pc
   when(io.fromWriteBackStage.ex) {
-    seq_pc := "h80000180".U
+    seq_pc := "hbfc00380".U
   }.elsewhen(io.fromWriteBackStage.eret) {
     seq_pc := io.fromWriteBackStage.cp0_epc
   }.elsewhen(ready_go && io.fromFetchStage.allowin) {
