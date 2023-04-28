@@ -39,7 +39,7 @@ wave:
 	@echo "get wave"
 	vivado -mode gui -nojournal -nolog -source $(tcl_top)\\show_wave.tcl -tclargs $(test_top)
 
-example:
+ref:
 	@echo "get example wave"
 	vivado -mode gui -nojournal -nolog -source $(tcl_top)\\show_example.tcl -tclargs $(test_top)
 

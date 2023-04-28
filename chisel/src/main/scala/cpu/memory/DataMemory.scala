@@ -14,32 +14,43 @@ class DataMemory extends Module {
     val memory             = new DataMemory_Memory()
     val dataSram           = new DataMemory_DataSram()
   })
-  val aluop   = io.fromExecute.op
-  val addr    = io.fromExecute.addr
-  val data    = io.fromExecute.data
-  val addr_ok = io.dataSram.addr_ok
-  val data_ok = io.dataSram.data_ok
-  val rdata   = io.dataSram.rdata
+  val req        = io.fromExecute.req
+  val aluop      = io.fromExecute.op
+  val addr       = io.fromExecute.addr
+  val data       = io.fromExecute.data
+  val es_waiting = io.fromExecute.waiting
+  val addr_ok    = io.dataSram.addr_ok
+  val data_ok    = io.dataSram.data_ok
+  val rdata      = io.dataSram.rdata
+  val ms_waiting = io.fromMemory.waiting
 
-  val wen = aluop match {
-    case EXE_SB_OP | EXE_SH_OP | EXE_SW_OP | EXE_SWL_OP | EXE_SWR_OP | EXE_SC_OP => WRITE_ENABLE
-    case _                                                                       => WRITE_DISABLE
+  val wen = WireInit(WRITE_DISABLE)
+  val en = WireInit(CHIP_DISABLE)
+  val mem_addr = WireInit(ZERO_WORD)
+
+  switch(aluop) {
+    is(EXE_SB_OP, EXE_SH_OP, EXE_SW_OP, EXE_SWL_OP, EXE_SWR_OP, EXE_SC_OP) {
+      wen := WRITE_ENABLE
+    }
   }
 
-  val en = aluop match {
-    case EXE_LB_OP | EXE_LBU_OP | EXE_LH_OP | EXE_LHU_OP | EXE_LW_OP | EXE_LWL_OP | EXE_LWR_OP |
-        EXE_LL_OP | EXE_SB_OP | EXE_SH_OP | EXE_SW_OP | EXE_SWL_OP | EXE_SWR_OP =>
-      CHIP_ENABLE
-    case _ => CHIP_DISABLE
+  switch(aluop) {
+    is(
+      EXE_LB_OP, EXE_LBU_OP, EXE_LH_OP, EXE_LHU_OP, EXE_LW_OP, EXE_LL_OP, EXE_SB_OP, EXE_SH_OP, EXE_SW_OP, EXE_LWL_OP, EXE_LWR_OP, EXE_SWL_OP, EXE_SWR_OP,
+    ) {
+      en := CHIP_ENABLE
+    }
   }
 
-  val mem_addr = aluop match {
-    case EXE_LB_OP | EXE_LBU_OP | EXE_LH_OP | EXE_LHU_OP | EXE_LW_OP | EXE_LL_OP | EXE_SB_OP |
-        EXE_SH_OP | EXE_SW_OP =>
-      addr
-    case EXE_LWL_OP | EXE_LWR_OP | EXE_SWL_OP | EXE_SWR_OP =>
-      Cat(addr(31, 2), 0.U(2.W))
-    case _ => ZERO_WORD
+  switch(aluop) {
+    is(
+      EXE_LB_OP, EXE_LBU_OP, EXE_LH_OP, EXE_LHU_OP, EXE_LW_OP, EXE_LL_OP, EXE_SB_OP, EXE_SH_OP, EXE_SW_OP,
+    ) {
+      mem_addr := addr
+    }
+    is(EXE_LWL_OP, EXE_LWR_OP, EXE_SWL_OP, EXE_SWR_OP) {
+      mem_addr := Cat(addr(31, 2), 0.U(2.W))
+    }
   }
 
   val addrLowBit2 = addr(1, 0)
@@ -184,23 +195,23 @@ class DataMemory extends Module {
   }
 
   val data_sram_discard         = RegInit(0.U(2.W))
-  val data_sram_data_ok_discard = io.dataSram.addr_ok && ~(data_sram_discard.orR)
+  val data_sram_data_ok_discard = addr_ok && ~(data_sram_discard.orR)
   // data sram
-  io.dataSram.req    := en && io.fromExecute.req
-  io.dataSram.wr     := wen && io.fromExecute.req && wsel.orR
+  io.dataSram.req    := en && req
+  io.dataSram.wr     := wen && req && wsel.orR
   io.dataSram.size   := size
   io.dataSram.addr   := Cat(addr(31, 2), sramAddrLowBit2)
-  io.dataSram.wstrb  := Fill(4, wen && io.fromExecute.req) & wsel
+  io.dataSram.wstrb  := Fill(4, wen && req) & wsel
   io.dataSram.wdata  := wdata
   io.memory.rdata    := rdata & read_mask_next
   io.memory.data_ok  := data_sram_discard
   io.execute.rdata   := rdata & read_mask_next
-  io.execute.addr_ok := io.dataSram.addr_ok
+  io.execute.addr_ok := addr_ok
   io.execute.data_ok := data_sram_discard
 
   when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
-    data_sram_discard := Cat(io.fromExecute.waiting, io.fromMemory.waiting)
-  }.elsewhen(io.dataSram.data_ok) {
+    data_sram_discard := Cat(es_waiting, ms_waiting)
+  }.elsewhen(data_ok) {
     when(data_sram_discard === 3.U) {
       data_sram_discard := 1.U
     }.elsewhen(data_sram_discard === 1.U) {
