@@ -123,7 +123,7 @@ class Memory extends Module {
   inst_is_eret    := io.fromMemoryStage.valid && (aluop === EXE_ERET_OP)
   inst_is_syscall := io.fromMemoryStage.valid && (aluop === EXE_SYSCALL_OP)
 
-  ms_fwd_valid := ms_valid
+  ms_fwd_valid := valid // p195 ms_to_ws_valid
 
   val ready_go = true.B
   allowin := !ms_valid || ready_go && io.fromWriteBackStage.allowin

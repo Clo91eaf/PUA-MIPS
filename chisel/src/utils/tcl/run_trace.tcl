@@ -10,8 +10,6 @@ set verify_top "$test_top/mycpu_sram_verify/run_vivado/mycpu_prj1"
 # 打开 Vivado 项目
 open_project $verify_top/mycpu.xpr
 update_compile_order -fileset sources_1
-add_files -norecurse -scan_for_includes {F:\\NSCSCC\\PUA-MIPS\\chisel\\src\\main\\resources\\mycpu_top.v F:\\NSCSCC\\PUA-MIPS\\chisel\\generated\\PuaMips.v}
-update_compile_order -fileset sources_1
 
 # generate_target all [get_files $ip_top/clk_pll/clk_pll.xci]
 # export_ip_user_files -of_objects [get_files $ip_top/clk_pll/clk_pll.xci] -no_script -sync -force -quiet
@@ -41,5 +39,5 @@ wait_on_run inst_ram_synth_1
 # 启动仿真
 launch_simulation
 source $tb_top
-run 10000 ns 
+run all
 close_sim

@@ -5,8 +5,8 @@ EXP="1 + 2"
 test_top=../vivado/CPU_CDE_SRAM
 tcl_top=./src/utils/tcl
 cpu_dir=src/main/scala/cpu
-puamips=F:\\NSCSCC\\PUA-MIPS\\chisel\\generated\\PuaMips.v
-mycpu_top=F:\\NSCSCC\\PUA-MIPS\\chisel\\src\\main\\resources\\mycpu_top.v
+puamips=.\\generated\\PuaMips.v
+mycpu_top=.\\src\\main\\resources\\mycpu_top.v
 
 func=lab9
 
@@ -26,7 +26,8 @@ get:
 	@echo "get trace"
 	rm -rf $(test_top)/soft/func_lab9
 	cp -r $(test_top)/soft_src/func_$(func) $(test_top)/soft/func_lab9
-	vivado -mode batch -nojournal -nolog -source $(tcl_top)/get_trace.tcl -tclargs $(test_top) func_$(func)
+	vivado -mode batch -nojournal -nolog -source $(tcl_top)/get_trace.tcl -tclargs $(test_top)
+	@echo "$(func) trace get!!!"
 
 # run trace target
 run: verilog
@@ -36,7 +37,6 @@ run: verilog
 # wave target
 wave:
 	@echo "get wave"
-	rm -rf *.str
 	vivado -mode gui -nojournal -nolog -source $(tcl_top)/show_wave.tcl
 
 example:
