@@ -27,6 +27,7 @@ class DataMemory extends Module {
   val wen = WireInit(WRITE_DISABLE)
   val en = WireInit(CHIP_DISABLE)
   val mem_addr = WireInit(ZERO_WORD)
+  val size = WireInit(0.U(2.W))
 
   switch(aluop) {
     is(EXE_SB_OP, EXE_SH_OP, EXE_SW_OP, EXE_SWL_OP, EXE_SWR_OP, EXE_SC_OP) {
@@ -175,16 +176,23 @@ class DataMemory extends Module {
     ),
   )
   val read_mask_next = RegNext(read_mask)
-
-  val size = aluop match {
-    case EXE_LW_OP | EXE_SW_OP              => 2.U
-    case EXE_LH_OP | EXE_LHU_OP | EXE_SH_OP => 1.U
-    case EXE_LB_OP | EXE_LBU_OP | EXE_SB_OP => 0.U
-    case EXE_LWL_OP | EXE_SWL_OP =>
-      Mux(addrLowBit2 === 3.U, 2.U, addrLowBit2)
-    case EXE_LWR_OP | EXE_SWR_OP =>
-      Mux(addrLowBit2 === 0.U, 2.U, 3.U - addrLowBit2)
-    case _ => 0.U
+  
+  switch(aluop) {
+    is(EXE_LW_OP, EXE_SW_OP) {
+      size := 2.U
+    }
+    is(EXE_LH_OP, EXE_LHU_OP, EXE_SH_OP) {
+      size := 1.U
+    }
+    is(EXE_LB_OP, EXE_LBU_OP, EXE_SB_OP) {
+      size := 0.U
+    }
+    is(EXE_LWL_OP, EXE_SWL_OP) {
+      size := Mux(addrLowBit2 === 3.U, 2.U, addrLowBit2)
+    }
+    is(EXE_LWR_OP, EXE_SWR_OP) {
+      size := Mux(addrLowBit2 === 0.U, 2.U, 3.U - addrLowBit2)
+    }
   }
 
   val sramAddrLowBit2 = WireInit(addrLowBit2)
