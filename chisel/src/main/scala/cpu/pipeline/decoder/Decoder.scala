@@ -416,7 +416,7 @@ class Decoder extends Module {
   when(io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
     bd := false.B
   }.elsewhen(valid && io.fromExecute.allowin) {
-    bd := true.B
+    bd := branch_flag
   }
 
   val es_reg_wen   = io.fromExecute.reg_wen
