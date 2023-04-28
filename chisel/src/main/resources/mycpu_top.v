@@ -33,7 +33,7 @@ module mycpu_top (
 PuaMips puamips(
   .clock              (clk),
   .reset              (~resetn),
-  .io_ext_int         (ext_int),
+  .io_ext_int         (6'b0),
 
   .io_inst_sram_req       (inst_sram_req),
   .io_inst_sram_wr        (inst_sram_wr),
