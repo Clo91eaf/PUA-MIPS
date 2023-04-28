@@ -63,29 +63,29 @@ class Execute extends Module {
   val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg_wen         = Wire(REG_WRITE_BUS)
-  val reg_wdata       = Wire(BUS)
-  val hi              = Wire(BUS)
-  val lo              = Wire(BUS)
-  val whilo           = Wire(Bool())
-  val hilo_temp_o     = Wire(DOUBLE_BUS)
-  val cnt             = Wire(CNT_BUS)
-  val mem_addr_temp   = Wire(BUS)
-  val stallreq        = Wire(Bool())
-  val allowin         = Wire(Bool())
-  val valid           = Wire(Bool())
-  val blk_valid       = Wire(Bool())
-  val es_fwd_valid    = Wire(Bool())
-  val badvaddr        = Wire(Bool())
-  val excode          = Wire(UInt(5.W))
-  val ex              = Wire(Bool())
-  val no_store        = Wire(Bool())
-  val addr_ok_r       = RegInit(false.B)
-  val data_sram_req   = es_valid && !addr_ok_r && !no_store
-  val data_buff       = RegInit(BUS_INIT)
-  val es_addr_ok      = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
-  val es_data_sram_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
-  val es_data_ok      = data_buff.orR || (es_addr_ok && es_data_sram_ok)
+  val reg_wen       = Wire(REG_WRITE_BUS)
+  val reg_wdata     = Wire(BUS)
+  val hi            = Wire(BUS)
+  val lo            = Wire(BUS)
+  val whilo         = Wire(Bool())
+  val hilo_temp_o   = Wire(DOUBLE_BUS)
+  val cnt           = Wire(CNT_BUS)
+  val mem_addr_temp = Wire(BUS)
+  val stallreq      = Wire(Bool())
+  val allowin       = Wire(Bool())
+  val valid         = Wire(Bool())
+  val blk_valid     = Wire(Bool())
+  val es_fwd_valid  = Wire(Bool())
+  val badvaddr      = Wire(Bool())
+  val excode        = Wire(UInt(5.W))
+  val ex            = Wire(Bool())
+  val no_store      = Wire(Bool())
+  val addr_ok_r     = RegInit(false.B)
+  val data_sram_req = es_valid && !addr_ok_r && !no_store
+  val data_buff     = RegInit(BUS_INIT)
+  val addr_ok       = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
+  val data_sram_ok  = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
+  val data_ok       = data_buff.orR || (addr_ok && data_sram_ok)
 
   // output-memory stage
   io.memoryStage.pc       := pc
@@ -119,7 +119,7 @@ class Execute extends Module {
   io.memoryStage.valid           := valid
   io.memoryStage.is_in_delayslot := is_in_delayslot
   io.memoryStage.mem_addr        := mem_addr_temp
-  io.memoryStage.data_ok         := es_data_ok
+  io.memoryStage.data_ok         := data_ok
   io.memoryStage.data            := Mux(data_buff.orR, data_buff, io.fromDataMemory.rdata)
   io.memoryStage.wait_mem        := es_valid && io.fromDataMemory.addr_ok
 
@@ -131,7 +131,7 @@ class Execute extends Module {
   io.dataMemory.op      := aluop
   io.dataMemory.data    := reg2
   io.dataMemory.addr    := mem_addr_temp
-  io.dataMemory.waiting := es_valid && es_addr_ok && !es_data_ok
+  io.dataMemory.waiting := es_valid && addr_ok && !data_ok
 
   when(data_sram_req && io.fromDataMemory.addr_ok && !io.fromMemory.allowin) {
     addr_ok_r := true.B
