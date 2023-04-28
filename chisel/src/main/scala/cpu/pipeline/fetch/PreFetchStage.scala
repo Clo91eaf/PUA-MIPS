@@ -38,6 +38,7 @@ class PreFetchStage extends Module {
   val inst_sram_addr    = Wire(BUS)
   val inst_waiting      = Wire(Bool())
   val inst_buff         = RegInit(BUS_INIT)
+  val inst_buff_valid   = RegInit(false.B)
   val inst_ok           = Wire(Bool())
   val inst              = Wire(BUS)
   val inst_sram_data_ok = Wire(Bool())
@@ -68,13 +69,13 @@ class PreFetchStage extends Module {
   bd_done_w   := io.fromFetchStage.valid
 
   when(br_taken && valid && ready_go || io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
-    br_taken_r := false.B
+    br_taken_r  := false.B
     br_target_r := BUS_INIT
-    bd_done_r := false.B
+    bd_done_r   := false.B
   }.elsewhen(br_leaving_ds) {
-    br_taken_r := br_taken_w
+    br_taken_r  := br_taken_w
     br_target_r := br_taken_w
-    bd_done_r := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
+    bd_done_r   := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
   }.elsewhen(br_taken && to_fs_valid && io.fromFetchStage.allowin && !bd_done) {
     bd_done_r := true.B
   }
@@ -111,11 +112,13 @@ class PreFetchStage extends Module {
   addr_ok := (inst_sram_req && io.fromInstMemory.addr_ok) || addr_ok_r
 
   when(io.fromFetchStage.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
-    inst_buff := 0.U
+    inst_buff_valid := false.B
+    inst_buff       := 0.U
   }.elsewhen(addr_ok && inst_sram_data_ok && !io.fromFetchStage.allowin) {
-    inst_buff := io.fromInstMemory.rdata
+    inst_buff_valid := true.B
+    inst_buff       := io.fromInstMemory.rdata
   }
 
-  inst_ok := inst_buff.orR || (addr_ok && inst_sram_data_ok)
-  inst    := Mux(inst_buff.orR, inst_buff, io.fromInstMemory.rdata)
+  inst_ok := inst_buff_valid || (addr_ok && inst_sram_data_ok)
+  inst    := Mux(inst_buff_valid, inst_buff, io.fromInstMemory.rdata)
 }

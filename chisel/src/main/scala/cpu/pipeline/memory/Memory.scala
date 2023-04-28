@@ -57,21 +57,24 @@ class Memory extends Module {
   io.decoder.ms_fwd_valid := ms_fwd_valid
 
   // output-execute
-  val ms_data_buff = RegInit(BUS_INIT)
+  val ms_data_buff       = RegInit(BUS_INIT)
+  val ms_data_buff_valid = RegInit(false.B)
   io.execute.hi          := hi
   io.execute.lo          := lo
   io.execute.whilo       := whilo && valid
   io.execute.allowin     := allowin
   io.execute.ex          := ms_valid && io.fromMemoryStage.ex
   io.execute.eret        := ms_valid && inst_is_eret
-  io.execute.inst_unable := !ms_valid || ms_data_buff.orR || io.fromMemoryStage.data_ok
+  io.execute.inst_unable := !ms_valid || ms_data_buff_valid || io.fromMemoryStage.data_ok
 
-  when(!ms_data_buff.orR && ms_valid && io.fromDataMemory.data_ok) {
-    ms_data_buff := io.fromDataMemory.rdata
+  when(!ms_data_buff_valid && ms_valid && io.fromDataMemory.data_ok) {
+    ms_data_buff_valid := true.B
+    ms_data_buff       := io.fromDataMemory.rdata
   }.elsewhen(
     io.fromWriteBackStage.allowin && io.fromWriteBackStage.eret && io.fromWriteBackStage.ex,
   ) {
-    ms_data_buff := BUS_INIT
+    ms_data_buff_valid := false.B
+    ms_data_buff       := BUS_INIT
   }
 
   val data_ok =
@@ -80,7 +83,7 @@ class Memory extends Module {
     io.fromDataMemory.rdata,
     Seq(
       io.fromMemoryStage.data_ok -> io.fromMemoryStage.data,
-      ms_data_buff.orR           -> ms_data_buff,
+      ms_data_buff_valid         -> ms_data_buff,
     ),
   )
   io.dataMemory.waiting := ms_valid && io.fromMemoryStage.wait_mem && !data_ok

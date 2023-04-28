@@ -18,10 +18,12 @@ class FetchStage extends Module {
   val valid             = RegInit(false.B)
   val allowin           = Wire(Bool())
   val ready_go          = Wire(Bool())
+  val fs_to_ds_valid    = Wire(Bool())
   val pfs_to_fs_inst_ok = RegInit(false.B)
   val pfs_to_fs_inst    = RegInit(BUS_INIT)
   val pc                = RegInit(BUS_INIT)
   val inst_buff         = RegInit(BUS_INIT)
+  val inst_buff_valid   = RegInit(false.B)
   val inst_ok           = Wire(Bool())
   val inst              = Wire(BUS)
   val ex                = Wire(Bool())
@@ -30,9 +32,9 @@ class FetchStage extends Module {
   // output
   io.preFetchStage.valid       := valid
   io.preFetchStage.allowin     := allowin
-  io.preFetchStage.inst_unable := !valid || inst_buff.orR || pfs_to_fs_inst_ok
+  io.preFetchStage.inst_unable := !valid || inst_buff_valid || pfs_to_fs_inst_ok
 
-  io.decoderStage.valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  io.decoderStage.valid    := fs_to_ds_valid
   io.decoderStage.pc       := pc
   io.decoderStage.inst     := inst
   io.decoderStage.ex       := ex
@@ -41,35 +43,40 @@ class FetchStage extends Module {
   io.instMemory.waiting := valid && !inst_ok
 
   /*-------------------------------io finish------------------------------*/
-  val addr_error = (pc(1, 0) =/= "b00".U)
-  ex       := valid && addr_error
-  badvaddr := pc
+  ready_go       := inst_ok
+  allowin        := !valid || ready_go && io.fromDecoder.allowin
+  fs_to_ds_valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
-  allowin := !valid || ready_go && io.fromDecoder.allowin
   when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
     valid := false.B
   }.elsewhen(allowin) {
     valid := io.fromPreFetchStage.valid
   }
+
   when(io.fromPreFetchStage.valid && allowin) {
     pfs_to_fs_inst_ok := io.fromPreFetchStage.inst_ok
     pfs_to_fs_inst    := io.fromPreFetchStage.inst
     pc                := io.fromPreFetchStage.pc
   }
 
-  when(!inst_buff.orR && valid && io.fromInstMemory.data_ok && !io.fromDecoder.allowin) {
-    inst_buff := io.fromInstMemory.rdata
+  when(!inst_buff_valid && valid && io.fromInstMemory.data_ok && !io.fromDecoder.allowin) {
+    inst_buff_valid := true.B
+    inst_buff       := io.fromInstMemory.rdata
   }.elsewhen(io.fromDecoder.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
-    inst_buff := 0.U
+    inst_buff_valid := false.B
+    inst_buff       := 0.U
   }
 
-  inst_ok := pfs_to_fs_inst_ok || inst_buff.orR || (valid && io.fromInstMemory.data_ok)
+  inst_ok := pfs_to_fs_inst_ok || inst_buff_valid || (valid && io.fromInstMemory.data_ok)
   inst := MuxCase(
     io.fromInstMemory.rdata,
     Seq(
       pfs_to_fs_inst_ok -> pfs_to_fs_inst,
-      inst_buff.orR     -> inst_buff,
+      inst_buff_valid   -> inst_buff,
     ),
   )
-  ready_go := inst_ok
+
+  val addr_error = (pc(1, 0) =/= "b00".U)
+  ex       := valid && addr_error
+  badvaddr := pc
 }
