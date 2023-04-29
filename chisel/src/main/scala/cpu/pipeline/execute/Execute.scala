@@ -117,7 +117,7 @@ class Execute extends Module {
   io.memoryStage.cnt             := cnt
   io.memoryStage.aluop           := aluop
   io.memoryStage.reg2            := reg2
-  io.memoryStage.valid           := valid
+  io.memoryStage.valid           := es_valid
   io.memoryStage.is_in_delayslot := is_in_delayslot
   io.memoryStage.mem_addr        := mem_addr_temp
   io.memoryStage.data_ok         := data_ok
