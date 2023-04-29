@@ -70,7 +70,7 @@ class WriteBackStage extends Module {
 
   // output-reg file
   io.regFile.reg_waddr := ws_reg_waddr
-  io.regFile.reg_wen   := ws_reg_wen & Fill(4, ws_valid)
+  io.regFile.reg_wen   := ws_reg_wen & Fill(4, ws_valid & ~ws_ex)
   io.regFile.reg_wdata := Mux(ws_inst_is_mfc0, cp0_rdata, ws_reg_wdata)
 
   // output-hilo
