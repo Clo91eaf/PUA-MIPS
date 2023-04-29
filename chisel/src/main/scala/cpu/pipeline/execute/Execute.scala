@@ -76,7 +76,7 @@ class Execute extends Module {
   val valid           = Wire(Bool())
   val blk_valid       = Wire(Bool())
   val es_fwd_valid    = Wire(Bool())
-  val badvaddr        = Wire(Bool())
+  val badvaddr        = Wire(BUS)
   val excode          = Wire(UInt(5.W))
   val ex              = Wire(Bool())
   val no_store        = Wire(Bool())
@@ -338,7 +338,7 @@ class Execute extends Module {
   badvaddr := Mux(
     io.fromExecuteStage.fs_to_ds_ex,
     io.fromExecuteStage.badvaddr,
-    io.fromAlu.out,
+    mem_addr_temp,
   )
   excode := MuxCase(
     io.fromExecuteStage.excode,

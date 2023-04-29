@@ -15,7 +15,7 @@ class DecoderStage extends Module {
   val inst     = RegInit(BUS_INIT)
   val ex       = RegInit(false.B)
   val bd       = RegInit(false.B)
-  val badvaddr = RegInit(false.B)
+  val badvaddr = RegInit(BUS_INIT)
   val valid    = RegInit(false.B)
 
   // output-decoder

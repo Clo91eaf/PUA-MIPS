@@ -117,7 +117,7 @@ class CP0Reg extends Module {
   )
 
   // EPC
-  val c0_epc = RegInit(0.U(32.W))
+  val c0_epc = RegInit(BUS_INIT)
   when(wb_ex && !cp0_status_exl) {
     c0_epc := Mux(wb_bd, wb_pc - 4.U, wb_pc)
   }.elsewhen(mtc0_we && cp0_addr === CP0_EPC_ADDR) {
@@ -127,8 +127,8 @@ class CP0Reg extends Module {
   cp0_epc := c0_epc
 
   // BADVADDR
-  val c0_badvaddr = RegInit(0.U(32.W))
-  when(wb_ex && wb_excode === CP0_BADV_ADDR) {
+  val c0_badvaddr = RegInit(BUS_INIT)
+  when(wb_ex && (wb_excode === EX_ADEL || wb_excode === EX_ADES)) {
     c0_badvaddr := wb_badvaddr
   }
 
@@ -138,7 +138,7 @@ class CP0Reg extends Module {
   val tick = RegInit(false.B)
   tick := !tick
 
-  val c0_count = RegInit(0.U(32.W))
+  val c0_count = RegInit(BUS_INIT)
   when(mtc0_we && cp0_addr === CP0_COUNT_ADDR) {
     c0_count := cp0_wdata
   }.elsewhen(tick) {
@@ -148,7 +148,7 @@ class CP0Reg extends Module {
   cp0_count := c0_count
 
   // COMPARE
-  val c0_compare = RegInit(0.U(32.W))
+  val c0_compare = RegInit(BUS_INIT)
   when(mtc0_we && cp0_addr === CP0_COMP_ADDR) {
     c0_compare := cp0_wdata
   }

@@ -27,7 +27,7 @@ class ExecuteStage extends Module {
   val es_valid           = RegInit(false.B)
   val ex                 = RegInit(false.B)
   val bd                 = RegInit(false.B)
-  val badvaddr           = RegInit(false.B)
+  val badvaddr           = RegInit(BUS_INIT)
   val cp0_addr           = RegInit(0.U(8.W))
   val excode             = RegInit(0.U(5.W))
   val overflow_inst      = RegInit(false.B)

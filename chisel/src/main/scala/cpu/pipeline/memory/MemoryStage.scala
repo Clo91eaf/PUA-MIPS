@@ -29,7 +29,7 @@ class MemoryStage extends Module {
   val valid           = RegInit(false.B)
   val ex              = RegInit(false.B)
   val bd              = RegInit(false.B)
-  val badvaddr        = RegInit(false.B)
+  val badvaddr        = RegInit(BUS_INIT)
   val cp0_addr        = RegInit(0.U(8.W))
   val excode          = RegInit(0.U(5.W))
   val data_ok         = RegInit(false.B)

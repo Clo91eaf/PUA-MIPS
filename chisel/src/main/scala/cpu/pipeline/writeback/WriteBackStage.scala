@@ -41,7 +41,7 @@ class WriteBackStage extends Module {
   val ws_inst_is_eret    = RegInit(false.B)
   val ws_inst_is_syscall = RegInit(false.B)
   val ws_bd              = RegInit(false.B)
-  val ws_badvaddr        = RegInit(false.B)
+  val ws_badvaddr        = RegInit(BUS_INIT)
   val ws_cp0_addr        = RegInit(0.U(8.W))
   val ws_excode          = RegInit(0.U(5.W))
   val ws_ex              = RegInit(false.B)

@@ -29,7 +29,7 @@ class FetchStage_DecoderStage extends Bundle {
   val pc       = Output(BUS)
   val inst     = Output(BUS)
   val ex       = Output(Bool())
-  val badvaddr = Output(Bool())
+  val badvaddr = Output(UInt(32.W))
 }
 
 class FetchStage_InstMemory extends Bundle {
@@ -41,7 +41,7 @@ class DecoderStage_Decoder extends Bundle {
   val pc       = Output(BUS)
   val inst     = Output(BUS)
   val ex       = Output(Bool())
-  val badvaddr = Output(Bool())
+  val badvaddr = Output(UInt(32.W))
   val valid    = Output(Bool())
 }
 
@@ -76,7 +76,7 @@ class Decoder_ExecuteStage extends Bundle {
   val valid                  = Output(Bool())
   val ex                     = Output(Bool())
   val bd                     = Output(Bool())
-  val badvaddr               = Output(Bool())
+  val badvaddr               = Output(UInt(32.W))
   val cp0_addr               = Output(UInt(8.W))
   val excode                 = Output(UInt(5.W))
   val overflow_inst          = Output(Bool())
@@ -112,7 +112,7 @@ class ExecuteStage_Execute extends Bundle {
   val pc              = Output(INST_ADDR_BUS)
   val valid           = Output(Bool())
   val bd              = Output(Bool())
-  val badvaddr        = Output(Bool())
+  val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val overflow_inst   = Output(Bool())
@@ -197,7 +197,7 @@ class Execute_MemoryStage extends Bundle {
   val valid           = Output(Bool())
   val mem_addr        = Output(BUS)
   val bd              = Output(Bool())
-  val badvaddr        = Output(Bool())
+  val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
@@ -262,7 +262,7 @@ class MemoryStage_Memory extends Bundle {
   val pc              = Output(BUS)
   val valid           = Output(Bool())
   val bd              = Output(Bool())
-  val badvaddr        = Output(Bool())
+  val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
@@ -298,7 +298,7 @@ class Memory_WriteBackStage extends Bundle {
   val inst_is_eret    = Output(Bool())
   val inst_is_syscall = Output(Bool())
   val bd              = Output(Bool())
-  val badvaddr        = Output(Bool())
+  val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
