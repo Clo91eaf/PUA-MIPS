@@ -121,10 +121,10 @@ class Memory extends Module {
   is_in_delayslot := io.fromMemoryStage.is_in_delayslot
 
   /*-------------------------------io finish-------------------------------*/
-  inst_is_mfc0    := io.fromMemoryStage.valid && (aluop === EXE_MFC0_OP)
-  inst_is_mtc0    := io.fromMemoryStage.valid && (aluop === EXE_MTC0_OP)
-  inst_is_eret    := io.fromMemoryStage.valid && (aluop === EXE_ERET_OP)
-  inst_is_syscall := io.fromMemoryStage.valid && (aluop === EXE_SYSCALL_OP)
+  inst_is_mfc0    := ms_valid && (aluop === EXE_MFC0_OP)
+  inst_is_mtc0    := ms_valid && (aluop === EXE_MTC0_OP)
+  inst_is_eret    := ms_valid && (aluop === EXE_ERET_OP)
+  inst_is_syscall := ms_valid && (aluop === EXE_SYSCALL_OP)
 
   ms_fwd_valid := valid // p195 ms_to_ws_valid
 

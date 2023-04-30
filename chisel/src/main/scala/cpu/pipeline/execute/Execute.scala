@@ -74,6 +74,7 @@ class Execute extends Module {
   val stallreq        = Wire(Bool())
   val allowin         = Wire(Bool())
   val valid           = Wire(Bool())
+  val es_to_ms_valid  = Wire(Bool())
   val blk_valid       = Wire(Bool())
   val es_fwd_valid    = Wire(Bool())
   val badvaddr        = Wire(BUS)
@@ -117,7 +118,7 @@ class Execute extends Module {
   io.memoryStage.cnt             := cnt
   io.memoryStage.aluop           := aluop
   io.memoryStage.reg2            := reg2
-  io.memoryStage.valid           := es_valid
+  io.memoryStage.valid           := es_to_ms_valid
   io.memoryStage.is_in_delayslot := is_in_delayslot
   io.memoryStage.mem_addr        := mem_addr_temp
   io.memoryStage.data_ok         := data_ok
@@ -168,6 +169,7 @@ class Execute extends Module {
   }
 
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  es_to_ms_valid := es_valid && ready_go && ws_not_eret_ex
   blk_valid := es_valid && load_op && ws_not_eret_ex
 
   ready_go := !stallreq
