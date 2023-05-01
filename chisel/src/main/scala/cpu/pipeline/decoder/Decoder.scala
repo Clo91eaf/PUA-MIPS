@@ -69,10 +69,11 @@ class Decoder extends Module {
   val overflow_inst          = Wire(Bool())
   val bd                     = RegInit(false.B)
   val ready_go               = Wire(Bool())
+  val ds_is_branch           = ((aluop === EXE_JR_OP) || (aluop === EXE_JALR_OP) || (aluop === EXE_J_OP) || (aluop === EXE_JAL_OP) || (aluop === EXE_BEQ_OP) || (aluop === EXE_BNE_OP) || (aluop === EXE_BGTZ_OP) || (aluop === EXE_BGEZ_OP) || (aluop === EXE_BGEZAL_OP) || (aluop === EXE_BLTZ_OP) || (aluop === EXE_BLTZAL_OP) || (aluop === EXE_BLEZ_OP)) && ds_valid
 
   // output-preFetchStage
   io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
-  io.preFetchStage.branch_stall          := branch_flag && !ready_go
+  io.preFetchStage.branch_stall          := ds_is_branch && !ready_go
   io.preFetchStage.branch_flag           := branch_flag
   io.preFetchStage.branch_target_address := branch_target_address
 
@@ -416,7 +417,7 @@ class Decoder extends Module {
   when(io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
     bd := false.B
   }.elsewhen(valid && io.fromExecute.allowin) {
-    bd := branch_flag
+    bd := ds_is_branch
   }
 
   val es_reg_wen   = io.fromExecute.reg_wen
