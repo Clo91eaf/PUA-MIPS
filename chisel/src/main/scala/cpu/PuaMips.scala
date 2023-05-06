@@ -6,8 +6,7 @@ import chisel3.internal.DontCareBinding
 
 import defines._
 import defines.Const._
-import memory._
-import pipeline._
+import axi._
 import pipeline.fetch._
 import pipeline.decoder._
 import pipeline.execute._
@@ -30,8 +29,8 @@ class PuaMips extends Module {
   val mul            = Module(new Mul())
   val div            = Module(new Div())
   val mov            = Module(new Mov())
-  val dataMemory     = Module(new DataMemory())
   val instMemory     = Module(new InstMemory())
+  val dataMemory     = Module(new DataMemory())
   val sramAXITrans   = Module(new SramAXITrans())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())

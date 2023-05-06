@@ -1,4 +1,4 @@
-package cpu.memory
+package cpu.axi
 
 import chisel3._
 import chisel3.util._
@@ -64,17 +64,17 @@ class FifoBufferValid(
     val empty          = Output(Bool())
     val full           = Output(Bool())
     val related_1      = Output(Bool())
-    val related_2      = Output(Bool())
+    // val related_2      = Output(Bool())
     val input          = Input(UInt(DATA_WIDTH.W))
     val output         = Output(UInt(DATA_WIDTH.W))
     val related_data_1 = Input(UInt(RLAT_WIDTH.W))
-    val related_data_2 = Input(UInt(RLAT_WIDTH.W))
+    // val related_data_2 = Input(UInt(RLAT_WIDTH.W))
   })
 
   val buff          = RegInit(VecInit(Seq.fill(BUFF_DEPTH)(0.U(DATA_WIDTH.W))))
   val valid         = RegInit(VecInit(Seq.fill(BUFF_DEPTH)(0.U(1.W))))
   val related_vec_1 = Wire(Vec(BUFF_DEPTH, Bool()))
-  val related_vec_2 = Wire(Vec(BUFF_DEPTH, Bool()))
+  // val related_vec_2 = Wire(Vec(BUFF_DEPTH, Bool()))
 
   val head  = RegInit(0.U(ADDR_WIDTH.W))
   val tail  = RegInit(0.U(ADDR_WIDTH.W))
@@ -86,7 +86,7 @@ class FifoBufferValid(
   io.empty     := count === 0.U
   io.full      := count === (BUFF_DEPTH - 1).U
   io.related_1 := related_vec_1.reduce(_ || _)
-  io.related_2 := related_vec_2.reduce(_ || _)
+  // io.related_2 := related_vec_2.reduce(_ || _)
   io.output    := buff(tail)
 
   when(do_read && !do_write) {
@@ -120,7 +120,7 @@ class FifoBufferValid(
       valid(i) := true.B
     }
     related_vec_1(i) := valid(i) & io.related_data_1 === buff(i)(RLAT_WIDTH - 1, 0)
-    related_vec_2(i) := valid(i) & io.related_data_2 === buff(i)(RLAT_WIDTH - 1, 0)
+    // related_vec_2(i) := valid(i) & io.related_data_2 === buff(i)(RLAT_WIDTH - 1, 0)
   }
 }
 
