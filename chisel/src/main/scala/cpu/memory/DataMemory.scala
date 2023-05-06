@@ -12,16 +12,16 @@ class DataMemory extends Module {
     val fromWriteBackStage = Flipped(new WriteBackStage_DataMemory())
     val execute            = new DataMemory_Execute()
     val memory             = new DataMemory_Memory()
-    val dataSram           = new DataMemory_DataSram()
+    val sramAXITrans       = new DataMemory_SramAXITrans()
   })
   val req        = io.fromExecute.req
   val aluop      = io.fromExecute.op
   val addr       = io.fromExecute.addr
   val data       = io.fromExecute.data
   val es_waiting = io.fromExecute.waiting
-  val addr_ok    = io.dataSram.addr_ok
-  val data_ok    = io.dataSram.data_ok
-  val rdata      = io.dataSram.rdata
+  val addr_ok    = io.sramAXITrans.addr_ok
+  val data_ok    = io.sramAXITrans.data_ok
+  val rdata      = io.sramAXITrans.rdata
   val ms_waiting = io.fromMemory.waiting
 
   val wen = WireInit(WRITE_DISABLE)
@@ -205,12 +205,12 @@ class DataMemory extends Module {
   val data_sram_discard         = RegInit(0.U(2.W))
   val data_sram_data_ok_discard = addr_ok && ~(data_sram_discard.orR)
   // data sram
-  io.dataSram.req    := en && req
-  io.dataSram.wr     := wen && req && wsel.orR
-  io.dataSram.size   := size
-  io.dataSram.addr   := Cat(addr(31, 2), sramAddrLowBit2)
-  io.dataSram.wstrb  := Fill(4, wen && req) & wsel
-  io.dataSram.wdata  := wdata
+  io.sramAXITrans.req    := en && req
+  io.sramAXITrans.wr     := wen && req && wsel.orR
+  io.sramAXITrans.size   := size
+  io.sramAXITrans.addr   := Cat(addr(31, 2), sramAddrLowBit2)
+  io.sramAXITrans.wstrb  := Fill(4, wen && req) & wsel
+  io.sramAXITrans.wdata  := wdata
   io.memory.rdata    := rdata & read_mask_next
   io.memory.data_ok  := data_sram_discard
   io.execute.rdata   := rdata & read_mask_next

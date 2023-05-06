@@ -6,7 +6,6 @@ import chisel3.internal.DontCareBinding
 
 import defines._
 import defines.Const._
-
 import memory._
 import pipeline._
 import pipeline.fetch._
@@ -14,14 +13,12 @@ import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
 import pipeline.writeback._
-import os.write
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
-    val ext_int   = Input(UInt(6.W))
-    val inst_sram = new INST_SRAM()
-    val data_sram = new DATA_SRAM()
-    val debug     = new DEBUG()
+    val ext_int = Input(UInt(6.W))
+    val axi     = new AXI()
+    val debug   = new DEBUG()
   })
   val preFetchStage  = Module(new PreFetchStage())
   val fetchStage     = Module(new FetchStage())
@@ -35,6 +32,7 @@ class PuaMips extends Module {
   val mov            = Module(new Mov())
   val dataMemory     = Module(new DataMemory())
   val instMemory     = Module(new InstMemory())
+  val sramAXITrans   = Module(new SramAXITrans())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
@@ -43,9 +41,10 @@ class PuaMips extends Module {
   val hilo           = Module(new HILO())
   val cp0            = Module(new CP0Reg())
 
-  // sram
-  io.data_sram <> dataMemory.io.dataSram
-  io.inst_sram <> instMemory.io.instSram
+  // axi interface
+  io.axi <> sramAXITrans.io.axi
+  sramAXITrans.io.fromDataMemory <> dataMemory.io.sramAXITrans
+  sramAXITrans.io.fromInstMemory <> instMemory.io.sramAXITrans
 
   // inst memory
   instMemory.io.preFetchStage <> preFetchStage.io.fromInstMemory
@@ -55,6 +54,7 @@ class PuaMips extends Module {
   dataMemory.io.execute <> execute.io.fromDataMemory
   dataMemory.io.memory <> memory.io.fromDataMemory
 
+  // debug
   io.debug <> writeBackStage.io.debug
 
   // preFetchStage

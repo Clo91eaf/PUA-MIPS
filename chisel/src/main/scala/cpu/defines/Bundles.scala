@@ -219,7 +219,7 @@ class Execute_DataMemory extends Bundle {
   val waiting = Output(Bool())
 }
 
-class DataMemory_DataSram extends Bundle {
+class DataMemory_SramAXITrans extends Bundle {
   val req     = Output(Bool())
   val wr      = Output(Bool())
   val size    = Output(UInt(2.W))
@@ -435,7 +435,7 @@ class InstMemory_FetchStage extends Bundle {
   val rdata   = Output(BUS)
 }
 
-class InstMemory_InstSram extends Bundle {
+class InstMemory_SramAXITrans extends Bundle {
   val req     = Output(Bool())
   val wr      = Output(Bool())
   val size    = Output(UInt(2.W))
@@ -474,29 +474,53 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_count    = Output(UInt(32.W))
   val cp0_compare  = Output(UInt(32.W))
 }
-// other
-class INST_SRAM extends Bundle {
-  val req     = Output(Bool())
-  val wr      = Output(Bool())
-  val size    = Output(UInt(2.W))
-  val addr    = Output(BUS)
-  val wstrb   = Output(UInt(4.W))
-  val wdata   = Output(BUS)
-  val addr_ok = Input(Bool())
-  val data_ok = Input(Bool())
-  val rdata   = Input(BUS)
-}
 
-class DATA_SRAM extends Bundle {
-  val req     = Output(Bool())
-  val wr      = Output(Bool())
-  val size    = Output(UInt(2.W))
-  val addr    = Output(BUS)
-  val wstrb   = Output(UInt(4.W))
-  val wdata   = Output(BUS)
-  val addr_ok = Input(Bool())
-  val data_ok = Input(Bool())
-  val rdata   = Input(BUS)
+class AXI extends Bundle {
+  // read request
+  val arid    = Output(UInt(4.W))
+  val araddr  = Output(UInt(32.W))
+  val arlen   = Output(UInt(8.W))
+  val arsize  = Output(UInt(3.W))
+  val arburst = Output(UInt(2.W))
+  val arlock  = Output(UInt(2.W))
+  val arcache = Output(UInt(4.W))
+  val arprot  = Output(UInt(3.W))
+  val arvalid = Output(Bool())
+  val arready = Input(Bool())
+
+  // read response
+  val rid    = Input(UInt(4.W))
+  val rdata  = Input(UInt(32.W))
+  val rresp  = Input(UInt(2.W))
+  val rlast  = Input(Bool())
+  val rvalid = Input(Bool())
+  val rready = Output(Bool())
+
+  // write request
+  val awid    = Output(UInt(4.W))
+  val awaddr  = Output(UInt(32.W))
+  val awlen   = Output(UInt(8.W))
+  val awsize  = Output(UInt(3.W))
+  val awburst = Output(UInt(2.W))
+  val awlock  = Output(UInt(2.W))
+  val awcache = Output(UInt(4.W))
+  val awprot  = Output(UInt(3.W))
+  val awvalid = Output(Bool())
+  val awready = Input(Bool())
+
+  // write data
+  val wid    = Output(UInt(4.W))
+  val wdata  = Output(UInt(32.W))
+  val wstrb  = Output(UInt(4.W))
+  val wlast  = Output(Bool())
+  val wvalid = Output(Bool())
+  val wready = Input(Bool())
+
+  // write response
+  val bid    = Input(UInt(4.W))
+  val bresp  = Input(UInt(2.W))
+  val bvalid = Input(Bool())
+  val bready = Output(Bool())
 }
 
 class DEBUG extends Bundle {
