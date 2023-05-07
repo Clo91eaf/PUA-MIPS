@@ -2,7 +2,7 @@ PY=src\\utils\\python
 PYSCRIPT=calculater.py
 EXP="1 + 2"
 
-test_top=../../PUA-MIPS-TEST/CPU_CDE_SRAM
+test_top=../../PUA-MIPS-TEST/CPU_CDE_AXI
 tcl_top=.\\src\\utils\\tcl
 cpu_dir=.\\src\\main\\scala\\cpu
 puamips=.\\generated\\PuaMips.v

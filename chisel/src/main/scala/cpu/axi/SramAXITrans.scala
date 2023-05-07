@@ -53,17 +53,17 @@ class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
 }
 
 class FifoBufferValid(
-    DATA_WIDTH: Int = 32,
-    BUFF_DEPTH: Int = 4,
-    ADDR_WIDTH: Int = 2,
+    DATA_WIDTH: Int = 33,
+    BUFF_DEPTH: Int = 6,
+    ADDR_WIDTH: Int = 3,
     RLAT_WIDTH: Int = 32,
 ) extends Module {
   val io = IO(new Bundle {
-    val wen            = Input(Bool())
-    val ren            = Input(Bool())
-    val empty          = Output(Bool())
-    val full           = Output(Bool())
-    val related_1      = Output(Bool())
+    val wen       = Input(Bool())
+    val ren       = Input(Bool())
+    val empty     = Output(Bool())
+    val full      = Output(Bool())
+    val related_1 = Output(Bool())
     // val related_2      = Output(Bool())
     val input          = Input(UInt(DATA_WIDTH.W))
     val output         = Output(UInt(DATA_WIDTH.W))
@@ -87,7 +87,7 @@ class FifoBufferValid(
   io.full      := count === (BUFF_DEPTH - 1).U
   io.related_1 := related_vec_1.reduce(_ || _)
   // io.related_2 := related_vec_2.reduce(_ || _)
-  io.output    := buff(tail)
+  io.output := buff(tail)
 
   when(do_read && !do_write) {
     count := count - 1.U
@@ -132,8 +132,8 @@ class SramAXITrans extends Module {
   })
   // some constant
   // ID
-  val INST_ID = "h0".U(4.W)
-  val DATA_ID = "h1".U(4.W)
+  val INST_ID = 0.U(4.W)
+  val DATA_ID = 1.U(4.W)
 
   // read request
   io.axi.arlen   := 0.U
@@ -155,24 +155,23 @@ class SramAXITrans extends Module {
   io.axi.wlast := 1.U
 
   // ***************define****************
-
   // AXI read request
   val axi_ar_busy = RegInit(false.B)
   val axi_ar_id   = RegInit(0.U(4.W))
-  val axi_ar_addr = RegInit(0.U(32.W))
+  val axi_ar_addr = RegInit(BUS_INIT)
   val axi_ar_size = RegInit(0.U(3.W))
 
   // AXI read response
   val axi_r_data_ok = Wire(Bool())
   val axi_r_inst_ok = Wire(Bool())
-  val axi_r_data    = Wire(UInt(32.W))
+  val axi_r_data    = Wire(BUS)
 
   // AXI write request
   val axi_aw_busy = RegInit(false.B)
-  val axi_aw_addr = RegInit(0.U(32.W))
+  val axi_aw_addr = RegInit(BUS_INIT)
   val axi_aw_size = RegInit(0.U(3.W))
   val axi_w_busy  = RegInit(false.B)
-  val axi_w_data  = RegInit(0.U(32.W))
+  val axi_w_data  = RegInit(BUS_INIT)
   val axi_w_strb  = RegInit(0.U(4.W))
 
   // AXI write response
@@ -181,12 +180,14 @@ class SramAXITrans extends Module {
   // middle read request
   val read_req_sel_data = Wire(Bool())
   val read_req_sel_inst = Wire(Bool())
-  val read_req_valid    = Wire(Bool())
-  val read_req_id       = Wire(UInt(4.W))
-  val read_req_addr     = Wire(UInt(32.W))
-  val read_req_size     = Wire(UInt(3.W))
-  val read_data_req_ok  = Wire(Bool())
-  val read_inst_req_ok  = Wire(Bool())
+
+  val read_req_valid = Wire(Bool())
+  val read_req_id    = Wire(UInt(4.W))
+  val read_req_addr  = Wire(BUS)
+  val read_req_size  = Wire(UInt(3.W))
+
+  val read_data_req_ok = Wire(Bool())
+  val read_inst_req_ok = Wire(Bool())
 
   // middle read inst response
   val read_inst_resp_wen    = Wire(Bool())
@@ -212,7 +213,7 @@ class SramAXITrans extends Module {
   val read_data_resp_input  = Wire(BUS)
   val read_data_resp_output = Wire(BUS)
 
-  val read_data_resp_buff = Module(new FifoBuffer())
+  val read_data_resp_buff = Module(new FifoBuffer(32, 6))
   read_data_resp_buff.io.wen <> read_data_resp_wen
   read_data_resp_buff.io.ren <> read_data_resp_ren
   read_data_resp_buff.io.empty <> read_data_resp_empty
@@ -222,9 +223,9 @@ class SramAXITrans extends Module {
 
   // middle write request
   val write_req_valid   = Wire(Bool())
-  val write_req_addr    = Wire(UInt(32.W))
+  val write_req_addr    = Wire(BUS)
   val write_req_size    = Wire(UInt(3.W))
-  val write_req_data    = Wire(UInt(32.W))
+  val write_req_data    = Wire(BUS)
   val write_req_strb    = Wire(UInt(4.W))
   val write_data_req_ok = Wire(Bool())
 
@@ -234,7 +235,7 @@ class SramAXITrans extends Module {
   val write_data_resp_empty = Wire(Bool())
   val write_data_resp_full  = Wire(Bool())
 
-  val write_data_resp_count = Module(new FifoCount())
+  val write_data_resp_count = Module(new FifoCount(6, 3))
   write_data_resp_count.io.wen <> write_data_resp_wen
   write_data_resp_count.io.ren <> write_data_resp_ren
   write_data_resp_count.io.empty <> write_data_resp_empty
@@ -258,10 +259,10 @@ class SramAXITrans extends Module {
   val data_req_record_empty     = Wire(Bool())
   val data_req_record_full      = Wire(Bool())
   val data_req_record_related_1 = Wire(Bool())
-  val data_req_record_input     = Wire(UInt(33.W))
+  val data_req_record_input     = Wire(UInt(33.W)) // {wr, addr}
   val data_req_record_output    = Wire(UInt(33.W))
 
-  val data_req_record = Module(new FifoBufferValid())
+  val data_req_record = Module(new FifoBufferValid(33, 6, 3, 32))
   data_req_record.io.wen <> data_req_record_wen
   data_req_record.io.ren <> data_req_record_ren
   data_req_record.io.empty <> data_req_record_empty
@@ -302,34 +303,33 @@ class SramAXITrans extends Module {
 
   // AXI write request
   when(!axi_aw_busy && !axi_w_busy && write_req_valid) {
-    axi_aw_busy := 1.B;
-    axi_aw_addr := write_req_addr;
-    axi_aw_size := write_req_size;
+    axi_aw_busy := true.B
+    axi_aw_addr := write_req_addr
+    axi_aw_size := write_req_size
   }.elsewhen(axi_aw_busy && io.axi.awvalid && io.axi.awready) {
-    axi_aw_busy := 0.B;
-    axi_aw_addr := "h0000_0000".U(32.W);
-    axi_aw_size := 3.U(3.W);
+    axi_aw_busy := false.B
+    axi_aw_addr := 0.U(32.W)
+    axi_aw_size := 3.U(3.W)
   }
 
   when(!axi_aw_busy && !axi_w_busy && write_req_valid) {
-    axi_w_busy := 1.B;
-    axi_w_data := write_req_data;
-    axi_w_strb := write_req_strb;
+    axi_w_busy := true.B
+    axi_w_data := write_req_data
+    axi_w_strb := write_req_strb
   }.elsewhen(axi_w_busy && io.axi.wvalid && io.axi.wready) {
-    axi_w_busy := 0.B;
-    axi_w_data := "h0000_0000".U(32.W);
-    axi_w_strb := "h0".U(4.W);
+    axi_w_busy := false.B
+    axi_w_data := 0.U(32.W)
+    axi_w_strb := 0.U(4.W)
   }
-
-  io.axi.awvalid := axi_aw_busy;
-  io.axi.wvalid  := axi_w_busy;
-  io.axi.awaddr  := axi_aw_addr;
-  io.axi.awsize  := axi_aw_size;
-  io.axi.wdata   := axi_w_data;
-  io.axi.wstrb   := axi_w_strb;
+  io.axi.awvalid := axi_aw_busy
+  io.axi.wvalid  := axi_w_busy
+  io.axi.awaddr  := axi_aw_addr
+  io.axi.awsize  := axi_aw_size
+  io.axi.wdata   := axi_w_data
+  io.axi.wstrb   := axi_w_strb
 
   // AXI write response
-  axi_b_ok := io.axi.bvalid && io.axi.bready
+  axi_b_ok      := io.axi.bvalid && io.axi.bready
   io.axi.bready := !write_data_resp_full
 
   // Middle read request
@@ -338,32 +338,31 @@ class SramAXITrans extends Module {
 
   // To AXI
   read_req_valid := inst_read_valid || data_read_valid
-  read_req_id := Mux(read_req_sel_data, DATA_ID, INST_ID)
-  read_req_addr := Mux(read_req_sel_data, io.fromDataMemory.addr, io.fromInstMemory.addr)
-  read_req_size := Mux(read_req_sel_data, io.fromDataMemory.size, io.fromInstMemory.size)
+  read_req_id    := Mux(read_req_sel_data, DATA_ID, INST_ID)
+  read_req_addr  := Mux(read_req_sel_data, io.fromDataMemory.addr, io.fromInstMemory.addr)
+  read_req_size  := Mux(read_req_sel_data, io.fromDataMemory.size, io.fromInstMemory.size)
 
   // To SRAM
   read_data_req_ok := read_req_sel_data && !axi_ar_busy
   read_inst_req_ok := read_req_sel_inst && !axi_ar_busy
 
   // Middle read inst response
-  read_inst_resp_ren := inst_read_ready
-  read_inst_resp_wen := axi_r_inst_ok
+  read_inst_resp_ren   := inst_read_ready
+  read_inst_resp_wen   := axi_r_inst_ok
   read_inst_resp_input := axi_r_data
 
   // Middle read data response
-  read_data_resp_ren := data_read_ready
-  read_data_resp_wen := axi_r_data_ok
+  read_data_resp_ren   := data_read_ready
+  read_data_resp_wen   := axi_r_data_ok
   read_data_resp_input := axi_r_data
 
   // middle write request
-
   // to axi
   write_req_valid := data_write_valid
-  write_req_addr := io.fromDataMemory.addr
-  write_req_size := io.fromDataMemory.size
-  write_req_data := io.fromDataMemory.wdata
-  write_req_strb := io.fromDataMemory.wstrb
+  write_req_addr  := io.fromDataMemory.addr
+  write_req_size  := io.fromDataMemory.size
+  write_req_data  := io.fromDataMemory.wdata
+  write_req_strb  := io.fromDataMemory.wstrb
 
   // to sram
   write_data_req_ok := data_write_valid && !axi_aw_busy && !axi_w_busy
@@ -373,30 +372,30 @@ class SramAXITrans extends Module {
   write_data_resp_wen := axi_b_ok
 
   // SRAM inst request
-  inst_read_valid := io.fromInstMemory.req && !io.fromInstMemory.wr && !inst_related
+  inst_read_valid           := io.fromInstMemory.req && !io.fromInstMemory.wr && !inst_related
   io.fromInstMemory.addr_ok := read_inst_req_ok
-  inst_related := false.B
+  inst_related              := false.B
 
   // SRAM inst response
-  inst_read_ready := true.B
+  inst_read_ready           := true.B
   io.fromInstMemory.data_ok := !read_inst_resp_empty
-  io.fromInstMemory.rdata := read_inst_resp_output
+  io.fromInstMemory.rdata   := read_inst_resp_output
 
   // SRAM data request
-  data_related := data_req_record_related_1
-  data_read_valid := io.fromDataMemory.req && !io.fromDataMemory.wr && !data_related
-  data_write_valid := io.fromDataMemory.req && io.fromDataMemory.wr && !data_related
+  data_related              := data_req_record_related_1
+  data_read_valid           := io.fromDataMemory.req && !io.fromDataMemory.wr && !data_related
+  data_write_valid          := io.fromDataMemory.req && io.fromDataMemory.wr && !data_related
   io.fromDataMemory.addr_ok := read_data_req_ok || write_data_req_ok
 
   // request record
-  data_req_record_ren := io.fromDataMemory.data_ok
-  data_req_record_wen := io.fromDataMemory.req && io.fromDataMemory.addr_ok
+  data_req_record_ren   := io.fromDataMemory.data_ok
+  data_req_record_wen   := io.fromDataMemory.req && io.fromDataMemory.addr_ok
   data_req_record_input := Cat(io.fromDataMemory.wr, io.fromDataMemory.addr)
 
   // SRAM data response
   io.fromDataMemory.rdata := read_data_resp_output
-  data_read_ready := !data_req_record_empty && !data_req_record_output(32)
-  data_write_ready := !data_req_record_empty && data_req_record_output(32)
+  data_read_ready         := !data_req_record_empty && !data_req_record_output(32)
+  data_write_ready        := !data_req_record_empty && data_req_record_output(32)
 
   io.fromDataMemory.data_ok := (data_read_ready && !read_data_resp_empty) || (data_write_ready && !write_data_resp_empty)
 }

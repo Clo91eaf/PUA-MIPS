@@ -1,8 +1,8 @@
 set test_top [lindex $argv 0]
 
-set ip_top "$test_top\\mycpu_sram_verify\\rtl\\xilinx_ip"
-set tb_top "$test_top\\mycpu_sram_verify\\run_vivado\\PUA-MIPS\\mycpu.sim\\sim_1\\behav\\xsim\\tb_top.tcl"
-set verify_top "$test_top\\mycpu_sram_verify\\run_vivado\\PUA-MIPS"
+set ip_top "$test_top\\mycpu_axi_verify\\rtl\\xilinx_ip"
+set tb_top "$test_top\\mycpu_axi_verify\\run_vivado\\PUA-MIPS\\mycpu.sim\\sim_1\\behav\\xsim\\tb_top.tcl"
+set verify_top "$test_top\\mycpu_axi_verify\\run_vivado\\PUA-MIPS"
 
 # 打开 Vivado 项目
 open_project $verify_top\\mycpu.xpr
