@@ -74,7 +74,7 @@ class PreFetchStage extends Module {
     bd_done_r   := false.B
   }.elsewhen(br_leaving_ds) {
     br_taken_r  := br_taken_w
-    br_target_r := br_taken_w
+    br_target_r := br_target_w
     bd_done_r   := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
   }.elsewhen(br_taken && to_fs_valid && io.fromFetchStage.allowin && !bd_done) {
     bd_done_r := true.B
