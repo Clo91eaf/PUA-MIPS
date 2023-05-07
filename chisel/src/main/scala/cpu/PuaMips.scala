@@ -42,8 +42,8 @@ class PuaMips extends Module {
 
   // axi interface
   io.axi <> sramAXITrans.io.axi
-  sramAXITrans.io.fromDataMemory <> dataMemory.io.sramAXITrans
-  sramAXITrans.io.fromInstMemory <> instMemory.io.sramAXITrans
+  sramAXITrans.io.dataMemory <> dataMemory.io.sramAXITrans
+  sramAXITrans.io.instMemory <> instMemory.io.sramAXITrans
 
   // debug
   io.debug <> writeBackStage.io.debug

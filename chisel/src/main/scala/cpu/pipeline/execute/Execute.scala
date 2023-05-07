@@ -63,32 +63,160 @@ class Execute extends Module {
   val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
-  val reg_wen         = Wire(REG_WRITE_BUS)
-  val reg_wdata       = Wire(BUS)
-  val hi              = Wire(BUS)
-  val lo              = Wire(BUS)
-  val whilo           = Wire(Bool())
-  val hilo_temp_o     = Wire(DOUBLE_BUS)
-  val cnt             = Wire(CNT_BUS)
-  val mem_addr_temp   = Wire(BUS)
-  val stallreq        = Wire(Bool())
-  val allowin         = Wire(Bool())
-  val valid           = Wire(Bool())
-  val es_to_ms_valid  = Wire(Bool())
-  val blk_valid       = Wire(Bool())
-  val es_fwd_valid    = Wire(Bool())
-  val badvaddr        = Wire(BUS)
-  val excode          = Wire(UInt(5.W))
-  val ex              = Wire(Bool())
-  val no_store        = Wire(Bool())
-  val addr_ok_r       = RegInit(false.B)
-  val data_sram_req   = es_valid && !addr_ok_r && !no_store
-  val data_buff       = RegInit(BUS_INIT)
-  val data_buff_valid = RegInit(false.B)
-  val addr_ok         = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
-  val data_sram_ok    = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
-  val data_ok         = data_buff_valid || (addr_ok && data_sram_ok)
+  val reg_wen        = Wire(REG_WRITE_BUS)
+  val reg_wdata      = Wire(BUS)
+  val hi             = Wire(BUS)
+  val lo             = Wire(BUS)
+  val whilo          = Wire(Bool())
+  val hilo_temp_o    = Wire(DOUBLE_BUS)
+  val cnt            = Wire(CNT_BUS)
+  val mem_addr_temp  = Wire(BUS)
+  val stallreq       = Wire(Bool())
+  val allowin        = Wire(Bool())
+  val valid          = Wire(Bool())
+  val es_to_ms_valid = Wire(Bool())
+  val blk_valid      = Wire(Bool())
+  val es_fwd_valid   = Wire(Bool())
+  val badvaddr       = Wire(BUS)
+  val excode         = Wire(UInt(5.W))
+  val ex             = Wire(Bool())
+  val no_store       = Wire(Bool())
 
+  // data sram
+  val addr_ok_r         = RegInit(false.B)
+  val mem_we            = WireInit(WRITE_DISABLE)
+  val mem_re            = WireInit(WRITE_DISABLE)
+  val addrLowBit2       = mem_addr_temp(1, 0)
+  val data_sram_req     = es_valid && !addr_ok_r && (mem_we || mem_re) && !no_store
+  val data_sram_wr      = mem_we
+  val data_sram_size    = WireInit(0.U(2.W))
+  val data_sram_addr    = Wire(BUS)
+  val data_sram_wstrb   = Wire(UInt(4.W))
+  val data_sram_wdata   = Wire(BUS)
+  val data_buff         = RegInit(BUS_INIT)
+  val data_buff_valid   = RegInit(false.B)
+  val addr_ok           = data_sram_req && io.fromDataMemory.addr_ok || addr_ok_r
+  val data_sram_data_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
+  val data_ok           = Wire(Bool())
+  val data              = Wire(BUS)
+
+  // mem_we
+  switch(aluop) {
+    is(EXE_SB_OP, EXE_SH_OP, EXE_SW_OP, EXE_SWL_OP, EXE_SWR_OP, EXE_SC_OP) {
+      mem_we := WRITE_ENABLE
+    }
+  }
+
+  // mem_re
+  switch(aluop) {
+    is(EXE_LB_OP, EXE_LBU_OP, EXE_LH_OP, EXE_LHU_OP, EXE_LW_OP, EXE_LL_OP, EXE_LWL_OP, EXE_LWR_OP) {
+      mem_re := CHIP_ENABLE
+    }
+  }
+
+  // size
+  switch(aluop) {
+    is(EXE_LW_OP, EXE_SW_OP) {
+      data_sram_size := 2.U
+    }
+    is(EXE_LH_OP, EXE_LHU_OP, EXE_SH_OP) {
+      data_sram_size := 1.U
+    }
+    is(EXE_LB_OP, EXE_LBU_OP, EXE_SB_OP) {
+      data_sram_size := 0.U
+    }
+    is(EXE_LWL_OP, EXE_SWL_OP) {
+      data_sram_size := Mux(addrLowBit2 === 3.U, 2.U, addrLowBit2)
+    }
+    is(EXE_LWR_OP, EXE_SWR_OP) {
+      data_sram_size := Mux(addrLowBit2 === 0.U, 2.U, 3.U - addrLowBit2)
+    }
+  }
+
+  // addr
+  data_sram_addr := Mux(
+    (aluop === EXE_LWL_OP || aluop === EXE_SWL_OP),
+    Cat(addrLowBit2, 0.U(2.W)),
+    mem_addr_temp,
+  )
+
+  // wstrb
+  data_sram_wstrb := MuxLookup(
+    aluop,
+    "b1111".U, // default SW,SC
+    Seq(
+      EXE_SB_OP -> MuxLookup(
+        addrLowBit2,
+        "b0000".U,
+        Seq(
+          "b00".U -> "b0001".U,
+          "b01".U -> "b0010".U,
+          "b10".U -> "b0100".U,
+          "b11".U -> "b1000".U,
+        ),
+      ),
+      EXE_SH_OP -> MuxLookup(
+        addrLowBit2,
+        "b0000".U,
+        Seq(
+          "b00".U -> "b0011".U,
+          "b10".U -> "b1100".U,
+        ),
+      ),
+      EXE_SWL_OP -> MuxLookup(
+        addrLowBit2,
+        "b0000".U,
+        Seq(
+          "b11".U -> "b1111".U,
+          "b10".U -> "b0111".U,
+          "b01".U -> "b0011".U,
+          "b00".U -> "b0001".U,
+        ),
+      ),
+      EXE_SWR_OP -> MuxLookup(
+        addrLowBit2,
+        "b0000".U,
+        Seq(
+          "b11".U -> "b1000".U,
+          "b10".U -> "b1100".U,
+          "b01".U -> "b1110".U,
+          "b00".U -> "b1111".U,
+        ),
+      ),
+    ),
+  )
+
+  // wdata
+  data_sram_wdata := MuxLookup(
+    aluop,
+    reg2,
+    Seq(
+      EXE_SB_OP -> Fill(4, reg2(7, 0)),
+      EXE_SH_OP -> Fill(2, reg2(15, 0)),
+      EXE_SW_OP -> reg2,
+      EXE_SWL_OP -> MuxLookup(
+        addrLowBit2,
+        ZERO_WORD,
+        Seq(
+          "b00".U -> Cat(0.U(8.W), reg2(31, 24)),
+          "b01".U -> Cat(0.U(16.W), reg2(31, 16)),
+          "b10".U -> Cat(0.U(24.W), reg2(31, 8)),
+          "b11".U -> reg2,
+        ),
+      ),
+      EXE_SWR_OP -> MuxLookup(
+        addrLowBit2,
+        ZERO_WORD,
+        Seq(
+          "b00".U -> reg2,
+          "b01".U -> Cat(reg2(23, 0), 0.U(8.W)),
+          "b10".U -> Cat(reg2(15, 0), 0.U(16.W)),
+          "b11".U -> Cat(reg2(7, 0), 0.U(24.W)),
+        ),
+      ),
+      // EXE_SC_OP -> Mux(LLbit, data, ZERO_WORD)
+    ),
+  )
   // output-memory stage
   io.memoryStage.pc       := pc
   io.memoryStage.ex       := ex
@@ -122,18 +250,22 @@ class Execute extends Module {
   io.memoryStage.is_in_delayslot := is_in_delayslot
   io.memoryStage.mem_addr        := mem_addr_temp
   io.memoryStage.data_ok         := data_ok
-  io.memoryStage.data            := Mux(data_buff_valid, data_buff, io.fromDataMemory.rdata)
-  io.memoryStage.wait_mem        := es_valid && io.fromDataMemory.addr_ok
+  io.memoryStage.data            := data
+  io.memoryStage.wait_mem        := es_valid && addr_ok
 
   // output-execute stage
   io.executeStage.allowin := allowin
 
   // output-data memory
-  io.dataMemory.req     := data_sram_req
-  io.dataMemory.op      := aluop
-  io.dataMemory.data    := reg2
-  io.dataMemory.addr    := mem_addr_temp
-  io.dataMemory.waiting := es_valid && addr_ok && !data_ok
+  io.dataMemory.aluop       := aluop
+  io.dataMemory.addrLowBit2 := addrLowBit2
+  io.dataMemory.req         := data_sram_req
+  io.dataMemory.wr          := data_sram_wr
+  io.dataMemory.size        := data_sram_size
+  io.dataMemory.addr        := data_sram_addr
+  io.dataMemory.wdata       := data_sram_wdata
+  io.dataMemory.wstrb       := data_sram_wstrb
+  io.dataMemory.waiting     := es_valid && addr_ok && !data_ok
 
   when(data_sram_req && io.fromDataMemory.addr_ok && !io.fromMemory.allowin) {
     addr_ok_r := true.B
@@ -142,11 +274,14 @@ class Execute extends Module {
   }
   when(io.fromMemory.allowin || no_store) {
     data_buff_valid := false.B
-    data_buff := BUS_INIT
-  }.elsewhen(io.fromDataMemory.addr_ok && io.fromDataMemory.data_ok && io.fromMemory.inst_unable) {
+    data_buff       := BUS_INIT
+  }.elsewhen(addr_ok && data_sram_data_ok && !io.fromMemory.allowin) {
     data_buff_valid := true.B
-    data_buff := io.fromDataMemory.rdata
+    data_buff       := io.fromDataMemory.rdata
   }
+
+  data_ok := data_buff_valid || (addr_ok && data_sram_data_ok)
+  data := Mux(data_buff_valid, data_buff, io.fromDataMemory.rdata)
 
   // io-finish
 
@@ -170,9 +305,9 @@ class Execute extends Module {
 
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   es_to_ms_valid := es_valid && ready_go && ws_not_eret_ex
-  blk_valid := es_valid && load_op && ws_not_eret_ex
+  blk_valid      := es_valid && load_op && ws_not_eret_ex
 
-  ready_go := !stallreq
+  ready_go := Mux((mem_we || mem_re), addr_ok || ex, true.B)
   valid    := es_valid && ready_go && ws_not_eret_ex
   allowin  := !es_valid || ready_go && io.fromMemory.allowin
 
@@ -329,7 +464,7 @@ class Execute extends Module {
   }
 
   val overflow_ex = io.fromExecuteStage.overflow_inst && io.fromAlu.ov
-  val st_addr     = mem_addr_temp(1, 0)
+  val st_addr     = addrLowBit2
   val load_ex = ((aluop === EXE_LW_OP) && (st_addr =/= 0.U)) ||
     ((aluop === EXE_LH_OP || aluop === EXE_LHU_OP) && st_addr(0) =/= 0.U)
   val store_ex = (aluop === EXE_SW_OP && (st_addr =/= 0.U)) ||
