@@ -69,7 +69,8 @@ class Decoder extends Module {
   val overflow_inst          = Wire(Bool())
   val bd                     = RegInit(false.B)
   val ready_go               = Wire(Bool())
-  val ds_is_branch           = ((aluop === EXE_JR_OP) || (aluop === EXE_JALR_OP) || (aluop === EXE_J_OP) || (aluop === EXE_JAL_OP) || (aluop === EXE_BEQ_OP) || (aluop === EXE_BNE_OP) || (aluop === EXE_BGTZ_OP) || (aluop === EXE_BGEZ_OP) || (aluop === EXE_BGEZAL_OP) || (aluop === EXE_BLTZ_OP) || (aluop === EXE_BLTZAL_OP) || (aluop === EXE_BLEZ_OP)) && ds_valid
+  val ds_is_branch =
+    ((aluop === EXE_JR_OP) || (aluop === EXE_JALR_OP) || (aluop === EXE_J_OP) || (aluop === EXE_JAL_OP) || (aluop === EXE_BEQ_OP) || (aluop === EXE_BNE_OP) || (aluop === EXE_BGTZ_OP) || (aluop === EXE_BGEZ_OP) || (aluop === EXE_BGEZAL_OP) || (aluop === EXE_BLTZ_OP) || (aluop === EXE_BLTZAL_OP) || (aluop === EXE_BLEZ_OP)) && ds_valid
 
   // output-preFetchStage
   io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
@@ -157,8 +158,8 @@ class Decoder extends Module {
   val BTarget = pc_plus_4 + imm_sll2_signedext
   val JTarget = Cat(pc_plus_4(31, 28), inst(25, 0), 0.U(2.W))
 
-  reg1_raddr             := rs // inst(25, 21)
-  reg2_raddr             := rt // inst(20, 16)
+  reg1_raddr := rs // inst(25, 21)
+  reg2_raddr := rt // inst(20, 16)
 
   val signals: List[UInt] = ListLookup(
     inst,
@@ -434,13 +435,9 @@ class Decoder extends Module {
   for (i <- 0 until 4) {
     when(reset.asBool === RST_ENABLE) {
       reg1_value(i) := ZERO_WORD
-    }.elsewhen(
-      reg1_ren && es_fwd_valid && es_reg_wen(i) && es_reg_waddr === reg1_raddr,
-    ) {
+    }.elsewhen(reg1_ren && es_fwd_valid && es_reg_wen(i) && es_reg_waddr === reg1_raddr) {
       reg1_value(i) := io.fromExecute.reg_wdata(i * 8 + 7, i * 8)
-    }.elsewhen(
-      reg1_ren && ms_fwd_valid && ms_reg_wen(i) && ms_reg_waddr === reg1_raddr,
-    ) {
+    }.elsewhen(reg1_ren && ms_fwd_valid && ms_reg_wen(i) && ms_reg_waddr === reg1_raddr) {
       reg1_value(i) := io.fromMemory.reg_wdata(i * 8 + 7, i * 8)
     }.elsewhen(reg1_ren) {
       reg1_value(i) := reg1_data(i * 8 + 7, i * 8)

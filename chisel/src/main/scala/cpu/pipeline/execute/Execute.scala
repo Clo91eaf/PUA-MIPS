@@ -189,7 +189,7 @@ class Execute extends Module {
   // wdata
   data_sram_wdata := MuxLookup(
     aluop,
-    reg2,
+    BUS_INIT,
     Seq(
       EXE_SB_OP -> Fill(4, reg2(7, 0)),
       EXE_SH_OP -> Fill(2, reg2(15, 0)),
