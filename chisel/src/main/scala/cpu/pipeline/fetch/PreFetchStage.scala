@@ -31,6 +31,9 @@ class PreFetchStage extends Module {
   val br_target     = Wire(BUS)
   val bd_done       = Wire(Bool())
 
+  val target_leaving_pfs = br_taken && to_fs_valid && io.fromFetchStage.allowin && bd_done
+  val bd_leaving_pfs     = br_taken && to_fs_valid && io.fromFetchStage.allowin && !bd_done
+
   val seq_pc = RegInit(PC_INIT)
   val pc     = Mux(br_taken && bd_done, br_target, seq_pc)
 
@@ -68,15 +71,19 @@ class PreFetchStage extends Module {
   br_target_w := io.fromDecoder.branch_target_address
   bd_done_w   := io.fromFetchStage.valid
 
-  when(br_taken && valid && ready_go || io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+  when(target_leaving_pfs || io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
     br_taken_r  := false.B
     br_target_r := BUS_INIT
-    bd_done_r   := false.B
   }.elsewhen(br_leaving_ds) {
     br_taken_r  := br_taken_w
     br_target_r := br_target_w
-    bd_done_r   := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
-  }.elsewhen(br_taken && to_fs_valid && io.fromFetchStage.allowin && !bd_done) {
+  }
+
+  when(target_leaving_pfs || io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    bd_done_r := false.B
+  }.elsewhen(br_leaving_ds) {
+    bd_done_r := io.fromFetchStage.valid || to_fs_valid && io.fromFetchStage.allowin
+  }.elsewhen(bd_leaving_pfs) {
     bd_done_r := true.B
   }
 
