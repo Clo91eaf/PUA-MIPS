@@ -42,7 +42,7 @@ class Memory extends Module {
   val LLbit           = Wire(Bool())
   val zero32          = Wire(BUS)
   val allowin         = Wire(Bool())
-  val valid           = Wire(Bool())
+  val ms_to_ws_valid  = Wire(Bool())
   val inst_is_mfc0    = Wire(Bool())
   val inst_is_mtc0    = Wire(Bool())
   val inst_is_eret    = Wire(Bool())
@@ -61,7 +61,7 @@ class Memory extends Module {
   val ms_data_buff_valid = RegInit(false.B)
   io.execute.hi          := hi
   io.execute.lo          := lo
-  io.execute.whilo       := whilo && valid
+  io.execute.whilo       := whilo && ms_to_ws_valid
   io.execute.allowin     := allowin
   io.execute.ex          := ms_valid && io.fromMemoryStage.ex
   io.execute.eret        := ms_valid && inst_is_eret
@@ -78,7 +78,7 @@ class Memory extends Module {
   }
 
   val data_ok =
-    io.fromMemoryStage.data_ok || (io.fromMemoryStage.wait_mem && io.fromDataMemory.data_ok)
+    io.fromMemoryStage.data_ok || ms_data_buff_valid || (io.fromMemoryStage.wait_mem && io.fromDataMemory.data_ok)
   val data = MuxCase(
     io.fromDataMemory.rdata,
     Seq(
@@ -101,7 +101,7 @@ class Memory extends Module {
   io.writeBackStage.whilo           := whilo
   io.writeBackStage.LLbit_wen       := LLbit_wen
   io.writeBackStage.LLbit_value     := LLbit_value
-  io.writeBackStage.valid           := valid
+  io.writeBackStage.valid           := ms_to_ws_valid
   io.writeBackStage.inst_is_mfc0    := inst_is_mfc0
   io.writeBackStage.inst_is_mtc0    := inst_is_mtc0
   io.writeBackStage.inst_is_eret    := inst_is_eret
@@ -126,12 +126,12 @@ class Memory extends Module {
   inst_is_eret    := ms_valid && (aluop === EXE_ERET_OP)
   inst_is_syscall := ms_valid && (aluop === EXE_SYSCALL_OP)
 
-  ms_fwd_valid := valid // p195 ms_to_ws_valid
+  ms_fwd_valid := ms_to_ws_valid // p195 ms_to_ws_valid
 
   val ready_go = Mux(io.fromMemoryStage.wait_mem, io.fromMemoryStage.data_ok, true.B)
   allowin := !ms_valid || ready_go && io.fromWriteBackStage.allowin
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
-  valid := ms_valid && ready_go && ws_not_eret_ex
+  ms_to_ws_valid := ms_valid && ready_go && ws_not_eret_ex
 
   zero32 := 0.U(32.W)
 

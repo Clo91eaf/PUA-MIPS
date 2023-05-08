@@ -15,7 +15,7 @@ class FetchStage extends Module {
     val decoderStage       = new FetchStage_DecoderStage
     val instMemory         = new FetchStage_InstMemory()
   })
-  val valid             = RegInit(false.B)
+  val fs_valid          = RegInit(false.B)
   val allowin           = Wire(Bool())
   val ready_go          = Wire(Bool())
   val fs_to_ds_valid    = Wire(Bool())
@@ -30,9 +30,9 @@ class FetchStage extends Module {
   val badvaddr          = Wire(BUS)
 
   // output
-  io.preFetchStage.valid       := valid
+  io.preFetchStage.valid       := fs_valid
   io.preFetchStage.allowin     := allowin
-  io.preFetchStage.inst_unable := !valid || inst_buff_valid || pfs_to_fs_inst_ok
+  io.preFetchStage.inst_unable := !fs_valid || inst_buff_valid || pfs_to_fs_inst_ok
 
   io.decoderStage.valid    := fs_to_ds_valid
   io.decoderStage.pc       := pc
@@ -40,17 +40,17 @@ class FetchStage extends Module {
   io.decoderStage.ex       := ex
   io.decoderStage.badvaddr := badvaddr
 
-  io.instMemory.waiting := valid && !inst_ok
+  io.instMemory.waiting := fs_valid && !inst_ok
 
   /*-------------------------------io finish------------------------------*/
   ready_go       := inst_ok
-  allowin        := !valid || ready_go && io.fromDecoder.allowin
-  fs_to_ds_valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  allowin        := !fs_valid || ready_go && io.fromDecoder.allowin
+  fs_to_ds_valid := fs_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
-    valid := false.B
+    fs_valid := false.B
   }.elsewhen(allowin) {
-    valid := io.fromPreFetchStage.valid
+    fs_valid := io.fromPreFetchStage.valid
   }
 
   when(io.fromPreFetchStage.valid && allowin) {
@@ -59,7 +59,7 @@ class FetchStage extends Module {
     pc                := io.fromPreFetchStage.pc
   }
 
-  when(!inst_buff_valid && valid && io.fromInstMemory.data_ok && !io.fromDecoder.allowin) {
+  when(!inst_buff_valid && fs_valid && io.fromInstMemory.data_ok && !io.fromDecoder.allowin) {
     inst_buff_valid := true.B
     inst_buff       := io.fromInstMemory.rdata
   }.elsewhen(io.fromDecoder.allowin || io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
@@ -67,7 +67,7 @@ class FetchStage extends Module {
     inst_buff       := 0.U
   }
 
-  inst_ok := pfs_to_fs_inst_ok || inst_buff_valid || (valid && io.fromInstMemory.data_ok)
+  inst_ok := pfs_to_fs_inst_ok || inst_buff_valid || (fs_valid && io.fromInstMemory.data_ok)
   inst := MuxCase(
     io.fromInstMemory.rdata,
     Seq(
@@ -77,6 +77,6 @@ class FetchStage extends Module {
   )
 
   val addr_error = (pc(1, 0) =/= "b00".U)
-  ex       := valid && addr_error
+  ex       := fs_valid && addr_error
   badvaddr := pc
 }

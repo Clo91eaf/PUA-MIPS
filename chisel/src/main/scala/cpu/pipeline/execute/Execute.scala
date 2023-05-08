@@ -73,7 +73,6 @@ class Execute extends Module {
   val mem_addr_temp  = Wire(BUS)
   val stallreq       = Wire(Bool())
   val allowin        = Wire(Bool())
-  val valid          = Wire(Bool())
   val es_to_ms_valid = Wire(Bool())
   val blk_valid      = Wire(Bool())
   val es_fwd_valid   = Wire(Bool())
@@ -281,7 +280,7 @@ class Execute extends Module {
   }
 
   data_ok := data_buff_valid || (addr_ok && data_sram_data_ok)
-  data := Mux(data_buff_valid, data_buff, io.fromDataMemory.rdata)
+  data    := Mux(data_buff_valid, data_buff, io.fromDataMemory.rdata)
 
   // io-finish
 
@@ -304,12 +303,11 @@ class Execute extends Module {
   }
 
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
-  es_to_ms_valid := es_valid && ready_go && ws_not_eret_ex
-  blk_valid      := es_valid && load_op && ws_not_eret_ex
+  blk_valid := es_valid && load_op && ws_not_eret_ex
 
-  ready_go := Mux((mem_we || mem_re), addr_ok || ex, true.B)
-  valid    := es_valid && ready_go && ws_not_eret_ex
-  allowin  := !es_valid || ready_go && io.fromMemory.allowin
+  ready_go       := Mux((mem_we || mem_re), addr_ok || ex, true.B)
+  allowin        := !es_valid || ready_go && io.fromMemory.allowin
+  es_to_ms_valid := es_valid && ready_go && ws_not_eret_ex
 
   es_fwd_valid := es_valid
 

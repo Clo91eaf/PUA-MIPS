@@ -63,7 +63,7 @@ class Decoder extends Module {
   val link_addr              = Wire(BUS)
   val is_in_delayslot        = Wire(Bool())
   val allowin                = Wire(Bool())
-  val valid                  = Wire(Bool())
+  val ds_to_es_valid         = Wire(Bool())
   val ex                     = Wire(Bool())
   val excode                 = Wire(UInt(5.W))
   val overflow_inst          = Wire(Bool())
@@ -111,7 +111,7 @@ class Decoder extends Module {
   io.executeStage.excode                 := excode
   io.executeStage.link_addr              := link_addr
   io.executeStage.is_in_delayslot        := is_in_delayslot
-  io.executeStage.valid                  := valid
+  io.executeStage.valid                  := ds_to_es_valid
 
   /*-------------------------------io finish-------------------------------*/
 
@@ -148,8 +148,8 @@ class Decoder extends Module {
     (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
     (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
   ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)))
-  allowin := !ds_valid || ready_go && io.fromExecute.allowin
-  valid   := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  allowin        := !ds_valid || ready_go && io.fromExecute.allowin
+  ds_to_es_valid := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
@@ -417,7 +417,7 @@ class Decoder extends Module {
 
   when(io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
     bd := false.B
-  }.elsewhen(valid && io.fromExecute.allowin) {
+  }.elsewhen(ds_to_es_valid && io.fromExecute.allowin) {
     bd := ds_is_branch
   }
 

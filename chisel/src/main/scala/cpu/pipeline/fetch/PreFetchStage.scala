@@ -15,7 +15,7 @@ class PreFetchStage extends Module {
     val fetchStage = new PreFetchStage_FetchStage()
     val instMemory = new PreFetchStage_InstMemory()
   })
-  val valid       = Wire(Bool())
+  val pfs_valid   = Wire(Bool())
   val ready_go    = Wire(Bool())
   val to_fs_valid = Wire(Bool())
 
@@ -49,7 +49,7 @@ class PreFetchStage extends Module {
   val addr_ok           = Wire(Bool())
 
   // output
-  io.fetchStage.valid := valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  io.fetchStage.valid := pfs_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   io.fetchStage.inst_ok := inst_ok
   io.fetchStage.inst    := inst
   io.fetchStage.pc      := pc
@@ -58,10 +58,10 @@ class PreFetchStage extends Module {
   io.instMemory.waiting := inst_waiting
 
   // handshake
-  valid    := !reset.asBool
-  ready_go := addr_ok
+  pfs_valid := !reset.asBool
+  ready_go  := addr_ok
   to_fs_valid :=
-    valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+    pfs_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   // branch
   br_leaving_ds := io.fromDecoder.br_leaving_ds
@@ -101,7 +101,7 @@ class PreFetchStage extends Module {
   }
 
   // inst sram
-  inst_sram_req := valid &&
+  inst_sram_req := pfs_valid &&
     !addr_ok_r &&
     !(bd_done && br_stall) &&
     !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
