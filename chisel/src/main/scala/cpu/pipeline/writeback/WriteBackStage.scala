@@ -123,7 +123,7 @@ class WriteBackStage extends Module {
   // output-debug
   io.debug.pc    := ws_pc
   io.debug.waddr := io.regFile.reg_waddr
-  io.debug.wen   := Fill(4, io.regFile.reg_wen.orR)
+  io.debug.wen   := io.regFile.reg_wen
   io.debug.wdata := io.regFile.reg_wdata
 
   // output-cp0
