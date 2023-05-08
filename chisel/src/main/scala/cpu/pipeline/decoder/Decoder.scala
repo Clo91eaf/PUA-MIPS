@@ -147,7 +147,12 @@ class Decoder extends Module {
   mfc0_block := (io.fromExecute.inst_is_mfc0 && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)) ||
     (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
     (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
-  ready_go := !(mfc0_block || (io.fromExecute.blk_valid && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt)))
+  ready_go := !(mfc0_block
+    || (io.fromExecute.blk_valid 
+    && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt))
+    || (io.fromMemory.blk_valid 
+    && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt))
+    )
   allowin        := !ds_valid || ready_go && io.fromExecute.allowin
   ds_to_es_valid := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
@@ -433,9 +438,7 @@ class Decoder extends Module {
 
   reg1 := reg1_value.asUInt
   for (i <- 0 until 4) {
-    when(reset.asBool === RST_ENABLE) {
-      reg1_value(i) := ZERO_WORD
-    }.elsewhen(reg1_ren && es_fwd_valid && es_reg_wen(i) && es_reg_waddr === reg1_raddr) {
+    when(reg1_ren && es_fwd_valid && es_reg_wen(i) && es_reg_waddr === reg1_raddr) {
       reg1_value(i) := io.fromExecute.reg_wdata(i * 8 + 7, i * 8)
     }.elsewhen(reg1_ren && ms_fwd_valid && ms_reg_wen(i) && ms_reg_waddr === reg1_raddr) {
       reg1_value(i) := io.fromMemory.reg_wdata(i * 8 + 7, i * 8)
@@ -450,9 +453,7 @@ class Decoder extends Module {
 
   reg2 := reg2_value.asUInt
   for (i <- 0 until 4) {
-    when(reset.asBool === RST_ENABLE) {
-      reg2_value(i) := ZERO_WORD
-    }.elsewhen(
+    when(
       reg2_ren && es_fwd_valid && es_reg_wen(i) && es_reg_waddr === reg2_raddr,
     ) {
       reg2_value(i) := io.fromExecute.reg_wdata(i * 8 + 7, i * 8)

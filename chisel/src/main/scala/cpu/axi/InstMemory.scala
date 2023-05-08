@@ -15,14 +15,13 @@ class InstMemory extends Module {
     val sramAXITrans       = new InstMemory_SramAXITrans()
   })
   val inst_sram_discard = RegInit(0.U(2.W))
-  val inst_sram_data_ok_discard = io.sramAXITrans.data_ok && ~(inst_sram_discard.orR)
 
   io.preFetchStage.addr_ok := io.sramAXITrans.addr_ok
   io.preFetchStage.rdata   := io.sramAXITrans.rdata
-  io.preFetchStage.data_ok := inst_sram_data_ok_discard
+  io.preFetchStage.data_ok := io.sramAXITrans.data_ok && ~inst_sram_discard.orR
 
   io.fetchStage.rdata := io.sramAXITrans.rdata
-  io.fetchStage.data_ok := inst_sram_data_ok_discard
+  io.fetchStage.data_ok := io.sramAXITrans.data_ok && ~inst_sram_discard.orR
 
   io.sramAXITrans.req   := io.fromPreFetchStage.req
   io.sramAXITrans.wr    := false.B

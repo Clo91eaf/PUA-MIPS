@@ -204,6 +204,7 @@ class Execute_MemoryStage extends Bundle {
   val data_ok         = Output(Bool())
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
+  val res_from_mem    = Output(Bool())
 }
 
 class Execute_CP0 extends Bundle {
@@ -273,6 +274,7 @@ class MemoryStage_Memory extends Bundle {
   val data_ok         = Output(Bool())
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
+  val res_from_mem    = Output(Bool())
 }
 
 // memory
@@ -318,6 +320,7 @@ class Memory_Decoder extends Bundle {
   val reg_wen      = Output(REG_WRITE_BUS)
   val inst_is_mfc0 = Output(Bool())
   val ms_fwd_valid = Output(Bool())
+  val blk_valid = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {

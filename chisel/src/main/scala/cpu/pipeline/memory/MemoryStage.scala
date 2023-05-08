@@ -35,6 +35,7 @@ class MemoryStage extends Module {
   val data_ok         = RegInit(false.B)
   val data            = RegInit(BUS_INIT)
   val wait_mem        = RegInit(false.B)
+  val res_from_mem    = RegInit(false.B)
 
   // output-memory
   io.memory.pc              := pc
@@ -55,6 +56,7 @@ class MemoryStage extends Module {
   io.memory.data_ok         := data_ok
   io.memory.data            := data
   io.memory.wait_mem        := wait_mem
+  io.memory.res_from_mem    := res_from_mem
   io.memory.is_in_delayslot := is_in_delayslot
   io.memory.valid           := valid
 
@@ -89,6 +91,7 @@ class MemoryStage extends Module {
     data_ok         := io.fromExecute.data_ok
     data            := io.fromExecute.data
     wait_mem        := io.fromExecute.wait_mem
+    res_from_mem    := io.fromExecute.res_from_mem
   }
 
   // debug

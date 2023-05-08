@@ -251,6 +251,7 @@ class Execute extends Module {
   io.memoryStage.data_ok         := data_ok
   io.memoryStage.data            := data
   io.memoryStage.wait_mem        := es_valid && addr_ok
+  io.memoryStage.res_from_mem    := mem_re
 
   // output-execute stage
   io.executeStage.allowin := allowin

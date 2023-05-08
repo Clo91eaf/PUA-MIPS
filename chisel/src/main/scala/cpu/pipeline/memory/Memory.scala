@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
+import os.read
 
 class Memory extends Module {
   val io = IO(new Bundle {
@@ -48,6 +49,7 @@ class Memory extends Module {
   val inst_is_eret    = Wire(Bool())
   val inst_is_syscall = Wire(Bool())
   val ms_fwd_valid    = Wire(Bool())
+  val ms_blk_valid    = Wire(Bool())
 
   // output-decoder
   io.decoder.reg_waddr    := reg_waddr
@@ -55,6 +57,7 @@ class Memory extends Module {
   io.decoder.reg_wdata    := reg_wdata
   io.decoder.inst_is_mfc0 := inst_is_mfc0
   io.decoder.ms_fwd_valid := ms_fwd_valid
+  io.decoder.blk_valid    := ms_blk_valid
 
   // output-execute
   val ms_data_buff       = RegInit(BUS_INIT)
@@ -67,7 +70,9 @@ class Memory extends Module {
   io.execute.eret        := ms_valid && inst_is_eret
   io.execute.inst_unable := !ms_valid || ms_data_buff_valid || io.fromMemoryStage.data_ok
 
-  when(!ms_data_buff_valid && ms_valid && io.fromDataMemory.data_ok) {
+  when(
+    !ms_data_buff_valid && ms_valid && io.fromDataMemory.data_ok && !io.fromWriteBackStage.allowin,
+  ) {
     ms_data_buff_valid := true.B
     ms_data_buff       := io.fromDataMemory.rdata
   }.elsewhen(
@@ -126,12 +131,13 @@ class Memory extends Module {
   inst_is_eret    := ms_valid && (aluop === EXE_ERET_OP)
   inst_is_syscall := ms_valid && (aluop === EXE_SYSCALL_OP)
 
-  ms_fwd_valid := ms_to_ws_valid // p195 ms_to_ws_valid
-
   val ready_go = Mux(io.fromMemoryStage.wait_mem, data_ok, true.B)
   allowin := !ms_valid || ready_go && io.fromWriteBackStage.allowin
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   ms_to_ws_valid := ms_valid && ready_go && ws_not_eret_ex
+
+  ms_fwd_valid := ms_to_ws_valid // p195 ms_to_ws_valid
+  ms_blk_valid := ms_valid && io.fromMemoryStage.res_from_mem && !ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
 
   zero32 := 0.U(32.W)
 
