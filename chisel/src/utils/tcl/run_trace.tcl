@@ -11,6 +11,5 @@ update_compile_order -fileset sources_1
 # 启动仿真
 launch_simulation
 source $tb_top
-run 100000ns
-# run all
+run all
 close_sim

@@ -82,19 +82,17 @@ class DataMemory extends Module {
   io.sramAXITrans.wstrb := wstrb
   io.sramAXITrans.wdata := wdata
   io.memory.rdata       := rdata & read_mask_next
-  io.memory.data_ok     := data_sram_discard
+  io.memory.data_ok     := ~data_sram_discard.orR && data_ok
   io.execute.rdata      := rdata & read_mask_next
   io.execute.addr_ok    := addr_ok
-  io.execute.data_ok    := data_sram_discard
+  io.execute.data_ok    := ~data_sram_discard.orR && data_ok
 
   when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
     data_sram_discard := Cat(es_waiting, ms_waiting)
   }.elsewhen(data_ok) {
     when(data_sram_discard === 3.U) {
       data_sram_discard := 1.U
-    }.elsewhen(data_sram_discard === 1.U) {
-      data_sram_discard := 0.U
-    }.elsewhen(data_sram_discard === 2.U) {
+    }.elsewhen(data_sram_discard === 1.U || data_sram_discard === 2.U) {
       data_sram_discard := 0.U
     }
   }

@@ -128,7 +128,7 @@ class Memory extends Module {
 
   ms_fwd_valid := ms_to_ws_valid // p195 ms_to_ws_valid
 
-  val ready_go = Mux(io.fromMemoryStage.wait_mem, io.fromMemoryStage.data_ok, true.B)
+  val ready_go = Mux(io.fromMemoryStage.wait_mem, data_ok, true.B)
   allowin := !ms_valid || ready_go && io.fromWriteBackStage.allowin
   val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
   ms_to_ws_valid := ms_valid && ready_go && ws_not_eret_ex
