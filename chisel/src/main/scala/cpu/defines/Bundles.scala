@@ -1,6 +1,7 @@
 package cpu.defines
 
 import chisel3._
+import chisel3.util._
 import Const._
 
 // pre fetch stage
@@ -445,6 +446,27 @@ class WriteBackStage_FetchStage extends Bundle {
   val cp0_epc = Output(UInt(32.W))
 }
 
+class WriteBackStage_VPaddrTransfer extends Bundle {
+  val cp0_entryhi = Output(UInt(32.W))
+}
+
+class WriteBackStage_TLBMMU extends Bundle {
+  val we      = Output(Bool())
+  val w_index = Output(UInt(log2Ceil(TLB_NUM).W))
+  val w_vpn2  = Output(UInt(19.W))
+  val w_asid  = Output(UInt(8.W))
+  val w_g     = Output(Bool())
+  val w_pfn0  = Output(UInt(20.W))
+  val w_c0    = Output(UInt(3.W))
+  val w_d0    = Output(Bool())
+  val w_v0    = Output(Bool())
+  val w_pfn1  = Output(UInt(20.W))
+  val w_c1    = Output(UInt(3.W))
+  val w_d1    = Output(Bool())
+  val w_v1    = Output(Bool())
+  val r_index = Output(UInt(log2Ceil(TLB_NUM).W))
+}
+
 // instMemory
 
 class InstMemory_PreFetchStage extends Bundle {
@@ -551,4 +573,66 @@ class DEBUG extends Bundle {
   val wen   = Output(WEN_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
+}
+
+//TLB MMU
+class TLBMMUCommon extends Bundle {
+  val s0_index = Output(UInt(log2Ceil(TLB_NUM).W))
+}
+
+class TLBMMU_WriteBackStage extends Bundle {
+  val r_vpn2 = Output(UInt(19.W))
+  val r_asid = Output(UInt(8.W))
+  val r_g    = Output(Bool())
+  val r_pfn0 = Output(UInt(20.W))
+  val r_c0   = Output(UInt(3.W))
+  val r_d0   = Output(Bool())
+  val r_v0   = Output(Bool())
+  val r_pfn1 = Output(UInt(20.W))
+  val r_c1   = Output(UInt(3.W))
+  val r_d1   = Output(Bool())
+  val r_v1   = Output(Bool())
+}
+
+class TLBMMU_VPaddrTransfer extends Bundle {
+  val tlb_found = Output(Bool())
+  val tlb_pfn   = Output(UInt(20.W))
+  val tlb_c     = Output(UInt(3.W))
+  val tlb_d     = Output(Bool())
+  val tlb_v     = Output(Bool())
+}
+
+class TLBMMU_ExecuteStage extends Bundle {
+  val s1_found = Output(Bool())
+  val s1_index = Output(UInt(log2Ceil(TLB_NUM).W))
+}
+
+//VPaddr Transfer
+class VPaddrTransfer_TLBMMU extends Bundle {
+  val tlb_vpn2     = Output(UInt(19.W))
+  val tlb_odd_page = Output(Bool())
+  val tlb_asid     = Output(UInt(8.W))
+}
+
+class DataVPaddrTransfer_Execute extends Bundle {
+  val tlb_refill   = Output(Bool())
+  val tlb_invalid  = Output(Bool())
+  val tlb_modified = Output(Bool())
+}
+
+class Execute_DataVPaddrTransfer extends Bundle {
+  val vaddr = Input(UInt(32.W))
+}
+
+class DataVPaddrTransfer_DataMemory extends Bundle {
+  val paddr        = Output(UInt(32.W))
+}
+
+class VPaddrTransferCommon extends Bundle {
+  val vaddr        = Input(UInt(32.W))
+  val inst_tlbp    = Input(Bool())
+  val paddr        = Output(UInt(32.W))
+  val tlb_refill   = Output(Bool())
+  val tlb_invalid  = Output(Bool())
+  val tlb_modified = Output(Bool())
 }
