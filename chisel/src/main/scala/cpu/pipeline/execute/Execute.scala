@@ -135,7 +135,7 @@ class Execute extends Module {
   // addr
   data_sram_addr := Mux(
     (aluop === EXE_LWL_OP || aluop === EXE_SWL_OP),
-    Cat(mem_addr_temp, 0.U(2.W)),
+    Cat(mem_addr_temp(31, 2), 0.U(2.W)),
     mem_addr_temp,
   )
 
