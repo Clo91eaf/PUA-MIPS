@@ -6,8 +6,9 @@ import cpu.defines.Const._
 
 class ExecuteStage extends Module {
   val io = IO(new Bundle {
-    val fromDecoder = Flipped(new Decoder_ExecuteStage())
-    val fromExecute = Flipped(new Execute_ExecuteStage())
+    val fromDecoder        = Flipped(new Decoder_ExecuteStage())
+    val fromExecute        = Flipped(new Execute_ExecuteStage())
+    val fromWriteBackStage = Flipped(new WriteBackStage_ExecuteStage())
 
     val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()
@@ -56,7 +57,9 @@ class ExecuteStage extends Module {
   // output-decoder
   io.decoder.is_in_delayslot := is_in_delayslot
 
-  when(io.fromExecute.allowin) {
+  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    es_valid := false.B
+  }.elsewhen(io.fromExecute.allowin) {
     es_valid := io.fromDecoder.valid
   }
 

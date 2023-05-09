@@ -6,10 +6,11 @@ import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromExecute = Flipped(new Execute_MemoryStage())
-    val fromMemory  = Flipped(new Memory_MemoryStage())
-    val execute     = new MemoryStage_Execute()
-    val memory      = new MemoryStage_Memory()
+    val fromExecute        = Flipped(new Execute_MemoryStage())
+    val fromMemory         = Flipped(new Memory_MemoryStage())
+    val fromWriteBackStage = Flipped(new WriteBackStage_MemoryStage())
+    val execute            = new MemoryStage_Execute()
+    val memory             = new MemoryStage_Memory()
   })
 
   // output
@@ -65,7 +66,9 @@ class MemoryStage extends Module {
   io.execute.cnt  := cnt
 
   /*--------------------io finish--------------------*/
-  when(io.fromMemory.allowin) {
+  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    valid := false.B
+  }.elsewhen(io.fromMemory.allowin) {
     valid := io.fromExecute.valid
   }
 

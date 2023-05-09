@@ -320,7 +320,7 @@ class Memory_Decoder extends Bundle {
   val reg_wen      = Output(REG_WRITE_BUS)
   val inst_is_mfc0 = Output(Bool())
   val ms_fwd_valid = Output(Bool())
-  val blk_valid = Output(Bool())
+  val blk_valid    = Output(Bool())
 }
 
 class Memory_Execute extends Bundle {
@@ -362,6 +362,11 @@ class WriteBackStage_Mov extends Bundle {
   val cp0_rdata = Output(BUS)
 }
 
+class WriteBackStage_DecoderStage extends Bundle {
+  val ex   = Output(Bool())
+  val eret = Output(Bool())
+}
+
 class WriteBackStage_Decoder extends Bundle {
   val inst_is_mfc0 = Output(Bool())
   val reg_waddr    = Output(ADDR_BUS)
@@ -374,6 +379,11 @@ class WriteBackStage_Decoder extends Bundle {
 class WriteBackStage_LLbitReg extends Bundle {
   val LLbit_value = Output(Bool())
   val LLbit_wen   = Output(Bool())
+}
+
+class WriteBackStage_ExecuteStage extends Bundle {
+  val ex   = Output(Bool())
+  val eret = Output(Bool())
 }
 
 class WriteBackStage_Execute extends Bundle {
@@ -389,6 +399,12 @@ class WriteBackStage_HILO extends Bundle {
   val hi    = Output(BUS)
   val lo    = Output(BUS)
 }
+
+class WriteBackStage_MemoryStage extends Bundle {
+  val ex   = Output(Bool())
+  val eret = Output(Bool())
+}
+
 
 class WriteBackStage_Memory extends Bundle {
   val LLbit_value = Output(Bool())

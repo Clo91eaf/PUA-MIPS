@@ -6,9 +6,10 @@ import cpu.defines.Const._
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
-    val fromFetchStage = Flipped(new FetchStage_DecoderStage())
-    val fromDecoder    = Flipped(new Decoder_DecoderStage())
-    val decoder        = new DecoderStage_Decoder()
+    val fromFetchStage     = Flipped(new FetchStage_DecoderStage())
+    val fromDecoder        = Flipped(new Decoder_DecoderStage())
+    val fromWriteBackStage = Flipped(new WriteBackStage_DecoderStage())
+    val decoder            = new DecoderStage_Decoder()
   })
 
   val pc       = RegInit(BUS_INIT)
@@ -25,7 +26,9 @@ class DecoderStage extends Module {
   io.decoder.badvaddr := badvaddr
   io.decoder.valid    := valid
 
-  when(io.fromDecoder.allowin) {
+  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+    valid := false.B
+  }.elsewhen(io.fromDecoder.allowin) {
     valid := io.fromFetchStage.valid
   }
 

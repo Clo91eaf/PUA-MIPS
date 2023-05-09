@@ -14,9 +14,12 @@ class WriteBackStage extends Module {
     val preFetchStage = new WriteBackStage_PreFetchStage()
     val fetchStage    = new WriteBackStage_FetchStage()
     val instMemory    = new WriteBackStage_InstMemory()
+    val decoderStage  = new WriteBackStage_DecoderStage()
     val decoder       = new WriteBackStage_Decoder()
     val regFile       = new WriteBackStage_RegFile()
+    val executeStage  = new WriteBackStage_ExecuteStage()
     val execute       = new WriteBackStage_Execute()
+    val memoryStage   = new WriteBackStage_MemoryStage()
     val memory        = new WriteBackStage_Memory()
     val dataMemory    = new WriteBackStage_DataMemory()
     val llbitReg      = new WriteBackStage_LLbitReg()
@@ -51,8 +54,8 @@ class WriteBackStage extends Module {
 
   // output
   val allowin      = Wire(Bool())
-  val eret         = Wire(Bool())
-  val ex           = Wire(Bool())
+  val eret         = WireInit(false.B)
+  val ex           = WireInit(false.B)
   val inst_is_mfc0 = Wire(Bool())
   val cp0_we       = Wire(Bool())
   val cp0_wdata    = Wire(UInt(32.W))
@@ -88,6 +91,10 @@ class WriteBackStage extends Module {
   io.fetchStage.ex      := ex
   io.fetchStage.cp0_epc := cp0_epc
 
+  // output-decoder stage
+  io.decoderStage.eret := eret
+  io.decoderStage.ex   := ex
+
   // output-decoder
   io.decoder.eret         := eret
   io.decoder.ex           := ex
@@ -95,6 +102,10 @@ class WriteBackStage extends Module {
   io.decoder.reg_waddr    := ws_reg_waddr
   io.decoder.cp0_cause    := cp0_cause
   io.decoder.cp0_status   := cp0_status
+
+  // output-execute stage
+  io.executeStage.eret := eret
+  io.executeStage.ex   := ex
 
   // output-execute
   io.execute.hi    := ws_hi
@@ -108,6 +119,10 @@ class WriteBackStage extends Module {
   io.mov.cp0_waddr := ws_cp0_addr
   io.mov.cp0_wdata := cp0_wdata
   io.mov.cp0_rdata := cp0_rdata
+
+  // output-memory stage
+  io.memoryStage.eret        := eret
+  io.memoryStage.ex          := ex
 
   // output-memory
   io.memory.LLbit_wen   := ws_LLbit_wen

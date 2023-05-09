@@ -12,6 +12,7 @@ import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
 import pipeline.writeback._
+import os.write
 
 class PuaMips extends Module {
   val io = IO(new Bundle {
@@ -112,18 +113,21 @@ class PuaMips extends Module {
 
   // writeBackStage
   writeBackStage.io.preFetchStage <> preFetchStage.io.fromWriteBackStage
-  writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
-  writeBackStage.io.dataMemory <> dataMemory.io.fromWriteBackStage
+  writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
+  writeBackStage.io.decoderStage <> decoderStage.io.fromWriteBackStage
   writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
+  writeBackStage.io.executeStage <> executeStage.io.fromWriteBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage
-  writeBackStage.io.mov <> mov.io.fromWriteBackStage
+  writeBackStage.io.memoryStage <> memoryStage.io.fromWriteBackStage
+  writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.regFile <> regfile.io.fromWriteBackStage
+  writeBackStage.io.mov <> mov.io.fromWriteBackStage
   writeBackStage.io.hilo <> hilo.io.fromWriteBackStage
   writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
-  writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
-  writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
   writeBackStage.io.ext_int := io.ext_int
+  writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
+  writeBackStage.io.dataMemory <> dataMemory.io.fromWriteBackStage
 
   // cp0
   cp0.io.writeBackStage <> writeBackStage.io.fromCP0
