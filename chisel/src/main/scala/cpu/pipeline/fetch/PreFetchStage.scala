@@ -31,7 +31,6 @@ class PreFetchStage extends Module {
   val to_pfs_valid    = Wire(Bool())
   val pfs_allowin     = Wire(Bool())
   val pfs_ready_go    = Wire(Bool())
-  val to_fs_valid     = Wire(Bool())
   val pfs_to_fs_valid = Wire(Bool())
 
   val pfs_ex       = Wire(Bool())
@@ -50,8 +49,8 @@ class PreFetchStage extends Module {
   val br_target     = Wire(BUS)
   val bd_done       = Wire(Bool())
 
-  val target_leaving_pfs = br_taken && to_fs_valid && fs_allowin && bd_done
-  val bd_leaving_pfs     = br_taken && to_fs_valid && fs_allowin && !bd_done
+  val target_leaving_pfs = br_taken && pfs_to_fs_valid && fs_allowin && bd_done
+  val bd_leaving_pfs     = br_taken && pfs_to_fs_valid && fs_allowin && !bd_done
 
   val seq_pc = RegInit(PC_INIT)
   val pc     = Mux(br_taken && bd_done, br_target, seq_pc)
@@ -111,7 +110,7 @@ class PreFetchStage extends Module {
   when(target_leaving_pfs || do_flush) {
     bd_done_r := false.B
   }.elsewhen(br_leaving_ds) {
-    bd_done_r := io.fromFetchStage.valid || to_fs_valid && fs_allowin
+    bd_done_r := io.fromFetchStage.valid || pfs_to_fs_valid && fs_allowin
   }.elsewhen(bd_leaving_pfs) {
     bd_done_r := true.B
   }
