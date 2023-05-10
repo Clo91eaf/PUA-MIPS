@@ -5,16 +5,19 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class MMU extends Module {
+class DataMMU extends Module {
   val io = IO(new Bundle {
     val fromWriteBackStage = Flipped(new WriteBackStage_MMU())
-    val fromTLB         = Flipped(new TLB_MMU())
-    val common             = Flipped(new MMUCommon())
-    val tlbmmu             = new MMU_TLB()
+    val fromTLB            = Flipped(new TLB_MMU())
+    val fromExecute        = Flipped(new Execute_DataMMU())
+
+    val execute    = new MMU_Common()
+    val dataMemory = new MMU_Sram()
+    val tlb        = new MMU_TLB()
   })
   // input
-  val vaddr       = io.common.vaddr
-  val inst_tlbp   = io.common.inst_tlbp
+  val vaddr       = io.fromExecute.vaddr
+  val inst_tlbp   = io.fromExecute.inst_is_tlbp
   val cp0_entryhi = io.fromWriteBackStage.cp0_entryhi
   val tlb_found   = io.fromTLB.tlb_found
   val tlb_pfn     = io.fromTLB.tlb_pfn
@@ -29,13 +32,13 @@ class MMU extends Module {
   val tlb_vpn2     = Wire(UInt(19.W))
   val tlb_odd_page = Wire(Bool())
   val tlb_asid     = Wire(UInt(8.W))
-  io.common.paddr        := paddr
-  io.common.tlb_refill   := tlb_refill
-  io.common.tlb_invalid  := tlb_invalid
-  io.common.tlb_modified := tlb_modified
-  io.tlbmmu.tlb_vpn2     := tlb_vpn2
-  io.tlbmmu.tlb_odd_page := tlb_odd_page
-  io.tlbmmu.tlb_asid     := tlb_asid
+  io.dataMemory.paddr        := paddr
+  io.execute.tlb_refill   := tlb_refill
+  io.execute.tlb_invalid  := tlb_invalid
+  io.execute.tlb_modified := tlb_modified
+  io.tlb.tlb_vpn2        := tlb_vpn2
+  io.tlb.tlb_odd_page    := tlb_odd_page
+  io.tlb.tlb_asid        := tlb_asid
   // io-finish
   val unmapped = Wire(Bool())
   unmapped := vaddr(31) && !vaddr(30)

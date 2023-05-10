@@ -18,6 +18,10 @@ class PreFetchStage_InstMemory extends Bundle {
   val waiting = Output(Bool())
 }
 
+class PreFetchStage_InstMMU extends Bundle {
+  val vaddr = Output(UInt(32.W))
+}
+
 // fetch stage
 class FetchStage_PreFetchStage extends Bundle {
   val valid       = Output(Bool())
@@ -399,11 +403,10 @@ class WriteBackStage_MemoryStage extends Bundle {
   val eret = Output(Bool())
 }
 
-
 class WriteBackStage_Memory extends Bundle {
-  val allowin     = Output(Bool())
-  val eret        = Output(Bool())
-  val ex          = Output(Bool())
+  val allowin = Output(Bool())
+  val eret    = Output(Bool())
+  val ex      = Output(Bool())
 }
 
 class WriteBackStage_RegFile extends Bundle {
@@ -423,12 +426,6 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_addr    = Output(UInt(8.W))
   val mtc0_we     = Output(Bool())
   val cp0_wdata   = Output(UInt(32.W))
-}
-
-class WriteBackStage_PreFetchStage extends Bundle {
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
-  val cp0_epc = Output(UInt(32.W))
 }
 
 class WriteBackStage_FetchStage extends Bundle {
@@ -593,32 +590,33 @@ class TLB_ExecuteStage extends Bundle {
   val s1_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
-//VPaddr Transfer
+// MMU
 class MMU_TLB extends Bundle {
   val tlb_vpn2     = Output(UInt(19.W))
   val tlb_odd_page = Output(Bool())
   val tlb_asid     = Output(UInt(8.W))
 }
 
-class DataMMU_Execute extends Bundle {
+class MMU_Common extends Bundle {
   val tlb_refill   = Output(Bool())
   val tlb_invalid  = Output(Bool())
   val tlb_modified = Output(Bool())
 }
 
 class Execute_DataMMU extends Bundle {
-  val vaddr = Input(UInt(32.W))
+  val vaddr        = Output(UInt(32.W))
+  val inst_is_tlbp = Output(Bool())
 }
 
-class DataMMU_DataMemory extends Bundle {
-  val paddr        = Output(UInt(32.W))
+class MMU_Sram extends Bundle {
+  val paddr = Output(UInt(32.W))
 }
 
-class MMUCommon extends Bundle {
-  val vaddr        = Input(UInt(32.W))
-  val inst_tlbp    = Input(Bool())
-  val paddr        = Output(UInt(32.W))
-  val tlb_refill   = Output(Bool())
-  val tlb_invalid  = Output(Bool())
-  val tlb_modified = Output(Bool())
+//exCtrl
+class Ctrl_PreFetchStage extends Bundle {
+  val after_ex = Output(Bool())
+  val do_flush = Output(Bool())
+  val flush_pc = Output(UInt(32.W))
+  val block    = Output(Bool())
+
 }
