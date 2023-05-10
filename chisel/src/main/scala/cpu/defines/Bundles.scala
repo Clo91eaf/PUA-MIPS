@@ -6,10 +6,14 @@ import Const._
 
 // pre fetch stage
 class PreFetchStage_FetchStage extends Bundle {
-  val valid   = Output(Bool())
-  val inst_ok = Output(Bool())
-  val inst    = Output(BUS)
-  val pc      = Output(BUS)
+  val valid      = Output(Bool())
+  val inst_ok    = Output(Bool())
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
+  val tlb_refill = Output(Bool())
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val excode     = Output(UInt(5.W))
 }
 
 class PreFetchStage_InstMemory extends Bundle {
