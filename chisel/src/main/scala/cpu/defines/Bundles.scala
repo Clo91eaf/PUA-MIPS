@@ -27,6 +27,10 @@ class PreFetchStage_InstMMU extends Bundle {
 }
 
 // fetch stage
+class FetchStage_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
 class FetchStage_PreFetchStage extends Bundle {
   val valid       = Output(Bool())
   val allowin     = Output(Bool())
@@ -39,6 +43,7 @@ class FetchStage_DecoderStage extends Bundle {
   val inst     = Output(BUS)
   val ex       = Output(Bool())
   val badvaddr = Output(UInt(32.W))
+  val excode   = Output(UInt(5.W))
 }
 
 class FetchStage_InstMemory extends Bundle {
@@ -442,6 +447,12 @@ class WriteBackStage_MMU extends Bundle {
   val cp0_entryhi = Output(UInt(32.W))
 }
 
+class WriteBackStage_PreFetchStage extends Bundle {
+  val eret    = Output(Bool())
+  val ex      = Output(Bool())
+  val cp0_epc = Output(UInt(32.W))
+}
+
 class WriteBackStage_TLB extends Bundle {
   val we      = Output(Bool())
   val w_index = Output(UInt(log2Ceil(TLB_NUM).W))
@@ -622,5 +633,9 @@ class Ctrl_PreFetchStage extends Bundle {
   val do_flush = Output(Bool())
   val flush_pc = Output(UInt(32.W))
   val block    = Output(Bool())
+}
 
+class Ctrl_FetchStage extends Bundle {
+  val after_ex = Output(Bool())
+  val do_flush = Output(Bool())
 }
