@@ -291,8 +291,6 @@ class Memory_MemoryStage extends Bundle {
 
 class Memory_WriteBackStage extends Bundle {
   val pc              = Output(BUS)
-  val LLbit_value     = Output(Bool())
-  val LLbit_wen       = Output(Bool())
   val reg_wdata       = Output(BUS)
   val reg_waddr       = Output(ADDR_BUS)
   val reg_wen         = Output(REG_WRITE_BUS)
@@ -377,11 +375,6 @@ class WriteBackStage_Decoder extends Bundle {
   val cp0_status   = Output(UInt(32.W))
 }
 
-class WriteBackStage_LLbitReg extends Bundle {
-  val LLbit_value = Output(Bool())
-  val LLbit_wen   = Output(Bool())
-}
-
 class WriteBackStage_ExecuteStage extends Bundle {
   val ex   = Output(Bool())
   val eret = Output(Bool())
@@ -408,8 +401,6 @@ class WriteBackStage_MemoryStage extends Bundle {
 
 
 class WriteBackStage_Memory extends Bundle {
-  val LLbit_value = Output(Bool())
-  val LLbit_wen   = Output(Bool())
   val allowin     = Output(Bool())
   val eret        = Output(Bool())
   val ex          = Output(Bool())
@@ -502,11 +493,6 @@ class RegFile_Decoder extends Bundle {
 class HILO_Execute extends Bundle {
   val hi = Output(BUS)
   val lo = Output(BUS)
-}
-
-// LLbitReg
-class LLbitReg_Memory extends Bundle {
-  val LLbit = Output(Bool())
 }
 
 // CP0

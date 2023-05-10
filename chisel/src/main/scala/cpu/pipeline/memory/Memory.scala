@@ -8,7 +8,6 @@ import os.read
 
 class Memory extends Module {
   val io = IO(new Bundle {
-    val fromLLbitReg       = Flipped(new LLbitReg_Memory())
     val fromMemoryStage    = Flipped(new MemoryStage_Memory())
     val fromDataMemory     = Flipped(new DataMemory_Memory())
     val fromWriteBackStage = Flipped(new WriteBackStage_Memory())
@@ -34,13 +33,10 @@ class Memory extends Module {
   val hi              = Wire(BUS)
   val lo              = Wire(BUS)
   val whilo           = Wire(Bool())
-  val LLbit_wen       = Wire(Bool())
-  val LLbit_value     = Wire(Bool())
   val cp0_wen         = Wire(Bool())
   val cp0_waddr       = Wire(CP0_ADDR_BUS)
   val cp0_wdata       = Wire(BUS)
   val is_in_delayslot = Wire(Bool())
-  val LLbit           = Wire(Bool())
   val zero32          = Wire(BUS)
   val allowin         = Wire(Bool())
   val ms_to_ws_valid  = Wire(Bool())
@@ -104,8 +100,6 @@ class Memory extends Module {
   io.writeBackStage.hi              := hi
   io.writeBackStage.lo              := lo
   io.writeBackStage.whilo           := whilo
-  io.writeBackStage.LLbit_wen       := LLbit_wen
-  io.writeBackStage.LLbit_value     := LLbit_value
   io.writeBackStage.valid           := ms_to_ws_valid
   io.writeBackStage.inst_is_mfc0    := inst_is_mfc0
   io.writeBackStage.inst_is_mtc0    := inst_is_mtc0
@@ -141,19 +135,6 @@ class Memory extends Module {
 
   zero32 := 0.U(32.W)
 
-  // 获取最新的LLbit的值
-  when(reset.asBool === RST_ENABLE) {
-    LLbit := false.B
-  }.otherwise {
-    when(io.fromWriteBackStage.LLbit_wen) {
-      // input-write back stage
-      LLbit := io.fromWriteBackStage.LLbit_value
-    }.otherwise {
-      // input-l lbit reg
-      LLbit := io.fromLLbitReg.LLbit
-    }
-  }
-
   when(reset.asBool === RST_ENABLE) {
     reg_waddr   := NOP_REG_ADDR
     reg_wen     := REG_WRITE_DISABLE
@@ -161,8 +142,6 @@ class Memory extends Module {
     hi          := ZERO_WORD
     lo          := ZERO_WORD
     whilo       := WRITE_DISABLE
-    LLbit_wen   := false.B
-    LLbit_value := false.B
     cp0_wen     := WRITE_DISABLE
     cp0_waddr   := 0.U
     cp0_wdata   := ZERO_WORD
@@ -172,8 +151,6 @@ class Memory extends Module {
     hi          := io.fromMemoryStage.hi
     lo          := io.fromMemoryStage.lo
     whilo       := io.fromMemoryStage.whilo
-    LLbit_wen   := false.B
-    LLbit_value := false.B
 
     cp0_waddr := io.fromMemoryStage.cp0_addr
     cp0_wen   := (aluop === EXE_MTC0_OP) && ms_valid
@@ -270,27 +247,8 @@ class Memory extends Module {
           ),
         ),
         EXE_LL_OP -> mem_data_i,
-        EXE_SC_OP -> Mux(LLbit, 1.U, ZERO_WORD),
       ),
     ) // reg_wdata
-
-    LLbit_wen := MuxLookup(
-      aluop,
-      false.B,
-      Seq(
-        EXE_LL_OP -> true.B,
-        EXE_SC_OP -> LLbit,
-      ),
-    ) // LLbit_wen
-
-    LLbit_value := MuxLookup(
-      aluop,
-      false.B,
-      Seq(
-        EXE_LL_OP -> true.B,
-        EXE_SC_OP -> (!LLbit),
-      ),
-    ) // LLbit_value
   }
 
   // debug

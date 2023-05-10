@@ -37,7 +37,6 @@ class PuaMips extends Module {
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
   val regfile        = Module(new Regfile())
-  val llbitReg       = Module(new LLbitReg())
   val hilo           = Module(new HILO())
   val cp0            = Module(new CP0Reg())
 
@@ -123,7 +122,6 @@ class PuaMips extends Module {
   writeBackStage.io.regFile <> regfile.io.fromWriteBackStage
   writeBackStage.io.mov <> mov.io.fromWriteBackStage
   writeBackStage.io.hilo <> hilo.io.fromWriteBackStage
-  writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.ext_int := io.ext_int
   writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
@@ -137,8 +135,4 @@ class PuaMips extends Module {
 
   // regfile
   regfile.io.decoder <> decoder.io.fromRegfile
-
-  // llbitReg
-  llbitReg.io.flush := DontCare
-  llbitReg.io.memory <> memory.io.fromLLbitReg
 }

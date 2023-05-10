@@ -22,7 +22,6 @@ class WriteBackStage extends Module {
     val memoryStage   = new WriteBackStage_MemoryStage()
     val memory        = new WriteBackStage_Memory()
     val dataMemory    = new WriteBackStage_DataMemory()
-    val llbitReg      = new WriteBackStage_LLbitReg()
     val mov           = new WriteBackStage_Mov()
     val hilo          = new WriteBackStage_HILO()
     val cp0           = new WriteBackStage_CP0()
@@ -36,8 +35,6 @@ class WriteBackStage extends Module {
   val ws_hi              = RegInit(BUS_INIT)
   val ws_lo              = RegInit(BUS_INIT)
   val ws_whilo           = RegInit(WRITE_DISABLE)
-  val ws_LLbit_wen       = RegInit(false.B)
-  val ws_LLbit_value     = RegInit(false.B)
   val ws_valid           = RegInit(false.B)
   val ws_inst_is_mtc0    = RegInit(false.B)
   val ws_inst_is_mfc0    = RegInit(false.B)
@@ -125,15 +122,9 @@ class WriteBackStage extends Module {
   io.memoryStage.ex          := ex
 
   // output-memory
-  io.memory.LLbit_wen   := ws_LLbit_wen
-  io.memory.LLbit_value := ws_LLbit_value
   io.memory.allowin     := allowin
   io.memory.eret        := eret
   io.memory.ex          := ex
-
-  // output-llbit reg
-  io.llbitReg.LLbit_wen   := ws_LLbit_wen
-  io.llbitReg.LLbit_value := ws_LLbit_value
 
   // output-debug
   io.debug.pc    := ws_pc
@@ -170,8 +161,6 @@ class WriteBackStage extends Module {
     ws_hi              := io.fromMemory.hi
     ws_lo              := io.fromMemory.lo
     ws_whilo           := io.fromMemory.whilo
-    ws_LLbit_wen       := io.fromMemory.LLbit_wen
-    ws_LLbit_value     := io.fromMemory.LLbit_value
     ws_pc              := io.fromMemory.pc
     ws_inst_is_mfc0    := io.fromMemory.inst_is_mfc0
     ws_inst_is_mtc0    := io.fromMemory.inst_is_mtc0

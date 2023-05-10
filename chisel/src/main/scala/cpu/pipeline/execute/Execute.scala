@@ -213,7 +213,6 @@ class Execute extends Module {
           "b11".U -> Cat(reg2(7, 0), 0.U(24.W)),
         ),
       ),
-      // EXE_SC_OP -> Mux(LLbit, data, ZERO_WORD)
     ),
   )
   // output-memory stage
