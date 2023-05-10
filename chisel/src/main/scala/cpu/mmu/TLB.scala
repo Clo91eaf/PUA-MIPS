@@ -5,17 +5,17 @@ import chisel3.util._
 import cpu.defines.Const._
 import cpu.defines._
 
-class TLBMMU extends Module {
+class TLB extends Module {
   val io = IO(new Bundle {
-    val s0_in              = Flipped(new VPaddrTransfer_TLBMMU())
-    val s1_in              = Flipped(new VPaddrTransfer_TLBMMU())
-    val fromWriteBackStage = Flipped(new WriteBackStage_TLBMMU())
-    val common             = new TLBMMUCommon()
+    val s0_in              = Flipped(new MMU_TLB())
+    val s1_in              = Flipped(new MMU_TLB())
+    val fromWriteBackStage = Flipped(new WriteBackStage_TLB())
+    val common             = new TLBCommon()
 
-    val s0_out         = new TLBMMU_VPaddrTransfer()
-    val s1_out         = new TLBMMU_VPaddrTransfer()
-    val executeStage   = new TLBMMU_ExecuteStage()
-    val writeBackStage = new TLBMMU_WriteBackStage()
+    val s0_out         = new TLB_MMU()
+    val s1_out         = new TLB_MMU()
+    val executeStage   = new TLB_ExecuteStage()
+    val writeBackStage = new TLB_WriteBackStage()
   })
 
   // io

@@ -5,22 +5,22 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class VPaddrTransfer extends Module {
+class MMU extends Module {
   val io = IO(new Bundle {
-    val fromWriteBackStage = Flipped(new WriteBackStage_VPaddrTransfer())
-    val fromTLBMMU         = Flipped(new TLBMMU_VPaddrTransfer())
-    val common             = Flipped(new VPaddrTransferCommon())
-    val tlbmmu             = new VPaddrTransfer_TLBMMU()
+    val fromWriteBackStage = Flipped(new WriteBackStage_MMU())
+    val fromTLB         = Flipped(new TLB_MMU())
+    val common             = Flipped(new MMUCommon())
+    val tlbmmu             = new MMU_TLB()
   })
   // input
   val vaddr       = io.common.vaddr
   val inst_tlbp   = io.common.inst_tlbp
   val cp0_entryhi = io.fromWriteBackStage.cp0_entryhi
-  val tlb_found   = io.fromTLBMMU.tlb_found
-  val tlb_pfn     = io.fromTLBMMU.tlb_pfn
-  val tlb_c       = io.fromTLBMMU.tlb_c
-  val tlb_d       = io.fromTLBMMU.tlb_d
-  val tlb_v       = io.fromTLBMMU.tlb_v
+  val tlb_found   = io.fromTLB.tlb_found
+  val tlb_pfn     = io.fromTLB.tlb_pfn
+  val tlb_c       = io.fromTLB.tlb_c
+  val tlb_d       = io.fromTLB.tlb_d
+  val tlb_v       = io.fromTLB.tlb_v
   // output
   val paddr        = Wire(UInt(32.W))
   val tlb_refill   = Wire(Bool())

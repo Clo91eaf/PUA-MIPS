@@ -8,12 +8,13 @@ import cpu.pipeline.decoder._
 import cpu.pipeline.execute._
 import cpu.pipeline.memory._
 import cpu.pipeline.writeback._
+import cpu.mmu._
 
 import chisel3.stage.ChiselGeneratorAnnotation
 
 object testMain extends App {
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new Regfile))
+    Seq(ChiselGeneratorAnnotation(() => new TLB))
   )
 }

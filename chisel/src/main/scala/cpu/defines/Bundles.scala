@@ -446,11 +446,11 @@ class WriteBackStage_FetchStage extends Bundle {
   val cp0_epc = Output(UInt(32.W))
 }
 
-class WriteBackStage_VPaddrTransfer extends Bundle {
+class WriteBackStage_MMU extends Bundle {
   val cp0_entryhi = Output(UInt(32.W))
 }
 
-class WriteBackStage_TLBMMU extends Bundle {
+class WriteBackStage_TLB extends Bundle {
   val we      = Output(Bool())
   val w_index = Output(UInt(log2Ceil(TLB_NUM).W))
   val w_vpn2  = Output(UInt(19.W))
@@ -576,11 +576,11 @@ class DEBUG extends Bundle {
 }
 
 //TLB MMU
-class TLBMMUCommon extends Bundle {
+class TLBCommon extends Bundle {
   val s0_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
-class TLBMMU_WriteBackStage extends Bundle {
+class TLB_WriteBackStage extends Bundle {
   val r_vpn2 = Output(UInt(19.W))
   val r_asid = Output(UInt(8.W))
   val r_g    = Output(Bool())
@@ -594,7 +594,7 @@ class TLBMMU_WriteBackStage extends Bundle {
   val r_v1   = Output(Bool())
 }
 
-class TLBMMU_VPaddrTransfer extends Bundle {
+class TLB_MMU extends Bundle {
   val tlb_found = Output(Bool())
   val tlb_pfn   = Output(UInt(20.W))
   val tlb_c     = Output(UInt(3.W))
@@ -602,33 +602,33 @@ class TLBMMU_VPaddrTransfer extends Bundle {
   val tlb_v     = Output(Bool())
 }
 
-class TLBMMU_ExecuteStage extends Bundle {
+class TLB_ExecuteStage extends Bundle {
   val s1_found = Output(Bool())
   val s1_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 //VPaddr Transfer
-class VPaddrTransfer_TLBMMU extends Bundle {
+class MMU_TLB extends Bundle {
   val tlb_vpn2     = Output(UInt(19.W))
   val tlb_odd_page = Output(Bool())
   val tlb_asid     = Output(UInt(8.W))
 }
 
-class DataVPaddrTransfer_Execute extends Bundle {
+class DataMMU_Execute extends Bundle {
   val tlb_refill   = Output(Bool())
   val tlb_invalid  = Output(Bool())
   val tlb_modified = Output(Bool())
 }
 
-class Execute_DataVPaddrTransfer extends Bundle {
+class Execute_DataMMU extends Bundle {
   val vaddr = Input(UInt(32.W))
 }
 
-class DataVPaddrTransfer_DataMemory extends Bundle {
+class DataMMU_DataMemory extends Bundle {
   val paddr        = Output(UInt(32.W))
 }
 
-class VPaddrTransferCommon extends Bundle {
+class MMUCommon extends Bundle {
   val vaddr        = Input(UInt(32.W))
   val inst_tlbp    = Input(Bool())
   val paddr        = Output(UInt(32.W))
