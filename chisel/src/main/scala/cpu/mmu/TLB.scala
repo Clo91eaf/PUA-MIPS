@@ -117,8 +117,8 @@ class TLB extends Module {
   val s1_index_arr = Wire(Vec(TLB_NUM, UInt(log2Ceil(TLB_NUM).W)))
 
   // search
-  s0_found := Mux(match0.asUInt.orR, true.B, false.B)
-  s1_found := Mux(match1.asUInt.orR, true.B, false.B)
+  s0_found := match0.asUInt.orR
+  s1_found := match1.asUInt.orR
 
   s0_index := s0_index_arr(TLB_NUM - 1)
   s1_index := s1_index_arr(TLB_NUM - 1)
@@ -135,47 +135,24 @@ class TLB extends Module {
 
   for (tlb_i <- 0 until TLB_NUM) {
 
+    // 判断是否有匹配项
     match0(tlb_i) := (s0_vpn2 === tlb_vpn2(tlb_i)) &&
       ((s0_asid === tlb_asid(tlb_i)) || tlb_g(tlb_i))
     match1(tlb_i) := (s1_vpn2 === tlb_vpn2(tlb_i)) &&
       ((s1_asid === tlb_asid(tlb_i)) || tlb_g(tlb_i))
 
     if (tlb_i == 0) {
-      s0_index_arr(tlb_i) := Fill(log2Ceil(TLB_NUM), match0(tlb_i)) & tlb_i.U
-      s1_index_arr(tlb_i) := Fill(log2Ceil(TLB_NUM), match1(tlb_i)) & tlb_i.U
+      s0_index_arr(tlb_i) := Mux(match0(tlb_i), tlb_i.U, 0.U)
+      s1_index_arr(tlb_i) := Mux(match1(tlb_i), tlb_i.U, 0.U)
     } else {
       s0_index_arr(tlb_i) := s0_index_arr(tlb_i - 1) |
-        Fill(log2Ceil(TLB_NUM), (match0(tlb_i)) & tlb_i.U)
+        Mux(match0(tlb_i), tlb_i.U, 0.U)
       s1_index_arr(tlb_i) := s1_index_arr(tlb_i - 1) |
-        Fill(log2Ceil(TLB_NUM), (match1(tlb_i)) & tlb_i.U)
+        Mux(match1(tlb_i), tlb_i.U, 0.U)
     }
-    // s0_index_arr(tlb_i) := Mux(
-    //   tlb_i.U === 0.U,
-    //   Fill(log2Ceil(TLB_NUM), match0(tlb_i)) & tlb_i.U,
-    //   s0_index_arr(tlb_i - 1) | Fill(log2Ceil(TLB_NUM), (match0(tlb_i)) & tlb_i.U),
-    // )
-    // s1_index_arr(tlb_i) := Mux(
-    //   tlb_i.U === 0.U,
-    //   Fill(log2Ceil(TLB_NUM), match1(tlb_i)) & tlb_i.U,
-    //   s1_index_arr(tlb_i - 1) | Fill(log2Ceil(TLB_NUM), (match1(tlb_i)) & tlb_i.U),
-    // )
 
     // Write
-    when(reset.asBool) {
-      tlb_vpn2(tlb_i) := 0.U
-      tlb_asid(tlb_i) := 0.U
-      tlb_g(tlb_i)    := 0.U
-
-      tlb_pfn0(tlb_i) := 0.U
-      tlb_c0(tlb_i)   := 0.U
-      tlb_d0(tlb_i)   := 0.U
-      tlb_v0(tlb_i)   := 0.U
-
-      tlb_pfn1(tlb_i) := 0.U
-      tlb_c1(tlb_i)   := 0.U
-      tlb_d1(tlb_i)   := 0.U
-      tlb_v1(tlb_i)   := 0.U
-    }.elsewhen(we && w_index === tlb_i.U) {
+    when(we && w_index === tlb_i.U) {
       tlb_vpn2(tlb_i) := w_vpn2
       tlb_asid(tlb_i) := w_asid
       tlb_g(tlb_i)    := w_g
@@ -190,7 +167,7 @@ class TLB extends Module {
       tlb_d1(tlb_i)   := w_d1
       tlb_v1(tlb_i)   := w_v1
     }
-  }
+  } // 循环结束
 
   r_vpn2 := tlb_vpn2(r_index)
   r_asid := tlb_asid(r_index)
