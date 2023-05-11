@@ -6,39 +6,41 @@ import cpu.defines.Const._
 
 class DecoderStage extends Module {
   val io = IO(new Bundle {
-    val fromFetchStage     = Flipped(new FetchStage_DecoderStage())
-    val fromDecoder        = Flipped(new Decoder_DecoderStage())
-    val fromWriteBackStage = Flipped(new WriteBackStage_DecoderStage())
-    val decoder            = new DecoderStage_Decoder()
+    val fromFetchStage = Flipped(new FetchStage_DecoderStage())
+    val fromDecoder    = Flipped(new Decoder_DecoderStage())
+    val fromCtrl       = Flipped(new Ctrl_DecoderStage())
+    val decoder        = new DecoderStage_Decoder()
   })
 
-  val pc       = RegInit(BUS_INIT)
-  val inst     = RegInit(BUS_INIT)
-  val ex       = RegInit(false.B)
-  val bd       = RegInit(false.B)
-  val badvaddr = RegInit(BUS_INIT)
-  val valid    = RegInit(false.B)
+  val pc         = RegInit(BUS_INIT)
+  val inst       = RegInit(BUS_INIT)
+  val ex         = RegInit(false.B)
+  val badvaddr   = RegInit(BUS_INIT)
+  val valid      = RegInit(false.B)
+  val tlb_refill = RegInit(false.B)
+  val excode     = RegInit(0.U(5.W))
 
   // output-decoder
-  io.decoder.pc       := pc
-  io.decoder.inst     := inst
-  io.decoder.ex       := ex
-  io.decoder.badvaddr := badvaddr
-  io.decoder.valid    := valid
+  io.decoder.pc         := pc
+  io.decoder.inst       := inst
+  io.decoder.ex         := ex
+  io.decoder.badvaddr   := badvaddr
+  io.decoder.valid      := valid
+  io.decoder.excode     := excode
+  io.decoder.tlb_refill := tlb_refill
 
-  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+  when(io.fromCtrl.do_flush) {
     valid := false.B
   }.elsewhen(io.fromDecoder.allowin) {
     valid := io.fromFetchStage.valid
   }
 
   when(io.fromFetchStage.valid && io.fromDecoder.allowin) {
-    pc       := io.fromFetchStage.pc
-    inst     := io.fromFetchStage.inst
-    ex       := io.fromFetchStage.ex
-    badvaddr := io.fromFetchStage.badvaddr
+    pc         := io.fromFetchStage.pc
+    inst       := io.fromFetchStage.inst
+    ex         := io.fromFetchStage.ex
+    badvaddr   := io.fromFetchStage.badvaddr
+    excode     := io.fromFetchStage.excode
+    tlb_refill := io.fromFetchStage.tlb_refill
   }
-
-  // debug
-  // printf(p"decoderStage :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }

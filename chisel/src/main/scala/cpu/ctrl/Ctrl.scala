@@ -17,6 +17,7 @@ class Ctrl extends Module {
 
     val preFetchStage = new Ctrl_PreFetchStage()
     val fetchStage    = new Ctrl_FetchStage()
+    val decoderStage  = new Ctrl_DecoderStage()
     val instMemory    = new Ctrl_InstMemory()
     val dataMemory    = new Ctrl_DataMemory()
   })
@@ -43,4 +44,6 @@ class Ctrl extends Module {
 
   io.fetchStage.after_ex := ds_ex || es_ex || ms_ex || ws_ex
   io.fetchStage.do_flush := ws_do_flush
+
+  io.decoderStage.do_flush := ws_do_flush
 }

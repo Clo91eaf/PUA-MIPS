@@ -48,11 +48,13 @@ class FetchStage_InstMemory extends Bundle {
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val pc       = Output(BUS)
-  val inst     = Output(BUS)
-  val ex       = Output(Bool())
-  val badvaddr = Output(UInt(32.W))
-  val valid    = Output(Bool())
+  val valid      = Output(Bool())
+  val tlb_refill = Output(Bool())
+  val excode     = Output(UInt(5.W))
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
 }
 
 // decoder
