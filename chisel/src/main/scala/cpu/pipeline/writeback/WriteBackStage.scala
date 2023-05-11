@@ -109,8 +109,6 @@ class WriteBackStage extends Module {
 
   // output-memory
   io.memory.allowin     := allowin
-  io.memory.eret        := eret
-  io.memory.ex          := ex
 
   // output-debug
   io.debug.pc    := ws_pc

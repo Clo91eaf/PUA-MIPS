@@ -341,6 +341,13 @@ class Memory_WriteBackStage extends Bundle {
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
+  val inst_is_tlbp    = Output(Bool())
+  val inst_is_tlbr    = Output(Bool())
+  val inst_is_tlbwi   = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 class Memory_DataMemory extends Bundle {
@@ -361,8 +368,6 @@ class Memory_Execute extends Bundle {
   val hi          = Output(BUS)
   val lo          = Output(BUS)
   val allowin     = Output(Bool())
-  val eret        = Output(Bool())
-  val ex          = Output(Bool())
   val inst_unable = Output(Bool())
 }
 
@@ -421,8 +426,6 @@ class WriteBackStage_HILO extends Bundle {
 
 class WriteBackStage_Memory extends Bundle {
   val allowin = Output(Bool())
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
 }
 
 class WriteBackStage_RegFile extends Bundle {
