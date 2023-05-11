@@ -281,6 +281,10 @@ class MemoryStage_Execute extends Bundle {
 }
 
 class MemoryStage_Memory extends Bundle {
+  // wire
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+  // reg
   val aluop           = Output(ALU_OP_BUS)
   val hi              = Output(BUS)
   val lo              = Output(BUS)
@@ -302,6 +306,10 @@ class MemoryStage_Memory extends Bundle {
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
   val res_from_mem    = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 // memory
@@ -409,11 +417,6 @@ class WriteBackStage_HILO extends Bundle {
   val whilo = Output(Bool())
   val hi    = Output(BUS)
   val lo    = Output(BUS)
-}
-
-class WriteBackStage_MemoryStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
 }
 
 class WriteBackStage_Memory extends Bundle {
@@ -653,6 +656,11 @@ class Ctrl_DataMemory extends Bundle {
 }
 
 class Ctrl_DecoderStage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class Ctrl_MemoryStage extends Bundle {
   val do_flush = Output(Bool())
   val after_ex = Output(Bool())
 }

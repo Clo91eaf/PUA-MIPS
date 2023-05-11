@@ -1,19 +1,25 @@
 package cpu.pipeline.memory
 
 import chisel3._
+import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
 class MemoryStage extends Module {
   val io = IO(new Bundle {
-    val fromExecute        = Flipped(new Execute_MemoryStage())
-    val fromMemory         = Flipped(new Memory_MemoryStage())
-    val fromWriteBackStage = Flipped(new WriteBackStage_MemoryStage())
-    val execute            = new MemoryStage_Execute()
-    val memory             = new MemoryStage_Memory()
+    val fromExecute = Flipped(new Execute_MemoryStage())
+    val fromMemory  = Flipped(new Memory_MemoryStage())
+    val fromCtrl    = Flipped(new Ctrl_MemoryStage())
+
+    val execute = new MemoryStage_Execute()
+    val memory  = new MemoryStage_Memory()
   })
 
   // output
+  // wire
+  io.memory.after_ex := io.fromCtrl.after_ex
+  io.memory.do_flush := io.fromCtrl.do_flush
+  // reg
   val pc              = RegInit(BUS_INIT)
   val reg_waddr       = RegInit(ADDR_BUS_INIT)
   val reg_wen         = RegInit(REG_WRITE_DISABLE)
@@ -37,6 +43,10 @@ class MemoryStage extends Module {
   val data            = RegInit(BUS_INIT)
   val wait_mem        = RegInit(false.B)
   val res_from_mem    = RegInit(false.B)
+  val tlb_refill      = RegInit(false.B)
+  val after_tlb       = RegInit(false.B)
+  val s1_found        = RegInit(false.B)
+  val s1_index        = RegInit(0.U(log2Ceil(TLB_NUM).W))
 
   // output-memory
   io.memory.pc              := pc
@@ -60,13 +70,17 @@ class MemoryStage extends Module {
   io.memory.res_from_mem    := res_from_mem
   io.memory.is_in_delayslot := is_in_delayslot
   io.memory.valid           := valid
+  io.memory.after_tlb       := after_tlb
+  io.memory.s1_found        := s1_found
+  io.memory.s1_index        := s1_index
+  io.memory.tlb_refill      := tlb_refill
 
   // output-execute
   io.execute.hilo := hilo
   io.execute.cnt  := cnt
 
   /*--------------------io finish--------------------*/
-  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+  when(io.fromCtrl.do_flush) {
     valid := false.B
   }.elsewhen(io.fromMemory.allowin) {
     valid := io.fromExecute.valid
@@ -95,6 +109,10 @@ class MemoryStage extends Module {
     data            := io.fromExecute.data
     wait_mem        := io.fromExecute.wait_mem
     res_from_mem    := io.fromExecute.res_from_mem
+    tlb_refill      := io.fromExecute.tlb_refill
+    after_tlb       := io.fromExecute.after_tlb
+    s1_found        := io.fromExecute.s1_found
+    s1_index        := io.fromExecute.s1_index
   }
 
   // debug
