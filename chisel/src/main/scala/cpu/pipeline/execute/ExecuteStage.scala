@@ -6,13 +6,14 @@ import cpu.defines.Const._
 
 class ExecuteStage extends Module {
   val io = IO(new Bundle {
-    val fromDecoder        = Flipped(new Decoder_ExecuteStage())
-    val fromExecute        = Flipped(new Execute_ExecuteStage())
-    val fromWriteBackStage = Flipped(new WriteBackStage_ExecuteStage())
+    val fromDecoder = Flipped(new Decoder_ExecuteStage())
+    val fromExecute = Flipped(new Execute_ExecuteStage())
+    val fromCtrl    = Flipped(new Ctrl_DecoderStage())
 
     val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()
   })
+
   // output
   val aluop              = RegInit(ALU_OP_BUS_INIT)
   val alusel             = RegInit(ALU_SEL_BUS_INIT)
@@ -33,8 +34,15 @@ class ExecuteStage extends Module {
   val excode             = RegInit(0.U(5.W))
   val overflow_inst      = RegInit(false.B)
   val fs_to_ds_ex        = RegInit(false.B)
+  val tlb_refill         = RegInit(false.B)
+  val after_tlb          = RegInit(false.B)
 
   // output-execute
+  // wire
+  io.execute.do_flush := io.fromCtrl.do_flush
+  io.execute.after_ex := io.fromCtrl.after_ex
+  // reg
+  io.execute.valid           := es_valid
   io.execute.aluop           := aluop
   io.execute.alusel          := alusel
   io.execute.inst            := inst
@@ -45,7 +53,6 @@ class ExecuteStage extends Module {
   io.execute.reg_waddr       := reg_waddr
   io.execute.reg_wen         := reg_wen
   io.execute.pc              := pc
-  io.execute.valid           := es_valid
   io.execute.bd              := bd
   io.execute.badvaddr        := badvaddr
   io.execute.cp0_addr        := cp0_addr
@@ -53,11 +60,13 @@ class ExecuteStage extends Module {
   io.execute.overflow_inst   := overflow_inst
   io.execute.fs_to_ds_ex     := fs_to_ds_ex
   io.execute.ds_to_es_ex     := ex
+  io.execute.tlb_refill      := tlb_refill
+  io.execute.after_tlb       := after_tlb
 
   // output-decoder
   io.decoder.is_in_delayslot := is_in_delayslot
 
-  when(io.fromWriteBackStage.ex || io.fromWriteBackStage.eret) {
+  when(io.fromCtrl.do_flush) {
     es_valid := false.B
   }.elsewhen(io.fromExecute.allowin) {
     es_valid := io.fromDecoder.valid
@@ -82,8 +91,7 @@ class ExecuteStage extends Module {
     excode             := io.fromDecoder.excode
     overflow_inst      := io.fromDecoder.overflow_inst
     fs_to_ds_ex        := io.fromDecoder.fs_to_ds_ex
+    tlb_refill         := io.fromDecoder.tlb_refill
+    after_tlb          := io.fromDecoder.after_tlb
   }
-
-  // debug
-  // printf(p"decoderStage :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
 }

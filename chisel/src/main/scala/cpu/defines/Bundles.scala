@@ -49,10 +49,10 @@ class FetchStage_InstMemory extends Bundle {
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
   // wire
-  val valid    = Output(Bool())
-  val after_ex = Output(Bool())
   val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
   // reg
+  val valid      = Output(Bool())
   val tlb_refill = Output(Bool())
   val excode     = Output(UInt(5.W))
   val ex         = Output(Bool())
@@ -118,6 +118,11 @@ class ExecuteStage_Decoder extends Bundle {
 }
 
 class ExecuteStage_Execute extends Bundle {
+  // wire
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+  // reg
+  val valid           = Output(Bool())
   val aluop           = Output(ALU_OP_BUS)
   val alusel          = Output(ALU_SEL_BUS)
   val inst            = Output(BUS)
@@ -128,7 +133,6 @@ class ExecuteStage_Execute extends Bundle {
   val reg_waddr       = Output(ADDR_BUS)
   val reg_wen         = Output(REG_WRITE_BUS)
   val pc              = Output(INST_ADDR_BUS)
-  val valid           = Output(Bool())
   val bd              = Output(Bool())
   val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
@@ -136,6 +140,8 @@ class ExecuteStage_Execute extends Bundle {
   val overflow_inst   = Output(Bool())
   val fs_to_ds_ex     = Output(Bool())
   val ds_to_es_ex     = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
 }
 
 // execute
@@ -388,11 +394,6 @@ class WriteBackStage_Decoder extends Bundle {
   val reg_waddr    = Output(ADDR_BUS)
   val cp0_cause    = Output(UInt(32.W))
   val cp0_status   = Output(UInt(32.W))
-}
-
-class WriteBackStage_ExecuteStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
 }
 
 class WriteBackStage_Execute extends Bundle {

@@ -22,10 +22,10 @@ class DecoderStage extends Module {
 
   // output-decoder
   // wire
-  io.decoder.valid    := valid
-  io.decoder.after_ex := io.fromCtrl.after_ex
   io.decoder.do_flush := io.fromCtrl.do_flush
+  io.decoder.after_ex := io.fromCtrl.after_ex
   // reg
+  io.decoder.valid      := valid
   io.decoder.pc         := pc
   io.decoder.inst       := inst
   io.decoder.ex         := ex

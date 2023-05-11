@@ -17,7 +17,6 @@ class WriteBackStage extends Module {
     val decoderStage  = new WriteBackStage_DecoderStage()
     val decoder       = new WriteBackStage_Decoder()
     val regFile       = new WriteBackStage_RegFile()
-    val executeStage  = new WriteBackStage_ExecuteStage()
     val execute       = new WriteBackStage_Execute()
     val memoryStage   = new WriteBackStage_MemoryStage()
     val memory        = new WriteBackStage_Memory()
@@ -97,10 +96,6 @@ class WriteBackStage extends Module {
   io.decoder.reg_waddr    := ws_reg_waddr
   io.decoder.cp0_cause    := cp0_cause
   io.decoder.cp0_status   := cp0_status
-
-  // output-execute stage
-  io.executeStage.eret := eret
-  io.executeStage.ex   := ex
 
   // output-execute
   io.execute.hi    := ws_hi
