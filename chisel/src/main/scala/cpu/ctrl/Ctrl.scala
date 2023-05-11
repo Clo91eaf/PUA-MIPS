@@ -40,4 +40,7 @@ class Ctrl extends Module {
   io.preFetchStage.after_ex := fs_ex || ds_ex || es_ex || ms_ex || ws_ex
   io.preFetchStage.do_flush := ws_do_flush
   io.preFetchStage.flush_pc := ws_flush_pc
+
+  io.fetchStage.after_ex := ds_ex || es_ex || ms_ex || ws_ex
+  io.fetchStage.do_flush := ws_do_flush
 }

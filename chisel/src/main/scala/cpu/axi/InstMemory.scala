@@ -19,10 +19,7 @@ class InstMemory extends Module {
     val ctrl          = new InstMemory_Ctrl()
   })
 
-  val pfs_inst_waiting          = Wire(Bool())
-  val fs_inst_waiting           = Wire(Bool())
   val inst_sram_discard         = RegInit(0.U(2.W))
-  val inst_sram_data_ok_discard = Wire(Bool())
 
   io.preFetchStage.addr_ok := io.sramAXITrans.addr_ok
   io.preFetchStage.rdata   := io.sramAXITrans.rdata
