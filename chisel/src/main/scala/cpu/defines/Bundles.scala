@@ -26,10 +26,6 @@ class PreFetchStage_InstMMU extends Bundle {
 }
 
 // fetch stage
-class FetchStage_Ctrl extends Bundle {
-  val ex = Output(Bool())
-}
-
 class FetchStage_PreFetchStage extends Bundle {
   val valid       = Output(Bool())
   val allowin     = Output(Bool())
@@ -643,6 +639,34 @@ class Ctrl_InstMemory extends Bundle {
   val ws_do_flush = Output(Bool())
 }
 
+class Ctrl_DataMemory extends Bundle {
+  val ws_do_flush = Output(Bool())
+}
+
 class InstMemory_Ctrl extends Bundle {
   val inst_sram_discard = Output(UInt(2.W))
+}
+
+class DataMemory_Ctrl extends Bundle {
+  val data_sram_discard = Output(UInt(2.W))
+}
+
+class FetchStage_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Decoder_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Execute_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Memory_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class WriteBackStage_Ctrl extends Bundle {
+  val ex = Output(Bool())
 }
