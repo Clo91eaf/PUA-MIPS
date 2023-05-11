@@ -37,7 +37,7 @@ class InstMemory extends Module {
 
   io.ctrl.inst_sram_discard := inst_sram_discard
 
-  when(io.fromCtrl.ws_do_flush) {
+  when(io.fromCtrl.do_flush) {
     inst_sram_discard := Cat(io.fromPreFetchStage.waiting, io.fromFetchStage.waiting)
   }.elsewhen(io.sramAXITrans.data_ok) {
     when(inst_sram_discard === 3.U) {

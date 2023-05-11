@@ -639,11 +639,11 @@ class Ctrl_FetchStage extends Bundle {
 }
 
 class Ctrl_InstMemory extends Bundle {
-  val ws_do_flush = Output(Bool())
+  val do_flush = Output(Bool())
 }
 
 class Ctrl_DataMemory extends Bundle {
-  val ws_do_flush = Output(Bool())
+  val do_flush = Output(Bool())
 }
 
 class Ctrl_DecoderStage extends Bundle {

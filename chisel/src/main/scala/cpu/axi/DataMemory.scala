@@ -91,7 +91,7 @@ class DataMemory extends Module {
   io.execute.data_ok        := ~data_sram_discard.orR && data_ok
   io.ctrl.data_sram_discard := data_sram_discard
 
-  when(io.fromCtrl.ws_do_flush) {
+  when(io.fromCtrl.do_flush) {
     data_sram_discard := Cat(es_waiting, ms_waiting)
   }.elsewhen(data_ok) {
     when(data_sram_discard === 3.U) {

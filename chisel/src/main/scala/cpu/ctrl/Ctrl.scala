@@ -34,8 +34,8 @@ class Ctrl extends Module {
   val ms_ex = io.fromMemory.ex
   val ws_ex = io.fromWriteBackStage.ex
 
-  io.dataMemory.ws_do_flush := ws_do_flush
-  io.instMemory.ws_do_flush := ws_do_flush
+  io.dataMemory.do_flush := ws_do_flush
+  io.instMemory.do_flush := ws_do_flush
 
   io.preFetchStage.block    := inst_sram_discard.orR || data_sram_discard.orR
   io.preFetchStage.after_ex := fs_ex || ds_ex || es_ex || ms_ex || ws_ex
