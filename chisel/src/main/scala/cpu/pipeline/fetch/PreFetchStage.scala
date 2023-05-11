@@ -15,6 +15,7 @@ class PreFetchStage extends Module {
 
     val fetchStage = new PreFetchStage_FetchStage()
     val instMemory = new PreFetchStage_InstMemory()
+    val instMMU    = new PreFetchStage_InstMMU()
   })
   val tlb_refill   = io.fromInstMMU.tlb_refill
   val tlb_invalid  = io.fromInstMMU.tlb_invalid
@@ -76,8 +77,8 @@ class PreFetchStage extends Module {
   io.fetchStage.ex         := pfs_ex
   io.fetchStage.badvaddr   := pfs_badvaddr
   io.instMemory.req        := inst_sram_req
-  io.instMemory.addr       := inst_sram_addr
   io.instMemory.waiting    := inst_waiting
+  io.instMMU.vaddr         := inst_sram_addr
 
   // handshake
   to_pfs_valid    := !reset.asBool && !pfs_ex && !after_ex

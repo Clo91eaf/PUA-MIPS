@@ -18,7 +18,6 @@ class PreFetchStage_FetchStage extends Bundle {
 
 class PreFetchStage_InstMemory extends Bundle {
   val req     = Output(Bool())
-  val addr    = Output(BUS)
   val waiting = Output(Bool())
 }
 
