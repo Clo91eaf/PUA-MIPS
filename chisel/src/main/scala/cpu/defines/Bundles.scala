@@ -97,6 +97,8 @@ class Decoder_ExecuteStage extends Bundle {
   val excode                 = Output(UInt(5.W))
   val overflow_inst          = Output(Bool())
   val fs_to_ds_ex            = Output(Bool())
+  val tlb_refill             = Output(Bool())
+  val after_tlb              = Output(Bool())
 }
 
 class Decoder_RegFile extends Bundle {
@@ -384,8 +386,6 @@ class WriteBackStage_DecoderStage extends Bundle {
 class WriteBackStage_Decoder extends Bundle {
   val inst_is_mfc0 = Output(Bool())
   val reg_waddr    = Output(ADDR_BUS)
-  val eret         = Output(Bool())
-  val ex           = Output(Bool())
   val cp0_cause    = Output(UInt(32.W))
   val cp0_status   = Output(UInt(32.W))
 }

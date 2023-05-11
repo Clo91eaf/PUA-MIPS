@@ -93,8 +93,6 @@ class WriteBackStage extends Module {
   io.decoderStage.ex   := ex
 
   // output-decoder
-  io.decoder.eret         := eret
-  io.decoder.ex           := ex
   io.decoder.inst_is_mfc0 := inst_is_mfc0
   io.decoder.reg_waddr    := ws_reg_waddr
   io.decoder.cp0_cause    := cp0_cause

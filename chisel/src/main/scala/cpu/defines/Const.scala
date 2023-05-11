@@ -119,6 +119,10 @@ trait Constants {
   val EXE_BREAK_OP   = 69.U(ALU_OP_LEN.W)
   val EXE_ERET_OP    = 70.U(ALU_OP_LEN.W)
   val EXE_WAIT_OP    = 71.U(ALU_OP_LEN.W)
+  // tlb
+  val EXE_TLB_OP   = 72.U(ALU_OP_LEN.W)
+  val EXE_TLBR_OP  = 73.U(ALU_OP_LEN.W)
+  val EXE_TLBWI_OP = 74.U(ALU_OP_LEN.W)
 
   // AluSel
   val ALU_SEL_BUS      = UInt(3.W)

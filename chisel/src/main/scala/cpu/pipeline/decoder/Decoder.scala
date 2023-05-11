@@ -14,12 +14,13 @@ class Decoder extends Module {
     val fromRegfile        = Flipped(new RegFile_Decoder())
     val fromMemory         = Flipped(new Memory_Decoder())
     val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
-    
+
     val preFetchStage = new Decoder_PreFetchStage()
     val fetchStage    = new Decoder_FetchStage()
     val decoderStage  = new Decoder_DecoderStage()
     val executeStage  = new Decoder_ExecuteStage()
     val regfile       = new Decoder_RegFile()
+    val ctrl          = new Decoder_Ctrl()
   })
   // input
   val aluop_i           = Wire(ALU_OP_BUS)
@@ -28,9 +29,13 @@ class Decoder extends Module {
   val is_in_delayslot_i = Wire(Bool())
 
   // input-decoder stage
-  val pc       = io.fromDecoderStage.pc
-  val inst     = io.fromDecoderStage.inst
-  val ds_valid = io.fromDecoderStage.valid
+  val pc            = io.fromDecoderStage.pc
+  val inst          = io.fromDecoderStage.inst
+  val ds_valid      = io.fromDecoderStage.valid
+  val ds_tlb_refill = io.fromDecoderStage.tlb_refill
+  val ds_excode     = io.fromDecoderStage.excode
+  val ds_badvaddr   = io.fromDecoderStage.badvaddr
+  val do_flush      = io.fromDecoderStage.do_flush
 
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
@@ -71,6 +76,8 @@ class Decoder extends Module {
   val ready_go               = Wire(Bool())
   val ds_is_branch =
     ((aluop === EXE_JR_OP) || (aluop === EXE_JALR_OP) || (aluop === EXE_J_OP) || (aluop === EXE_JAL_OP) || (aluop === EXE_BEQ_OP) || (aluop === EXE_BNE_OP) || (aluop === EXE_BGTZ_OP) || (aluop === EXE_BGEZ_OP) || (aluop === EXE_BGEZAL_OP) || (aluop === EXE_BLTZ_OP) || (aluop === EXE_BLTZAL_OP) || (aluop === EXE_BLEZ_OP)) && ds_valid
+  val cp0_addr  = Cat(inst(15, 11), inst(2, 0))
+  val after_tlb = RegInit(false.B)
 
   // output-preFetchStage
   io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
@@ -89,9 +96,11 @@ class Decoder extends Module {
   io.executeStage.fs_to_ds_ex   := io.fromDecoderStage.ex
   io.executeStage.bd            := ds_valid && bd
   io.executeStage.badvaddr      := io.fromDecoderStage.badvaddr
-  io.executeStage.cp0_addr      := Cat(inst(15, 11), inst(2, 0))
+  io.executeStage.cp0_addr      := cp0_addr
   io.executeStage.ex            := ex
   io.executeStage.overflow_inst := overflow_inst
+  io.executeStage.tlb_refill    := io.fromDecoderStage.tlb_refill
+  io.executeStage.after_tlb     := after_tlb
 
   // output-regfile
   io.regfile.reg1_ren   := reg1_ren
@@ -112,6 +121,9 @@ class Decoder extends Module {
   io.executeStage.link_addr              := link_addr
   io.executeStage.is_in_delayslot        := is_in_delayslot
   io.executeStage.valid                  := ds_to_es_valid
+
+  // output-ctrl
+  io.ctrl.ex := ex
 
   /*-------------------------------io finish-------------------------------*/
 
@@ -148,13 +160,12 @@ class Decoder extends Module {
     (io.fromMemory.inst_is_mfc0 && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)) ||
     (io.fromWriteBackStage.inst_is_mfc0 && (io.fromWriteBackStage.reg_waddr === rs || io.fromWriteBackStage.reg_waddr === rt))
   ready_go := !(mfc0_block
-    || (io.fromExecute.blk_valid 
-    && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt))
-    || (io.fromMemory.blk_valid 
-    && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt))
-    )
+    || (io.fromExecute.blk_valid
+      && (io.fromExecute.reg_waddr === rs || io.fromExecute.reg_waddr === rt))
+    || (io.fromMemory.blk_valid
+      && (io.fromMemory.reg_waddr === rs || io.fromMemory.reg_waddr === rt)))
   allowin        := !ds_valid || ready_go && io.fromExecute.allowin
-  ds_to_es_valid := ds_valid && ready_go && !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
+  ds_to_es_valid := ds_valid && ready_go && !do_flush
 
   pc_plus_4          := pc + 4.U
   pc_plus_8          := pc + 8.U
@@ -268,10 +279,10 @@ class Decoder extends Module {
       // BLTZALL   -> List( INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_LTZAL, REG_WRITE_ENABLE   , WRA_T3 , IMM_N  ),
 
       // // TLB
-      // TLBP      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_P   , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TLBR      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_R   , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TLBWI     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_WI  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
-      // TLBWR     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , INST_TLB, TLB_WR  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TLBP      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLB_OP    , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TLBR      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLBR_OP   , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TLBWI     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLBWI_OP  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      // TLBWR     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, TLB_WR  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
 
       // 例外指令
       SYSCALL   -> List( INST_VALID  , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_SYSCALL_OP  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
@@ -420,7 +431,7 @@ class Decoder extends Module {
     ),
   )
 
-  when(io.fromWriteBackStage.eret || io.fromWriteBackStage.ex) {
+  when(do_flush) {
     bd := false.B
   }.elsewhen(ds_to_es_valid && io.fromExecute.allowin) {
     bd := ds_is_branch
@@ -479,13 +490,32 @@ class Decoder extends Module {
   val interrupt = ((cp0_cause(15, 8) & cp0_status(15, 8)) =/= 0.U) &&
     (cp0_status(1, 0) === 1.U)
 
-  ex := (io.fromDecoderStage.ex | aluop === EXE_SYSCALL_OP | aluop === EXE_BREAK_OP | (inst_valid === INST_INVALID) | interrupt) & ds_valid
+  ex := ds_valid &&
+    (
+      io.fromDecoderStage.ex ||
+        aluop === EXE_SYSCALL_OP ||
+        aluop === EXE_BREAK_OP ||
+        aluop === EXE_ERET_OP ||
+        inst_valid === INST_INVALID ||
+        interrupt ||
+        after_tlb
+    )
+
+  val inst_is_mtc0_entryhi = aluop === EXE_MTC0_OP && cp0_addr === CP0_ENTRYHI_ADDR
+
+  val affect_tlb = aluop === EXE_TLBR_OP || aluop === EXE_TLBWI_OP || inst_is_mtc0_entryhi
+
+  when(do_flush) {
+    after_tlb := false.B
+  }.elsewhen(affect_tlb && io.fromExecute.allowin && ds_to_es_valid) {
+    after_tlb := true.B
+  }
 
   excode := MuxCase(
     EX_NO,
     Seq(
       interrupt                     -> EX_INT,
-      io.fromDecoderStage.ex        -> EX_ADEL,
+      io.fromDecoderStage.ex        -> io.fromDecoderStage.excode,
       (inst_valid === INST_INVALID) -> EX_RI,
       (aluop === EXE_SYSCALL_OP)    -> EX_SYS,
       (aluop === EXE_BREAK_OP)      -> EX_BP,
