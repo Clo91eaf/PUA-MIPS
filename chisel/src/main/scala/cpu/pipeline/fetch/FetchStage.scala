@@ -46,12 +46,13 @@ class FetchStage extends Module {
   io.preFetchStage.allowin     := allowin
   io.preFetchStage.inst_unable := !fs_valid || inst_buff_valid || pfs_to_fs_inst_ok
 
-  io.decoderStage.valid    := fs_to_ds_valid
-  io.decoderStage.pc       := pc
-  io.decoderStage.inst     := inst
-  io.decoderStage.ex       := ex
-  io.decoderStage.badvaddr := badvaddr
-  io.decoderStage.excode   := excode
+  io.decoderStage.valid      := fs_to_ds_valid
+  io.decoderStage.pc         := pc
+  io.decoderStage.inst       := inst
+  io.decoderStage.ex         := ex
+  io.decoderStage.badvaddr   := badvaddr
+  io.decoderStage.excode     := excode
+  io.decoderStage.tlb_refill := fs_tlb_refill
 
   io.instMemory.waiting := fs_valid && !inst_ok
 

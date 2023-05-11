@@ -111,7 +111,6 @@ class PuaMips extends Module {
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
 
   // writeBackStage
-  writeBackStage.io.decoderStage <> decoderStage.io.fromWriteBackStage
   writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
   writeBackStage.io.executeStage <> executeStage.io.fromWriteBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage

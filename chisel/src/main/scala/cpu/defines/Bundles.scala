@@ -33,12 +33,13 @@ class FetchStage_PreFetchStage extends Bundle {
 }
 
 class FetchStage_DecoderStage extends Bundle {
-  val valid    = Output(Bool())
-  val pc       = Output(BUS)
-  val inst     = Output(BUS)
-  val ex       = Output(Bool())
-  val badvaddr = Output(UInt(32.W))
-  val excode   = Output(UInt(5.W))
+  val valid      = Output(Bool())
+  val tlb_refill = Output(Bool())
+  val excode     = Output(UInt(5.W))
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
 }
 
 class FetchStage_InstMemory extends Bundle {
@@ -641,6 +642,10 @@ class Ctrl_InstMemory extends Bundle {
 
 class Ctrl_DataMemory extends Bundle {
   val ws_do_flush = Output(Bool())
+}
+
+class Ctrl_DecoderStage extends Bundle {
+  val do_flush = Output(Bool())
 }
 
 class InstMemory_Ctrl extends Bundle {
