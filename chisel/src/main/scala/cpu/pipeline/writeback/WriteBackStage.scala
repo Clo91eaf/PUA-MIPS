@@ -11,15 +11,10 @@ class WriteBackStage extends Module {
     val fromCP0    = Flipped(new CP0_WriteBackStage())
     val ext_int    = Input(UInt(6.W))
 
-    val preFetchStage = new WriteBackStage_PreFetchStage()
-    val fetchStage    = new WriteBackStage_FetchStage()
-    val instMemory    = new WriteBackStage_InstMemory()
-    val decoderStage  = new WriteBackStage_DecoderStage()
     val decoder       = new WriteBackStage_Decoder()
     val regFile       = new WriteBackStage_RegFile()
     val execute       = new WriteBackStage_Execute()
     val memory        = new WriteBackStage_Memory()
-    val dataMemory    = new WriteBackStage_DataMemory()
     val mov           = new WriteBackStage_Mov()
     val hilo          = new WriteBackStage_HILO()
     val cp0           = new WriteBackStage_CP0()
@@ -58,14 +53,6 @@ class WriteBackStage extends Module {
   val cp0_status   = Wire(UInt(32.W))
   val cp0_cause    = Wire(UInt(32.W))
 
-  // output-inst memory
-  io.instMemory.ex   := ex
-  io.instMemory.eret := eret
-
-  // output-data memory
-  io.dataMemory.ex   := ex
-  io.dataMemory.eret := eret
-
   // output-reg file
   io.regFile.reg_waddr := ws_reg_waddr
   io.regFile.reg_wen   := ws_reg_wen & Fill(4, ws_valid & ~ws_ex)
@@ -75,20 +62,6 @@ class WriteBackStage extends Module {
   io.hilo.hi    := ws_hi
   io.hilo.lo    := ws_lo
   io.hilo.whilo := ws_whilo & ws_valid
-
-  // output-preFetchStage
-  io.preFetchStage.eret    := eret
-  io.preFetchStage.ex      := ex
-  io.preFetchStage.cp0_epc := cp0_epc
-
-  // output-fetchStage
-  io.fetchStage.eret    := eret
-  io.fetchStage.ex      := ex
-  io.fetchStage.cp0_epc := cp0_epc
-
-  // output-decoder stage
-  io.decoderStage.eret := eret
-  io.decoderStage.ex   := ex
 
   // output-decoder
   io.decoder.inst_is_mfc0 := inst_is_mfc0

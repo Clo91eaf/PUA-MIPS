@@ -9,7 +9,6 @@ class DataMemory extends Module {
   val io = IO(new Bundle {
     val fromExecute        = Flipped(new Execute_DataMemory())
     val fromMemory         = Flipped(new Memory_DataMemory())
-    val fromWriteBackStage = Flipped(new WriteBackStage_DataMemory())
     val fromCtrl           = Flipped(new Ctrl_DataMemory())
     val fromDataMMU        = Flipped(new MMU_Sram())
 

@@ -383,26 +383,12 @@ class Memory_Control extends Bundle {
 }
 
 // writeBackStage
-class WriteBackStage_InstMemory extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
-
-class WriteBackStage_DataMemory extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
 
 class WriteBackStage_Mov extends Bundle {
   val cp0_wen   = Output(Bool())
   val cp0_waddr = Output(Bool())
   val cp0_wdata = Output(Bool())
   val cp0_rdata = Output(BUS)
-}
-
-class WriteBackStage_DecoderStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
 }
 
 class WriteBackStage_Decoder extends Bundle {
@@ -447,21 +433,10 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_wdata   = Output(UInt(32.W))
 }
 
-class WriteBackStage_FetchStage extends Bundle {
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
-  val cp0_epc = Output(UInt(32.W))
-}
-
 class WriteBackStage_MMU extends Bundle {
   val cp0_entryhi = Output(UInt(32.W))
 }
 
-class WriteBackStage_PreFetchStage extends Bundle {
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
-  val cp0_epc = Output(UInt(32.W))
-}
 
 class WriteBackStage_TLB extends Bundle {
   val we      = Output(Bool())

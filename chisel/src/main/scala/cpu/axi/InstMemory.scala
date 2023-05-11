@@ -9,7 +9,6 @@ class InstMemory extends Module {
   val io = IO(new Bundle {
     val fromPreFetchStage  = Flipped(new PreFetchStage_InstMemory())
     val fromFetchStage     = Flipped(new FetchStage_InstMemory())
-    val fromWriteBackStage = Flipped(new WriteBackStage_InstMemory())
     val fromInstMMU        = Flipped(new MMU_Sram())
     val fromCtrl           = Flipped(new Ctrl_InstMemory())
 

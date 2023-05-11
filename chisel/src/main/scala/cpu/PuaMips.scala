@@ -119,8 +119,6 @@ class PuaMips extends Module {
   writeBackStage.io.hilo <> hilo.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.ext_int := io.ext_int
-  writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
-  writeBackStage.io.dataMemory <> dataMemory.io.fromWriteBackStage
 
   // cp0
   cp0.io.writeBackStage <> writeBackStage.io.fromCP0
