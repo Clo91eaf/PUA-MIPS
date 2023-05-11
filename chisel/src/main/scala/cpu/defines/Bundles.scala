@@ -668,5 +668,7 @@ class Memory_Ctrl extends Bundle {
 }
 
 class WriteBackStage_Ctrl extends Bundle {
-  val ex = Output(Bool())
+  val ex       = Output(Bool())
+  val do_flush = Output(Bool())
+  val flush_pc = Output(BUS)
 }
