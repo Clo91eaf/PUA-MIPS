@@ -48,7 +48,11 @@ class FetchStage_InstMemory extends Bundle {
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val valid      = Output(Bool())
+  // wire
+  val valid    = Output(Bool())
+  val after_ex = Output(Bool())
+  val do_flush = Output(Bool())
+  // reg
   val tlb_refill = Output(Bool())
   val excode     = Output(UInt(5.W))
   val ex         = Output(Bool())
@@ -648,6 +652,7 @@ class Ctrl_DataMemory extends Bundle {
 
 class Ctrl_DecoderStage extends Bundle {
   val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
 }
 
 class InstMemory_Ctrl extends Bundle {

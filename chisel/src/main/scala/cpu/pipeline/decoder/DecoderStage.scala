@@ -21,11 +21,15 @@ class DecoderStage extends Module {
   val excode     = RegInit(0.U(5.W))
 
   // output-decoder
+  // wire
+  io.decoder.valid    := valid
+  io.decoder.after_ex := io.fromCtrl.after_ex
+  io.decoder.do_flush := io.fromCtrl.do_flush
+  // reg
   io.decoder.pc         := pc
   io.decoder.inst       := inst
   io.decoder.ex         := ex
   io.decoder.badvaddr   := badvaddr
-  io.decoder.valid      := valid
   io.decoder.excode     := excode
   io.decoder.tlb_refill := tlb_refill
 

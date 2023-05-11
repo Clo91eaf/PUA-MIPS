@@ -46,4 +46,5 @@ class Ctrl extends Module {
   io.fetchStage.do_flush := ws_do_flush
 
   io.decoderStage.do_flush := ws_do_flush
+  io.decoderStage.after_ex := es_ex || ms_ex || ws_ex
 }

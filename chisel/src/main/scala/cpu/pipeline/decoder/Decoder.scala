@@ -15,7 +15,6 @@ class Decoder extends Module {
     val fromMemory         = Flipped(new Memory_Decoder())
     val fromWriteBackStage = Flipped(new WriteBackStage_Decoder())
     
-
     val preFetchStage = new Decoder_PreFetchStage()
     val fetchStage    = new Decoder_FetchStage()
     val decoderStage  = new Decoder_DecoderStage()
