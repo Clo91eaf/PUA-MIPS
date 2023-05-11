@@ -229,6 +229,10 @@ class Execute_MemoryStage extends Bundle {
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
   val res_from_mem    = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 class Execute_CP0 extends Bundle {
@@ -242,7 +246,6 @@ class Execute_DataMemory extends Bundle {
   val req         = Output(Bool())
   val wr          = Output(Bool())
   val size        = Output(UInt(2.W))
-  val addr        = Output(BUS)
   val wdata       = Output(BUS)
   val wstrb       = Output(UInt(4.W))
   val waiting     = Output(Bool())
@@ -400,8 +403,6 @@ class WriteBackStage_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi    = Output(BUS)
   val lo    = Output(BUS)
-  val eret  = Output(Bool())
-  val ex    = Output(Bool())
 }
 
 class WriteBackStage_HILO extends Bundle {
@@ -603,7 +604,7 @@ class TLB_MMU extends Bundle {
   val tlb_v     = Output(Bool())
 }
 
-class TLB_ExecuteStage extends Bundle {
+class TLB_Execute extends Bundle {
   val s1_found = Output(Bool())
   val s1_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }

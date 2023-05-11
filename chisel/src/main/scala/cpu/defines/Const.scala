@@ -120,7 +120,7 @@ trait Constants {
   val EXE_ERET_OP    = 70.U(ALU_OP_LEN.W)
   val EXE_WAIT_OP    = 71.U(ALU_OP_LEN.W)
   // tlb
-  val EXE_TLB_OP   = 72.U(ALU_OP_LEN.W)
+  val EXE_TLBP_OP   = 72.U(ALU_OP_LEN.W)
   val EXE_TLBR_OP  = 73.U(ALU_OP_LEN.W)
   val EXE_TLBWI_OP = 74.U(ALU_OP_LEN.W)
 

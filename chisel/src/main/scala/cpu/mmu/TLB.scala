@@ -14,7 +14,7 @@ class TLB extends Module {
 
     val s0_out         = new TLB_MMU()
     val s1_out         = new TLB_MMU()
-    val executeStage   = new TLB_ExecuteStage()
+    val executeStage   = new TLB_Execute()
     val writeBackStage = new TLB_WriteBackStage()
   })
 

@@ -11,6 +11,7 @@ class DataMemory extends Module {
     val fromMemory         = Flipped(new Memory_DataMemory())
     val fromWriteBackStage = Flipped(new WriteBackStage_DataMemory())
     val fromCtrl           = Flipped(new Ctrl_DataMemory())
+    val fromDataMMU        = Flipped(new MMU_Sram())
 
     val execute      = new DataMemory_Execute()
     val memory       = new DataMemory_Memory()
@@ -22,7 +23,7 @@ class DataMemory extends Module {
   val addrLowBit2 = io.fromExecute.addrLowBit2
   val wr          = io.fromExecute.wr
   val size        = io.fromExecute.size
-  val addr        = io.fromExecute.addr
+  val addr        = io.fromDataMMU.paddr
   val wdata       = io.fromExecute.wdata
   val wstrb       = io.fromExecute.wstrb
   val es_waiting  = io.fromExecute.waiting

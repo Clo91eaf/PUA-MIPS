@@ -101,8 +101,6 @@ class WriteBackStage extends Module {
   io.execute.hi    := ws_hi
   io.execute.lo    := ws_lo
   io.execute.whilo := ws_whilo && ws_valid
-  io.execute.eret  := eret
-  io.execute.ex    := ex
 
   // output-mov
   io.mov.cp0_wen   := cp0_we

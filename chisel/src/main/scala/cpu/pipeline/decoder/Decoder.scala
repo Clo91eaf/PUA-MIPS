@@ -36,6 +36,7 @@ class Decoder extends Module {
   val ds_excode     = io.fromDecoderStage.excode
   val ds_badvaddr   = io.fromDecoderStage.badvaddr
   val do_flush      = io.fromDecoderStage.do_flush
+  val after_ex      = io.fromDecoderStage.after_ex
 
   // input-regfile
   reg1_data := io.fromRegfile.reg1_data
@@ -279,7 +280,7 @@ class Decoder extends Module {
       // BLTZALL   -> List( INST_VALID , READ_ENABLE   , READ_DISABLE    , EXE_RES_JUMP_BRANCH , EXE_LTZAL, REG_WRITE_ENABLE   , WRA_T3 , IMM_N  ),
 
       // // TLB
-      TLBP      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLB_OP    , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
+      TLBP      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLBP_OP    , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
       TLBR      -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLBR_OP   , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
       TLBWI     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, EXE_TLBWI_OP  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
       // TLBWR     -> List( INST_VALID , READ_DISABLE    , READ_DISABLE    , EXE_RES_NOP, TLB_WR  , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
