@@ -626,7 +626,7 @@ class MMU_Sram extends Bundle {
   val paddr = Output(UInt(32.W))
 }
 
-//exCtrl
+//Ctrl
 class Ctrl_PreFetchStage extends Bundle {
   val after_ex = Output(Bool())
   val do_flush = Output(Bool())
@@ -637,4 +637,12 @@ class Ctrl_PreFetchStage extends Bundle {
 class Ctrl_FetchStage extends Bundle {
   val after_ex = Output(Bool())
   val do_flush = Output(Bool())
+}
+
+class Ctrl_InstMemory extends Bundle {
+  val ws_do_flush = Output(Bool())
+}
+
+class InstMemory_Ctrl extends Bundle {
+  val inst_sram_discard = Output(UInt(2.W))
 }
