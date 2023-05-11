@@ -431,12 +431,27 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_addr    = Output(UInt(8.W))
   val mtc0_we     = Output(Bool())
   val cp0_wdata   = Output(UInt(32.W))
+  val tlbp        = Output(Bool())
+  val tlbr        = Output(Bool())
+  val tlbwi       = Output(Bool())
+  val s1_found    = Output(Bool())
+  val s1_index    = Output(UInt(4.W))
+  val r_vpn2      = Output(UInt(19.W))
+  val r_asid      = Output(UInt(8.W))
+  val r_g         = Output(Bool())
+  val r_pfn0      = Output(UInt(20.W))
+  val r_c0        = Output(UInt(3.W))
+  val r_d0        = Output(Bool())
+  val r_v0        = Output(Bool())
+  val r_pfn1      = Output(UInt(20.W))
+  val r_c1        = Output(UInt(3.W))
+  val r_d1        = Output(Bool())
+  val r_v1        = Output(Bool())
 }
 
 class WriteBackStage_MMU extends Bundle {
   val cp0_entryhi = Output(UInt(32.W))
 }
-
 
 class WriteBackStage_TLB extends Bundle {
   val we      = Output(Bool())
@@ -501,6 +516,10 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_badvaddr = Output(UInt(32.W))
   val cp0_count    = Output(UInt(32.W))
   val cp0_compare  = Output(UInt(32.W))
+  val cp0_entryhi  = Output(UInt(32.W))
+  val cp0_entrylo0 = Output(UInt(32.W))
+  val cp0_entrylo1 = Output(UInt(32.W))
+  val cp0_index    = Output(UInt(32.W))
 }
 
 class AXI extends Bundle {
