@@ -167,5 +167,5 @@ class PreFetchStage extends Module {
       (tlb_refill || tlb_invalid) -> EX_TLBL,
     ),
   )
-  pfs_badvaddr := inst_sram_addr
+  pfs_badvaddr := pc
 }
