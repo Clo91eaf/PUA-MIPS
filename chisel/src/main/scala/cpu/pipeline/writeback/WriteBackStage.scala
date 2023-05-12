@@ -126,9 +126,9 @@ class WriteBackStage extends Module {
   io.debug.wdata := io.regFile.reg_wdata
 
   // output-cp0
-  io.cp0.wb_ex       := ws_ex
+  io.cp0.wb_ex       := ex && !ws_inst_is_eret && !ws_after_tlb
   io.cp0.wb_bd       := ws_bd
-  io.cp0.eret_flush  := ws_inst_is_eret
+  io.cp0.eret_flush  := eret
   io.cp0.wb_excode   := ws_excode
   io.cp0.wb_pc       := ws_pc
   io.cp0.wb_badvaddr := ws_badvaddr
