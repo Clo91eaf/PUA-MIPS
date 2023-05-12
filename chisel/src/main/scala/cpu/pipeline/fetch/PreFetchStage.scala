@@ -129,10 +129,11 @@ class PreFetchStage extends Module {
 
   // inst sram
   inst_sram_req := pfs_valid &&
+    !pfs_ex &&
     !addr_ok_r &&
     !(bd_done && br_stall) &&
     !do_flush
-  inst_sram_addr := Cat(pc(31, 2), 0.U(2.W))
+  inst_sram_addr := pc
   inst_waiting   := addr_ok && !inst_ok
 
   inst_sram_data_ok := io.fromInstMemory.data_ok && io.fromFetchStage.inst_unable
@@ -167,5 +168,5 @@ class PreFetchStage extends Module {
       (tlb_refill || tlb_invalid) -> EX_TLBL,
     ),
   )
-  pfs_badvaddr := pc
+  pfs_badvaddr := inst_sram_addr
 }

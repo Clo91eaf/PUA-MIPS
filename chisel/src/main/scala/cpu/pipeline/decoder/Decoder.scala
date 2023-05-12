@@ -524,6 +524,5 @@ class Decoder extends Module {
   )
 
   overflow_inst := (aluop === EXE_ADD_OP) || (aluop === EXE_SUB_OP)
-  // debug
-  // printf(p"decoder :pc 0x${Hexadecimal(pc)}, inst 0x${Hexadecimal(inst)}\n")
+
 }

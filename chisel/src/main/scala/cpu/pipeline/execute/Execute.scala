@@ -32,25 +32,26 @@ class Execute extends Module {
     val ctrl         = new Execute_Ctrl()
   })
   // input-execute stage
-  val pc           = io.fromExecuteStage.pc
-  val aluop        = io.fromExecuteStage.aluop
-  val alusel       = io.fromExecuteStage.alusel
-  val reg1         = io.fromExecuteStage.reg1
-  val reg2         = io.fromExecuteStage.reg2
-  val reg_waddr    = io.fromExecuteStage.reg_waddr
-  val wreg_i       = io.fromExecuteStage.reg_wen
-  val inst         = io.fromExecuteStage.inst
-  val es_valid     = io.fromExecuteStage.valid
-  val cp0_addr     = io.fromExecuteStage.cp0_addr
-  val bd           = io.fromExecuteStage.bd
-  val do_flush     = io.fromExecuteStage.do_flush
-  val after_ex     = io.fromExecuteStage.after_ex
-  val after_tlb    = io.fromExecuteStage.after_tlb
-  val tlb_refill   = io.fromDataMMU.tlb_refill
-  val tlb_invalid  = io.fromDataMMU.tlb_invalid
-  val tlb_modified = io.fromDataMMU.tlb_modified
-  val s1_found     = io.fromTLB.s1_found
-  val s1_index     = io.fromTLB.s1_index
+  val pc            = io.fromExecuteStage.pc
+  val aluop         = io.fromExecuteStage.aluop
+  val alusel        = io.fromExecuteStage.alusel
+  val reg1          = io.fromExecuteStage.reg1
+  val reg2          = io.fromExecuteStage.reg2
+  val reg_waddr     = io.fromExecuteStage.reg_waddr
+  val wreg_i        = io.fromExecuteStage.reg_wen
+  val inst          = io.fromExecuteStage.inst
+  val es_valid      = io.fromExecuteStage.valid
+  val cp0_addr      = io.fromExecuteStage.cp0_addr
+  val bd            = io.fromExecuteStage.bd
+  val do_flush      = io.fromExecuteStage.do_flush
+  val after_ex      = io.fromExecuteStage.after_ex
+  val after_tlb     = io.fromExecuteStage.after_tlb
+  val ds_tlb_refill = io.fromExecuteStage.tlb_refill
+  val tlb_refill    = io.fromDataMMU.tlb_refill
+  val tlb_invalid   = io.fromDataMMU.tlb_invalid
+  val tlb_modified  = io.fromDataMMU.tlb_modified
+  val s1_found      = io.fromTLB.s1_found
+  val s1_index      = io.fromTLB.s1_index
 
   // input-hilo
   val hi_i = io.fromHILO.hi
@@ -264,7 +265,7 @@ class Execute extends Module {
   io.memoryStage.data            := data
   io.memoryStage.wait_mem        := es_valid && addr_ok
   io.memoryStage.res_from_mem    := mem_re
-  io.memoryStage.tlb_refill      := tlb_refill || tlb_refill_ex
+  io.memoryStage.tlb_refill      := ds_tlb_refill || tlb_refill_ex
   io.memoryStage.after_tlb       := after_tlb
   io.memoryStage.s1_found        := s1_found
   io.memoryStage.s1_index        := s1_index

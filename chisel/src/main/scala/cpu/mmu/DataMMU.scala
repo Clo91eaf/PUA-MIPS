@@ -32,13 +32,13 @@ class DataMMU extends Module {
   val tlb_vpn2     = Wire(UInt(19.W))
   val tlb_odd_page = Wire(Bool())
   val tlb_asid     = Wire(UInt(8.W))
-  io.dataMemory.paddr        := paddr
+  io.dataMemory.paddr     := paddr
   io.execute.tlb_refill   := tlb_refill
   io.execute.tlb_invalid  := tlb_invalid
   io.execute.tlb_modified := tlb_modified
-  io.tlb.tlb_vpn2        := tlb_vpn2
-  io.tlb.tlb_odd_page    := tlb_odd_page
-  io.tlb.tlb_asid        := tlb_asid
+  io.tlb.tlb_vpn2         := tlb_vpn2
+  io.tlb.tlb_odd_page     := tlb_odd_page
+  io.tlb.tlb_asid         := tlb_asid
   // io-finish
   val unmapped = Wire(Bool())
   unmapped := vaddr(31) && !vaddr(30)

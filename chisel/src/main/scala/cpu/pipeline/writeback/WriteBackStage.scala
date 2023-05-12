@@ -68,7 +68,8 @@ class WriteBackStage extends Module {
   val eret         = ws_valid && ws_inst_is_eret
   val ex           = ws_valid && ws_ex
 
-  val ex_tlb_refill_entry = (ws_excode === EX_TLBL || ws_excode === EX_TLBS) && ws_tlb_refill
+  val ex_tlb_refill_entry =
+    (ws_excode === EX_TLBL || ws_excode === EX_TLBS) && ws_tlb_refill && ws_valid
 
   val do_flush = ex
   val flush_pc = MuxCase(
@@ -154,7 +155,7 @@ class WriteBackStage extends Module {
   io.cp0.r_v1        := io.fromTLB.r_v1
 
   // output-tlb
-  io.tlb.we      := ws_inst_is_tlbwi
+  io.tlb.we      := ws_inst_is_tlbwi && ws_valid
   io.tlb.r_index := io.fromCP0.cp0_index(3, 0)
 
   // ENTRYHI
