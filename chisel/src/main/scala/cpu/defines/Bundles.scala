@@ -657,6 +657,11 @@ class Ctrl_DecoderStage extends Bundle {
   val after_ex = Output(Bool())
 }
 
+class Ctrl_ExecuteStage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
 class Ctrl_MemoryStage extends Bundle {
   val do_flush = Output(Bool())
   val after_ex = Output(Bool())

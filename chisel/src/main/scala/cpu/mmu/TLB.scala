@@ -7,51 +7,51 @@ import cpu.defines._
 
 class TLB extends Module {
   val io = IO(new Bundle {
-    val s0_in              = Flipped(new MMU_TLB())
-    val s1_in              = Flipped(new MMU_TLB())
+    val fromInstMMU        = Flipped(new MMU_TLB())
+    val fromDataMMU        = Flipped(new MMU_TLB())
     val fromWriteBackStage = Flipped(new WriteBackStage_TLB())
     val common             = new TLBCommon()
 
-    val s0_out         = new TLB_MMU()
-    val s1_out         = new TLB_MMU()
-    val executeStage   = new TLB_Execute()
+    val instMMU        = new TLB_MMU()
+    val dataMMU        = new TLB_MMU()
+    val execute        = new TLB_Execute()
     val writeBackStage = new TLB_WriteBackStage()
   })
 
   // io
-  val s0_vpn2     = io.s0_in.tlb_vpn2
-  val s0_odd_page = io.s0_in.tlb_odd_page
-  val s0_asid     = io.s0_in.tlb_asid
+  val s0_vpn2     = io.fromInstMMU.tlb_vpn2
+  val s0_odd_page = io.fromInstMMU.tlb_odd_page
+  val s0_asid     = io.fromInstMMU.tlb_asid
   val s0_found    = Wire(Bool())
   val s0_index    = Wire(UInt(log2Ceil(TLB_NUM).W))
   val s0_pfn      = Wire(UInt(20.W))
   val s0_c        = Wire(UInt(3.W))
   val s0_d        = Wire(Bool())
   val s0_v        = Wire(Bool())
-  io.s0_out.tlb_found := s0_found
-  io.common.s0_index  := s0_index
-  io.s0_out.tlb_pfn   := s0_pfn
-  io.s0_out.tlb_c     := s0_c
-  io.s0_out.tlb_d     := s0_d
-  io.s0_out.tlb_v     := s0_v
+  io.instMMU.tlb_found := s0_found
+  io.common.s0_index   := s0_index
+  io.instMMU.tlb_pfn   := s0_pfn
+  io.instMMU.tlb_c     := s0_c
+  io.instMMU.tlb_d     := s0_d
+  io.instMMU.tlb_v     := s0_v
 
   // search port 1
-  val s1_vpn2     = io.s1_in.tlb_vpn2
-  val s1_odd_page = io.s1_in.tlb_odd_page
-  val s1_asid     = io.s1_in.tlb_asid
+  val s1_vpn2     = io.fromDataMMU.tlb_vpn2
+  val s1_odd_page = io.fromDataMMU.tlb_odd_page
+  val s1_asid     = io.fromDataMMU.tlb_asid
   val s1_found    = Wire(Bool())
   val s1_index    = Wire(UInt(log2Ceil(TLB_NUM).W))
   val s1_pfn      = Wire(UInt(20.W))
   val s1_c        = Wire(UInt(3.W))
   val s1_d        = Wire(Bool())
   val s1_v        = Wire(Bool())
-  io.s1_out.tlb_found      := s1_found
-  io.executeStage.s1_found := s1_found
-  io.executeStage.s1_index := s1_index
-  io.s1_out.tlb_pfn        := s1_pfn
-  io.s1_out.tlb_c          := s1_c
-  io.s1_out.tlb_d          := s1_d
-  io.s1_out.tlb_v          := s1_v
+  io.dataMMU.tlb_found := s1_found
+  io.execute.s1_found  := s1_found
+  io.execute.s1_index  := s1_index
+  io.dataMMU.tlb_pfn   := s1_pfn
+  io.dataMMU.tlb_c     := s1_c
+  io.dataMMU.tlb_d     := s1_d
+  io.dataMMU.tlb_v     := s1_v
 
   // write port
   val we      = io.fromWriteBackStage.we
