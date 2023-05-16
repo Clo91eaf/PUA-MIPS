@@ -9,24 +9,21 @@ class WriteBackStage extends Module {
   val io = IO(new Bundle {
     val fromMemory = Flipped(new Memory_WriteBackStage())
     val fromCP0    = Flipped(new CP0_WriteBackStage())
+    val fromTLB    = Flipped(new TLB_WriteBackStage())
     val ext_int    = Input(UInt(6.W))
 
-    val preFetchStage = new WriteBackStage_PreFetchStage()
-    val fetchStage    = new WriteBackStage_FetchStage()
-    val instMemory    = new WriteBackStage_InstMemory()
-    val decoderStage  = new WriteBackStage_DecoderStage()
-    val decoder       = new WriteBackStage_Decoder()
-    val regFile       = new WriteBackStage_RegFile()
-    val executeStage  = new WriteBackStage_ExecuteStage()
-    val execute       = new WriteBackStage_Execute()
-    val memoryStage   = new WriteBackStage_MemoryStage()
-    val memory        = new WriteBackStage_Memory()
-    val dataMemory    = new WriteBackStage_DataMemory()
-    val llbitReg      = new WriteBackStage_LLbitReg()
-    val mov           = new WriteBackStage_Mov()
-    val hilo          = new WriteBackStage_HILO()
-    val cp0           = new WriteBackStage_CP0()
-    val debug         = new DEBUG()
+    val decoder = new WriteBackStage_Decoder()
+    val regFile = new WriteBackStage_RegFile()
+    val execute = new WriteBackStage_Execute()
+    val memory  = new WriteBackStage_Memory()
+    val mov     = new WriteBackStage_Mov()
+    val hilo    = new WriteBackStage_HILO()
+    val cp0     = new WriteBackStage_CP0()
+    val ctrl    = new WriteBackStage_Ctrl()
+    val tlb     = new WriteBackStage_TLB()
+    val instMMU = new WriteBackStage_MMU()
+    val dataMMU = new WriteBackStage_MMU()
+    val debug   = new DEBUG()
   })
   // input
   val ws_pc              = RegInit(BUS_INIT)
@@ -36,8 +33,6 @@ class WriteBackStage extends Module {
   val ws_hi              = RegInit(BUS_INIT)
   val ws_lo              = RegInit(BUS_INIT)
   val ws_whilo           = RegInit(WRITE_DISABLE)
-  val ws_LLbit_wen       = RegInit(false.B)
-  val ws_LLbit_value     = RegInit(false.B)
   val ws_valid           = RegInit(false.B)
   val ws_inst_is_mtc0    = RegInit(false.B)
   val ws_inst_is_mfc0    = RegInit(false.B)
@@ -49,27 +44,51 @@ class WriteBackStage extends Module {
   val ws_excode          = RegInit(0.U(5.W))
   val ws_ex              = RegInit(false.B)
   val ext_int            = io.ext_int
+  val ws_inst_is_tlbp    = RegInit(false.B)
+  val ws_inst_is_tlbr    = RegInit(false.B)
+  val ws_inst_is_tlbwi   = RegInit(false.B)
+  val ws_tlb_refill      = RegInit(false.B)
+  val ws_after_tlb       = RegInit(false.B)
+  val ws_s1_found        = RegInit(false.B)
+  val ws_s1_index        = RegInit(0.U(log2Ceil(TLB_NUM).W))
   // input-cp0
-  val cp0_rdata = io.fromCP0.cp0_rdata
+  val cp0_rdata  = io.fromCP0.cp0_rdata
+  val cp0_epc    = io.fromCP0.cp0_epc
+  val cp0_status = io.fromCP0.cp0_status
+  val cp0_cause  = io.fromCP0.cp0_cause
 
   // output
-  val allowin      = Wire(Bool())
-  val eret         = WireInit(false.B)
-  val ex           = WireInit(false.B)
+  val allowin = Wire(Bool())
+
   val inst_is_mfc0 = Wire(Bool())
   val cp0_we       = Wire(Bool())
   val cp0_wdata    = Wire(UInt(32.W))
-  val cp0_epc      = Wire(UInt(32.W))
-  val cp0_status   = Wire(UInt(32.W))
-  val cp0_cause    = Wire(UInt(32.W))
+  val excode       = ws_excode
+  val badvaddr     = ws_badvaddr
+  val eret         = ws_valid && ws_inst_is_eret
+  val ex           = ws_valid && ws_ex
 
-  // output-inst memory
-  io.instMemory.ex   := ex
-  io.instMemory.eret := eret
+  val ex_tlb_refill_entry =
+    (ws_excode === EX_TLBL || ws_excode === EX_TLBS) && ws_tlb_refill && ws_valid
 
-  // output-data memory
-  io.dataMemory.ex   := ex
-  io.dataMemory.eret := eret
+  val do_flush = ex
+  val flush_pc = MuxCase(
+    EX_ENTRY,
+    Seq(
+      ws_after_tlb        -> ws_pc,
+      ws_inst_is_eret     -> cp0_epc,
+      ex_tlb_refill_entry -> EX_TLB_REFILL_ENTRY,
+    ),
+  )
+
+  // output-ctrl
+  io.ctrl.ex       := ex
+  io.ctrl.do_flush := do_flush
+  io.ctrl.flush_pc := flush_pc
+
+  // output-mmu
+  io.dataMMU.cp0_entryhi := io.fromCP0.cp0_entryhi
+  io.instMMU.cp0_entryhi := io.fromCP0.cp0_entryhi
 
   // output-reg file
   io.regFile.reg_waddr := ws_reg_waddr
@@ -81,38 +100,16 @@ class WriteBackStage extends Module {
   io.hilo.lo    := ws_lo
   io.hilo.whilo := ws_whilo & ws_valid
 
-  // output-preFetchStage
-  io.preFetchStage.eret    := eret
-  io.preFetchStage.ex      := ex
-  io.preFetchStage.cp0_epc := cp0_epc
-
-  // output-fetchStage
-  io.fetchStage.eret    := eret
-  io.fetchStage.ex      := ex
-  io.fetchStage.cp0_epc := cp0_epc
-
-  // output-decoder stage
-  io.decoderStage.eret := eret
-  io.decoderStage.ex   := ex
-
   // output-decoder
-  io.decoder.eret         := eret
-  io.decoder.ex           := ex
   io.decoder.inst_is_mfc0 := inst_is_mfc0
   io.decoder.reg_waddr    := ws_reg_waddr
   io.decoder.cp0_cause    := cp0_cause
   io.decoder.cp0_status   := cp0_status
 
-  // output-execute stage
-  io.executeStage.eret := eret
-  io.executeStage.ex   := ex
-
   // output-execute
   io.execute.hi    := ws_hi
   io.execute.lo    := ws_lo
   io.execute.whilo := ws_whilo && ws_valid
-  io.execute.eret  := eret
-  io.execute.ex    := ex
 
   // output-mov
   io.mov.cp0_wen   := cp0_we
@@ -120,20 +117,8 @@ class WriteBackStage extends Module {
   io.mov.cp0_wdata := cp0_wdata
   io.mov.cp0_rdata := cp0_rdata
 
-  // output-memory stage
-  io.memoryStage.eret        := eret
-  io.memoryStage.ex          := ex
-
   // output-memory
-  io.memory.LLbit_wen   := ws_LLbit_wen
-  io.memory.LLbit_value := ws_LLbit_value
-  io.memory.allowin     := allowin
-  io.memory.eret        := eret
-  io.memory.ex          := ex
-
-  // output-llbit reg
-  io.llbitReg.LLbit_wen   := ws_LLbit_wen
-  io.llbitReg.LLbit_value := ws_LLbit_value
+  io.memory.allowin := allowin
 
   // output-debug
   io.debug.pc    := ws_pc
@@ -142,9 +127,9 @@ class WriteBackStage extends Module {
   io.debug.wdata := io.regFile.reg_wdata
 
   // output-cp0
-  io.cp0.wb_ex       := ws_ex
+  io.cp0.wb_ex       := ex && !ws_inst_is_eret && !ws_after_tlb
   io.cp0.wb_bd       := ws_bd
-  io.cp0.eret_flush  := ws_inst_is_eret
+  io.cp0.eret_flush  := eret
   io.cp0.wb_excode   := ws_excode
   io.cp0.wb_pc       := ws_pc
   io.cp0.wb_badvaddr := ws_badvaddr
@@ -152,6 +137,42 @@ class WriteBackStage extends Module {
   io.cp0.cp0_addr    := ws_cp0_addr
   io.cp0.mtc0_we     := cp0_we
   io.cp0.cp0_wdata   := cp0_wdata
+  io.cp0.tlbp        := ws_inst_is_tlbp
+  io.cp0.tlbr        := ws_inst_is_tlbr
+  io.cp0.tlbwi       := ws_inst_is_tlbwi
+  io.cp0.s1_found    := ws_s1_found
+  io.cp0.s1_index    := ws_s1_index
+  io.cp0.r_vpn2      := io.fromTLB.r_vpn2
+  io.cp0.r_asid      := io.fromTLB.r_asid
+  io.cp0.r_g         := io.fromTLB.r_g
+  io.cp0.r_pfn0      := io.fromTLB.r_pfn0
+  io.cp0.r_c0        := io.fromTLB.r_c0
+  io.cp0.r_d0        := io.fromTLB.r_d0
+  io.cp0.r_v0        := io.fromTLB.r_v0
+  io.cp0.r_pfn1      := io.fromTLB.r_pfn1
+  io.cp0.r_c1        := io.fromTLB.r_c1
+  io.cp0.r_d1        := io.fromTLB.r_d1
+  io.cp0.r_v1        := io.fromTLB.r_v1
+
+  // output-tlb
+  io.tlb.we      := ws_inst_is_tlbwi && ws_valid
+  io.tlb.r_index := io.fromCP0.cp0_index(3, 0)
+
+  // ENTRYHI
+  io.tlb.w_index := io.fromCP0.cp0_index(3, 0)
+  io.tlb.w_vpn2  := io.fromCP0.cp0_entryhi(31, 13)
+  io.tlb.w_asid  := io.fromCP0.cp0_entryhi(7, 0)
+  io.tlb.w_g     := io.fromCP0.cp0_entrylo0(0) & io.fromCP0.cp0_entrylo1(0)
+  // ENTRYLO0
+  io.tlb.w_pfn0 := io.fromCP0.cp0_entrylo0(25, 6)
+  io.tlb.w_c0   := io.fromCP0.cp0_entrylo0(5, 3)
+  io.tlb.w_d0   := io.fromCP0.cp0_entrylo0(2)
+  io.tlb.w_v0   := io.fromCP0.cp0_entrylo0(1)
+  // ENTRYLO1
+  io.tlb.w_pfn1 := io.fromCP0.cp0_entrylo1(25, 6)
+  io.tlb.w_c1   := io.fromCP0.cp0_entrylo1(5, 3)
+  io.tlb.w_d1   := io.fromCP0.cp0_entrylo1(2)
+  io.tlb.w_v1   := io.fromCP0.cp0_entrylo1(1)
 
   // io-finish
 
@@ -170,8 +191,6 @@ class WriteBackStage extends Module {
     ws_hi              := io.fromMemory.hi
     ws_lo              := io.fromMemory.lo
     ws_whilo           := io.fromMemory.whilo
-    ws_LLbit_wen       := io.fromMemory.LLbit_wen
-    ws_LLbit_value     := io.fromMemory.LLbit_value
     ws_pc              := io.fromMemory.pc
     ws_inst_is_mfc0    := io.fromMemory.inst_is_mfc0
     ws_inst_is_mtc0    := io.fromMemory.inst_is_mtc0
@@ -182,19 +201,18 @@ class WriteBackStage extends Module {
     ws_cp0_addr        := io.fromMemory.cp0_addr
     ws_ex              := io.fromMemory.ex
     ws_bd              := io.fromMemory.bd
+    ws_inst_is_tlbp    := io.fromMemory.inst_is_tlbp
+    ws_inst_is_tlbr    := io.fromMemory.inst_is_tlbr
+    ws_inst_is_tlbwi   := io.fromMemory.inst_is_tlbwi
+    ws_tlb_refill      := io.fromMemory.tlb_refill
+    ws_after_tlb       := io.fromMemory.after_tlb
+    ws_s1_found        := io.fromMemory.s1_found
+    ws_s1_index        := io.fromMemory.s1_index
   }
 
-  cp0_epc    := Fill(32, ws_valid) & io.fromCP0.cp0_epc
-  cp0_status := Fill(32, ws_valid) & io.fromCP0.cp0_status
-  cp0_cause  := Fill(32, ws_valid) & io.fromCP0.cp0_cause
+  inst_is_mfc0 := ws_valid && ws_inst_is_mfc0
 
-  eret         := ws_inst_is_eret && ws_valid
-  ex           := ws_ex && ws_valid
-  inst_is_mfc0 := ws_inst_is_mfc0 && ws_valid
-
-  cp0_we    := ws_inst_is_mtc0 && ws_valid && !ws_ex
+  cp0_we    := ws_valid && ws_inst_is_mtc0 && !ws_ex
   cp0_wdata := ws_reg_wdata
 
-  // debug
-  // printf(p"writeBackStage :pc 0x${Hexadecimal(pc)}\n")
 }

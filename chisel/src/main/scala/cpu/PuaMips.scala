@@ -12,6 +12,8 @@ import pipeline.decoder._
 import pipeline.execute._
 import pipeline.memory._
 import pipeline.writeback._
+import mmu._
+import ctrl._
 import os.write
 
 class PuaMips extends Module {
@@ -37,9 +39,12 @@ class PuaMips extends Module {
   val memory         = Module(new Memory())
   val writeBackStage = Module(new WriteBackStage())
   val regfile        = Module(new Regfile())
-  val llbitReg       = Module(new LLbitReg())
   val hilo           = Module(new HILO())
   val cp0            = Module(new CP0Reg())
+  val instMMU        = Module(new InstMMU())
+  val dataMMU        = Module(new DataMMU())
+  val ctrl           = Module(new Ctrl())
+  val tlb            = Module(new TLB())
 
   // axi interface
   io.axi <> sramAXITrans.io.axi
@@ -52,6 +57,7 @@ class PuaMips extends Module {
   // inst memory
   instMemory.io.preFetchStage <> preFetchStage.io.fromInstMemory
   instMemory.io.fetchStage <> fetchStage.io.fromInstMemory
+  instMemory.io.ctrl <> ctrl.io.fromInstMemory
 
   // data memory
   dataMemory.io.execute <> execute.io.fromDataMemory
@@ -60,11 +66,13 @@ class PuaMips extends Module {
   // preFetchStage
   preFetchStage.io.fetchStage <> fetchStage.io.fromPreFetchStage
   preFetchStage.io.instMemory <> instMemory.io.fromPreFetchStage
+  preFetchStage.io.instMMU <> instMMU.io.fromPreFetchStage
 
   // fetchStage
   fetchStage.io.preFetchStage <> preFetchStage.io.fromFetchStage
   fetchStage.io.decoderStage <> decoderStage.io.fromFetchStage
   fetchStage.io.instMemory <> instMemory.io.fromFetchStage
+  fetchStage.io.ctrl <> ctrl.io.fromFetchStage
 
   // decoderStage
   decoderStage.io.decoder <> decoder.io.fromDecoderStage
@@ -75,6 +83,7 @@ class PuaMips extends Module {
   decoder.io.executeStage <> executeStage.io.fromDecoder
   decoder.io.regfile <> regfile.io.fromDecoder
   decoder.io.decoderStage <> decoderStage.io.fromDecoder
+  decoder.io.ctrl <> ctrl.io.fromDecoder
 
   // executeStage
   executeStage.io.decoder <> decoder.io.fromExecuteStage
@@ -94,6 +103,8 @@ class PuaMips extends Module {
   execute.io.memoryStage <> memoryStage.io.fromExecute
   execute.io.dataMemory <> dataMemory.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
+  execute.io.ctrl <> ctrl.io.fromExecute
+  execute.io.dataMMU <> dataMMU.io.fromExecute
 
   // memoryStage
   memoryStage.io.execute <> execute.io.fromMemoryStage
@@ -102,6 +113,7 @@ class PuaMips extends Module {
   // data memory
   dataMemory.io.memory <> memory.io.fromDataMemory
   dataMemory.io.execute <> execute.io.fromDataMemory
+  dataMemory.io.ctrl <> ctrl.io.fromDataMemory
 
   // memory
   memory.io.decoder <> decoder.io.fromMemory
@@ -110,24 +122,21 @@ class PuaMips extends Module {
   memory.io.dataMemory <> dataMemory.io.fromMemory
   memory.io.execute <> execute.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
+  memory.io.ctrl <> ctrl.io.fromMemory
 
   // writeBackStage
-  writeBackStage.io.preFetchStage <> preFetchStage.io.fromWriteBackStage
-  writeBackStage.io.fetchStage <> fetchStage.io.fromWriteBackStage
-  writeBackStage.io.decoderStage <> decoderStage.io.fromWriteBackStage
   writeBackStage.io.decoder <> decoder.io.fromWriteBackStage
-  writeBackStage.io.executeStage <> executeStage.io.fromWriteBackStage
   writeBackStage.io.execute <> execute.io.fromWriteBackStage
-  writeBackStage.io.memoryStage <> memoryStage.io.fromWriteBackStage
   writeBackStage.io.memory <> memory.io.fromWriteBackStage
   writeBackStage.io.regFile <> regfile.io.fromWriteBackStage
   writeBackStage.io.mov <> mov.io.fromWriteBackStage
   writeBackStage.io.hilo <> hilo.io.fromWriteBackStage
-  writeBackStage.io.llbitReg <> llbitReg.io.fromWriteBackStage
   writeBackStage.io.cp0 <> cp0.io.fromWriteBackStage
   writeBackStage.io.ext_int := io.ext_int
-  writeBackStage.io.instMemory <> instMemory.io.fromWriteBackStage
-  writeBackStage.io.dataMemory <> dataMemory.io.fromWriteBackStage
+  writeBackStage.io.tlb <> tlb.io.fromWriteBackStage
+  writeBackStage.io.ctrl <> ctrl.io.fromWriteBackStage
+  writeBackStage.io.instMMU <> instMMU.io.fromWriteBackStage
+  writeBackStage.io.dataMMU <> dataMMU.io.fromWriteBackStage
 
   // cp0
   cp0.io.writeBackStage <> writeBackStage.io.fromCP0
@@ -138,7 +147,28 @@ class PuaMips extends Module {
   // regfile
   regfile.io.decoder <> decoder.io.fromRegfile
 
-  // llbitReg
-  llbitReg.io.flush := DontCare
-  llbitReg.io.memory <> memory.io.fromLLbitReg
+  // ctrl
+  ctrl.io.preFetchStage <> preFetchStage.io.fromCtrl
+  ctrl.io.fetchStage <> fetchStage.io.fromCtrl
+  ctrl.io.decoderStage <> decoderStage.io.fromCtrl
+  ctrl.io.executeStage <> executeStage.io.fromCtrl
+  ctrl.io.memoryStage <> memoryStage.io.fromCtrl
+  ctrl.io.instMemory <> instMemory.io.fromCtrl
+  ctrl.io.dataMemory <> dataMemory.io.fromCtrl
+
+  // mmu
+  dataMMU.io.execute <> execute.io.fromDataMMU
+  dataMMU.io.tlb <> tlb.io.fromDataMMU
+  dataMMU.io.dataMemory <> dataMemory.io.fromDataMMU
+
+  instMMU.io.preFetchStage <> preFetchStage.io.fromInstMMU
+  instMMU.io.tlb <> tlb.io.fromInstMMU
+  instMMU.io.instMemory <> instMemory.io.fromInstMMU
+
+  // tlb
+  tlb.io.writeBackStage <> writeBackStage.io.fromTLB
+  tlb.io.instMMU <> instMMU.io.fromTLB
+  tlb.io.dataMMU <> dataMMU.io.fromTLB
+  tlb.io.execute <> execute.io.fromTLB
+
 }

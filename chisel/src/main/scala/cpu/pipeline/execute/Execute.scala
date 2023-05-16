@@ -17,28 +17,41 @@ class Execute extends Module {
     val fromMemory         = Flipped(new Memory_Execute())
     val fromHILO           = Flipped(new HILO_Execute())
     val fromWriteBackStage = Flipped(new WriteBackStage_Execute())
+    val fromDataMMU        = Flipped(new MMU_Common())
+    val fromTLB            = Flipped(new TLB_Execute())
 
     val alu          = new Execute_ALU()
     val mul          = new Execute_Mul()
     val div          = new Execute_Div()
     val mov          = new Execute_Mov()
     val decoder      = new Execute_Decoder()
+    val dataMMU      = new Execute_DataMMU()
     val memoryStage  = new Execute_MemoryStage()
     val dataMemory   = new Execute_DataMemory()
     val executeStage = new Execute_ExecuteStage()
+    val ctrl         = new Execute_Ctrl()
   })
   // input-execute stage
-  val pc        = io.fromExecuteStage.pc
-  val aluop     = io.fromExecuteStage.aluop
-  val alusel    = io.fromExecuteStage.alusel
-  val reg1      = io.fromExecuteStage.reg1
-  val reg2      = io.fromExecuteStage.reg2
-  val reg_waddr = io.fromExecuteStage.reg_waddr
-  val wreg_i    = io.fromExecuteStage.reg_wen
-  val inst      = io.fromExecuteStage.inst
-  val es_valid  = io.fromExecuteStage.valid
-  val cp0_addr  = io.fromExecuteStage.cp0_addr
-  val bd        = io.fromExecuteStage.bd
+  val pc            = io.fromExecuteStage.pc
+  val aluop         = io.fromExecuteStage.aluop
+  val alusel        = io.fromExecuteStage.alusel
+  val reg1          = io.fromExecuteStage.reg1
+  val reg2          = io.fromExecuteStage.reg2
+  val reg_waddr     = io.fromExecuteStage.reg_waddr
+  val wreg_i        = io.fromExecuteStage.reg_wen
+  val inst          = io.fromExecuteStage.inst
+  val es_valid      = io.fromExecuteStage.valid
+  val cp0_addr      = io.fromExecuteStage.cp0_addr
+  val bd            = io.fromExecuteStage.bd
+  val do_flush      = io.fromExecuteStage.do_flush
+  val after_ex      = io.fromExecuteStage.after_ex
+  val after_tlb     = io.fromExecuteStage.after_tlb
+  val ds_tlb_refill = io.fromExecuteStage.tlb_refill
+  val tlb_refill    = io.fromDataMMU.tlb_refill
+  val tlb_invalid   = io.fromDataMMU.tlb_invalid
+  val tlb_modified  = io.fromDataMMU.tlb_modified
+  val s1_found      = io.fromTLB.s1_found
+  val s1_index      = io.fromTLB.s1_index
 
   // input-hilo
   val hi_i = io.fromHILO.hi
@@ -80,6 +93,7 @@ class Execute extends Module {
   val excode         = Wire(UInt(5.W))
   val ex             = Wire(Bool())
   val no_store       = Wire(Bool())
+  val tlb_refill_ex  = Wire(Bool())
 
   // data sram
   val addr_ok_r         = RegInit(false.B)
@@ -213,7 +227,6 @@ class Execute extends Module {
           "b11".U -> Cat(reg2(7, 0), 0.U(24.W)),
         ),
       ),
-      // EXE_SC_OP -> Mux(LLbit, data, ZERO_WORD)
     ),
   )
   // output-memory stage
@@ -252,6 +265,10 @@ class Execute extends Module {
   io.memoryStage.data            := data
   io.memoryStage.wait_mem        := es_valid && addr_ok
   io.memoryStage.res_from_mem    := mem_re
+  io.memoryStage.tlb_refill      := ds_tlb_refill || tlb_refill_ex
+  io.memoryStage.after_tlb       := after_tlb
+  io.memoryStage.s1_found        := s1_found
+  io.memoryStage.s1_index        := s1_index
 
   // output-execute stage
   io.executeStage.allowin := allowin
@@ -262,10 +279,14 @@ class Execute extends Module {
   io.dataMemory.req         := data_sram_req
   io.dataMemory.wr          := data_sram_wr
   io.dataMemory.size        := data_sram_size
-  io.dataMemory.addr        := data_sram_addr
   io.dataMemory.wdata       := data_sram_wdata
   io.dataMemory.wstrb       := data_sram_wstrb
   io.dataMemory.waiting     := es_valid && addr_ok && !data_ok
+
+  io.dataMMU.vaddr        := data_sram_addr
+  io.dataMMU.inst_is_tlbp := aluop === EXE_TLBP_OP
+
+  io.ctrl.ex := ex
 
   when(data_sram_req && io.fromDataMemory.addr_ok && !io.fromMemory.allowin) {
     addr_ok_r := true.B
@@ -285,8 +306,7 @@ class Execute extends Module {
 
   // io-finish
 
-  no_store := io.fromMemory.ex | io.fromWriteBackStage.ex |
-    ex | io.fromMemory.eret | io.fromWriteBackStage.eret
+  no_store := ex || after_ex
 
   val ready_go = Wire(Bool())
   val load_op  = Wire(Bool())
@@ -303,12 +323,11 @@ class Execute extends Module {
     load_op := false.B
   }
 
-  val ws_not_eret_ex = !io.fromWriteBackStage.eret && !io.fromWriteBackStage.ex
-  blk_valid := es_valid && load_op && ws_not_eret_ex
+  blk_valid := es_valid && load_op && !do_flush
 
   ready_go       := Mux((mem_we || mem_re), addr_ok || ex, true.B)
   allowin        := !es_valid || ready_go && io.fromMemory.allowin
-  es_to_ms_valid := es_valid && ready_go && ws_not_eret_ex
+  es_to_ms_valid := es_valid && ready_go && !do_flush
 
   es_fwd_valid := es_valid
 
@@ -463,19 +482,22 @@ class Execute extends Module {
   }
 
   val overflow_ex = io.fromExecuteStage.overflow_inst && io.fromAlu.ov
-  val st_addr     = addrLowBit2
+
+  val st_addr = addrLowBit2
   val load_ex = ((aluop === EXE_LW_OP) && (st_addr =/= 0.U)) ||
     ((aluop === EXE_LH_OP || aluop === EXE_LHU_OP) && st_addr(0) =/= 0.U)
   val store_ex = (aluop === EXE_SW_OP && (st_addr =/= 0.U)) ||
     (aluop === EXE_SH_OP && (st_addr(0) =/= 0.U))
   val mem_ex = load_ex || store_ex
 
-  ex := (overflow_ex | mem_ex | io.fromExecuteStage.ds_to_es_ex) & es_valid
-  badvaddr := Mux(
-    io.fromExecuteStage.fs_to_ds_ex,
-    io.fromExecuteStage.badvaddr,
-    mem_addr_temp,
-  )
+  val tlb_load_ex  = mem_re && (tlb_refill || tlb_invalid)
+  val tlb_store_ex = mem_we && (tlb_refill || tlb_invalid)
+  tlb_refill_ex := (mem_re || mem_we) && tlb_refill
+  val tlb_mod_ex = mem_we && tlb_modified
+  val tlb_ex     = tlb_load_ex || tlb_store_ex || tlb_mod_ex
+
+  ex := es_valid && (overflow_ex | mem_ex | io.fromExecuteStage.ds_to_es_ex | tlb_ex)
+
   excode := MuxCase(
     io.fromExecuteStage.excode,
     Seq(
@@ -483,8 +505,16 @@ class Execute extends Module {
       overflow_ex                     -> EX_OV,
       load_ex                         -> EX_ADEL,
       store_ex                        -> EX_ADES,
+      tlb_load_ex                     -> EX_TLBL,
+      tlb_store_ex                    -> EX_TLBS,
+      tlb_mod_ex                      -> EX_MOD,
     ),
   )
-  // debug
-  // printf(p"execute :pc 0x${Hexadecimal(pc)}\n")
+
+  badvaddr := Mux(
+    io.fromExecuteStage.excode === EX_ADEL || io.fromExecuteStage.excode === EX_TLBL,
+    io.fromExecuteStage.badvaddr,
+    mem_addr_temp,
+  )
+
 }

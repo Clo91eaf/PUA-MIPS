@@ -1,20 +1,28 @@
 package cpu.defines
 
 import chisel3._
+import chisel3.util._
 import Const._
 
 // pre fetch stage
 class PreFetchStage_FetchStage extends Bundle {
-  val valid   = Output(Bool())
-  val inst_ok = Output(Bool())
-  val inst    = Output(BUS)
-  val pc      = Output(BUS)
+  val valid      = Output(Bool())
+  val inst_ok    = Output(Bool())
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
+  val tlb_refill = Output(Bool())
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val excode     = Output(UInt(5.W))
 }
 
 class PreFetchStage_InstMemory extends Bundle {
   val req     = Output(Bool())
-  val addr    = Output(BUS)
   val waiting = Output(Bool())
+}
+
+class PreFetchStage_InstMMU extends Bundle {
+  val vaddr = Output(UInt(32.W))
 }
 
 // fetch stage
@@ -25,11 +33,13 @@ class FetchStage_PreFetchStage extends Bundle {
 }
 
 class FetchStage_DecoderStage extends Bundle {
-  val valid    = Output(Bool())
-  val pc       = Output(BUS)
-  val inst     = Output(BUS)
-  val ex       = Output(Bool())
-  val badvaddr = Output(UInt(32.W))
+  val valid      = Output(Bool())
+  val tlb_refill = Output(Bool())
+  val excode     = Output(UInt(5.W))
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
 }
 
 class FetchStage_InstMemory extends Bundle {
@@ -38,11 +48,17 @@ class FetchStage_InstMemory extends Bundle {
 
 // decoderStage
 class DecoderStage_Decoder extends Bundle {
-  val pc       = Output(BUS)
-  val inst     = Output(BUS)
-  val ex       = Output(Bool())
-  val badvaddr = Output(UInt(32.W))
-  val valid    = Output(Bool())
+  // wire
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+  // reg
+  val valid      = Output(Bool())
+  val tlb_refill = Output(Bool())
+  val excode     = Output(UInt(5.W))
+  val ex         = Output(Bool())
+  val badvaddr   = Output(UInt(32.W))
+  val inst       = Output(BUS)
+  val pc         = Output(BUS)
 }
 
 // decoder
@@ -81,6 +97,8 @@ class Decoder_ExecuteStage extends Bundle {
   val excode                 = Output(UInt(5.W))
   val overflow_inst          = Output(Bool())
   val fs_to_ds_ex            = Output(Bool())
+  val tlb_refill             = Output(Bool())
+  val after_tlb              = Output(Bool())
 }
 
 class Decoder_RegFile extends Bundle {
@@ -100,6 +118,11 @@ class ExecuteStage_Decoder extends Bundle {
 }
 
 class ExecuteStage_Execute extends Bundle {
+  // wire
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+  // reg
+  val valid           = Output(Bool())
   val aluop           = Output(ALU_OP_BUS)
   val alusel          = Output(ALU_SEL_BUS)
   val inst            = Output(BUS)
@@ -110,7 +133,6 @@ class ExecuteStage_Execute extends Bundle {
   val reg_waddr       = Output(ADDR_BUS)
   val reg_wen         = Output(REG_WRITE_BUS)
   val pc              = Output(INST_ADDR_BUS)
-  val valid           = Output(Bool())
   val bd              = Output(Bool())
   val badvaddr        = Output(UInt(32.W))
   val cp0_addr        = Output(UInt(8.W))
@@ -118,6 +140,8 @@ class ExecuteStage_Execute extends Bundle {
   val overflow_inst   = Output(Bool())
   val fs_to_ds_ex     = Output(Bool())
   val ds_to_es_ex     = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
 }
 
 // execute
@@ -205,6 +229,10 @@ class Execute_MemoryStage extends Bundle {
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
   val res_from_mem    = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 class Execute_CP0 extends Bundle {
@@ -218,7 +246,6 @@ class Execute_DataMemory extends Bundle {
   val req         = Output(Bool())
   val wr          = Output(Bool())
   val size        = Output(UInt(2.W))
-  val addr        = Output(BUS)
   val wdata       = Output(BUS)
   val wstrb       = Output(UInt(4.W))
   val waiting     = Output(Bool())
@@ -254,6 +281,10 @@ class MemoryStage_Execute extends Bundle {
 }
 
 class MemoryStage_Memory extends Bundle {
+  // wire
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+  // reg
   val aluop           = Output(ALU_OP_BUS)
   val hi              = Output(BUS)
   val lo              = Output(BUS)
@@ -275,6 +306,10 @@ class MemoryStage_Memory extends Bundle {
   val data            = Output(BUS)
   val wait_mem        = Output(Bool())
   val res_from_mem    = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 // memory
@@ -290,8 +325,6 @@ class Memory_MemoryStage extends Bundle {
 
 class Memory_WriteBackStage extends Bundle {
   val pc              = Output(BUS)
-  val LLbit_value     = Output(Bool())
-  val LLbit_wen       = Output(Bool())
   val reg_wdata       = Output(BUS)
   val reg_waddr       = Output(ADDR_BUS)
   val reg_wen         = Output(REG_WRITE_BUS)
@@ -308,6 +341,13 @@ class Memory_WriteBackStage extends Bundle {
   val cp0_addr        = Output(UInt(8.W))
   val excode          = Output(UInt(5.W))
   val ex              = Output(Bool())
+  val inst_is_tlbp    = Output(Bool())
+  val inst_is_tlbr    = Output(Bool())
+  val inst_is_tlbwi   = Output(Bool())
+  val tlb_refill      = Output(Bool())
+  val after_tlb       = Output(Bool())
+  val s1_found        = Output(Bool())
+  val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 class Memory_DataMemory extends Bundle {
@@ -328,8 +368,6 @@ class Memory_Execute extends Bundle {
   val hi          = Output(BUS)
   val lo          = Output(BUS)
   val allowin     = Output(Bool())
-  val eret        = Output(Bool())
-  val ex          = Output(Bool())
   val inst_unable = Output(Bool())
 }
 
@@ -345,15 +383,6 @@ class Memory_Control extends Bundle {
 }
 
 // writeBackStage
-class WriteBackStage_InstMemory extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
-
-class WriteBackStage_DataMemory extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
 
 class WriteBackStage_Mov extends Bundle {
   val cp0_wen   = Output(Bool())
@@ -362,36 +391,17 @@ class WriteBackStage_Mov extends Bundle {
   val cp0_rdata = Output(BUS)
 }
 
-class WriteBackStage_DecoderStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
-
 class WriteBackStage_Decoder extends Bundle {
   val inst_is_mfc0 = Output(Bool())
   val reg_waddr    = Output(ADDR_BUS)
-  val eret         = Output(Bool())
-  val ex           = Output(Bool())
   val cp0_cause    = Output(UInt(32.W))
   val cp0_status   = Output(UInt(32.W))
-}
-
-class WriteBackStage_LLbitReg extends Bundle {
-  val LLbit_value = Output(Bool())
-  val LLbit_wen   = Output(Bool())
-}
-
-class WriteBackStage_ExecuteStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
 }
 
 class WriteBackStage_Execute extends Bundle {
   val whilo = Output(Bool())
   val hi    = Output(BUS)
   val lo    = Output(BUS)
-  val eret  = Output(Bool())
-  val ex    = Output(Bool())
 }
 
 class WriteBackStage_HILO extends Bundle {
@@ -400,18 +410,8 @@ class WriteBackStage_HILO extends Bundle {
   val lo    = Output(BUS)
 }
 
-class WriteBackStage_MemoryStage extends Bundle {
-  val ex   = Output(Bool())
-  val eret = Output(Bool())
-}
-
-
 class WriteBackStage_Memory extends Bundle {
-  val LLbit_value = Output(Bool())
-  val LLbit_wen   = Output(Bool())
-  val allowin     = Output(Bool())
-  val eret        = Output(Bool())
-  val ex          = Output(Bool())
+  val allowin = Output(Bool())
 }
 
 class WriteBackStage_RegFile extends Bundle {
@@ -431,18 +431,43 @@ class WriteBackStage_CP0 extends Bundle {
   val cp0_addr    = Output(UInt(8.W))
   val mtc0_we     = Output(Bool())
   val cp0_wdata   = Output(UInt(32.W))
+  val tlbp        = Output(Bool())
+  val tlbr        = Output(Bool())
+  val tlbwi       = Output(Bool())
+  val s1_found    = Output(Bool())
+  val s1_index    = Output(UInt(4.W))
+  val r_vpn2      = Output(UInt(19.W))
+  val r_asid      = Output(UInt(8.W))
+  val r_g         = Output(Bool())
+  val r_pfn0      = Output(UInt(20.W))
+  val r_c0        = Output(UInt(3.W))
+  val r_d0        = Output(Bool())
+  val r_v0        = Output(Bool())
+  val r_pfn1      = Output(UInt(20.W))
+  val r_c1        = Output(UInt(3.W))
+  val r_d1        = Output(Bool())
+  val r_v1        = Output(Bool())
 }
 
-class WriteBackStage_PreFetchStage extends Bundle {
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
-  val cp0_epc = Output(UInt(32.W))
+class WriteBackStage_MMU extends Bundle {
+  val cp0_entryhi = Output(UInt(32.W))
 }
 
-class WriteBackStage_FetchStage extends Bundle {
-  val eret    = Output(Bool())
-  val ex      = Output(Bool())
-  val cp0_epc = Output(UInt(32.W))
+class WriteBackStage_TLB extends Bundle {
+  val we      = Output(Bool())
+  val w_index = Output(UInt(log2Ceil(TLB_NUM).W))
+  val w_vpn2  = Output(UInt(19.W))
+  val w_asid  = Output(UInt(8.W))
+  val w_g     = Output(Bool())
+  val w_pfn0  = Output(UInt(20.W))
+  val w_c0    = Output(UInt(3.W))
+  val w_d0    = Output(Bool())
+  val w_v0    = Output(Bool())
+  val w_pfn1  = Output(UInt(20.W))
+  val w_c1    = Output(UInt(3.W))
+  val w_d1    = Output(Bool())
+  val w_v1    = Output(Bool())
+  val r_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
 // instMemory
@@ -482,11 +507,6 @@ class HILO_Execute extends Bundle {
   val lo = Output(BUS)
 }
 
-// LLbitReg
-class LLbitReg_Memory extends Bundle {
-  val LLbit = Output(Bool())
-}
-
 // CP0
 class CP0_WriteBackStage extends Bundle {
   val cp0_rdata    = Output(UInt(32.W))
@@ -496,6 +516,10 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_badvaddr = Output(UInt(32.W))
   val cp0_count    = Output(UInt(32.W))
   val cp0_compare  = Output(UInt(32.W))
+  val cp0_entryhi  = Output(UInt(32.W))
+  val cp0_entrylo0 = Output(UInt(32.W))
+  val cp0_entrylo1 = Output(UInt(32.W))
+  val cp0_index    = Output(UInt(32.W))
 }
 
 class AXI extends Bundle {
@@ -551,4 +575,124 @@ class DEBUG extends Bundle {
   val wen   = Output(WEN_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
+}
+
+//TLB MMU
+class TLBCommon extends Bundle {
+  val s0_index = Output(UInt(log2Ceil(TLB_NUM).W))
+}
+
+class TLB_WriteBackStage extends Bundle {
+  val r_vpn2 = Output(UInt(19.W))
+  val r_asid = Output(UInt(8.W))
+  val r_g    = Output(Bool())
+  val r_pfn0 = Output(UInt(20.W))
+  val r_c0   = Output(UInt(3.W))
+  val r_d0   = Output(Bool())
+  val r_v0   = Output(Bool())
+  val r_pfn1 = Output(UInt(20.W))
+  val r_c1   = Output(UInt(3.W))
+  val r_d1   = Output(Bool())
+  val r_v1   = Output(Bool())
+}
+
+class TLB_MMU extends Bundle {
+  val tlb_found = Output(Bool())
+  val tlb_pfn   = Output(UInt(20.W))
+  val tlb_c     = Output(UInt(3.W))
+  val tlb_d     = Output(Bool())
+  val tlb_v     = Output(Bool())
+}
+
+class TLB_Execute extends Bundle {
+  val s1_found = Output(Bool())
+  val s1_index = Output(UInt(log2Ceil(TLB_NUM).W))
+}
+
+// MMU
+class MMU_TLB extends Bundle {
+  val tlb_vpn2     = Output(UInt(19.W))
+  val tlb_odd_page = Output(Bool())
+  val tlb_asid     = Output(UInt(8.W))
+}
+
+class MMU_Common extends Bundle {
+  val tlb_refill   = Output(Bool())
+  val tlb_invalid  = Output(Bool())
+  val tlb_modified = Output(Bool())
+}
+
+class Execute_DataMMU extends Bundle {
+  val vaddr        = Output(UInt(32.W))
+  val inst_is_tlbp = Output(Bool())
+}
+
+class MMU_Sram extends Bundle {
+  val paddr = Output(UInt(32.W))
+}
+
+//Ctrl
+class Ctrl_PreFetchStage extends Bundle {
+  val after_ex = Output(Bool())
+  val do_flush = Output(Bool())
+  val flush_pc = Output(UInt(32.W))
+  val block    = Output(Bool())
+}
+
+class Ctrl_FetchStage extends Bundle {
+  val after_ex = Output(Bool())
+  val do_flush = Output(Bool())
+}
+
+class Ctrl_InstMemory extends Bundle {
+  val do_flush = Output(Bool())
+}
+
+class Ctrl_DataMemory extends Bundle {
+  val do_flush = Output(Bool())
+}
+
+class Ctrl_DecoderStage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class Ctrl_ExecuteStage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class Ctrl_MemoryStage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class InstMemory_Ctrl extends Bundle {
+  val inst_sram_discard = Output(UInt(2.W))
+}
+
+class DataMemory_Ctrl extends Bundle {
+  val data_sram_discard = Output(UInt(2.W))
+}
+
+class FetchStage_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Decoder_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Execute_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class Memory_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
+
+class WriteBackStage_Ctrl extends Bundle {
+  val ex       = Output(Bool())
+  val do_flush = Output(Bool())
+  val flush_pc = Output(BUS)
 }

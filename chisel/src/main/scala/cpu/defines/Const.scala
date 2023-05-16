@@ -119,6 +119,10 @@ trait Constants {
   val EXE_BREAK_OP   = 69.U(ALU_OP_LEN.W)
   val EXE_ERET_OP    = 70.U(ALU_OP_LEN.W)
   val EXE_WAIT_OP    = 71.U(ALU_OP_LEN.W)
+  // tlb
+  val EXE_TLBP_OP   = 72.U(ALU_OP_LEN.W)
+  val EXE_TLBR_OP  = 73.U(ALU_OP_LEN.W)
+  val EXE_TLBWI_OP = 74.U(ALU_OP_LEN.W)
 
   // AluSel
   val ALU_SEL_BUS      = UInt(3.W)
@@ -195,18 +199,31 @@ trait Constants {
   val CP0_EPC_ADDR    = "b01110000".U(8.W)
   val CP0_CONFIG_ADDR = "b10000000".U(8.W)
 
+  val CP0_ENTRYHI_ADDR  = "b01010000".U(8.W)
+  val CP0_ENTRYLO0_ADDR = "b00010000".U(8.W)
+  val CP0_ENTRYLO1_ADDR = "b00011000".U(8.W)
+  val CP0_INDEX_ADDR    = "b00000000".U(8.W)
+
   val CP0_ADDR_BUS      = UInt(8.W)
   val CP0_ADDR_BUS_INIT = 0.U(8.W)
 
   // 例外类型
-  val EX_INT  = "b00000".U(5.W)
-  val EX_ADEL = "b00100".U(5.W)
-  val EX_ADES = "b00101".U(5.W)
-  val EX_SYS  = "b01000".U(5.W)
-  val EX_BP   = "b01001".U(5.W)
-  val EX_RI   = "b01010".U(5.W)
-  val EX_OV   = "b01100".U(5.W)
-  val EX_NO   = "b11111".U(5.W)
+  val EX_INT  = "h00".U(5.W) //  interrupt.
+  val EX_MOD  = "h01".U(5.W) //  modification of a TLB entry.
+  val EX_TLBL = "h02".U(5.W) //  TLB miss on a load or instruction fetch.
+  val EX_TLBS = "h03".U(5.W) //  TLB miss on a store.
+  val EX_ADEL = "h04".U(5.W) //  address error on a load or instruction fetch.
+  val EX_ADES = "h05".U(5.W) //  address error on a store.
+  val EX_SYS  = "h08".U(5.W) //  syscall instruction.
+  val EX_BP   = "h09".U(5.W) //  breakpoint instruction.
+  val EX_RI   = "h0a".U(5.W) //  reserved instruction.
+  val EX_OV   = "h0c".U(5.W) //  arithmetic overflow.
+  val EX_NO   = "h1f".U(5.W) //  unknown cause.
+
+  val EX_ENTRY            = "h_bfc00380".U(32.W)
+  val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
+  // TLB MMU
+  val TLB_NUM = 16
 }
 trait OptionConst {
 
@@ -219,10 +236,10 @@ trait OptionConst {
   // 立即数类型
   private val IL = 3
   val IMM_N      = 0.U(IL.W)
-  val IMM_LSE = 1.U(IL.W) // 立即数取inst(15,0)作为低16位，符号扩展，适用于ADDI，ADDIU，SLTI，和SLTIU
-  val IMM_LZE = 2.U(IL.W) // 立即数取inst(15,0)作为低16位，零扩展，适用于位操作指令
-  val IMM_HZE = 3.U(IL.W) // 立即数取inst(15,0)作为高16位，零扩展，适用于LUI （是否有必要？）
-  val IMM_SHT = 4.U(IL.W) // 立即数取inst(10,6)作为低5位，不关心扩展，适用于SLL，SRL，SRA
+  val IMM_LSE    = 1.U(IL.W) // 立即数取inst(15,0)作为低16位，符号扩展，适用于ADDI，ADDIU，SLTI，和SLTIU
+  val IMM_LZE    = 2.U(IL.W) // 立即数取inst(15,0)作为低16位，零扩展，适用于位操作指令
+  val IMM_HZE    = 3.U(IL.W) // 立即数取inst(15,0)作为高16位，零扩展，适用于LUI （是否有必要？）
+  val IMM_SHT    = 4.U(IL.W) // 立即数取inst(10,6)作为低5位，不关心扩展，适用于SLL，SRL，SRA
 }
 
 object Const extends Constants with Instructions with OptionConst
