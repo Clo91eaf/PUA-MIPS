@@ -31,7 +31,6 @@ class MemoryStage extends Module {
   val mem_addr        = RegInit(BUS_INIT)
   val reg2            = RegInit(BUS_INIT)
   val hilo            = RegInit(DOUBLE_BUS_INIT)
-  val cnt             = RegInit(CNT_BUS_INIT)
   val is_in_delayslot = RegInit(NOT_IN_DELAY_SLOT)
   val valid           = RegInit(false.B)
   val ex              = RegInit(false.B)
@@ -77,7 +76,6 @@ class MemoryStage extends Module {
 
   // output-execute
   io.execute.hilo := hilo
-  io.execute.cnt  := cnt
 
   /*--------------------io finish--------------------*/
   when(io.fromCtrl.do_flush) {
@@ -94,7 +92,6 @@ class MemoryStage extends Module {
     lo              := io.fromExecute.lo
     whilo           := io.fromExecute.whilo
     hilo            := ZERO_WORD
-    cnt             := 0.U
     aluop           := io.fromExecute.aluop
     reg2            := io.fromExecute.reg2
     is_in_delayslot := io.fromExecute.is_in_delayslot

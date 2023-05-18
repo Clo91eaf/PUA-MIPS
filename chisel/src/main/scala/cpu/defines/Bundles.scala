@@ -207,7 +207,6 @@ class Execute_ExecuteStage extends Bundle {
 
 class Execute_MemoryStage extends Bundle {
   val aluop           = Output(ALU_OP_BUS)
-  val cnt             = Output(CNT_BUS)
   val hi              = Output(BUS)
   val hilo            = Output(DOUBLE_BUS)
   val lo              = Output(BUS)
@@ -276,7 +275,6 @@ class DataMemory_Memory extends Bundle {
 
 // memoryStage
 class MemoryStage_Execute extends Bundle {
-  val cnt  = Output(CNT_BUS)
   val hilo = Output(DOUBLE_BUS)
 }
 
