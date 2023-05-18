@@ -69,6 +69,7 @@ class Execute extends Module {
 
   // input-memory stage
   val hilo_temp_i = io.fromMemoryStage.hilo
+  val cnt_i       = io.fromMemoryStage.cnt
 
   // input-execute stage
   val link_addr       = io.fromExecuteStage.link_addr
@@ -82,7 +83,6 @@ class Execute extends Module {
   val whilo          = Wire(Bool())
   val hilo_temp_o    = Wire(DOUBLE_BUS)
   val cnt            = Wire(CNT_BUS)
-  val cnt_r          = RegNext(cnt)
   val mem_addr_temp  = Wire(BUS)
   val stallreq       = Wire(Bool())
   val allowin        = Wire(Bool())
@@ -254,6 +254,7 @@ class Execute extends Module {
   io.memoryStage.after_tlb       := after_tlb
   io.memoryStage.s1_found        := s1_found
   io.memoryStage.s1_index        := s1_index
+  io.memoryStage.cnt             := cnt
 
   // output-execute stage
   io.executeStage.allowin := allowin
@@ -390,12 +391,12 @@ class Execute extends Module {
     stallreq_for_madd_msub := NOT_STOP
     switch(aluop) {
       is(EXE_MADD_OP, EXE_MADDU_OP) {
-        when(cnt_r === 0.U) {
+        when(cnt_i === 0.U) {
           hilo_temp_o            := mulres
           cnt                    := 1.U
           stallreq_for_madd_msub := STOP
           hilo_temp1             := ZERO_WORD
-        }.elsewhen(cnt_r === 1.U) {
+        }.elsewhen(cnt_i === 1.U) {
           hilo_temp_o            := ZERO_WORD
           cnt                    := 2.U
           hilo_temp1             := hilo_temp_i + Cat(HI, LO)
@@ -403,11 +404,11 @@ class Execute extends Module {
         }
       }
       is(EXE_MSUB_OP, EXE_MSUBU_OP) {
-        when(cnt_r === 0.U) {
+        when(cnt_i === 0.U) {
           hilo_temp_o            := ~mulres + 1.U
           cnt                    := 1.U
           stallreq_for_madd_msub := STOP
-        }.elsewhen(cnt_r === 1.U) {
+        }.elsewhen(cnt_i === 1.U) {
           hilo_temp_o            := ZERO_WORD
           cnt                    := 2.U
           hilo_temp1             := hilo_temp_i + Cat(HI, LO)

@@ -236,6 +236,7 @@ class Execute_MemoryStage extends Bundle {
   val after_tlb       = Output(Bool())
   val s1_found        = Output(Bool())
   val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
+  val cnt             = Output(CNT_BUS)
 }
 
 class Execute_CP0 extends Bundle {
@@ -279,6 +280,7 @@ class DataMemory_Memory extends Bundle {
 
 // memoryStage
 class MemoryStage_Execute extends Bundle {
+  val cnt  = Output(CNT_BUS)
   val hilo = Output(DOUBLE_BUS)
 }
 
