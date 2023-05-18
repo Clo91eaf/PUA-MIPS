@@ -26,7 +26,6 @@ class Decoder extends Module {
   val aluop_i           = Wire(ALU_OP_BUS)
   val reg1_data         = Wire(BUS)
   val reg2_data         = Wire(BUS)
-  val is_in_delayslot_i = Wire(Bool())
 
   // input-decoder stage
   val pc            = io.fromDecoderStage.pc
@@ -43,7 +42,7 @@ class Decoder extends Module {
   reg2_data := io.fromRegfile.reg2_data
 
   // input-execute stage
-  is_in_delayslot_i := io.fromExecuteStage.is_in_delayslot
+  val is_in_delayslot = RegNext(io.fromExecuteStage.is_in_delayslot)
 
   // input-execute
   aluop_i := io.fromExecute.aluop
@@ -67,7 +66,6 @@ class Decoder extends Module {
   val branch_flag            = Wire(Bool())
   val branch_target_address  = Wire(BUS)
   val link_addr              = Wire(BUS)
-  val is_in_delayslot        = Wire(Bool())
   val allowin                = Wire(Bool())
   val ds_to_es_valid         = Wire(Bool())
   val ex                     = Wire(Bool())
@@ -418,26 +416,7 @@ class Decoder extends Module {
     ),
   )
 
-  next_inst_in_delayslot := MuxLookup(
-    aluop,
-    NOT_IN_DELAY_SLOT,
-    Seq(
-      // @formatter:off
-      EXE_JR_OP     -> IN_DELAY_SLOT,
-      EXE_JALR_OP   -> IN_DELAY_SLOT,
-      EXE_J_OP      -> IN_DELAY_SLOT,
-      EXE_JAL_OP    -> IN_DELAY_SLOT,
-      EXE_BEQ_OP    -> (reg1 === reg2),
-      EXE_BNE_OP    -> (reg1 =/= reg2),
-      EXE_BGTZ_OP   -> (!reg1(31) && (reg1 =/= 0.U)),
-      EXE_BGEZ_OP   -> (!reg1(31)),
-      EXE_BGEZAL_OP -> (!reg1(31)),
-      EXE_BLTZ_OP   -> reg1(31),
-      EXE_BLTZAL_OP -> reg1(31),
-      EXE_BLEZ_OP   -> (!(!reg1(31) && (reg1 =/= 0.U)))
-      // @formatter:on
-    ),
-  )
+  next_inst_in_delayslot := branch_flag_temp
 
   when(do_flush) {
     bd := false.B
@@ -489,12 +468,6 @@ class Decoder extends Module {
     }
   }
 
-  when(reset.asBool === RST_ENABLE) {
-    is_in_delayslot := NOT_IN_DELAY_SLOT
-  }.otherwise {
-    is_in_delayslot := is_in_delayslot_i
-  }
-
   val interrupt = ((cp0_cause(15, 8) & cp0_status(15, 8)) =/= 0.U) &&
     (cp0_status(1, 0) === 1.U)
 
@@ -531,5 +504,4 @@ class Decoder extends Module {
   )
 
   overflow_inst := (aluop === EXE_ADD_OP) || (aluop === EXE_SUB_OP)
-
 }
