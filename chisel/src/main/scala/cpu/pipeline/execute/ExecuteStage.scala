@@ -36,6 +36,8 @@ class ExecuteStage extends Module {
   val fs_to_ds_ex        = RegInit(false.B)
   val tlb_refill         = RegInit(false.B)
   val after_tlb          = RegInit(false.B)
+  val mem_re             = RegInit(false.B)
+  val mem_we             = RegInit(false.B)
 
   // output-execute
   // wire
@@ -62,6 +64,8 @@ class ExecuteStage extends Module {
   io.execute.ds_to_es_ex     := ex
   io.execute.tlb_refill      := tlb_refill
   io.execute.after_tlb       := after_tlb
+  io.execute.mem_re          := mem_re
+  io.execute.mem_we          := mem_we
 
   // output-decoder
   io.decoder.is_in_delayslot := is_in_delayslot
@@ -93,5 +97,7 @@ class ExecuteStage extends Module {
     fs_to_ds_ex        := io.fromDecoder.fs_to_ds_ex
     tlb_refill         := io.fromDecoder.tlb_refill
     after_tlb          := io.fromDecoder.after_tlb
+    mem_re             := io.fromDecoder.mem_re
+    mem_we             := io.fromDecoder.mem_we
   }
 }

@@ -99,6 +99,8 @@ class Decoder_ExecuteStage extends Bundle {
   val fs_to_ds_ex            = Output(Bool())
   val tlb_refill             = Output(Bool())
   val after_tlb              = Output(Bool())
+  val mem_re                 = Output(Bool())
+  val mem_we                 = Output(Bool())
 }
 
 class Decoder_RegFile extends Bundle {
@@ -142,6 +144,8 @@ class ExecuteStage_Execute extends Bundle {
   val ds_to_es_ex     = Output(Bool())
   val tlb_refill      = Output(Bool())
   val after_tlb       = Output(Bool())
+  val mem_re          = Output(Bool())
+  val mem_we          = Output(Bool())
 }
 
 // execute

@@ -97,8 +97,8 @@ class Execute extends Module {
 
   // data sram
   val addr_ok_r         = RegInit(false.B)
-  val mem_we            = WireInit(WRITE_DISABLE)
-  val mem_re            = WireInit(WRITE_DISABLE)
+  val mem_we            = io.fromExecuteStage.mem_we
+  val mem_re            = io.fromExecuteStage.mem_re
   val addrLowBit2       = mem_addr_temp(1, 0)
   val data_sram_req     = es_valid && !addr_ok_r && (mem_we || mem_re) && !no_store
   val data_sram_wr      = mem_we
@@ -112,20 +112,6 @@ class Execute extends Module {
   val data_sram_data_ok = io.fromDataMemory.data_ok && io.fromMemory.inst_unable
   val data_ok           = Wire(Bool())
   val data              = Wire(BUS)
-
-  // mem_we
-  switch(aluop) {
-    is(EXE_SB_OP, EXE_SH_OP, EXE_SW_OP, EXE_SWL_OP, EXE_SWR_OP, EXE_SC_OP) {
-      mem_we := WRITE_ENABLE
-    }
-  }
-
-  // mem_re
-  switch(aluop) {
-    is(EXE_LB_OP, EXE_LBU_OP, EXE_LH_OP, EXE_LHU_OP, EXE_LW_OP, EXE_LL_OP, EXE_LWL_OP, EXE_LWR_OP) {
-      mem_re := CHIP_ENABLE
-    }
-  }
 
   // size
   switch(aluop) {

@@ -79,6 +79,8 @@ class Decoder extends Module {
     ((aluop === EXE_JR_OP) || (aluop === EXE_JALR_OP) || (aluop === EXE_J_OP) || (aluop === EXE_JAL_OP) || (aluop === EXE_BEQ_OP) || (aluop === EXE_BNE_OP) || (aluop === EXE_BGTZ_OP) || (aluop === EXE_BGEZ_OP) || (aluop === EXE_BGEZAL_OP) || (aluop === EXE_BLTZ_OP) || (aluop === EXE_BLTZAL_OP) || (aluop === EXE_BLEZ_OP)) && ds_valid
   val cp0_addr  = Cat(inst(15, 11), inst(2, 0))
   val after_tlb = RegInit(false.B)
+  val mem_re    = Wire(Bool())
+  val mem_we    = Wire(Bool())
 
   // output-preFetchStage
   io.preFetchStage.br_leaving_ds         := branch_flag && ready_go && io.fromExecute.allowin
@@ -122,6 +124,8 @@ class Decoder extends Module {
   io.executeStage.link_addr              := link_addr
   io.executeStage.is_in_delayslot        := is_in_delayslot
   io.executeStage.valid                  := ds_to_es_valid
+  io.executeStage.mem_re                 := mem_re
+  io.executeStage.mem_we                 := mem_we
 
   // output-ctrl
   io.ctrl.ex := ex
@@ -305,7 +309,7 @@ class Decoder extends Module {
       SWL       -> List( INST_VALID  , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SWL_OP , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
       SWR       -> List( INST_VALID  , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SWR_OP , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
       LL        -> List( INST_VALID  , READ_ENABLE   , READ_DISABLE    , EXE_RES_LOAD_STORE, EXE_LL_OP  , REG_WRITE_ENABLE   , WRA_T2 , IMM_N  ),
-      SC        -> List( INST_VALID  , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SC_OP  , REG_WRITE_ENABLE   , WRA_T2 , IMM_N  ),
+      SC        -> List( INST_VALID  , READ_ENABLE   , READ_ENABLE     , EXE_RES_LOAD_STORE, EXE_SC_OP  , REG_WRITE_DISABLE  , WRA_T2 , IMM_N  ),
 
 
       SYNC      -> List( INST_VALID  , READ_DISABLE  , READ_ENABLE     , EXE_RES_NOP       , EXE_NOP_OP , REG_WRITE_DISABLE  , WRA_X  , IMM_N  ),
@@ -324,6 +328,9 @@ class Decoder extends Module {
   inst_valid := csinst_valid
   reg1_ren   := op1_type
   reg2_ren   := op2_type
+
+  mem_re := csInstType === EXE_RES_LOAD_STORE && csWReg === REG_WRITE_ENABLE
+  mem_we := csInstType === EXE_RES_LOAD_STORE && csWReg === REG_WRITE_DISABLE
 
   imm := MuxLookup(
     immType,
