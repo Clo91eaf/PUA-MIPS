@@ -1,4 +1,4 @@
-TEST_TOP=../../PUA-MIPS-TEST/
+TEST_TOP=../../PUA-MIPS-TEST
 CPU_DIR=./src/main/scala/cpu
 PUA_MIPS=./generated/PuaMips.v
 
