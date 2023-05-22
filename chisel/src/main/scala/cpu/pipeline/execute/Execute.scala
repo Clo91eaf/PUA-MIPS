@@ -260,14 +260,12 @@ class Execute extends Module {
   io.executeStage.allowin := allowin
 
   // output-data memory
-  io.dataMemory.aluop       := aluop
-  io.dataMemory.addrLowBit2 := addrLowBit2
-  io.dataMemory.req         := data_sram_req
-  io.dataMemory.wr          := data_sram_wr
-  io.dataMemory.size        := data_sram_size
-  io.dataMemory.wdata       := data_sram_wdata
-  io.dataMemory.wstrb       := data_sram_wstrb
-  io.dataMemory.waiting     := es_valid && addr_ok && !data_ok
+  io.dataMemory.req     := data_sram_req
+  io.dataMemory.wr      := data_sram_wr
+  io.dataMemory.size    := data_sram_size
+  io.dataMemory.wdata   := data_sram_wdata
+  io.dataMemory.wstrb   := data_sram_wstrb
+  io.dataMemory.waiting := es_valid && addr_ok && !data_ok
 
   io.dataMMU.vaddr        := data_sram_addr
   io.dataMMU.inst_is_tlbp := aluop === EXE_TLBP_OP
