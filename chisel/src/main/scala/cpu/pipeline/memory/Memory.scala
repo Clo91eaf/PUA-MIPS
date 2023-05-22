@@ -24,7 +24,6 @@ class Memory extends Module {
   val aluop      = io.fromMemoryStage.aluop
   val pc         = io.fromMemoryStage.pc
   val reg2_i     = io.fromMemoryStage.reg2
-  val mem_data_i = io.fromDataMemory.rdata
   val ms_valid   = io.fromMemoryStage.valid
   val tlb_refill = io.fromMemoryStage.tlb_refill
   val s1_index   = io.fromMemoryStage.s1_index
@@ -78,7 +77,7 @@ class Memory extends Module {
 
   when(io.fromMemoryStage.do_flush) {
     ms_data_buff_valid := false.B
-    ms_data_buff       := BUS_INIT
+    ms_data_buff       := 0.U
   }.elsewhen(
     !ms_data_buff_valid && ms_valid && io.fromDataMemory.data_ok && !io.fromWriteBackStage.allowin,
   ) {
@@ -86,7 +85,7 @@ class Memory extends Module {
     ms_data_buff       := io.fromDataMemory.rdata
   }.elsewhen(io.fromWriteBackStage.allowin) {
     ms_data_buff_valid := false.B
-    ms_data_buff       := BUS_INIT
+    ms_data_buff       := 0.U
   }
 
   val data_ok =
@@ -212,60 +211,60 @@ class Memory extends Module {
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Util.signedExtend(mem_data_i(7, 0)),
-            "b01".U -> Util.signedExtend(mem_data_i(15, 8)),
-            "b10".U -> Util.signedExtend(mem_data_i(23, 16)),
-            "b11".U -> Util.signedExtend(mem_data_i(31, 24)),
+            "b00".U -> Util.signedExtend(data(7, 0)),
+            "b01".U -> Util.signedExtend(data(15, 8)),
+            "b10".U -> Util.signedExtend(data(23, 16)),
+            "b11".U -> Util.signedExtend(data(31, 24)),
           ),
         ),
         EXE_LBU_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Util.zeroExtend(mem_data_i(7, 0)),
-            "b01".U -> Util.zeroExtend(mem_data_i(15, 8)),
-            "b10".U -> Util.zeroExtend(mem_data_i(23, 16)),
-            "b11".U -> Util.zeroExtend(mem_data_i(31, 24)),
+            "b00".U -> Util.zeroExtend(data(7, 0)),
+            "b01".U -> Util.zeroExtend(data(15, 8)),
+            "b10".U -> Util.zeroExtend(data(23, 16)),
+            "b11".U -> Util.zeroExtend(data(31, 24)),
           ),
         ),
         EXE_LH_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Util.signedExtend(mem_data_i(15, 0)),
-            "b10".U -> Util.signedExtend(mem_data_i(31, 16)),
+            "b00".U -> Util.signedExtend(data(15, 0)),
+            "b10".U -> Util.signedExtend(data(31, 16)),
           ),
         ),
         EXE_LHU_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Util.zeroExtend(mem_data_i(15, 0)),
-            "b10".U -> Util.zeroExtend(mem_data_i(31, 16)),
+            "b00".U -> Util.zeroExtend(data(15, 0)),
+            "b10".U -> Util.zeroExtend(data(31, 16)),
           ),
         ),
-        EXE_LW_OP -> mem_data_i,
+        EXE_LW_OP -> data,
         EXE_LWL_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> Cat(mem_data_i(7, 0), reg2_i(23, 0)),
-            "b01".U -> Cat(mem_data_i(15, 0), reg2_i(15, 0)),
-            "b10".U -> Cat(mem_data_i(23, 0), reg2_i(7, 0)),
-            "b11".U -> mem_data_i,
+            "b00".U -> Cat(data(7, 0), reg2_i(23, 0)),
+            "b01".U -> Cat(data(15, 0), reg2_i(15, 0)),
+            "b10".U -> Cat(data(23, 0), reg2_i(7, 0)),
+            "b11".U -> data,
           ),
         ),
         EXE_LWR_OP -> MuxLookup(
           addrLowBit2,
           ZERO_WORD,
           Seq(
-            "b00".U -> mem_data_i,
-            "b01".U -> Cat(reg2_i(31, 24), mem_data_i(31, 8)),
-            "b10".U -> Cat(reg2_i(31, 16), mem_data_i(31, 16)),
-            "b11".U -> Cat(reg2_i(31, 8), mem_data_i(31, 24)),
+            "b00".U -> data,
+            "b01".U -> Cat(reg2_i(31, 24), data(31, 8)),
+            "b10".U -> Cat(reg2_i(31, 16), data(31, 16)),
+            "b11".U -> Cat(reg2_i(31, 8), data(31, 24)),
           ),
         ),
-        EXE_LL_OP -> mem_data_i,
+        EXE_LL_OP -> data,
       ),
     ) // reg_wdata
   }
