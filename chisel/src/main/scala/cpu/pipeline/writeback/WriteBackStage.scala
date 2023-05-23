@@ -121,7 +121,7 @@ class WriteBackStage extends Module {
   io.memory.allowin := allowin
 
   // output-debug
-  io.debug.pc    := ws_pc
+  io.debug.pc    := ws_pc & Fill(32, ws_valid)
   io.debug.waddr := io.regFile.reg_waddr
   io.debug.wen   := io.regFile.reg_wen
   io.debug.wdata := io.regFile.reg_wdata
