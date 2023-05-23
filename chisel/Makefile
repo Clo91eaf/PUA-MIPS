@@ -16,6 +16,8 @@ func:
 
 perf:
 	$(MAKE) -C $(TEST_TOP)/verilator/ perf
+
+score:
 ifeq ($(strip $(MESSAGE)),)
 	@echo "message is empty"
 else
