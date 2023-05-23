@@ -245,14 +245,12 @@ class Execute_CP0 extends Bundle {
 
 // dataMemory
 class Execute_DataMemory extends Bundle {
-  val aluop       = Output(ALU_OP_BUS)
-  val addrLowBit2 = Output(UInt(2.W))
-  val req         = Output(Bool())
-  val wr          = Output(Bool())
-  val size        = Output(UInt(2.W))
-  val wdata       = Output(BUS)
-  val wstrb       = Output(UInt(4.W))
-  val waiting     = Output(Bool())
+  val req     = Output(Bool())
+  val wr      = Output(Bool())
+  val size    = Output(UInt(2.W))
+  val wdata   = Output(BUS)
+  val wstrb   = Output(UInt(4.W))
+  val waiting = Output(Bool())
 }
 
 class DataMemory_SramAXITrans extends Bundle {

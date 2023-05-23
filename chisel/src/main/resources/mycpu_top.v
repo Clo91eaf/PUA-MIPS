@@ -1,5 +1,5 @@
 module mycpu_top (
-    input  [ 5:0]      int,
+    input  [ 5:0]      ext_int,
     input              aclk,
     input              aresetn,
     //axi interface
@@ -60,7 +60,7 @@ module mycpu_top (
 PuaMips puamips(
   .clock                (aclk             ),
   .reset                (~aresetn         ),
-  .io_ext_int           (int              ),
+  .io_ext_int           (ext_int          ),
   .io_axi_arid          (arid             ),
   .io_axi_araddr        (araddr           ),
   .io_axi_arlen         (arlen            ),
