@@ -23,12 +23,11 @@ ifeq ($(strip $(MESSAGE)),)
 else
 	@echo "\
 	|$(shell date +"%Y-%m-%d")\
-	|0\
 	|$(shell grep IPC $(OUTPUT) | grep -oP '\d+\.\d+')\
 	|$(shell grep scores $(OUTPUT)	| grep -oP '\d+\.\d+')\
 	|$(MESSAGE)\
 	|$(shell grep -oE '^[0-9]+\.[0-9]{3}' $(OUTPUT) | tr '\n' '|')\
-	" >> $(SCORES_FILE)
+	" | tee -a $(SCORES_FILE)
 endif
 
 perfdiff:
