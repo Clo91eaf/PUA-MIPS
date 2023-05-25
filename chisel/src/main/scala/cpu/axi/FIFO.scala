@@ -1,5 +1,8 @@
 package cpu.axi
 
+import chisel3._
+import chisel3.util._
+
 /** A simple FIFO buffer implemented using Chisel's built-in Queue module.
   *
   * @param dataWidth

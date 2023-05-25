@@ -253,18 +253,6 @@ class Execute_DataMemory extends Bundle {
   val waiting = Output(Bool())
 }
 
-class DataMemory_SramAXITrans extends Bundle {
-  val req     = Output(Bool())
-  val wr      = Output(Bool())
-  val size    = Output(UInt(2.W))
-  val addr    = Output(BUS)
-  val wstrb   = Output(UInt(4.W))
-  val wdata   = Output(BUS)
-  val addr_ok = Input(Bool())
-  val data_ok = Input(Bool())
-  val rdata   = Input(BUS)
-}
-
 class DataMemory_Execute extends Bundle {
   val addr_ok = Output(Bool())
   val rdata   = Output(BUS)
@@ -485,15 +473,15 @@ class InstMemory_FetchStage extends Bundle {
   val rdata   = Output(BUS)
 }
 
-class InstMemory_SramAXITrans extends Bundle {
+class Memory_SramAXITrans extends Bundle {
   val req     = Output(Bool())
   val wr      = Output(Bool())
   val size    = Output(UInt(2.W))
   val addr    = Output(BUS)
   val wstrb   = Output(UInt(4.W))
   val wdata   = Output(BUS)
-  val data_ok = Input(Bool())
   val addr_ok = Input(Bool())
+  val data_ok = Input(Bool())
   val rdata   = Input(BUS)
 }
 
@@ -524,63 +512,69 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_index    = Output(UInt(32.W))
 }
 
+// AXI read address channel
 class AXI_AR extends Bundle {
-  val id    = Output(UInt(4.W))
-  val addr  = Output(UInt(32.W))
-  val len   = Output(UInt(8.W))
-  val size  = Output(UInt(3.W))
-  val burst = Output(UInt(2.W))
-  val lock  = Output(UInt(2.W))
-  val cache = Output(UInt(4.W))
-  val prot  = Output(UInt(3.W))
-  val valid = Output(Bool())
-  val ready = Input(Bool())
+  val id    = Output(UInt(4.W))  // transaction ID
+  val addr  = Output(UInt(32.W)) // address
+  val len   = Output(UInt(8.W))  // burst length
+  val size  = Output(UInt(3.W))  // transfer size
+  val burst = Output(UInt(2.W))  // burst type
+  val lock  = Output(UInt(2.W))  // lock type
+  val cache = Output(UInt(4.W))  // cache type
+  val prot  = Output(UInt(3.W))  // protection type
+  val valid = Output(Bool())     // valid signal
+  val ready = Input(Bool())      // ready signal
 }
 
+// AXI read data channel
 class AXI_R extends Bundle {
-  val id    = Input(UInt(4.W))
-  val data  = Input(UInt(32.W))
-  val resp  = Input(UInt(2.W))
-  val last  = Input(Bool())
-  val valid = Input(Bool())
-  val ready = Output(Bool())
+  val id    = Input(UInt(4.W))  // transaction ID
+  val data  = Input(UInt(32.W)) // read data
+  val resp  = Input(UInt(2.W))  // response type
+  val last  = Input(Bool())     // last beat of burst
+  val valid = Input(Bool())     // valid signal
+  val ready = Output(Bool())    // ready signal
 }
 
+// AXI write address channel
 class AXI_AW extends Bundle {
-  val id    = Output(UInt(4.W))
-  val addr  = Output(UInt(32.W))
-  val len   = Output(UInt(8.W))
-  val size  = Output(UInt(3.W))
-  val burst = Output(UInt(2.W))
-  val lock  = Output(UInt(2.W))
-  val cache = Output(UInt(4.W))
-  val prot  = Output(UInt(3.W))
-  val valid = Output(Bool())
-  val ready = Input(Bool())
+  val id    = Output(UInt(4.W))  // transaction ID
+  val addr  = Output(UInt(32.W)) // address
+  val len   = Output(UInt(8.W))  // burst length
+  val size  = Output(UInt(3.W))  // transfer size
+  val burst = Output(UInt(2.W))  // burst type
+  val lock  = Output(UInt(2.W))  // lock type
+  val cache = Output(UInt(4.W))  // cache type
+  val prot  = Output(UInt(3.W))  // protection type
+  val valid = Output(Bool())     // valid signal
+  val ready = Input(Bool())      // ready signal
 }
 
+// AXI write data channel
 class AXI_W extends Bundle {
-  val id    = Output(UInt(4.W))
-  val data  = Output(UInt(32.W))
-  val strb  = Output(UInt(4.W))
-  val last  = Output(Bool())
-  val valid = Output(Bool())
-  val ready = Input(Bool())
+  val id    = Output(UInt(4.W))  // transaction ID
+  val data  = Output(UInt(32.W)) // write data
+  val strb  = Output(UInt(4.W))  // byte enable
+  val last  = Output(Bool())     // last beat of burst
+  val valid = Output(Bool())     // valid signal
+  val ready = Input(Bool())      // ready signal
 }
 
+// AXI write response channel
 class AXI_B extends Bundle {
-  val id    = Input(UInt(4.W))
-  val resp  = Input(UInt(2.W))
-  val valid = Input(Bool())
-  val ready = Output(Bool())
+  val id    = Input(UInt(4.W)) // transaction ID
+  val resp  = Input(UInt(2.W)) // response type
+  val valid = Input(Bool())    // valid signal
+  val ready = Output(Bool())   // ready signal
 }
 
+// AXI interface
 class AXI extends Bundle {
-  val ar = new AXI_AR()
-  val r  = new AXI_R()
-  val aw = new AXI_AW()
-  val w  = new AXI_W()
-  val b  = new AXI_B()
+  val ar = new AXI_AR() // read address channel
+  val r  = new AXI_R()  // read data channel
+  val aw = new AXI_AW() // write address channel
+  val w  = new AXI_W()  // write data channel
+  val b  = new AXI_B()  // write response channel
 }
 
 class DEBUG extends Bundle {

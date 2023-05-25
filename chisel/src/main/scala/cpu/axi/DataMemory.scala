@@ -14,7 +14,7 @@ class DataMemory extends Module {
 
     val execute      = new DataMemory_Execute()
     val memory       = new DataMemory_Memory()
-    val sramAXITrans = new DataMemory_SramAXITrans()
+    val sramAXITrans = new Memory_SramAXITrans()
     val ctrl         = new DataMemory_Ctrl()
   })
   val req        = io.fromExecute.req

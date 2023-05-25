@@ -14,7 +14,7 @@ class InstMemory extends Module {
 
     val preFetchStage = new InstMemory_PreFetchStage()
     val fetchStage    = new InstMemory_FetchStage()
-    val sramAXITrans  = new InstMemory_SramAXITrans()
+    val sramAXITrans  = new Memory_SramAXITrans()
     val ctrl          = new InstMemory_Ctrl()
   })
 
