@@ -1,6 +1,7 @@
 TEST_TOP=../../PUA-MIPS-TEST
 CPU_DIR=./src/main/scala/cpu
 PUA_MIPS=./generated/PuaMips.v
+MYCPU_TOP=./src/main/resources/mycpu_top.v
 SCORES_FILE=../SCORES.md
 OUTPUT=$(TEST_TOP)/verilator/output.txt
 
@@ -8,6 +9,7 @@ verilog:
 	@echo "make verilog"
 	sbt 'runMain Elaborate'
 	cp $(PUA_MIPS) $(TEST_TOP)/mycpu/
+	cp $(MYCPU_TOP) $(TEST_TOP)/mycpu/
 	$(MAKE) -C $(TEST_TOP)/verilator/ 
 
 # run trace target

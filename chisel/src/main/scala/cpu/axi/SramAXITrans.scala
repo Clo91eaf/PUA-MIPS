@@ -5,23 +5,27 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-/**
- * A simple FIFO buffer implemented using Chisel's built-in Queue module.
- *
- * @param dataWidth The width of the data to be stored in the buffer.
- * @param buffDepth The depth of the buffer (i.e. the number of elements it can hold).
- */
+/** A simple FIFO buffer implemented using Chisel's built-in Queue module.
+  *
+  * @param dataWidth
+  *   The width of the data to be stored in the buffer.
+  * @param buffDepth
+  *   The depth of the buffer (i.e. the number of elements it can hold).
+  * @param addrWidth
+  *   The width of the address used to access the buffer.
+  */
 class FifoBuffer(
-    dataWidth: Int = 32,
-    buffDepth: Int = 4,
+    val dataWidth: Int = 32,
+    val buffDepth: Int = 4,
+    val addrWidth: Int = 2,
 ) extends Module {
   val io = IO(new Bundle {
-    val wen    = Input(Bool())              // Write enable signal.
-    val ren    = Input(Bool())              // Read enable signal.
-    val input  = Input(UInt(dataWidth.W))   // Data to be written to the buffer.
-    val output = Output(UInt(dataWidth.W))  // Data read from the buffer.
-    val empty  = Output(Bool())             // Output signal indicating whether the buffer is empty.
-    val full   = Output(Bool())             // Output signal indicating whether the buffer is full.
+    val wen    = Input(Bool())             // Write enable signal.
+    val ren    = Input(Bool())             // Read enable signal.
+    val input  = Input(UInt(dataWidth.W))  // Data to be written to the buffer.
+    val output = Output(UInt(dataWidth.W)) // Data read from the buffer.
+    val empty  = Output(Bool())            // Output signal indicating whether the buffer is empty.
+    val full   = Output(Bool())            // Output signal indicating whether the buffer is full.
   })
 
   // Instantiate a Queue module with the given data width and buffer depth.
@@ -36,13 +40,17 @@ class FifoBuffer(
   io.empty           := queue.io.count === 0.U
 }
 
-/**
- * A simple counter that keeps track of the number of elements in a FIFO buffer.
- *
- * @param BUFF_DEPTH The depth of the buffer (i.e. the number of elements it can hold).
- * @param ADDR_WIDTH The width of the address used to access the buffer.
- */
-class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
+/** A simple counter that keeps track of the number of elements in a FIFO buffer.
+  *
+  * @param buffDepth
+  *   The depth of the buffer (i.e. the number of elements it can hold).
+  * @param addrWidth
+  *   The width of the address used to access the buffer.
+  */
+class FifoCount(
+    val buffDepth: Int = 4,
+    val addrWidth: Int = 2,
+) extends Module {
   val io = IO(new Bundle {
     val wen   = Input(Bool())
     val ren   = Input(Bool())
@@ -50,10 +58,10 @@ class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
     val full  = Output(Bool())
   })
 
-  val count = RegInit(0.U(ADDR_WIDTH.W))
+  val count = RegInit(0.U(addrWidth.W))
 
   io.empty := count === 0.U
-  io.full  := count === BUFF_DEPTH.U
+  io.full  := count === buffDepth.U
 
   when(io.ren && !io.empty) {
     count := count - 1.U
@@ -62,46 +70,54 @@ class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
   }
 }
 
-/**
- * A FIFO buffer with a valid signal that checks if the output data is related to a specific value.
- *
- * @param DATA_WIDTH The width of the data to be stored in the buffer.
- * @param BUFF_DEPTH The depth of the buffer (i.e. the number of elements it can hold).
- * @param ADDR_WIDTH The width of the address used to access the buffer.
- * @param RLAT_WIDTH The width of the related data used to check if the output data is related to a specific value.
- */
+/** A FIFO buffer with a valid signal that checks if the output data is related to a specific value.
+  *
+  * @param dataWidth
+  *   The width of the data to be stored in the buffer.
+  * @param buffDepth
+  *   The depth of the buffer (i.e. the number of elements it can hold).
+  * @param addrWidth
+  *   The width of the address used to access the buffer.
+  * @param relatedDataWidth
+  *   The width of the related data used to check if the output data is related to a specific value.
+  */
 class FifoBufferValid(
-    DATA_WIDTH: Int = 33,
-    BUFF_DEPTH: Int = 6,
-    ADDR_WIDTH: Int = 3,
-    RLAT_WIDTH: Int = 32,
+    val dataWidth: Int = 33,
+    val buffDepth: Int = 6,
+    val addrWidth: Int = 3,
+    val relatedDataWidth: Int = 32,
 ) extends Module {
   val io = IO(new Bundle {
-    val wen           = Input(Bool())              // Write enable signal.
-    val ren           = Input(Bool())              // Read enable signal.
-    val empty         = Output(Bool())             // Output signal indicating whether the buffer is empty.
-    val full          = Output(Bool())             // Output signal indicating whether the buffer is full.
-    val related_1     = Output(Bool())             // Output signal indicating whether the output data is related to a specific value.
-    val input         = Input(UInt(DATA_WIDTH.W))  // Data to be written to the buffer.
-    val output        = Output(UInt(DATA_WIDTH.W)) // Data read from the buffer.
-    val related_data_1 = Input(UInt(RLAT_WIDTH.W)) // Related data used to check if the output data is related to a specific value.
+    val wen   = Input(Bool())  // Write enable signal.
+    val ren   = Input(Bool())  // Read enable signal.
+    val empty = Output(Bool()) // Output signal indicating whether the buffer is empty.
+    val full  = Output(Bool()) // Output signal indicating whether the buffer is full.
+    val related_1 = Output(
+      Bool(),
+    ) // Output signal indicating whether the output data is related to a specific value.
+    val input  = Input(UInt(dataWidth.W))  // Data to be written to the buffer.
+    val output = Output(UInt(dataWidth.W)) // Data read from the buffer.
+    val related_data_1 = Input(
+      UInt(relatedDataWidth.W),
+    ) // Related data used to check if the output data is related to a specific value.
   })
 
   // Instantiate a Queue module with the given data width and buffer depth.
-  val queue = Module(new Queue(UInt(DATA_WIDTH.W), BUFF_DEPTH))
+  val queue = Module(new Queue(UInt(dataWidth.W), buffDepth))
 
   // Connect the input and output signals to the Queue module.
   queue.io.enq.valid := io.wen
-  queue.io.enq.bits := io.input
-  io.full := queue.io.count === BUFF_DEPTH.U
-  io.empty := queue.io.count === 0.U
-  io.output := queue.io.deq.bits
+  queue.io.enq.bits  := io.input
+  io.full            := queue.io.count === buffDepth.U
+  io.empty           := queue.io.count === 0.U
+  io.output          := queue.io.deq.bits
 
   // Connect the ready signal to the read enable input.
   queue.io.deq.ready := io.ren
 
   // Check if the output data is related to a specific value.
-  io.related_1 := queue.io.deq.valid && io.related_data_1 === queue.io.deq.bits(RLAT_WIDTH - 1, 0)
+  io.related_1 := queue.io.deq.valid && io.related_data_1 === queue.io.deq
+    .bits(relatedDataWidth - 1, 0)
 }
 
 class SramAXITrans extends Module {
@@ -116,25 +132,24 @@ class SramAXITrans extends Module {
   val DATA_ID = 1.U(4.W)
 
   // read request
-  io.axi.arlen   := 0.U
-  io.axi.arburst := "b01".U(2.W)
-  io.axi.arlock  := "b00".U(2.W)
-  io.axi.arcache := "b0000".U(4.W)
-  io.axi.arprot  := "b000".U(3.W)
+  io.axi.ar.len   := 0.U
+  io.axi.ar.burst := "b01".U(2.W)
+  io.axi.ar.lock  := "b00".U(2.W)
+  io.axi.ar.cache := "b0000".U(4.W)
+  io.axi.ar.prot  := "b000".U(3.W)
 
   // write request
-  io.axi.awid    := "b0001".U(4.W)
-  io.axi.awlen   := "b00000000".U(8.W)
-  io.axi.awburst := "b01".U(2.W)
-  io.axi.awlock  := "b00".U(2.W)
-  io.axi.awcache := "b0000".U(4.W)
-  io.axi.awprot  := "b000".U(3.W)
+  io.axi.aw.id    := "b0001".U(4.W)
+  io.axi.aw.len   := "b00000000".U(8.W)
+  io.axi.aw.burst := "b01".U(2.W)
+  io.axi.aw.lock  := "b00".U(2.W)
+  io.axi.aw.cache := "b0000".U(4.W)
+  io.axi.aw.prot  := "b000".U(3.W)
 
   // write data
-  io.axi.wid   := "b0001".U(4.W)
-  io.axi.wlast := 1.U
+  io.axi.w.id   := "b0001".U(4.W)
+  io.axi.w.last := 1.U
 
-  // ***************define****************
   // AXI read request
   val axi_ar_busy = RegInit(false.B)
   val axi_ar_id   = RegInit(0.U(4.W))
@@ -242,6 +257,7 @@ class SramAXITrans extends Module {
   val data_req_record_input     = Wire(UInt(33.W)) // {wr, addr}
   val data_req_record_output    = Wire(UInt(33.W))
 
+  // FIFO buffer for request record
   val data_req_record = Module(new FifoBufferValid(33, 6, 3, 32))
   data_req_record.io.wen <> data_req_record_wen
   data_req_record.io.ren <> data_req_record_ren
@@ -262,31 +278,31 @@ class SramAXITrans extends Module {
     axi_ar_id   := read_req_id
     axi_ar_addr := read_req_addr
     axi_ar_size := read_req_size
-  }.elsewhen(axi_ar_busy && io.axi.arvalid && io.axi.arready) {
+  }.elsewhen(axi_ar_busy && io.axi.ar.valid && io.axi.ar.ready) {
     axi_ar_busy := false.B
     axi_ar_id   := 0.U
     axi_ar_addr := 0.U
     axi_ar_size := 0.U
   }
 
-  io.axi.arvalid := axi_ar_busy
-  io.axi.arid    := axi_ar_id
-  io.axi.araddr  := axi_ar_addr
-  io.axi.arsize  := axi_ar_size
+  io.axi.ar.valid := axi_ar_busy
+  io.axi.ar.id    := axi_ar_id
+  io.axi.ar.addr  := axi_ar_addr
+  io.axi.ar.size  := axi_ar_size
 
   // AXI read response
-  axi_r_data_ok := io.axi.rvalid && io.axi.rready && io.axi.rid === DATA_ID
-  axi_r_inst_ok := io.axi.rvalid && io.axi.rready && io.axi.rid === INST_ID
-  axi_r_data    := io.axi.rdata
+  axi_r_data_ok := io.axi.r.valid && io.axi.r.ready && io.axi.r.id === DATA_ID
+  axi_r_inst_ok := io.axi.r.valid && io.axi.r.ready && io.axi.r.id === INST_ID
+  axi_r_data    := io.axi.r.data
 
-  io.axi.rready := !read_inst_resp_full && !read_data_resp_full
+  io.axi.r.ready := !read_inst_resp_full && !read_data_resp_full
 
   // AXI write request
   when(!axi_aw_busy && !axi_w_busy && write_req_valid) {
     axi_aw_busy := true.B
     axi_aw_addr := write_req_addr
     axi_aw_size := write_req_size
-  }.elsewhen(axi_aw_busy && io.axi.awvalid && io.axi.awready) {
+  }.elsewhen(axi_aw_busy && io.axi.aw.valid && io.axi.aw.ready) {
     axi_aw_busy := false.B
     axi_aw_addr := 0.U(32.W)
     axi_aw_size := 3.U(3.W)
@@ -296,21 +312,21 @@ class SramAXITrans extends Module {
     axi_w_busy := true.B
     axi_w_data := write_req_data
     axi_w_strb := write_req_strb
-  }.elsewhen(axi_w_busy && io.axi.wvalid && io.axi.wready) {
+  }.elsewhen(axi_w_busy && io.axi.w.valid && io.axi.w.ready) {
     axi_w_busy := false.B
     axi_w_data := 0.U(32.W)
     axi_w_strb := 0.U(4.W)
   }
-  io.axi.awvalid := axi_aw_busy
-  io.axi.wvalid  := axi_w_busy
-  io.axi.awaddr  := axi_aw_addr
-  io.axi.awsize  := axi_aw_size
-  io.axi.wdata   := axi_w_data
-  io.axi.wstrb   := axi_w_strb
+  io.axi.aw.valid := axi_aw_busy
+  io.axi.w.valid  := axi_w_busy
+  io.axi.aw.addr  := axi_aw_addr
+  io.axi.aw.size  := axi_aw_size
+  io.axi.w.data   := axi_w_data
+  io.axi.w.strb   := axi_w_strb
 
   // AXI write response
-  axi_b_ok      := io.axi.bvalid && io.axi.bready
-  io.axi.bready := !write_data_resp_full
+  axi_b_ok       := io.axi.b.valid && io.axi.b.ready
+  io.axi.b.ready := !write_data_resp_full
 
   // Middle read request
   read_req_sel_data := data_read_valid

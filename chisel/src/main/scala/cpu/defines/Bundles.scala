@@ -524,52 +524,63 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_index    = Output(UInt(32.W))
 }
 
+class AXI_AR extends Bundle {
+  val id    = Output(UInt(4.W))
+  val addr  = Output(UInt(32.W))
+  val len   = Output(UInt(8.W))
+  val size  = Output(UInt(3.W))
+  val burst = Output(UInt(2.W))
+  val lock  = Output(UInt(2.W))
+  val cache = Output(UInt(4.W))
+  val prot  = Output(UInt(3.W))
+  val valid = Output(Bool())
+  val ready = Input(Bool())
+}
+
+class AXI_R extends Bundle {
+  val id    = Input(UInt(4.W))
+  val data  = Input(UInt(32.W))
+  val resp  = Input(UInt(2.W))
+  val last  = Input(Bool())
+  val valid = Input(Bool())
+  val ready = Output(Bool())
+}
+
+class AXI_AW extends Bundle {
+  val id    = Output(UInt(4.W))
+  val addr  = Output(UInt(32.W))
+  val len   = Output(UInt(8.W))
+  val size  = Output(UInt(3.W))
+  val burst = Output(UInt(2.W))
+  val lock  = Output(UInt(2.W))
+  val cache = Output(UInt(4.W))
+  val prot  = Output(UInt(3.W))
+  val valid = Output(Bool())
+  val ready = Input(Bool())
+}
+
+class AXI_W extends Bundle {
+  val id    = Output(UInt(4.W))
+  val data  = Output(UInt(32.W))
+  val strb  = Output(UInt(4.W))
+  val last  = Output(Bool())
+  val valid = Output(Bool())
+  val ready = Input(Bool())
+}
+
+class AXI_B extends Bundle {
+  val id    = Input(UInt(4.W))
+  val resp  = Input(UInt(2.W))
+  val valid = Input(Bool())
+  val ready = Output(Bool())
+}
+
 class AXI extends Bundle {
-  // read request
-  val arid    = Output(UInt(4.W))
-  val araddr  = Output(UInt(32.W))
-  val arlen   = Output(UInt(8.W))
-  val arsize  = Output(UInt(3.W))
-  val arburst = Output(UInt(2.W))
-  val arlock  = Output(UInt(2.W))
-  val arcache = Output(UInt(4.W))
-  val arprot  = Output(UInt(3.W))
-  val arvalid = Output(Bool())
-  val arready = Input(Bool())
-
-  // read response
-  val rid    = Input(UInt(4.W))
-  val rdata  = Input(UInt(32.W))
-  val rresp  = Input(UInt(2.W))
-  val rlast  = Input(Bool())
-  val rvalid = Input(Bool())
-  val rready = Output(Bool())
-
-  // write request
-  val awid    = Output(UInt(4.W))
-  val awaddr  = Output(UInt(32.W))
-  val awlen   = Output(UInt(8.W))
-  val awsize  = Output(UInt(3.W))
-  val awburst = Output(UInt(2.W))
-  val awlock  = Output(UInt(2.W))
-  val awcache = Output(UInt(4.W))
-  val awprot  = Output(UInt(3.W))
-  val awvalid = Output(Bool())
-  val awready = Input(Bool())
-
-  // write data
-  val wid    = Output(UInt(4.W))
-  val wdata  = Output(UInt(32.W))
-  val wstrb  = Output(UInt(4.W))
-  val wlast  = Output(Bool())
-  val wvalid = Output(Bool())
-  val wready = Input(Bool())
-
-  // write response
-  val bid    = Input(UInt(4.W))
-  val bresp  = Input(UInt(2.W))
-  val bvalid = Input(Bool())
-  val bready = Output(Bool())
+  val ar = new AXI_AR()
+  val r  = new AXI_R()
+  val aw = new AXI_AW()
+  val w  = new AXI_W()
+  val b  = new AXI_B()
 }
 
 class DEBUG extends Bundle {
