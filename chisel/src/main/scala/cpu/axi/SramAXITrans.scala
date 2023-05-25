@@ -7,8 +7,8 @@ import cpu.defines.Const._
 
 class SramAXITrans extends Module {
   val io = IO(new Bundle {
-    val instMemory = Flipped(new Memory_SramAXITrans())
-    val dataMemory = Flipped(new Memory_SramAXITrans())
+    val instMemory = Flipped(new Sram_SramAXITrans())
+    val dataMemory = Flipped(new Sram_SramAXITrans())
     val axi        = new AXI()
   })
   // some constant

@@ -9,7 +9,7 @@ class MemoryStage extends Module {
   val io = IO(new Bundle {
     val fromExecute = Flipped(new Execute_MemoryStage())
     val fromMemory  = Flipped(new Memory_MemoryStage())
-    val fromCtrl    = Flipped(new Ctrl_MemoryStage())
+    val fromCtrl    = Flipped(new Ctrl_Stage())
 
     val execute = new MemoryStage_Execute()
     val memory  = new MemoryStage_Memory()

@@ -8,7 +8,7 @@ class ExecuteStage extends Module {
   val io = IO(new Bundle {
     val fromDecoder = Flipped(new Decoder_ExecuteStage())
     val fromExecute = Flipped(new Execute_ExecuteStage())
-    val fromCtrl    = Flipped(new Ctrl_ExecuteStage())
+    val fromCtrl    = Flipped(new Ctrl_Stage())
 
     val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()

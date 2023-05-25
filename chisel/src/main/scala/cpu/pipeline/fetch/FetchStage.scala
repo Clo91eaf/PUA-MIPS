@@ -10,9 +10,9 @@ class FetchStage extends Module {
     val fromPreFetchStage = Flipped(new PreFetchStage_FetchStage())
     val fromInstMemory    = Flipped(new InstMemory_FetchStage())
     val fromDecoder       = Flipped(new Decoder_FetchStage())
-    val fromCtrl          = Flipped(new Ctrl_FetchStage())
+    val fromCtrl          = Flipped(new Ctrl_Stage())
 
-    val ctrl          = new FetchStage_Ctrl()
+    val ctrl          = new Pipeline_Ctrl()
     val preFetchStage = new FetchStage_PreFetchStage()
     val decoderStage  = new FetchStage_DecoderStage()
     val instMemory    = new FetchStage_InstMemory()

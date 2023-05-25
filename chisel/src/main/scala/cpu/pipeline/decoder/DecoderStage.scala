@@ -8,7 +8,7 @@ class DecoderStage extends Module {
   val io = IO(new Bundle {
     val fromFetchStage = Flipped(new FetchStage_DecoderStage())
     val fromDecoder    = Flipped(new Decoder_DecoderStage())
-    val fromCtrl       = Flipped(new Ctrl_DecoderStage())
+    val fromCtrl       = Flipped(new Ctrl_Stage())
     val decoder        = new DecoderStage_Decoder()
   })
 

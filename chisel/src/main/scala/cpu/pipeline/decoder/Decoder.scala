@@ -20,12 +20,12 @@ class Decoder extends Module {
     val decoderStage  = new Decoder_DecoderStage()
     val executeStage  = new Decoder_ExecuteStage()
     val regfile       = new Decoder_RegFile()
-    val ctrl          = new Decoder_Ctrl()
+    val ctrl          = new Pipeline_Ctrl()
   })
   // input
-  val aluop_i           = Wire(ALU_OP_BUS)
-  val reg1_data         = Wire(BUS)
-  val reg2_data         = Wire(BUS)
+  val aluop_i   = Wire(ALU_OP_BUS)
+  val reg1_data = Wire(BUS)
+  val reg2_data = Wire(BUS)
 
   // input-decoder stage
   val pc            = io.fromDecoderStage.pc

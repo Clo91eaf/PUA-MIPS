@@ -29,7 +29,7 @@ class Execute extends Module {
     val memoryStage  = new Execute_MemoryStage()
     val dataMemory   = new Execute_DataMemory()
     val executeStage = new Execute_ExecuteStage()
-    val ctrl         = new Execute_Ctrl()
+    val ctrl         = new Pipeline_Ctrl()
   })
   // input-execute stage
   val pc            = io.fromExecuteStage.pc

@@ -7,18 +7,18 @@ import cpu.defines.Const._
 
 class InstMemory extends Module {
   val io = IO(new Bundle {
-    val fromPreFetchStage  = Flipped(new PreFetchStage_InstMemory())
-    val fromFetchStage     = Flipped(new FetchStage_InstMemory())
-    val fromInstMMU        = Flipped(new MMU_Sram())
-    val fromCtrl           = Flipped(new Ctrl_InstMemory())
+    val fromPreFetchStage = Flipped(new PreFetchStage_InstMemory())
+    val fromFetchStage    = Flipped(new FetchStage_InstMemory())
+    val fromInstMMU       = Flipped(new MMU_Sram())
+    val fromCtrl          = Flipped(new Ctrl_Sram())
 
     val preFetchStage = new InstMemory_PreFetchStage()
     val fetchStage    = new InstMemory_FetchStage()
-    val sramAXITrans  = new Memory_SramAXITrans()
-    val ctrl          = new InstMemory_Ctrl()
+    val sramAXITrans  = new Sram_SramAXITrans()
+    val ctrl          = new Sram_Ctrl()
   })
 
-  val inst_sram_discard         = RegInit(0.U(2.W))
+  val inst_sram_discard = RegInit(0.U(2.W))
 
   io.preFetchStage.addr_ok := io.sramAXITrans.addr_ok
   io.preFetchStage.rdata   := io.sramAXITrans.rdata
@@ -34,7 +34,7 @@ class InstMemory extends Module {
   io.sramAXITrans.wstrb := 0.U(4.W)
   io.sramAXITrans.wdata := BUS_INIT
 
-  io.ctrl.inst_sram_discard := inst_sram_discard
+  io.ctrl.sram_discard := inst_sram_discard
 
   when(io.fromCtrl.do_flush) {
     inst_sram_discard := Cat(io.fromPreFetchStage.waiting, io.fromFetchStage.waiting)

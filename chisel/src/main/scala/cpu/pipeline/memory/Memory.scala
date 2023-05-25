@@ -18,7 +18,7 @@ class Memory extends Module {
     val dataMemory     = new Memory_DataMemory()
     val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
-    val ctrl           = new Memory_Ctrl()
+    val ctrl           = new Pipeline_Ctrl()
   })
   // input
   val aluop      = io.fromMemoryStage.aluop

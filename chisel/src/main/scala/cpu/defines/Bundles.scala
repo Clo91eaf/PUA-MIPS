@@ -461,7 +461,6 @@ class WriteBackStage_TLB extends Bundle {
 }
 
 // instMemory
-
 class InstMemory_PreFetchStage extends Bundle {
   val addr_ok = Output(Bool())
   val rdata   = Output(BUS)
@@ -473,7 +472,8 @@ class InstMemory_FetchStage extends Bundle {
   val rdata   = Output(BUS)
 }
 
-class Memory_SramAXITrans extends Bundle {
+// memory
+class Sram_SramAXITrans extends Bundle {
   val req     = Output(Bool())
   val wr      = Output(Bool())
   val size    = Output(UInt(2.W))
@@ -646,60 +646,25 @@ class Ctrl_PreFetchStage extends Bundle {
   val block    = Output(Bool())
 }
 
-class Ctrl_FetchStage extends Bundle {
-  val after_ex = Output(Bool())
-  val do_flush = Output(Bool())
-}
-
-class Ctrl_InstMemory extends Bundle {
-  val do_flush = Output(Bool())
-}
-
-class Ctrl_DataMemory extends Bundle {
-  val do_flush = Output(Bool())
-}
-
-class Ctrl_DecoderStage extends Bundle {
-  val do_flush = Output(Bool())
-  val after_ex = Output(Bool())
-}
-
-class Ctrl_ExecuteStage extends Bundle {
-  val do_flush = Output(Bool())
-  val after_ex = Output(Bool())
-}
-
-class Ctrl_MemoryStage extends Bundle {
-  val do_flush = Output(Bool())
-  val after_ex = Output(Bool())
-}
-
-class InstMemory_Ctrl extends Bundle {
-  val inst_sram_discard = Output(UInt(2.W))
-}
-
-class DataMemory_Ctrl extends Bundle {
-  val data_sram_discard = Output(UInt(2.W))
-}
-
-class FetchStage_Ctrl extends Bundle {
-  val ex = Output(Bool())
-}
-
-class Decoder_Ctrl extends Bundle {
-  val ex = Output(Bool())
-}
-
-class Execute_Ctrl extends Bundle {
-  val ex = Output(Bool())
-}
-
-class Memory_Ctrl extends Bundle {
-  val ex = Output(Bool())
-}
-
 class WriteBackStage_Ctrl extends Bundle {
   val ex       = Output(Bool())
   val do_flush = Output(Bool())
   val flush_pc = Output(BUS)
+}
+
+class Ctrl_Sram extends Bundle {
+  val do_flush = Output(Bool())
+}
+
+class Ctrl_Stage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class Sram_Ctrl extends Bundle {
+  val sram_discard = Output(UInt(2.W))
+}
+
+class Pipeline_Ctrl extends Bundle {
+  val ex = Output(Bool())
 }

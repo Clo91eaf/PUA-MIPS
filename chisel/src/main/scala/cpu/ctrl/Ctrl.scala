@@ -7,25 +7,25 @@ import cpu.defines.Const._
 
 class Ctrl extends Module {
   val io = IO(new Bundle {
-    val fromInstMemory     = Flipped(new InstMemory_Ctrl())
-    val fromDataMemory     = Flipped(new DataMemory_Ctrl())
-    val fromFetchStage     = Flipped(new FetchStage_Ctrl())
-    val fromDecoder        = Flipped(new Decoder_Ctrl())
-    val fromExecute        = Flipped(new Execute_Ctrl())
-    val fromMemory         = Flipped(new Memory_Ctrl())
+    val fromInstMemory     = Flipped(new Sram_Ctrl())
+    val fromDataMemory     = Flipped(new Sram_Ctrl())
+    val fromFetchStage     = Flipped(new Pipeline_Ctrl())
+    val fromDecoder        = Flipped(new Pipeline_Ctrl())
+    val fromExecute        = Flipped(new Pipeline_Ctrl())
+    val fromMemory         = Flipped(new Pipeline_Ctrl())
     val fromWriteBackStage = Flipped(new WriteBackStage_Ctrl())
 
     val preFetchStage = new Ctrl_PreFetchStage()
-    val fetchStage    = new Ctrl_FetchStage()
-    val decoderStage  = new Ctrl_DecoderStage()
-    val executeStage  = new Ctrl_ExecuteStage()
-    val memoryStage   = new Ctrl_MemoryStage()
-    val instMemory    = new Ctrl_InstMemory()
-    val dataMemory    = new Ctrl_DataMemory()
+    val fetchStage    = new Ctrl_Stage()
+    val decoderStage  = new Ctrl_Stage()
+    val executeStage  = new Ctrl_Stage()
+    val memoryStage   = new Ctrl_Stage()
+    val instMemory    = new Ctrl_Sram()
+    val dataMemory    = new Ctrl_Sram()
   })
 
-  val inst_sram_discard = io.fromInstMemory.inst_sram_discard
-  val data_sram_discard = io.fromDataMemory.data_sram_discard
+  val inst_sram_discard = io.fromInstMemory.sram_discard
+  val data_sram_discard = io.fromDataMemory.sram_discard
 
   val ws_do_flush = io.fromWriteBackStage.do_flush
   val ws_flush_pc = io.fromWriteBackStage.flush_pc
