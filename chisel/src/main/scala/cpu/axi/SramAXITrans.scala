@@ -5,30 +5,43 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
+/**
+ * A simple FIFO buffer implemented using Chisel's built-in Queue module.
+ *
+ * @param dataWidth The width of the data to be stored in the buffer.
+ * @param buffDepth The depth of the buffer (i.e. the number of elements it can hold).
+ */
 class FifoBuffer(
     dataWidth: Int = 32,
     buffDepth: Int = 4,
 ) extends Module {
   val io = IO(new Bundle {
-    val wen    = Input(Bool())
-    val ren    = Input(Bool())
-    val input  = Input(UInt(dataWidth.W))
-    val output = Output(UInt(dataWidth.W))
-    val empty  = Output(Bool())
-    val full   = Output(Bool())
+    val wen    = Input(Bool())              // Write enable signal.
+    val ren    = Input(Bool())              // Read enable signal.
+    val input  = Input(UInt(dataWidth.W))   // Data to be written to the buffer.
+    val output = Output(UInt(dataWidth.W))  // Data read from the buffer.
+    val empty  = Output(Bool())             // Output signal indicating whether the buffer is empty.
+    val full   = Output(Bool())             // Output signal indicating whether the buffer is full.
   })
 
+  // Instantiate a Queue module with the given data width and buffer depth.
   val queue = Module(new Queue(UInt(dataWidth.W), buffDepth))
 
+  // Connect the input and output signals to the Queue module.
   queue.io.enq.valid := io.wen
   queue.io.enq.bits  := io.input
   io.full            := queue.io.enq.ready === false.B
-
   queue.io.deq.ready := io.ren
   io.output          := queue.io.deq.bits
   io.empty           := queue.io.count === 0.U
 }
 
+/**
+ * A simple counter that keeps track of the number of elements in a FIFO buffer.
+ *
+ * @param BUFF_DEPTH The depth of the buffer (i.e. the number of elements it can hold).
+ * @param ADDR_WIDTH The width of the address used to access the buffer.
+ */
 class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
   val io = IO(new Bundle {
     val wen   = Input(Bool())
@@ -39,19 +52,24 @@ class FifoCount(BUFF_DEPTH: Int = 4, ADDR_WIDTH: Int = 2) extends Module {
 
   val count = RegInit(0.U(ADDR_WIDTH.W))
 
-  val do_read  = io.ren && !io.empty
-  val do_write = io.wen && !io.full
-
   io.empty := count === 0.U
-  io.full  := count === (BUFF_DEPTH - 1).U
+  io.full  := count === BUFF_DEPTH.U
 
-  when(do_read && !do_write) {
+  when(io.ren && !io.empty) {
     count := count - 1.U
-  }.elsewhen(do_write && !do_read) {
+  }.elsewhen(io.wen && !io.full) {
     count := count + 1.U
   }
 }
 
+/**
+ * A FIFO buffer with a valid signal that checks if the output data is related to a specific value.
+ *
+ * @param DATA_WIDTH The width of the data to be stored in the buffer.
+ * @param BUFF_DEPTH The depth of the buffer (i.e. the number of elements it can hold).
+ * @param ADDR_WIDTH The width of the address used to access the buffer.
+ * @param RLAT_WIDTH The width of the related data used to check if the output data is related to a specific value.
+ */
 class FifoBufferValid(
     DATA_WIDTH: Int = 33,
     BUFF_DEPTH: Int = 6,
@@ -59,69 +77,31 @@ class FifoBufferValid(
     RLAT_WIDTH: Int = 32,
 ) extends Module {
   val io = IO(new Bundle {
-    val wen       = Input(Bool())
-    val ren       = Input(Bool())
-    val empty     = Output(Bool())
-    val full      = Output(Bool())
-    val related_1 = Output(Bool())
-    // val related_2      = Output(Bool())
-    val input          = Input(UInt(DATA_WIDTH.W))
-    val output         = Output(UInt(DATA_WIDTH.W))
-    val related_data_1 = Input(UInt(RLAT_WIDTH.W))
-    // val related_data_2 = Input(UInt(RLAT_WIDTH.W))
+    val wen           = Input(Bool())              // Write enable signal.
+    val ren           = Input(Bool())              // Read enable signal.
+    val empty         = Output(Bool())             // Output signal indicating whether the buffer is empty.
+    val full          = Output(Bool())             // Output signal indicating whether the buffer is full.
+    val related_1     = Output(Bool())             // Output signal indicating whether the output data is related to a specific value.
+    val input         = Input(UInt(DATA_WIDTH.W))  // Data to be written to the buffer.
+    val output        = Output(UInt(DATA_WIDTH.W)) // Data read from the buffer.
+    val related_data_1 = Input(UInt(RLAT_WIDTH.W)) // Related data used to check if the output data is related to a specific value.
   })
 
-  val buff          = RegInit(VecInit(Seq.fill(BUFF_DEPTH)(0.U(DATA_WIDTH.W))))
-  val valid         = RegInit(VecInit(Seq.fill(BUFF_DEPTH)(0.U(1.W))))
-  val related_vec_1 = Wire(Vec(BUFF_DEPTH, Bool()))
-  // val related_vec_2 = Wire(Vec(BUFF_DEPTH, Bool()))
+  // Instantiate a Queue module with the given data width and buffer depth.
+  val queue = Module(new Queue(UInt(DATA_WIDTH.W), BUFF_DEPTH))
 
-  val head  = RegInit(0.U(ADDR_WIDTH.W))
-  val tail  = RegInit(0.U(ADDR_WIDTH.W))
-  val count = RegInit(0.U((ADDR_WIDTH + 1).W))
+  // Connect the input and output signals to the Queue module.
+  queue.io.enq.valid := io.wen
+  queue.io.enq.bits := io.input
+  io.full := queue.io.count === BUFF_DEPTH.U
+  io.empty := queue.io.count === 0.U
+  io.output := queue.io.deq.bits
 
-  val do_read  = io.ren && !io.empty
-  val do_write = io.wen && !io.full
+  // Connect the ready signal to the read enable input.
+  queue.io.deq.ready := io.ren
 
-  io.empty     := count === 0.U
-  io.full      := count === (BUFF_DEPTH - 1).U
-  io.related_1 := related_vec_1.reduce(_ || _)
-  // io.related_2 := related_vec_2.reduce(_ || _)
-  io.output := buff(tail)
-
-  when(do_read && !do_write) {
-    count := count - 1.U
-  }.elsewhen(do_write && !do_read) {
-    count := count + 1.U
-  }
-
-  when(do_write) {
-    when(head === (BUFF_DEPTH - 1).U) {
-      head := 0.U
-    }.otherwise {
-      head := head + 1.U
-    }
-  }
-
-  when(do_read) {
-    when(tail === (BUFF_DEPTH - 1).U) {
-      tail := 0.U
-    }.otherwise {
-      tail := tail + 1.U
-    }
-  }
-
-  for (i <- 0 until BUFF_DEPTH) {
-    when(do_read && tail === i.U) {
-      buff(i)  := 0.U
-      valid(i) := false.B
-    }.elsewhen(do_write && head === i.U) {
-      buff(i)  := io.input
-      valid(i) := true.B
-    }
-    related_vec_1(i) := valid(i) & io.related_data_1 === buff(i)(RLAT_WIDTH - 1, 0)
-    // related_vec_2(i) := valid(i) & io.related_data_2 === buff(i)(RLAT_WIDTH - 1, 0)
-  }
+  // Check if the output data is related to a specific value.
+  io.related_1 := queue.io.deq.valid && io.related_data_1 === queue.io.deq.bits(RLAT_WIDTH - 1, 0)
 }
 
 class SramAXITrans extends Module {
