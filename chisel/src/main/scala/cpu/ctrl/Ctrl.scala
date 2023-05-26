@@ -20,8 +20,8 @@ class Ctrl extends Module {
     val decoderStage  = new Ctrl_Stage()
     val executeStage  = new Ctrl_Stage()
     val memoryStage   = new Ctrl_Stage()
-    val instMemory    = new Ctrl_Sram()
-    val dataMemory    = new Ctrl_Sram()
+    val InstSram    = new Ctrl_Sram()
+    val DataSram    = new Ctrl_Sram()
   })
 
   val inst_sram_discard = io.fromInstMemory.sram_discard
@@ -39,8 +39,8 @@ class Ctrl extends Module {
   io.preFetchStage.block    := inst_sram_discard.orR || data_sram_discard.orR
   io.preFetchStage.flush_pc := ws_flush_pc
 
-  io.dataMemory.do_flush    := ws_do_flush
-  io.instMemory.do_flush    := ws_do_flush
+  io.DataSram.do_flush    := ws_do_flush
+  io.InstSram.do_flush    := ws_do_flush
   io.preFetchStage.do_flush := ws_do_flush
   io.fetchStage.do_flush    := ws_do_flush
   io.decoderStage.do_flush  := ws_do_flush

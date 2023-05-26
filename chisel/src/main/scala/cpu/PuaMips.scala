@@ -32,8 +32,8 @@ class PuaMips extends Module {
   val mul            = Module(new Mul())
   val div            = Module(new Div())
   val mov            = Module(new Mov())
-  val instMemory     = Module(new InstMemory())
-  val dataMemory     = Module(new DataMemory())
+  val InstSram     = Module(new InstSram())
+  val DataSram     = Module(new DataSram())
   val sramAXITrans   = Module(new SramAXITrans())
   val memoryStage    = Module(new MemoryStage())
   val memory         = Module(new Memory())
@@ -48,30 +48,30 @@ class PuaMips extends Module {
 
   // axi interface
   io.axi <> sramAXITrans.io.axi
-  sramAXITrans.io.dataMemory <> dataMemory.io.sramAXITrans
-  sramAXITrans.io.instMemory <> instMemory.io.sramAXITrans
+  sramAXITrans.io.DataSram <> DataSram.io.sramAXITrans
+  sramAXITrans.io.InstSram <> InstSram.io.sramAXITrans
 
   // debug
   io.debug <> writeBackStage.io.debug
 
   // inst memory
-  instMemory.io.preFetchStage <> preFetchStage.io.fromInstMemory
-  instMemory.io.fetchStage <> fetchStage.io.fromInstMemory
-  instMemory.io.ctrl <> ctrl.io.fromInstMemory
+  InstSram.io.preFetchStage <> preFetchStage.io.fromInstMemory
+  InstSram.io.fetchStage <> fetchStage.io.fromInstMemory
+  InstSram.io.ctrl <> ctrl.io.fromInstMemory
 
   // data memory
-  dataMemory.io.execute <> execute.io.fromDataMemory
-  dataMemory.io.memory <> memory.io.fromDataMemory
+  DataSram.io.execute <> execute.io.fromDataMemory
+  DataSram.io.memory <> memory.io.fromDataMemory
 
   // preFetchStage
   preFetchStage.io.fetchStage <> fetchStage.io.fromPreFetchStage
-  preFetchStage.io.instMemory <> instMemory.io.fromPreFetchStage
+  preFetchStage.io.InstSram <> InstSram.io.fromPreFetchStage
   preFetchStage.io.instMMU <> instMMU.io.fromPreFetchStage
 
   // fetchStage
   fetchStage.io.preFetchStage <> preFetchStage.io.fromFetchStage
   fetchStage.io.decoderStage <> decoderStage.io.fromFetchStage
-  fetchStage.io.instMemory <> instMemory.io.fromFetchStage
+  fetchStage.io.InstSram <> InstSram.io.fromFetchStage
   fetchStage.io.ctrl <> ctrl.io.fromFetchStage
 
   // decoderStage
@@ -101,7 +101,7 @@ class PuaMips extends Module {
 
   execute.io.decoder <> decoder.io.fromExecute
   execute.io.memoryStage <> memoryStage.io.fromExecute
-  execute.io.dataMemory <> dataMemory.io.fromExecute
+  execute.io.DataSram <> DataSram.io.fromExecute
   execute.io.executeStage <> executeStage.io.fromExecute
   execute.io.ctrl <> ctrl.io.fromExecute
   execute.io.dataMMU <> dataMMU.io.fromExecute
@@ -111,15 +111,15 @@ class PuaMips extends Module {
   memoryStage.io.memory <> memory.io.fromMemoryStage
 
   // data memory
-  dataMemory.io.memory <> memory.io.fromDataMemory
-  dataMemory.io.execute <> execute.io.fromDataMemory
-  dataMemory.io.ctrl <> ctrl.io.fromDataMemory
+  DataSram.io.memory <> memory.io.fromDataMemory
+  DataSram.io.execute <> execute.io.fromDataMemory
+  DataSram.io.ctrl <> ctrl.io.fromDataMemory
 
   // memory
   memory.io.decoder <> decoder.io.fromMemory
   memory.io.mov <> mov.io.fromMemory
   memory.io.memoryStage <> memoryStage.io.fromMemory
-  memory.io.dataMemory <> dataMemory.io.fromMemory
+  memory.io.DataSram <> DataSram.io.fromMemory
   memory.io.execute <> execute.io.fromMemory
   memory.io.writeBackStage <> writeBackStage.io.fromMemory
   memory.io.ctrl <> ctrl.io.fromMemory
@@ -153,17 +153,17 @@ class PuaMips extends Module {
   ctrl.io.decoderStage <> decoderStage.io.fromCtrl
   ctrl.io.executeStage <> executeStage.io.fromCtrl
   ctrl.io.memoryStage <> memoryStage.io.fromCtrl
-  ctrl.io.instMemory <> instMemory.io.fromCtrl
-  ctrl.io.dataMemory <> dataMemory.io.fromCtrl
+  ctrl.io.InstSram <> InstSram.io.fromCtrl
+  ctrl.io.DataSram <> DataSram.io.fromCtrl
 
   // mmu
   dataMMU.io.execute <> execute.io.fromDataMMU
   dataMMU.io.tlb <> tlb.io.fromDataMMU
-  dataMMU.io.dataMemory <> dataMemory.io.fromDataMMU
+  dataMMU.io.DataSram <> DataSram.io.fromDataMMU
 
   instMMU.io.preFetchStage <> preFetchStage.io.fromInstMMU
   instMMU.io.tlb <> tlb.io.fromInstMMU
-  instMMU.io.instMemory <> instMemory.io.fromInstMMU
+  instMMU.io.InstSram <> InstSram.io.fromInstMMU
 
   // tlb
   tlb.io.writeBackStage <> writeBackStage.io.fromTLB

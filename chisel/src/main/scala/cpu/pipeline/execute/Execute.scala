@@ -27,7 +27,7 @@ class Execute extends Module {
     val decoder      = new Execute_Decoder()
     val dataMMU      = new Execute_DataMMU()
     val memoryStage  = new Execute_MemoryStage()
-    val dataMemory   = new Execute_DataMemory()
+    val DataSram   = new Execute_DataMemory()
     val executeStage = new Execute_ExecuteStage()
     val ctrl         = new Pipeline_Ctrl()
   })
@@ -260,12 +260,12 @@ class Execute extends Module {
   io.executeStage.allowin := allowin
 
   // output-data memory
-  io.dataMemory.req     := data_sram_req
-  io.dataMemory.wr      := data_sram_wr
-  io.dataMemory.size    := data_sram_size
-  io.dataMemory.wdata   := data_sram_wdata
-  io.dataMemory.wstrb   := data_sram_wstrb
-  io.dataMemory.waiting := es_valid && addr_ok && !data_ok
+  io.DataSram.req     := data_sram_req
+  io.DataSram.wr      := data_sram_wr
+  io.DataSram.size    := data_sram_size
+  io.DataSram.wdata   := data_sram_wdata
+  io.DataSram.wstrb   := data_sram_wstrb
+  io.DataSram.waiting := es_valid && addr_ok && !data_ok
 
   io.dataMMU.vaddr        := data_sram_addr
   io.dataMMU.inst_is_tlbp := aluop === EXE_TLBP_OP

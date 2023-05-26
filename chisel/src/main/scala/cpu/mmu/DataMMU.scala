@@ -12,7 +12,7 @@ class DataMMU extends Module {
     val fromExecute        = Flipped(new Execute_DataMMU())
 
     val execute    = new MMU_Common()
-    val dataMemory = new MMU_Sram()
+    val DataSram = new MMU_Sram()
     val tlb        = new MMU_TLB()
   })
   // input
@@ -32,7 +32,7 @@ class DataMMU extends Module {
   val tlb_vpn2     = Wire(UInt(19.W))
   val tlb_odd_page = Wire(Bool())
   val tlb_asid     = Wire(UInt(8.W))
-  io.dataMemory.paddr     := paddr
+  io.DataSram.paddr     := paddr
   io.execute.tlb_refill   := tlb_refill
   io.execute.tlb_invalid  := tlb_invalid
   io.execute.tlb_modified := tlb_modified

@@ -7,8 +7,8 @@ import cpu.defines.Const._
 
 class SramAXITrans extends Module {
   val io = IO(new Bundle {
-    val instMemory = Flipped(new Sram_SramAXITrans())
-    val dataMemory = Flipped(new Sram_SramAXITrans())
+    val InstSram = Flipped(new Sram_SramAXITrans())
+    val DataSram = Flipped(new Sram_SramAXITrans())
     val axi        = new AXI()
   })
   // some constant
@@ -151,7 +151,7 @@ class SramAXITrans extends Module {
   data_req_record.io.related_1 <> data_req_record_related_1
   data_req_record.io.input <> data_req_record_input
   data_req_record.io.output <> data_req_record_output
-  data_req_record.io.related_data_1 <> io.dataMemory.addr
+  data_req_record.io.related_data_1 <> io.DataSram.addr
 
   // SRAM data response
   val data_read_ready  = Wire(Bool())
@@ -220,8 +220,8 @@ class SramAXITrans extends Module {
   // To AXI
   read_req_valid := inst_read_valid || data_read_valid
   read_req_id    := Mux(read_req_sel_data, DATA_ID, INST_ID)
-  read_req_addr  := Mux(read_req_sel_data, io.dataMemory.addr, io.instMemory.addr)
-  read_req_size  := Mux(read_req_sel_data, io.dataMemory.size, io.instMemory.size)
+  read_req_addr  := Mux(read_req_sel_data, io.DataSram.addr, io.InstSram.addr)
+  read_req_size  := Mux(read_req_sel_data, io.DataSram.size, io.InstSram.size)
 
   // To SRAM
   read_data_req_ok := read_req_sel_data && !axi_ar_busy
@@ -240,10 +240,10 @@ class SramAXITrans extends Module {
   // middle write request
   // to axi
   write_req_valid := data_write_valid
-  write_req_addr  := io.dataMemory.addr
-  write_req_size  := io.dataMemory.size
-  write_req_data  := io.dataMemory.wdata
-  write_req_strb  := io.dataMemory.wstrb
+  write_req_addr  := io.DataSram.addr
+  write_req_size  := io.DataSram.size
+  write_req_data  := io.DataSram.wdata
+  write_req_strb  := io.DataSram.wstrb
 
   // to sram
   write_data_req_ok := data_write_valid && !axi_aw_busy && !axi_w_busy
@@ -253,30 +253,30 @@ class SramAXITrans extends Module {
   write_data_resp_wen := axi_b_ok
 
   // SRAM inst request
-  inst_read_valid       := io.instMemory.req && !io.instMemory.wr && !inst_related
-  io.instMemory.addr_ok := read_inst_req_ok
+  inst_read_valid       := io.InstSram.req && !io.InstSram.wr && !inst_related
+  io.InstSram.addr_ok := read_inst_req_ok
   inst_related          := false.B
 
   // SRAM inst response
   inst_read_ready       := true.B
-  io.instMemory.data_ok := !read_inst_resp_empty
-  io.instMemory.rdata   := read_inst_resp_output
+  io.InstSram.data_ok := !read_inst_resp_empty
+  io.InstSram.rdata   := read_inst_resp_output
 
   // SRAM data request
   data_related          := data_req_record_related_1
-  data_read_valid       := io.dataMemory.req && !io.dataMemory.wr && !data_related
-  data_write_valid      := io.dataMemory.req && io.dataMemory.wr && !data_related
-  io.dataMemory.addr_ok := read_data_req_ok || write_data_req_ok
+  data_read_valid       := io.DataSram.req && !io.DataSram.wr && !data_related
+  data_write_valid      := io.DataSram.req && io.DataSram.wr && !data_related
+  io.DataSram.addr_ok := read_data_req_ok || write_data_req_ok
 
   // request record
-  data_req_record_ren   := io.dataMemory.data_ok
-  data_req_record_wen   := io.dataMemory.req && io.dataMemory.addr_ok
-  data_req_record_input := Cat(io.dataMemory.wr, io.dataMemory.addr)
+  data_req_record_ren   := io.DataSram.data_ok
+  data_req_record_wen   := io.DataSram.req && io.DataSram.addr_ok
+  data_req_record_input := Cat(io.DataSram.wr, io.DataSram.addr)
 
   // SRAM data response
-  io.dataMemory.rdata := read_data_resp_output
+  io.DataSram.rdata := read_data_resp_output
   data_read_ready     := !data_req_record_empty && !data_req_record_output(32)
   data_write_ready    := !data_req_record_empty && data_req_record_output(32)
 
-  io.dataMemory.data_ok := (data_read_ready && !read_data_resp_empty) || (data_write_ready && !write_data_resp_empty)
+  io.DataSram.data_ok := (data_read_ready && !read_data_resp_empty) || (data_write_ready && !write_data_resp_empty)
 }

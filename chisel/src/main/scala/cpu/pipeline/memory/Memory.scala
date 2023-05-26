@@ -15,7 +15,7 @@ class Memory extends Module {
     val decoder        = new Memory_Decoder()
     val mov            = new Memory_Mov()
     val memoryStage    = new Memory_MemoryStage()
-    val dataMemory     = new Memory_DataMemory()
+    val DataSram     = new Memory_DataMemory()
     val execute        = new Memory_Execute()
     val writeBackStage = new Memory_WriteBackStage()
     val ctrl           = new Pipeline_Ctrl()
@@ -97,7 +97,7 @@ class Memory extends Module {
       ms_data_buff_valid         -> ms_data_buff,
     ),
   )
-  io.dataMemory.waiting := ms_valid && io.fromMemoryStage.wait_mem && !data_ok
+  io.DataSram.waiting := ms_valid && io.fromMemoryStage.wait_mem && !data_ok
 
   // output-memory stage
   io.memoryStage.allowin := allowin

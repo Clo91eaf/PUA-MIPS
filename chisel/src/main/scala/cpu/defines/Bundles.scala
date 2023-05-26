@@ -243,7 +243,7 @@ class Execute_CP0 extends Bundle {
   val cp0_raddr = Output(CP0_ADDR_BUS)
 }
 
-// dataMemory
+// DataSram
 class Execute_DataMemory extends Bundle {
   val req     = Output(Bool())
   val wr      = Output(Bool())
@@ -460,7 +460,7 @@ class WriteBackStage_TLB extends Bundle {
   val r_index = Output(UInt(log2Ceil(TLB_NUM).W))
 }
 
-// instMemory
+// InstSram
 class InstMemory_PreFetchStage extends Bundle {
   val addr_ok = Output(Bool())
   val rdata   = Output(BUS)

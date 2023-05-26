@@ -14,7 +14,7 @@ class PreFetchStage extends Module {
     val fromCtrl       = Flipped(new Ctrl_PreFetchStage())
 
     val fetchStage = new PreFetchStage_FetchStage()
-    val instMemory = new PreFetchStage_InstMemory()
+    val InstSram = new PreFetchStage_InstMemory()
     val instMMU    = new PreFetchStage_InstMMU()
   })
   val tlb_refill   = io.fromInstMMU.tlb_refill
@@ -76,8 +76,8 @@ class PreFetchStage extends Module {
   io.fetchStage.excode     := pfs_excode
   io.fetchStage.ex         := pfs_ex
   io.fetchStage.badvaddr   := pfs_badvaddr
-  io.instMemory.req        := inst_sram_req
-  io.instMemory.waiting    := inst_waiting
+  io.InstSram.req        := inst_sram_req
+  io.InstSram.waiting    := inst_waiting
   io.instMMU.vaddr         := inst_sram_addr
 
   // handshake

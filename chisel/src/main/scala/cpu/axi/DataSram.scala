@@ -5,7 +5,7 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class DataMemory extends Module {
+class DataSram extends Module {
   val io = IO(new Bundle {
     val fromExecute = Flipped(new Execute_DataMemory())
     val fromMemory  = Flipped(new Memory_DataMemory())

@@ -12,7 +12,7 @@ class InstMMU extends Module {
     val fromTLB            = Flipped(new TLB_MMU())
 
     val preFetchStage = new MMU_Common()
-    val instMemory    = new MMU_Sram()
+    val InstSram    = new MMU_Sram()
     val tlb           = new MMU_TLB()
   })
   // input
@@ -32,7 +32,7 @@ class InstMMU extends Module {
   val tlb_vpn2     = Wire(UInt(19.W))
   val tlb_odd_page = Wire(Bool())
   val tlb_asid     = Wire(UInt(8.W))
-  io.instMemory.paddr           := paddr
+  io.InstSram.paddr           := paddr
   io.preFetchStage.tlb_refill   := tlb_refill
   io.preFetchStage.tlb_invalid  := tlb_invalid
   io.preFetchStage.tlb_modified := tlb_modified

@@ -15,7 +15,7 @@ class FetchStage extends Module {
     val ctrl          = new Pipeline_Ctrl()
     val preFetchStage = new FetchStage_PreFetchStage()
     val decoderStage  = new FetchStage_DecoderStage()
-    val instMemory    = new FetchStage_InstMemory()
+    val InstSram    = new FetchStage_InstMemory()
   })
 
   val fs_valid           = RegInit(false.B)
@@ -54,7 +54,7 @@ class FetchStage extends Module {
   io.decoderStage.excode     := excode
   io.decoderStage.tlb_refill := fs_tlb_refill
 
-  io.instMemory.waiting := fs_valid && !inst_ok
+  io.InstSram.waiting := fs_valid && !inst_ok
 
   io.ctrl.ex := ex
 

@@ -5,7 +5,7 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class InstMemory extends Module {
+class InstSram extends Module {
   val io = IO(new Bundle {
     val fromPreFetchStage = Flipped(new PreFetchStage_InstMemory())
     val fromFetchStage    = Flipped(new FetchStage_InstMemory())
