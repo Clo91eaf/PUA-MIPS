@@ -573,10 +573,17 @@ class AXI extends Bundle {
 }
 
 class DEBUG extends Bundle {
+  // nscscc debug interface
   val pc    = Output(BUS)
   val wen   = Output(WEN_BUS)
   val waddr = Output(ADDR_BUS)
   val wdata = Output(BUS)
+  // soc-simulator + cemu debug interface
+  val cp0_count  = Output(BUS)
+  val cp0_random = Output(BUS)
+  val cp0_cause  = Output(BUS)
+  val int        = Output(Bool())
+  val commit     = Output(Bool())
 }
 
 //TLB MMU
