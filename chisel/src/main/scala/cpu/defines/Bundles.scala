@@ -522,6 +522,7 @@ class CP0_WriteBackStage extends Bundle {
   val cp0_entrylo0 = Output(UInt(32.W))
   val cp0_entrylo1 = Output(UInt(32.W))
   val cp0_index    = Output(UInt(32.W))
+  val cp0_random   = Output(UInt(32.W))
 }
 
 class AXI extends Bundle {

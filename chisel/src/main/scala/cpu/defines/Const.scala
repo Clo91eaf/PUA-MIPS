@@ -223,7 +223,7 @@ trait Constants {
   val EX_ENTRY            = "h_bfc00380".U(32.W)
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
   // TLB MMU
-  val TLB_NUM = 16
+  val TLB_NUM        = 16
 }
 trait OptionConst {
 

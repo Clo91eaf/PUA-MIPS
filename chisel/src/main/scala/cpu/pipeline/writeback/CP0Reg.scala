@@ -47,10 +47,11 @@ class CP0Reg extends Module {
   val cp0_badvaddr = Wire(UInt(32.W))
   val cp0_count    = Wire(UInt(32.W))
   val cp0_compare  = Wire(UInt(32.W))
-  val cp0_entryhi  = RegInit(0.U(32.W))
-  val cp0_entrylo0 = RegInit(0.U(32.W))
-  val cp0_entrylo1 = RegInit(0.U(32.W))
-  val cp0_index    = RegInit(0.U(32.W))
+  val cp0_random   = Wire(UInt(32.W))
+  val cp0_entryhi  = Wire(UInt(32.W))
+  val cp0_entrylo0 = Wire(UInt(32.W))
+  val cp0_entrylo1 = Wire(UInt(32.W))
+  val cp0_index    = Wire(UInt(32.W))
   io.writeBackStage.cp0_rdata    := cp0_rdata
   io.writeBackStage.cp0_status   := cp0_status
   io.writeBackStage.cp0_cause    := cp0_cause
@@ -62,6 +63,7 @@ class CP0Reg extends Module {
   io.writeBackStage.cp0_entrylo0 := cp0_entrylo0
   io.writeBackStage.cp0_entrylo1 := cp0_entrylo1
   io.writeBackStage.cp0_index    := cp0_index
+  io.writeBackStage.cp0_random   := cp0_random
 
   // CP0_STATUS
   val cp0_status_bev = true.B
@@ -163,13 +165,10 @@ class CP0Reg extends Module {
   cp0_badvaddr := c0_badvaddr
 
   // COUNT
-  val tick = RegInit(false.B)
-  tick := !tick
-
   val c0_count = RegInit(0.U(32.W))
   when(mtc0_we && cp0_addr === CP0_COUNT_ADDR) {
     c0_count := cp0_wdata
-  }.elsewhen(tick) {
+  }.otherwise {
     c0_count := c0_count + 1.U
   }
 
@@ -319,7 +318,7 @@ class CP0Reg extends Module {
     index_p := !s1_found
   }
 
-  val index_index = RegInit(0.U(4.W))
+  val index_index = RegInit(0.U(log2Ceil(TLB_NUM).W))
   when(mtc0_we && cp0_addr === CP0_INDEX_ADDR) {
     index_index := cp0_wdata(3, 0)
   }.elsewhen(tlbp) {
@@ -328,7 +327,17 @@ class CP0Reg extends Module {
 
   cp0_index := Cat(
     index_p,
-    0.U(27.W),
+    0.U((31 - log2Ceil(TLB_NUM)).W),
     index_index,
+  )
+
+  // RANDOM
+  val random = RegInit((TLB_NUM - 1).U(log2Ceil(TLB_NUM).W))
+
+  random := random + 1.U
+
+  cp0_random := Cat(
+    0.U((32 - log2Ceil(TLB_NUM)).W),
+    random,
   )
 }
