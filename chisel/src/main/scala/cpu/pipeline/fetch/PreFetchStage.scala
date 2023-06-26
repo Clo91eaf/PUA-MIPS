@@ -116,7 +116,7 @@ class PreFetchStage extends Module {
     bd_done_r := true.B
   }
 
-  br_taken  := br_taken_r || br_taken_w
+  br_taken  := br_taken_r || br_taken_w && io.fromFetchStage.valid
   br_target := Mux(br_taken_r, br_target_r, br_target_w)
   bd_done   := bd_done_r || bd_done_w
 
