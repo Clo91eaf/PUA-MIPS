@@ -81,13 +81,11 @@ class Decoder_ExecuteStage extends Bundle {
   val aluop                  = Output(ALU_OP_BUS)
   val alusel                 = Output(ALU_SEL_BUS)
   val inst                   = Output(BUS)
-  val is_in_delayslot        = Output(Bool())
   val link_addr              = Output(BUS)
   val reg1                   = Output(BUS)
   val reg2                   = Output(BUS)
   val reg_waddr              = Output(ADDR_BUS)
   val reg_wen                = Output(REG_WRITE_BUS)
-  val next_inst_in_delayslot = Output(Bool())
   val pc                     = Output(INST_ADDR_BUS)
   val valid                  = Output(Bool())
   val ex                     = Output(Bool())
@@ -115,10 +113,6 @@ class Decoder_Control extends Bundle {
 }
 
 // executeStage
-class ExecuteStage_Decoder extends Bundle {
-  val is_in_delayslot = Output(Bool())
-}
-
 class ExecuteStage_Execute extends Bundle {
   // wire
   val do_flush = Output(Bool())
@@ -128,7 +122,6 @@ class ExecuteStage_Execute extends Bundle {
   val aluop           = Output(ALU_OP_BUS)
   val alusel          = Output(ALU_SEL_BUS)
   val inst            = Output(BUS)
-  val is_in_delayslot = Output(Bool())
   val link_addr       = Output(BUS)
   val reg1            = Output(BUS)
   val reg2            = Output(BUS)
@@ -219,7 +212,6 @@ class Execute_MemoryStage extends Bundle {
   val reg_wdata       = Output(BUS)
   val whilo           = Output(Bool())
   val reg_wen         = Output(REG_WRITE_BUS)
-  val is_in_delayslot = Output(Bool())
   val pc              = Output(BUS)
   val valid           = Output(Bool())
   val mem_addr        = Output(BUS)
@@ -296,7 +288,6 @@ class MemoryStage_Memory extends Bundle {
   val reg_waddr       = Output(ADDR_BUS)
   val reg_wen         = Output(REG_WRITE_BUS)
   val reg_wdata       = Output(BUS)
-  val is_in_delayslot = Output(Bool())
   val pc              = Output(BUS)
   val valid           = Output(Bool())
   val bd              = Output(Bool())
@@ -371,12 +362,6 @@ class Memory_Execute extends Bundle {
   val lo          = Output(BUS)
   val allowin     = Output(Bool())
   val inst_unable = Output(Bool())
-}
-
-class Memory_CP0 extends Bundle {
-  val current_inst_addr = Output(BUS)
-  val is_in_delayslot   = Output(Bool())
-  val except_type       = Output(UInt(32.W))
 }
 
 class Memory_Control extends Bundle {

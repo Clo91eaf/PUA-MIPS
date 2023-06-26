@@ -32,7 +32,6 @@ class MemoryStage extends Module {
   val reg2            = RegInit(BUS_INIT)
   val hilo            = RegInit(DOUBLE_BUS_INIT)
   val cnt             = RegInit(CNT_BUS_INIT)
-  val is_in_delayslot = RegInit(NOT_IN_DELAY_SLOT)
   val valid           = RegInit(false.B)
   val ex              = RegInit(false.B)
   val bd              = RegInit(false.B)
@@ -68,7 +67,6 @@ class MemoryStage extends Module {
   io.memory.data            := data
   io.memory.wait_mem        := wait_mem
   io.memory.res_from_mem    := res_from_mem
-  io.memory.is_in_delayslot := is_in_delayslot
   io.memory.valid           := valid
   io.memory.after_tlb       := after_tlb
   io.memory.s1_found        := s1_found
@@ -97,7 +95,6 @@ class MemoryStage extends Module {
     cnt             := CNT_BUS_INIT
     aluop           := io.fromExecute.aluop
     reg2            := io.fromExecute.reg2
-    is_in_delayslot := io.fromExecute.is_in_delayslot
     pc              := io.fromExecute.pc
     mem_addr        := io.fromExecute.mem_addr
     ex              := io.fromExecute.ex

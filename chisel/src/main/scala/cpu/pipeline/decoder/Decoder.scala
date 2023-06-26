@@ -9,7 +9,6 @@ class Decoder extends Module {
   val io = IO(new Bundle {
     // 从各个流水线阶段传来的信号
     val fromDecoderStage   = Flipped(new DecoderStage_Decoder())
-    val fromExecuteStage   = Flipped(new ExecuteStage_Decoder())
     val fromExecute        = Flipped(new Execute_Decoder())
     val fromRegfile        = Flipped(new RegFile_Decoder())
     val fromMemory         = Flipped(new Memory_Decoder())
@@ -42,7 +41,6 @@ class Decoder extends Module {
   reg2_data := io.fromRegfile.reg2_data
 
   // input-execute stage
-  val is_in_delayslot = RegNext(io.fromExecuteStage.is_in_delayslot)
 
   // input-execute
   aluop_i := io.fromExecute.aluop
@@ -62,7 +60,6 @@ class Decoder extends Module {
   val reg2                   = Wire(BUS)
   val reg_waddr              = Wire(ADDR_BUS)
   val reg_wen                = Wire(REG_WRITE_BUS)
-  val next_inst_in_delayslot = Wire(Bool())
   val branch_flag            = Wire(Bool())
   val branch_target_address  = Wire(BUS)
   val link_addr              = Wire(BUS)
@@ -117,10 +114,8 @@ class Decoder extends Module {
   io.executeStage.reg_waddr              := reg_waddr
   io.executeStage.reg_wen                := reg_wen
   io.executeStage.inst                   := inst
-  io.executeStage.next_inst_in_delayslot := next_inst_in_delayslot
   io.executeStage.excode                 := excode
   io.executeStage.link_addr              := link_addr
-  io.executeStage.is_in_delayslot        := is_in_delayslot
   io.executeStage.valid                  := ds_to_es_valid
   io.executeStage.mem_re                 := mem_re
   io.executeStage.mem_we                 := mem_we
@@ -416,7 +411,6 @@ class Decoder extends Module {
     ),
   )
 
-  next_inst_in_delayslot := branch_flag_temp
 
   when(do_flush) {
     bd := false.B

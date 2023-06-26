@@ -40,7 +40,6 @@ class Memory extends Module {
   val cp0_wen         = Wire(Bool())
   val cp0_waddr       = Wire(CP0_ADDR_BUS)
   val cp0_wdata       = Wire(BUS)
-  val is_in_delayslot = Wire(Bool())
   val zero32          = Wire(BUS)
   val allowin         = Wire(Bool())
   val ms_to_ws_valid  = Wire(Bool())
@@ -133,7 +132,6 @@ class Memory extends Module {
   io.mov.cp0_wdata := cp0_wdata
 
   // input-memory stage
-  is_in_delayslot := io.fromMemoryStage.is_in_delayslot
 
   /*-------------------------------io finish-------------------------------*/
   inst_is_mfc0    := ms_valid && (aluop === EXE_MFC0_OP)

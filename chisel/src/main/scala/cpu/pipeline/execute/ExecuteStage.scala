@@ -10,7 +10,6 @@ class ExecuteStage extends Module {
     val fromExecute = Flipped(new Execute_ExecuteStage())
     val fromCtrl    = Flipped(new Ctrl_ExecuteStage())
 
-    val decoder = new ExecuteStage_Decoder()
     val execute = new ExecuteStage_Execute()
   })
 
@@ -18,8 +17,6 @@ class ExecuteStage extends Module {
   val aluop              = RegInit(ALU_OP_BUS_INIT)
   val alusel             = RegInit(ALU_SEL_BUS_INIT)
   val inst               = RegInit(BUS_INIT)
-  val ex_is_in_delayslot = RegInit(NOT_IN_DELAY_SLOT)
-  val is_in_delayslot    = RegInit(NOT_IN_DELAY_SLOT)
   val link_addr          = RegInit(BUS_INIT)
   val reg1               = RegInit(BUS_INIT)
   val reg2               = RegInit(BUS_INIT)
@@ -48,7 +45,6 @@ class ExecuteStage extends Module {
   io.execute.aluop           := aluop
   io.execute.alusel          := alusel
   io.execute.inst            := inst
-  io.execute.is_in_delayslot := ex_is_in_delayslot
   io.execute.link_addr       := link_addr
   io.execute.reg1            := reg1
   io.execute.reg2            := reg2
@@ -68,7 +64,6 @@ class ExecuteStage extends Module {
   io.execute.mem_we          := mem_we
 
   // output-decoder
-  io.decoder.is_in_delayslot := is_in_delayslot
 
   when(io.fromCtrl.do_flush) {
     es_valid := false.B
@@ -84,8 +79,6 @@ class ExecuteStage extends Module {
     reg_waddr          := io.fromDecoder.reg_waddr
     reg_wen            := io.fromDecoder.reg_wen
     link_addr          := io.fromDecoder.link_addr
-    ex_is_in_delayslot := io.fromDecoder.is_in_delayslot
-    is_in_delayslot    := io.fromDecoder.next_inst_in_delayslot
     inst               := io.fromDecoder.inst
     pc                 := io.fromDecoder.pc
     ex                 := io.fromDecoder.ex

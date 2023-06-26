@@ -73,7 +73,6 @@ class Execute extends Module {
 
   // input-execute stage
   val link_addr       = io.fromExecuteStage.link_addr
-  val is_in_delayslot = io.fromExecuteStage.is_in_delayslot
 
   // output
   val reg_wen        = Wire(REG_WRITE_BUS)
@@ -244,7 +243,6 @@ class Execute extends Module {
   io.memoryStage.aluop           := aluop
   io.memoryStage.reg2            := reg2
   io.memoryStage.valid           := es_to_ms_valid
-  io.memoryStage.is_in_delayslot := is_in_delayslot
   io.memoryStage.mem_addr        := mem_addr_temp
   io.memoryStage.data_ok         := data_ok
   io.memoryStage.data            := data

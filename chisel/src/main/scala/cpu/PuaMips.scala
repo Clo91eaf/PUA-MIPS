@@ -86,7 +86,6 @@ class PuaMips extends Module {
   decoder.io.ctrl <> ctrl.io.fromDecoder
 
   // executeStage
-  executeStage.io.decoder <> decoder.io.fromExecuteStage
   executeStage.io.execute <> execute.io.fromExecuteStage
 
   // execute
