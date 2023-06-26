@@ -66,7 +66,10 @@ class CP0Reg extends Module {
   io.writeBackStage.cp0_random   := cp0_random
 
   // CP0_STATUS
-  val cp0_status_bev = true.B
+  val cp0_status_bev = RegInit(true.B)
+  when(mtc0_we && cp0_addr === CP0_STATUS_ADDR) {
+    cp0_status_bev := cp0_wdata(22)
+  }
 
   val cp0_status_im = RegInit(0.U(8.W))
   when(mtc0_we && cp0_addr === CP0_STATUS_ADDR) {
