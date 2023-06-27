@@ -110,7 +110,7 @@ class CP0Reg extends Module {
   val cp0_cause_ti     = RegInit(false.B)
   val count_eq_compare = (cp0_count === cp0_compare)
 
-  when(mtc0_we && (cp0_addr === CP0_COMP_ADDR)) {
+  when(mtc0_we && (cp0_addr === CP0_COMPARE_ADDR)) {
     cp0_cause_ti := false.B
   }.elsewhen(count_eq_compare) {
     cp0_cause_ti := true.B
@@ -179,7 +179,7 @@ class CP0Reg extends Module {
 
   // COMPARE
   val c0_compare = RegInit(0.U(32.W))
-  when(mtc0_we && cp0_addr === CP0_COMP_ADDR) {
+  when(mtc0_we && cp0_addr === CP0_COMPARE_ADDR) {
     c0_compare := cp0_wdata
   }
 
@@ -194,7 +194,7 @@ class CP0Reg extends Module {
       CP0_EPC_ADDR      -> cp0_epc,
       CP0_BADV_ADDR     -> cp0_badvaddr,
       CP0_COUNT_ADDR    -> cp0_count,
-      CP0_COMP_ADDR     -> cp0_compare,
+      CP0_COMPARE_ADDR  -> cp0_compare,
       CP0_ENTRYHI_ADDR  -> cp0_entryhi,
       CP0_ENTRYLO0_ADDR -> cp0_entrylo0,
       CP0_ENTRYLO1_ADDR -> cp0_entrylo1,
