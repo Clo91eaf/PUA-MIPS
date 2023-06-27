@@ -72,14 +72,7 @@ class WriteBackStage extends Module {
     (ws_excode === EX_TLBL || ws_excode === EX_TLBS) && ws_tlb_refill && ws_valid
 
   val do_flush = ex
-  val flush_pc = MuxCase(
-    EX_ENTRY,
-    Seq(
-      ws_after_tlb        -> ws_pc,
-      ws_inst_is_eret     -> cp0_epc,
-      ex_tlb_refill_entry -> EX_TLB_REFILL_ENTRY,
-    ),
-  )
+  val flush_pc = io.fromCP0.flush_pc
 
   // output-ctrl
   io.ctrl.ex       := ex
@@ -134,32 +127,35 @@ class WriteBackStage extends Module {
   io.debug.commit := ws_valid & ~ws_ex
 
   // output-cp0
-  io.cp0.wb_ex       := ex && !ws_inst_is_eret && !ws_after_tlb
-  io.cp0.wb_bd       := ws_bd
-  io.cp0.eret_flush  := eret
-  io.cp0.wb_excode   := ws_excode
-  io.cp0.wb_pc       := ws_pc
-  io.cp0.wb_badvaddr := ws_badvaddr
-  io.cp0.ext_int_in  := ext_int
-  io.cp0.cp0_addr    := ws_cp0_addr
-  io.cp0.mtc0_we     := cp0_we
-  io.cp0.cp0_wdata   := cp0_wdata
-  io.cp0.tlbp        := ws_inst_is_tlbp
-  io.cp0.tlbr        := ws_inst_is_tlbr
-  io.cp0.tlbwi       := ws_inst_is_tlbwi
-  io.cp0.s1_found    := ws_s1_found
-  io.cp0.s1_index    := ws_s1_index
-  io.cp0.r_vpn2      := io.fromTLB.r_vpn2
-  io.cp0.r_asid      := io.fromTLB.r_asid
-  io.cp0.r_g         := io.fromTLB.r_g
-  io.cp0.r_pfn0      := io.fromTLB.r_pfn0
-  io.cp0.r_c0        := io.fromTLB.r_c0
-  io.cp0.r_d0        := io.fromTLB.r_d0
-  io.cp0.r_v0        := io.fromTLB.r_v0
-  io.cp0.r_pfn1      := io.fromTLB.r_pfn1
-  io.cp0.r_c1        := io.fromTLB.r_c1
-  io.cp0.r_d1        := io.fromTLB.r_d1
-  io.cp0.r_v1        := io.fromTLB.r_v1
+  io.cp0.wb_ex               := ex && !ws_inst_is_eret && !ws_after_tlb
+  io.cp0.wb_bd               := ws_bd
+  io.cp0.eret_flush          := eret
+  io.cp0.wb_excode           := ws_excode
+  io.cp0.wb_pc               := ws_pc
+  io.cp0.wb_badvaddr         := ws_badvaddr
+  io.cp0.ext_int_in          := ext_int
+  io.cp0.cp0_addr            := ws_cp0_addr
+  io.cp0.mtc0_we             := cp0_we
+  io.cp0.cp0_wdata           := cp0_wdata
+  io.cp0.tlbp                := ws_inst_is_tlbp
+  io.cp0.tlbr                := ws_inst_is_tlbr
+  io.cp0.tlbwi               := ws_inst_is_tlbwi
+  io.cp0.s1_found            := ws_s1_found
+  io.cp0.s1_index            := ws_s1_index
+  io.cp0.r_vpn2              := io.fromTLB.r_vpn2
+  io.cp0.r_asid              := io.fromTLB.r_asid
+  io.cp0.r_g                 := io.fromTLB.r_g
+  io.cp0.r_pfn0              := io.fromTLB.r_pfn0
+  io.cp0.r_c0                := io.fromTLB.r_c0
+  io.cp0.r_d0                := io.fromTLB.r_d0
+  io.cp0.r_v0                := io.fromTLB.r_v0
+  io.cp0.r_pfn1              := io.fromTLB.r_pfn1
+  io.cp0.r_c1                := io.fromTLB.r_c1
+  io.cp0.r_d1                := io.fromTLB.r_d1
+  io.cp0.r_v1                := io.fromTLB.r_v1
+  io.cp0.ws_after_tlb        := ws_after_tlb
+  io.cp0.ws_inst_is_eret     := ws_inst_is_eret
+  io.cp0.ex_tlb_refill_entry := ex_tlb_refill_entry
 
   // output-tlb
   io.tlb.we      := ws_inst_is_tlbwi && ws_valid

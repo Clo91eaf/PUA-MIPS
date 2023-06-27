@@ -40,6 +40,7 @@ class CP0Reg extends Module {
   val r_v1        = io.fromWriteBackStage.r_v1
 
   // output-writeBack stage
+  val flush_pc     = Wire(UInt(32.W))
   val cp0_rdata    = Wire(UInt(32.W))
   val cp0_status   = Wire(UInt(32.W))
   val cp0_cause    = Wire(UInt(32.W))
@@ -65,6 +66,16 @@ class CP0Reg extends Module {
   io.writeBackStage.cp0_entrylo1 := cp0_entrylo1
   io.writeBackStage.cp0_index    := cp0_index
   io.writeBackStage.cp0_random   := cp0_random
+  io.writeBackStage.flush_pc     := flush_pc
+
+  flush_pc := MuxCase(
+    EX_ENTRY,
+    Seq(
+      io.fromWriteBackStage.ws_after_tlb        -> wb_pc,
+      io.fromWriteBackStage.ws_inst_is_eret     -> cp0_epc,
+      io.fromWriteBackStage.ex_tlb_refill_entry -> EX_TLB_REFILL_ENTRY,
+    ),
+  )
 
   // CP0_STATUS
   val cp0_status_bev = RegInit(true.B)
