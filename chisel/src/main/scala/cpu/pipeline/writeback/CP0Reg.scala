@@ -52,6 +52,7 @@ class CP0Reg extends Module {
   val cp0_entrylo0 = Wire(UInt(32.W))
   val cp0_entrylo1 = Wire(UInt(32.W))
   val cp0_index    = Wire(UInt(32.W))
+  val cp0_ebase    = Wire(UInt(32.W))
   io.writeBackStage.cp0_rdata    := cp0_rdata
   io.writeBackStage.cp0_status   := cp0_status
   io.writeBackStage.cp0_cause    := cp0_cause
@@ -185,6 +186,20 @@ class CP0Reg extends Module {
 
   cp0_compare := c0_compare
 
+  // EBase
+  val ebase = RegInit(0.U(18.W))
+  when(mtc0_we && cp0_addr === CP0_EBASE_ADDR) {
+    ebase := cp0_wdata(29, 12)
+  }
+  val cpu_num = 0.U(10.W)
+  cp0_ebase := Cat(
+    1.U(1.W), // 31:31
+    0.U(1.W), // 30:30
+    ebase,    // 29:12
+    0.U(2.W), // 11:10
+    cpu_num,  // 9:0
+  )
+
   cp0_rdata := MuxLookup(
     cp0_addr,
     ZERO_WORD,
@@ -199,6 +214,7 @@ class CP0Reg extends Module {
       CP0_ENTRYLO0_ADDR -> cp0_entrylo0,
       CP0_ENTRYLO1_ADDR -> cp0_entrylo1,
       CP0_INDEX_ADDR    -> cp0_index,
+      CP0_EBASE_ADDR    -> cp0_ebase,
     ),
   )
 
