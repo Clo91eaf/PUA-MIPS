@@ -209,24 +209,6 @@ class CP0Reg extends Module {
     cpu_num,  // 9:0
   )
 
-  cp0_rdata := MuxLookup(
-    cp0_addr,
-    ZERO_WORD,
-    Seq(
-      CP0_STATUS_ADDR   -> cp0_status,
-      CP0_CAUSE_ADDR    -> cp0_cause,
-      CP0_EPC_ADDR      -> cp0_epc,
-      CP0_BADV_ADDR     -> cp0_badvaddr,
-      CP0_COUNT_ADDR    -> cp0_count,
-      CP0_COMPARE_ADDR  -> cp0_compare,
-      CP0_ENTRYHI_ADDR  -> cp0_entryhi,
-      CP0_ENTRYLO0_ADDR -> cp0_entrylo0,
-      CP0_ENTRYLO1_ADDR -> cp0_entrylo1,
-      CP0_INDEX_ADDR    -> cp0_index,
-      CP0_EBASE_ADDR    -> cp0_ebase,
-    ),
-  )
-
   // ENTRYHI
   val entry_hi_vpn2 = RegInit(0.U(19.W))
   when(wb_ex && excode_tlb) {
@@ -369,6 +351,18 @@ class CP0Reg extends Module {
     random,
   )
 
+  // PageMask 4KB pagesize
+  val mask  = 0.U(16.W)
+  val maskx = 3.U(4.W)
+
+  val cp0_page_mask = Wire(UInt(32.W))
+  cp0_page_mask := Cat(
+    0.U(4.W),
+    mask,
+    maskx,
+    0.U(11.W),
+  )
+
   val trap_base = Wire(UInt(32.W))
   trap_base := Mux(cp0_status(22), "hbfc00200".U, cp0_ebase)
 
@@ -379,6 +373,25 @@ class CP0Reg extends Module {
       io.fromWriteBackStage.ws_inst_is_eret     -> cp0_epc,
       io.fromWriteBackStage.ex_tlb_refill_entry -> (trap_base + 0.U),
       (wb_ex & cp0_cause_iv & !cp0_status_bev)  -> (trap_base + "h200".U),
+    ),
+  )
+
+  cp0_rdata := MuxLookup(
+    cp0_addr,
+    ZERO_WORD,
+    Seq(
+      CP0_STATUS_ADDR    -> cp0_status,
+      CP0_CAUSE_ADDR     -> cp0_cause,
+      CP0_EPC_ADDR       -> cp0_epc,
+      CP0_BADV_ADDR      -> cp0_badvaddr,
+      CP0_COUNT_ADDR     -> cp0_count,
+      CP0_COMPARE_ADDR   -> cp0_compare,
+      CP0_ENTRYHI_ADDR   -> cp0_entryhi,
+      CP0_ENTRYLO0_ADDR  -> cp0_entrylo0,
+      CP0_ENTRYLO1_ADDR  -> cp0_entrylo1,
+      CP0_INDEX_ADDR     -> cp0_index,
+      CP0_EBASE_ADDR     -> cp0_ebase,
+      CP0_PAGE_MASK_ADDR -> cp0_page_mask,
     ),
   )
 }
