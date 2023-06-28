@@ -24,7 +24,6 @@ class CP0Reg extends Module {
   val cp0_wdata   = io.fromWriteBackStage.cp0_wdata
   val tlbp        = io.fromWriteBackStage.tlbp
   val tlbr        = io.fromWriteBackStage.tlbr
-  val tlbwi       = io.fromWriteBackStage.tlbwi
   val s1_found    = io.fromWriteBackStage.s1_found
   val s1_index    = io.fromWriteBackStage.s1_index
   val r_vpn2      = io.fromWriteBackStage.r_vpn2

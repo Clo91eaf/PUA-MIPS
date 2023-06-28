@@ -47,6 +47,7 @@ class WriteBackStage extends Module {
   val ws_inst_is_tlbp    = RegInit(false.B)
   val ws_inst_is_tlbr    = RegInit(false.B)
   val ws_inst_is_tlbwi   = RegInit(false.B)
+  val ws_inst_is_tlbwr   = RegInit(false.B)
   val ws_tlb_refill      = RegInit(false.B)
   val ws_after_tlb       = RegInit(false.B)
   val ws_s1_found        = RegInit(false.B)
@@ -142,7 +143,6 @@ class WriteBackStage extends Module {
   io.cp0.cp0_wdata           := cp0_wdata
   io.cp0.tlbp                := ws_inst_is_tlbp
   io.cp0.tlbr                := ws_inst_is_tlbr
-  io.cp0.tlbwi               := ws_inst_is_tlbwi
   io.cp0.s1_found            := ws_s1_found
   io.cp0.s1_index            := ws_s1_index
   io.cp0.r_vpn2              := io.fromTLB.r_vpn2
@@ -161,14 +161,18 @@ class WriteBackStage extends Module {
   io.cp0.ex_tlb_refill_entry := ex_tlb_refill_entry
 
   // output-tlb
-  io.tlb.we      := ws_inst_is_tlbwi && ws_valid
+  io.tlb.we      := (ws_inst_is_tlbwi || ws_inst_is_tlbwr) && ws_valid
   io.tlb.r_index := io.fromCP0.cp0_index(3, 0)
 
   // ENTRYHI
-  io.tlb.w_index := io.fromCP0.cp0_index(3, 0)
-  io.tlb.w_vpn2  := io.fromCP0.cp0_entryhi(31, 13)
-  io.tlb.w_asid  := io.fromCP0.cp0_entryhi(7, 0)
-  io.tlb.w_g     := io.fromCP0.cp0_entrylo0(0) & io.fromCP0.cp0_entrylo1(0)
+  io.tlb.w_index := Mux(
+    ws_inst_is_tlbwi,
+    io.fromCP0.cp0_index(3, 0),
+    io.fromCP0.cp0_random(log2Ceil(TLB_NUM) - 1, 0),
+  )
+  io.tlb.w_vpn2 := io.fromCP0.cp0_entryhi(31, 13)
+  io.tlb.w_asid := io.fromCP0.cp0_entryhi(7, 0)
+  io.tlb.w_g    := io.fromCP0.cp0_entrylo0(0) & io.fromCP0.cp0_entrylo1(0)
   // ENTRYLO0
   io.tlb.w_pfn0 := io.fromCP0.cp0_entrylo0(25, 6)
   io.tlb.w_c0   := io.fromCP0.cp0_entrylo0(5, 3)

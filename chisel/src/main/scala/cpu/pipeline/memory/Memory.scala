@@ -52,6 +52,7 @@ class Memory extends Module {
   val inst_is_tlbp    = Wire(Bool())
   val inst_is_tlbr    = Wire(Bool())
   val inst_is_tlbwi   = Wire(Bool())
+  val inst_is_tlbwr   = Wire(Bool())
   val ex              = Wire(Bool())
 
   // output-ctrl
@@ -122,6 +123,7 @@ class Memory extends Module {
   io.writeBackStage.inst_is_tlbp    := inst_is_tlbp
   io.writeBackStage.inst_is_tlbr    := inst_is_tlbr
   io.writeBackStage.inst_is_tlbwi   := inst_is_tlbwi
+  io.writeBackStage.inst_is_tlbwr   := inst_is_tlbwr
   io.writeBackStage.tlb_refill      := tlb_refill
   io.writeBackStage.after_tlb       := after_tlb
   io.writeBackStage.s1_found        := s1_found
@@ -142,6 +144,7 @@ class Memory extends Module {
   inst_is_tlbp    := ms_valid && (aluop === EXE_TLBP_OP)
   inst_is_tlbr    := ms_valid && (aluop === EXE_TLBR_OP)
   inst_is_tlbwi   := ms_valid && (aluop === EXE_TLBWI_OP)
+  inst_is_tlbwr   := ms_valid && (aluop === EXE_TLBWR_OP)
 
   val ready_go = Mux(io.fromMemoryStage.wait_mem, data_ok, true.B)
   allowin        := !ms_valid || ready_go && io.fromWriteBackStage.allowin

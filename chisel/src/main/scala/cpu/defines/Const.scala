@@ -123,6 +123,7 @@ trait Constants {
   val EXE_TLBP_OP  = 72.U(ALU_OP_LEN.W)
   val EXE_TLBR_OP  = 73.U(ALU_OP_LEN.W)
   val EXE_TLBWI_OP = 74.U(ALU_OP_LEN.W)
+  val EXE_TLBWR_OP = 75.U(ALU_OP_LEN.W)
 
   // AluSel
   val ALU_SEL_BUS      = UInt(3.W)
