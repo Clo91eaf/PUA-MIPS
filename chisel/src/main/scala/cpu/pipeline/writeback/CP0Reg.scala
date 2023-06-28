@@ -58,6 +58,7 @@ class CP0Reg extends Module {
   val cp0_context   = Wire(UInt(32.W))
   val cp0_config    = Wire(UInt(32.W))
   val cp0_config1   = Wire(UInt(32.W))
+  val cp0_wired     = Wire(UInt(32.W))
   io.writeBackStage.cp0_rdata    := cp0_rdata
   io.writeBackStage.cp0_status   := cp0_status
   io.writeBackStage.cp0_cause    := cp0_cause
@@ -399,21 +400,32 @@ class CP0Reg extends Module {
 
   // Config1
   cp0_config1 := Cat(
-    0.U(1.W),  // m
-    15.U(6.W), // ms
-    0.U(3.W),  // is
-    5.U(3.W),  // il
-    1.U(3.W),  // ia
-    0.U(3.W),  // ds
-    5.U(3.W),  // dl
-    1.U(3.W),  // da
-    0.U(1.W),  // c2
-    0.U(1.W),  // md
-    0.U(1.W),  // pc
-    0.U(1.W),  // wr
-    0.U(1.W),  // ca
-    0.U(1.W),  // ep
-    0.U(1.W),  // fp
+    0.U(1.W),             // m
+    (TLB_NUM - 1).U(6.W), // ms
+    0.U(3.W),             // is
+    5.U(3.W),             // il
+    1.U(3.W),             // ia
+    0.U(3.W),             // ds
+    5.U(3.W),             // dl
+    1.U(3.W),             // da
+    0.U(1.W),             // c2
+    0.U(1.W),             // md
+    0.U(1.W),             // pc
+    0.U(1.W),             // wr
+    0.U(1.W),             // ca
+    0.U(1.W),             // ep
+    0.U(1.W),             // fp
+  )
+
+  // Wired
+  val wired = RegInit(0.U((log2Ceil(TLB_NUM)).W))
+  when(mtc0_we && cp0_addr === CP0_WIRED_ADDR) {
+    wired := cp0_wdata(log2Ceil(TLB_NUM) - 1, 0)
+  }
+
+  cp0_wired := Cat(
+    0.U((32 - log2Ceil(TLB_NUM)).W),
+    wired,
   )
 
   val trap_base = Wire(UInt(32.W))
@@ -448,6 +460,7 @@ class CP0Reg extends Module {
       CP0_CONTEXT_ADDR   -> cp0_context,
       CP0_CONFIG_ADDR    -> cp0_config,
       CP0_CONFIG1_ADDR   -> cp0_config1,
+      CP0_WIRED_ADDR     -> cp0_wired,
     ),
   )
 }
