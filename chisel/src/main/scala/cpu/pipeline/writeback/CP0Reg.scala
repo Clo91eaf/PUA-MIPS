@@ -56,6 +56,8 @@ class CP0Reg extends Module {
   val cp0_ebase     = Wire(UInt(32.W))
   val cp0_page_mask = Wire(UInt(32.W))
   val cp0_context   = Wire(UInt(32.W))
+  val cp0_config    = Wire(UInt(32.W))
+  val cp0_config1   = Wire(UInt(32.W))
   io.writeBackStage.cp0_rdata    := cp0_rdata
   io.writeBackStage.cp0_status   := cp0_status
   io.writeBackStage.cp0_cause    := cp0_cause
@@ -380,6 +382,21 @@ class CP0Reg extends Module {
     0.U(4.W),
   )
 
+  // Config0
+  cp0_config := Cat(
+    1.U(1.W),     // m
+    0.U(3.W),     // k23
+    0.U(3.W),     // ku
+    0.U(9.W),     // impl
+    0.U(1.W),     // be
+    0.U(2.W),     // at
+    0.U(3.W),     // ar
+    1.U(3.W),     // mt
+    0.U(3.W),     // 0
+    0.U(1.W),     // vi
+    "b011".U(3.W),// k0
+  )
+
   val trap_base = Wire(UInt(32.W))
   trap_base := Mux(cp0_status(22), "hbfc00200".U, cp0_ebase)
 
@@ -410,6 +427,7 @@ class CP0Reg extends Module {
       CP0_EBASE_ADDR     -> cp0_ebase,
       CP0_PAGE_MASK_ADDR -> cp0_page_mask,
       CP0_CONTEXT_ADDR   -> cp0_context,
+      CP0_CONFIG_ADDR    -> cp0_config,
     ),
   )
 }
