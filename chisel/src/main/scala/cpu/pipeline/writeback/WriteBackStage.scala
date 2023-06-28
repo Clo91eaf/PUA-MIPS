@@ -51,6 +51,8 @@ class WriteBackStage extends Module {
   val ws_after_tlb       = RegInit(false.B)
   val ws_s1_found        = RegInit(false.B)
   val ws_s1_index        = RegInit(0.U(log2Ceil(TLB_NUM).W))
+  val has_commit         = RegInit(false.B)
+
   // input-cp0
   val cp0_rdata  = io.fromCP0.cp0_rdata
   val cp0_epc    = io.fromCP0.cp0_epc
@@ -124,7 +126,7 @@ class WriteBackStage extends Module {
   io.debug.cp0_random := io.fromCP0.cp0_random
 
   io.debug.int    := ex && !ws_inst_is_eret && !ws_after_tlb
-  io.debug.commit := ws_valid & ~ws_ex
+  io.debug.commit := (has_commit || ex) && ws_valid
 
   // output-cp0
   io.cp0.wb_ex               := ex && !ws_inst_is_eret && !ws_after_tlb
@@ -211,6 +213,7 @@ class WriteBackStage extends Module {
     ws_after_tlb       := io.fromMemory.after_tlb
     ws_s1_found        := io.fromMemory.s1_found
     ws_s1_index        := io.fromMemory.s1_index
+    has_commit         := io.fromMemory.has_commit
   }
 
   inst_is_mfc0 := ws_valid && ws_inst_is_mfc0

@@ -126,6 +126,7 @@ class Memory extends Module {
   io.writeBackStage.after_tlb       := after_tlb
   io.writeBackStage.s1_found        := s1_found
   io.writeBackStage.s1_index        := s1_index
+  io.writeBackStage.has_commit      := io.fromMemoryStage.has_commit
   // output-execute
   io.mov.cp0_wen   := cp0_wen
   io.mov.cp0_waddr := cp0_waddr

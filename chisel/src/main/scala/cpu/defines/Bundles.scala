@@ -230,6 +230,7 @@ class Execute_MemoryStage extends Bundle {
   val s1_found     = Output(Bool())
   val s1_index     = Output(UInt(log2Ceil(TLB_NUM).W))
   val cnt          = Output(CNT_BUS)
+  val has_commit   = Output(Bool())
 }
 
 class Execute_CP0 extends Bundle {
@@ -304,6 +305,7 @@ class MemoryStage_Memory extends Bundle {
   val after_tlb    = Output(Bool())
   val s1_found     = Output(Bool())
   val s1_index     = Output(UInt(log2Ceil(TLB_NUM).W))
+  val has_commit   = Output(Bool())
 }
 
 // memory
@@ -342,6 +344,7 @@ class Memory_WriteBackStage extends Bundle {
   val after_tlb       = Output(Bool())
   val s1_found        = Output(Bool())
   val s1_index        = Output(UInt(log2Ceil(TLB_NUM).W))
+  val has_commit      = Output(Bool())
 }
 
 class Memory_DataMemory extends Bundle {

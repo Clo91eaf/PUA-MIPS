@@ -72,7 +72,7 @@ class Execute extends Module {
   val cnt_i       = io.fromMemoryStage.cnt
 
   // input-execute stage
-  val link_addr       = io.fromExecuteStage.link_addr
+  val link_addr = io.fromExecuteStage.link_addr
 
   // output
   val reg_wen        = Wire(REG_WRITE_BUS)
@@ -233,26 +233,27 @@ class Execute extends Module {
   io.decoder.es_fwd_valid := es_fwd_valid
 
   // output-memory stage
-  io.memoryStage.reg_wen         := reg_wen
-  io.memoryStage.reg_waddr       := reg_waddr
-  io.memoryStage.reg_wdata       := reg_wdata
-  io.memoryStage.hi              := hi
-  io.memoryStage.lo              := lo
-  io.memoryStage.whilo           := whilo
-  io.memoryStage.hilo            := hilo_temp_o
-  io.memoryStage.aluop           := aluop
-  io.memoryStage.reg2            := reg2
-  io.memoryStage.valid           := es_to_ms_valid
-  io.memoryStage.mem_addr        := mem_addr_temp
-  io.memoryStage.data_ok         := data_ok
-  io.memoryStage.data            := data
-  io.memoryStage.wait_mem        := es_valid && addr_ok
-  io.memoryStage.res_from_mem    := mem_re
-  io.memoryStage.tlb_refill      := ds_tlb_refill || tlb_refill_ex
-  io.memoryStage.after_tlb       := after_tlb
-  io.memoryStage.s1_found        := s1_found
-  io.memoryStage.s1_index        := s1_index
-  io.memoryStage.cnt             := cnt
+  io.memoryStage.reg_wen      := reg_wen
+  io.memoryStage.reg_waddr    := reg_waddr
+  io.memoryStage.reg_wdata    := reg_wdata
+  io.memoryStage.hi           := hi
+  io.memoryStage.lo           := lo
+  io.memoryStage.whilo        := whilo
+  io.memoryStage.hilo         := hilo_temp_o
+  io.memoryStage.aluop        := aluop
+  io.memoryStage.reg2         := reg2
+  io.memoryStage.valid        := es_to_ms_valid
+  io.memoryStage.mem_addr     := mem_addr_temp
+  io.memoryStage.data_ok      := data_ok
+  io.memoryStage.data         := data
+  io.memoryStage.wait_mem     := es_valid && addr_ok
+  io.memoryStage.res_from_mem := mem_re
+  io.memoryStage.tlb_refill   := ds_tlb_refill || tlb_refill_ex
+  io.memoryStage.after_tlb    := after_tlb
+  io.memoryStage.s1_found     := s1_found
+  io.memoryStage.s1_index     := s1_index
+  io.memoryStage.cnt          := cnt
+  io.memoryStage.has_commit   := !stallreq && es_valid
 
   // output-execute stage
   io.executeStage.allowin := allowin
