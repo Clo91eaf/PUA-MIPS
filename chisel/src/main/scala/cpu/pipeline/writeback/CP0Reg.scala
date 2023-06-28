@@ -384,17 +384,36 @@ class CP0Reg extends Module {
 
   // Config0
   cp0_config := Cat(
-    1.U(1.W),     // m
-    0.U(3.W),     // k23
-    0.U(3.W),     // ku
-    0.U(9.W),     // impl
-    0.U(1.W),     // be
-    0.U(2.W),     // at
-    0.U(3.W),     // ar
-    1.U(3.W),     // mt
-    0.U(3.W),     // 0
-    0.U(1.W),     // vi
-    "b011".U(3.W),// k0
+    1.U(1.W), // m
+    0.U(3.W), // k23
+    0.U(3.W), // ku
+    0.U(9.W), // impl
+    0.U(1.W), // be
+    0.U(2.W), // at
+    0.U(3.W), // ar
+    1.U(3.W), // mt
+    0.U(3.W), // 0
+    0.U(1.W), // vi
+    3.U(3.W), // k0
+  )
+
+  // Config1
+  cp0_config1 := Cat(
+    0.U(1.W),  // m
+    15.U(6.W), // ms
+    0.U(3.W),  // is
+    5.U(3.W),  // il
+    1.U(3.W),  // ia
+    0.U(3.W),  // ds
+    5.U(3.W),  // dl
+    1.U(3.W),  // da
+    0.U(1.W),  // c2
+    0.U(1.W),  // md
+    0.U(1.W),  // pc
+    0.U(1.W),  // wr
+    0.U(1.W),  // ca
+    0.U(1.W),  // ep
+    0.U(1.W),  // fp
   )
 
   val trap_base = Wire(UInt(32.W))
@@ -428,6 +447,7 @@ class CP0Reg extends Module {
       CP0_PAGE_MASK_ADDR -> cp0_page_mask,
       CP0_CONTEXT_ADDR   -> cp0_context,
       CP0_CONFIG_ADDR    -> cp0_config,
+      CP0_CONFIG1_ADDR   -> cp0_config1,
     ),
   )
 }
