@@ -40,20 +40,22 @@ class CP0Reg extends Module {
   val r_v1        = io.fromWriteBackStage.r_v1
 
   // output-writeBack stage
-  val flush_pc     = Wire(UInt(32.W))
-  val cp0_rdata    = Wire(UInt(32.W))
-  val cp0_status   = Wire(UInt(32.W))
-  val cp0_cause    = Wire(UInt(32.W))
-  val cp0_epc      = Wire(UInt(32.W))
-  val cp0_badvaddr = Wire(UInt(32.W))
-  val cp0_count    = Wire(UInt(32.W))
-  val cp0_compare  = Wire(UInt(32.W))
-  val cp0_random   = Wire(UInt(32.W))
-  val cp0_entryhi  = Wire(UInt(32.W))
-  val cp0_entrylo0 = Wire(UInt(32.W))
-  val cp0_entrylo1 = Wire(UInt(32.W))
-  val cp0_index    = Wire(UInt(32.W))
-  val cp0_ebase    = Wire(UInt(32.W))
+  val flush_pc      = Wire(UInt(32.W))
+  val cp0_rdata     = Wire(UInt(32.W))
+  val cp0_status    = Wire(UInt(32.W))
+  val cp0_cause     = Wire(UInt(32.W))
+  val cp0_epc       = Wire(UInt(32.W))
+  val cp0_badvaddr  = Wire(UInt(32.W))
+  val cp0_count     = Wire(UInt(32.W))
+  val cp0_compare   = Wire(UInt(32.W))
+  val cp0_random    = Wire(UInt(32.W))
+  val cp0_entryhi   = Wire(UInt(32.W))
+  val cp0_entrylo0  = Wire(UInt(32.W))
+  val cp0_entrylo1  = Wire(UInt(32.W))
+  val cp0_index     = Wire(UInt(32.W))
+  val cp0_ebase     = Wire(UInt(32.W))
+  val cp0_page_mask = Wire(UInt(32.W))
+  val cp0_context   = Wire(UInt(32.W))
   io.writeBackStage.cp0_rdata    := cp0_rdata
   io.writeBackStage.cp0_status   := cp0_status
   io.writeBackStage.cp0_cause    := cp0_cause
@@ -355,12 +357,27 @@ class CP0Reg extends Module {
   val mask  = 0.U(16.W)
   val maskx = 3.U(4.W)
 
-  val cp0_page_mask = Wire(UInt(32.W))
   cp0_page_mask := Cat(
     0.U(4.W),
     mask,
     maskx,
     0.U(11.W),
+  )
+
+  // Context
+  val ptebase = RegInit(0.U(9.W))
+  when(mtc0_we && cp0_addr === CP0_CONTEXT_ADDR) {
+    ptebase := cp0_wdata(31, 23)
+  }
+  val badvpn2 = RegInit(0.U(19.W))
+  when(wb_ex && excode_tlb) {
+    badvpn2 := wb_badvaddr(31, 13)
+  }
+
+  cp0_context := Cat(
+    ptebase,
+    badvpn2,
+    0.U(4.W),
   )
 
   val trap_base = Wire(UInt(32.W))
@@ -392,6 +409,7 @@ class CP0Reg extends Module {
       CP0_INDEX_ADDR     -> cp0_index,
       CP0_EBASE_ADDR     -> cp0_ebase,
       CP0_PAGE_MASK_ADDR -> cp0_page_mask,
+      CP0_CONTEXT_ADDR   -> cp0_context,
     ),
   )
 }
