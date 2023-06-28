@@ -398,7 +398,7 @@ class CP0Reg extends Module {
     1.U(3.W), // mt
     0.U(3.W), // 0
     0.U(1.W), // vi
-    3.U(3.W), // k0
+    2.U(3.W), // k0
   )
 
   // Config1
@@ -406,11 +406,11 @@ class CP0Reg extends Module {
     0.U(1.W),             // m
     (TLB_NUM - 1).U(6.W), // ms
     0.U(3.W),             // is
-    5.U(3.W),             // il
-    1.U(3.W),             // ia
+    0.U(3.W),             // il
+    0.U(3.W),             // ia
     0.U(3.W),             // ds
-    5.U(3.W),             // dl
-    1.U(3.W),             // da
+    0.U(3.W),             // dl
+    0.U(3.W),             // da
     0.U(1.W),             // c2
     0.U(1.W),             // md
     0.U(1.W),             // pc
