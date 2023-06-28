@@ -349,7 +349,10 @@ class CP0Reg extends Module {
   // RANDOM
   val random = RegInit((TLB_NUM - 1).U(log2Ceil(TLB_NUM).W))
 
-  random := random + 1.U
+  random := Mux(cp0_random === cp0_wired, (TLB_NUM - 1).U, (random - 1.U))
+  when(mtc0_we && cp0_addr === CP0_WIRED_ADDR) {
+    random := (TLB_NUM - 1).U
+  }
 
   cp0_random := Cat(
     0.U((32 - log2Ceil(TLB_NUM)).W),

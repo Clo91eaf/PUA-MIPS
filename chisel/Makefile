@@ -6,6 +6,7 @@ verilog:
 	@echo "make verilog"
 	sbt 'runMain Elaborate'
 	cp $(PUA_MIPS) $(TEST_TOP)/mycpu/
+	cp ./generated/PuaMips.v ~/Desktop/PUA-CPU/cemu/soc-simulator/PUA-CPU  
 
 # run trace target
 func:

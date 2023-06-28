@@ -125,8 +125,9 @@ class WriteBackStage extends Module {
   io.debug.cp0_cause  := io.fromCP0.cp0_cause
   io.debug.cp0_random := io.fromCP0.cp0_random
 
-  io.debug.int    := ex && !ws_inst_is_eret && !ws_after_tlb
-  io.debug.commit := (has_commit || ex) && ws_valid
+  io.debug.int := ex && !ws_inst_is_eret && !ws_after_tlb
+  // io.debug.commit := (has_commit || ex) && ws_valid
+  io.debug.commit := ws_valid & ~ws_ex
 
   // output-cp0
   io.cp0.wb_ex               := ex && !ws_inst_is_eret && !ws_after_tlb
