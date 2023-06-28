@@ -68,15 +68,6 @@ class CP0Reg extends Module {
   io.writeBackStage.cp0_random   := cp0_random
   io.writeBackStage.flush_pc     := flush_pc
 
-  flush_pc := MuxCase(
-    EX_ENTRY,
-    Seq(
-      io.fromWriteBackStage.ws_after_tlb        -> wb_pc,
-      io.fromWriteBackStage.ws_inst_is_eret     -> cp0_epc,
-      io.fromWriteBackStage.ex_tlb_refill_entry -> EX_TLB_REFILL_ENTRY,
-    ),
-  )
-
   // CP0_STATUS
   val cp0_status_bev = RegInit(true.B)
   when(mtc0_we && cp0_addr === CP0_STATUS_ADDR) {
@@ -147,10 +138,17 @@ class CP0Reg extends Module {
     cp0_cause_excode := wb_excode
   }
 
+  val cp0_cause_iv = RegInit(false.B)
+  when(mtc0_we && cp0_addr === CP0_CAUSE_ADDR) {
+    cp0_cause_iv := cp0_wdata(23)
+  }
+
   cp0_cause := Cat(
     cp0_cause_bd,     // 31:31
     cp0_cause_ti,     // 30:30
-    0.U(14.W),        // 29:16
+    0.U(6.W),         // 29:24
+    cp0_cause_iv,     // 23:23
+    0.U(7.W),         // 22:16
     cp0_cause_ip,     // 15:8
     false.B,          // 7:7
     cp0_cause_excode, // 6:2
@@ -369,5 +367,18 @@ class CP0Reg extends Module {
   cp0_random := Cat(
     0.U((32 - log2Ceil(TLB_NUM)).W),
     random,
+  )
+
+  val trap_base = Wire(UInt(32.W))
+  trap_base := Mux(cp0_status(22), "hbfc00200".U, cp0_ebase)
+
+  flush_pc := MuxCase(
+    (trap_base + "h180".U),
+    Seq(
+      io.fromWriteBackStage.ws_after_tlb        -> wb_pc,
+      io.fromWriteBackStage.ws_inst_is_eret     -> cp0_epc,
+      io.fromWriteBackStage.ex_tlb_refill_entry -> (trap_base + 0.U),
+      (wb_ex & cp0_cause_iv & !cp0_status_bev)  -> (trap_base + "h200".U),
+    ),
   )
 }
