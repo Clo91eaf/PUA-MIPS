@@ -444,7 +444,7 @@ class WriteBackStage_CP0 extends Bundle {
 }
 
 class WriteBackStage_MMU extends Bundle {
-  val cp0_entryhi = Output(UInt(32.W))
+  val cp0_entryhi = Output(UInt(32.W)) // EntryHi寄存器维护VPN2和ASID的值
 }
 
 class WriteBackStage_TLB extends Bundle {
@@ -695,7 +695,6 @@ class Memory_Ctrl extends Bundle {
 }
 
 class WriteBackStage_Ctrl extends Bundle {
-  val ex       = Output(Bool())
   val do_flush = Output(Bool())
   val flush_pc = Output(BUS)
 }

@@ -77,8 +77,10 @@ class WriteBackStage extends Module {
   val do_flush = ex
   val flush_pc = io.fromCP0.flush_pc
 
+  // has exception信号为真正的例外信号
+  val has_exception = ex && !ws_inst_is_eret && !ws_after_tlb
+
   // output-ctrl
-  io.ctrl.ex       := ex
   io.ctrl.do_flush := do_flush
   io.ctrl.flush_pc := flush_pc
 
@@ -126,12 +128,12 @@ class WriteBackStage extends Module {
   io.debug.cp0_cause  := io.fromCP0.cp0_cause
   io.debug.cp0_random := io.fromCP0.cp0_random
 
-  io.debug.int := ex && !ws_inst_is_eret && !ws_after_tlb
+  io.debug.int := has_exception
   // io.debug.commit := (has_commit || ex) && ws_valid
   io.debug.commit := ws_valid & ~ws_ex
 
   // output-cp0
-  io.cp0.wb_ex               := ex && !ws_inst_is_eret && !ws_after_tlb
+  io.cp0.wb_ex               := has_exception
   io.cp0.wb_bd               := ws_bd
   io.cp0.eret_flush          := eret
   io.cp0.wb_excode           := ws_excode
