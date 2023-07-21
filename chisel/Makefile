@@ -20,5 +20,9 @@ count_commit:
 	@echo "count the commits"
 	git log --format=oneline | wc -l
 
+test:
+	@echo "make test"
+	sbt "Test / runMain cpu.testMain"
+
 # Makefile targets
 .PHONY: get run wave
