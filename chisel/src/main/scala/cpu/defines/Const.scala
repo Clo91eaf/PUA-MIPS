@@ -109,8 +109,8 @@ trait Constants {
   val EXE_TLBWR = 75.U(OP_WID.W)
 
   // FUSel
-  val FU_SEL_NUM      = 10
-  val FU_SEL_WID      = log2Ceil(FU_SEL_NUM)
+  val FU_SEL_NUM = 10
+  val FU_SEL_WID = log2Ceil(FU_SEL_NUM)
 
   val FU_NOP  = 0.U(FU_SEL_WID.W)
   val FU_ALU  = 1.U(FU_SEL_WID.W) // 加、减、移位
@@ -125,6 +125,7 @@ trait Constants {
   val FU_MUL = 9.U(FU_SEL_WID.W)
 
   // inst rom
+  val INST_WID           = 32
   val INST_ADDR_BUS      = UInt(32.W)
   val INST_ADDR_BUS_INIT = 0.U(32.W)
   val INST_BUS           = UInt(32.W)
