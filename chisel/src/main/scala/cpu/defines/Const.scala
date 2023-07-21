@@ -6,14 +6,17 @@ import cpu.defines.Instructions
 
 trait Constants {
   // 全局
-  val RST_ENABLE    = true.B
-  val RST_DISABLE   = false.B
+  val PC_WID  = 32
+  val PC_INIT = "hbfc00000".U(PC_WID.W)
+
   val WRITE_ENABLE  = true.B
   val WRITE_DISABLE = false.B
   val READ_ENABLE   = true.B
   val READ_DISABLE  = false.B
   val INST_VALID    = false.B
   val INST_INVALID  = true.B
+  val SINGLE_ISSUE  = false.B
+  val DUAL_ISSUE    = true.B
 
   // AluOp
   private val OP_NUM = 75
@@ -112,17 +115,19 @@ trait Constants {
   val FU_SEL_NUM = 10
   val FU_SEL_WID = log2Ceil(FU_SEL_NUM)
 
-  val FU_NOP  = 0.U(FU_SEL_WID.W)
-  val FU_ALU  = 1.U(FU_SEL_WID.W) // 加、减、移位
-  val FU_MT   = 2.U(FU_SEL_WID.W)
-  val FU_MF   = 3.U(FU_SEL_WID.W)
-  val FU_MEM  = 4.U(FU_SEL_WID.W)
-  val FU_BR   = 5.U(FU_SEL_WID.W)
-  val FU_TLB  = 6.U(FU_SEL_WID.W)
-  val FU_EX   = 7.U(FU_SEL_WID.W)
-  val FU_TRAP = 8.U(FU_SEL_WID.W)
-
-  val FU_MUL = 9.U(FU_SEL_WID.W)
+  val FU_NOP    = 0.U(FU_SEL_WID.W)
+  val FU_ALU    = 1.U(FU_SEL_WID.W) // 加、减、移位
+  val FU_MTC0   = 2.U(FU_SEL_WID.W)
+  val FU_MFC0   = 3.U(FU_SEL_WID.W)
+  val FU_MEM    = 4.U(FU_SEL_WID.W)
+  val FU_BR     = 5.U(FU_SEL_WID.W)
+  val FU_TLB    = 6.U(FU_SEL_WID.W)
+  val FU_EX     = 7.U(FU_SEL_WID.W)
+  val FU_TRAP   = 8.U(FU_SEL_WID.W)
+  val FU_MTHILO = 9.U(FU_SEL_WID.W)
+  val FU_MFHILO = 10.U(FU_SEL_WID.W)
+  val FU_MUL    = 11.U(FU_SEL_WID.W)
+  val FU_DIV    = 12.U(FU_SEL_WID.W)
 
   // inst rom
   val INST_WID           = 32
@@ -146,7 +151,6 @@ trait Constants {
   val AREG_NUM         = 32
   val REG_ADDR_WID     = 5
   val DATA_WID         = 32
-  val PC_INIT          = "hbfc00000".U(32.W)
   val DOUBLE_BUS       = UInt(64.W)
   val DOUBLE_BUS_INIT  = 0.U(64.W)
   val DOUBLE_REG_WIDTH = 64
@@ -188,20 +192,19 @@ trait Constants {
   val CP0_ADDR_WID = 8
 
   // 例外类型
-  val EX_TYPE_BUS = UInt(5.W)
-  val EX_TYPE_WID = 5
+  val EXCODE_WID = 5
 
-  val EX_INT  = "h00".U(EX_TYPE_WID.W) // 中断异常
-  val EX_MOD  = "h01".U(EX_TYPE_WID.W) // TLB 条目修改异常
-  val EX_TLBL = "h02".U(EX_TYPE_WID.W) // TLB 非法取指令或访问异常
-  val EX_TLBS = "h03".U(EX_TYPE_WID.W) // TLB 非法存储访问异常
-  val EX_ADEL = "h04".U(EX_TYPE_WID.W) // 地址未对齐异常（取指令或访问异常）
-  val EX_ADES = "h05".U(EX_TYPE_WID.W) // 地址未对齐异常（存储访问异常）
-  val EX_SYS  = "h08".U(EX_TYPE_WID.W) // 系统调用异常
-  val EX_BP   = "h09".U(EX_TYPE_WID.W) // 断点异常
-  val EX_RI   = "h0a".U(EX_TYPE_WID.W) // 保留指令异常
-  val EX_OV   = "h0c".U(EX_TYPE_WID.W) // 算术溢出异常
-  val EX_NO   = "h1f".U(EX_TYPE_WID.W) // 无异常
+  val EX_INT  = "h00".U(EXCODE_WID.W) // 中断异常
+  val EX_MOD  = "h01".U(EXCODE_WID.W) // TLB 条目修改异常
+  val EX_TLBL = "h02".U(EXCODE_WID.W) // TLB 非法取指令或访问异常
+  val EX_TLBS = "h03".U(EXCODE_WID.W) // TLB 非法存储访问异常
+  val EX_ADEL = "h04".U(EXCODE_WID.W) // 地址未对齐异常（取指令或访问异常）
+  val EX_ADES = "h05".U(EXCODE_WID.W) // 地址未对齐异常（存储访问异常）
+  val EX_SYS  = "h08".U(EXCODE_WID.W) // 系统调用异常
+  val EX_BP   = "h09".U(EXCODE_WID.W) // 断点异常
+  val EX_RI   = "h0a".U(EXCODE_WID.W) // 保留指令异常
+  val EX_OV   = "h0c".U(EXCODE_WID.W) // 算术溢出异常
+  val EX_NO   = "h1f".U(EXCODE_WID.W) // 无异常
 
   val EX_ENTRY            = "h_bfc00380".U(32.W)
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)

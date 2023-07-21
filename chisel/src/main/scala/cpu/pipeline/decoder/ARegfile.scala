@@ -7,8 +7,8 @@ import cpu.defines.Const._
 import cpu.CpuConfig
 
 class SrcRead extends Bundle {
-  val raddr = Input(UInt(REG_ADDR_WID.W))
-  val rdata = Output(UInt(DATA_WID.W))
+  val raddr = Output(UInt(REG_ADDR_WID.W))
+  val rdata = Input(UInt(DATA_WID.W))
 }
 
 class Src12Read extends Bundle {
@@ -17,15 +17,15 @@ class Src12Read extends Bundle {
 }
 
 class RegWrite extends Bundle {
-  val wen   = Input(Bool())
-  val waddr = Input(UInt(REG_ADDR_WID.W))
-  val wdata = Input(UInt(DATA_WID.W))
+  val wen   = Output(Bool())
+  val waddr = Output(UInt(REG_ADDR_WID.W))
+  val wdata = Output(UInt(DATA_WID.W))
 }
 
 class ARegFile(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val read  = Flipped(Vec(config.decodeNum, new Src12Read()))
-    val write = Input(Vec(config.commitNum, new RegWrite()))
+    val read  = Flipped(Vec(config.decoderNum, new Src12Read()))
+    val write = Flipped(Vec(config.commitNum, new RegWrite()))
   })
 
   // 定义32个32位寄存器
@@ -39,7 +39,7 @@ class ARegFile(implicit val config: CpuConfig) extends Module {
   }
 
   // 读寄存器堆
-  for (i <- 0 until (config.decodeNum)) {
+  for (i <- 0 until (config.decoderNum)) {
     // src1
     when(io.read(i).src1.raddr === 0.U) {
       io.read(i).src1.rdata := 0.U
