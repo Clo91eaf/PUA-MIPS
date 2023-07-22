@@ -203,6 +203,7 @@ trait Constants {
   val EX_SYS  = "h08".U(EXCODE_WID.W) // 系统调用异常
   val EX_BP   = "h09".U(EXCODE_WID.W) // 断点异常
   val EX_RI   = "h0a".U(EXCODE_WID.W) // 保留指令异常
+  val EX_CPU  = "h0b".U(EXCODE_WID.W) // 协处理器不可用异常
   val EX_OV   = "h0c".U(EXCODE_WID.W) // 算术溢出异常
   val EX_NO   = "h1f".U(EXCODE_WID.W) // 无异常
 

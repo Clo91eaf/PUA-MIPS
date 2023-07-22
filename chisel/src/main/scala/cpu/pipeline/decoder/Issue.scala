@@ -10,12 +10,12 @@ class Issue(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
     val allow_to_go = Input(Bool())
-    val decodeInst  = Input(Vec(config.decoderNum, new DecodedInst()))
     val instBuffer = Input(new Bundle {
       val empty        = Bool()
       val almost_empty = Bool()
     })
-    val execute = new ExecuteCtrl()
+    val decodeInst = Input(Vec(config.decoderNum, new DecodedInst()))
+    val execute    = Input(Vec(config.fuNum, new MemRead()))
     // 输出
     val inst1 = Output(new Bundle {
       val is_in_delayslot = Bool()
@@ -37,10 +37,10 @@ class Issue(implicit val config: CpuConfig) extends Module {
 
   // 写后读冲突
   val load_stall =
-    io.execute.inst(0).mem_ren && (inst1.reg1_ren && inst1.reg1_raddr === io.execute.inst(0).reg_waddr ||
-      inst1.reg2_ren && inst1.reg2_raddr === io.execute.inst(0).reg_waddr) ||
-      io.execute.inst(1).mem_ren && (inst1.reg1_ren && inst1.reg1_raddr === io.execute.inst(1).reg_waddr ||
-        inst1.reg2_ren && inst1.reg2_raddr === io.execute.inst(1).reg_waddr)
+    io.execute(0).mem_ren && (inst1.reg1_ren && inst1.reg1_raddr === io.execute(0).reg_waddr ||
+      inst1.reg2_ren && inst1.reg2_raddr === io.execute(0).reg_waddr) ||
+      io.execute(1).mem_ren && (inst1.reg1_ren && inst1.reg1_raddr === io.execute(1).reg_waddr ||
+        inst1.reg2_ren && inst1.reg2_raddr === io.execute(1).reg_waddr)
   val raw_reg =
     inst0.reg_wen && (inst0.reg_waddr === inst1.reg1_raddr && inst1.reg1_ren || inst0.reg_waddr === inst1.reg2_raddr && inst1.reg2_ren)
   val raw_hilo = VecInit(FU_DIV, FU_MUL, FU_MTHILO).contains(inst0.fusel) &&

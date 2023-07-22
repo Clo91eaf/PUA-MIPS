@@ -6,10 +6,12 @@ import Const._
 import cpu.CpuConfig
 
 class ExceptionInfo extends Bundle {
-  val flush_req = Bool()
-  val badvaddr  = UInt(PC_WID.W)
-  val bd        = Bool()
-  val excode    = UInt(EXCODE_WID.W)
+  val flush_req  = Bool()
+  val tlb_refill = Bool()
+  val eret       = Bool()
+  val badvaddr   = UInt(PC_WID.W)
+  val bd         = Bool()
+  val excode     = UInt(EXCODE_WID.W)
 }
 
 class MemRead extends Bundle {
@@ -67,4 +69,3 @@ class WriteBackCtrl extends Bundle {
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
 }
-
