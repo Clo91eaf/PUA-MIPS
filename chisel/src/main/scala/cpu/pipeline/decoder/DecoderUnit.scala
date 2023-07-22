@@ -8,7 +8,7 @@ import cpu.CpuConfig
 import cpu.pipeline.execute.DecoderUnitExecuteStage
 
 class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
-  val inst = Input(
+  val inst = Flipped(
     Vec(
       config.decoderNum,
       Decoupled(new Bundle {
@@ -37,7 +37,7 @@ class DataForwardToDecoderUnit extends Bundle {
 class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
-    val instBuffer = Flipped(new InstBufferDecoderUnit())
+    val instBuffer = new InstBufferDecoderUnit()
     val regfile    = Vec(config.decoderNum, new Src12Read())
     val forward    = Input(Vec(config.fuNum, new DataForwardToDecoderUnit()))
     val cp0 = Input(new Bundle {
@@ -65,9 +65,18 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     val ctrl         = new DecoderUnitCtrl()
   })
 
-  val issue    = Module(new Issue()).io
-  val decoder  = Seq.fill(config.decoderNum)(Module(new Decoder()))
-  val jumpCtrl = Module(new JumpCtrl()).io
+  val issue       = Module(new Issue()).io
+  val decoder     = Seq.fill(config.decoderNum)(Module(new Decoder()))
+  val jumpCtrl    = Module(new JumpCtrl()).io
+  val forwardCtrl = Module(new ForwardCtrl()).io
+
+  io.regfile(0).src1.raddr := decoder(0).io.out.reg1_raddr
+  io.regfile(0).src2.raddr := decoder(0).io.out.reg2_raddr
+  io.regfile(1).src1.raddr := decoder(1).io.out.reg1_raddr
+  io.regfile(1).src2.raddr := decoder(1).io.out.reg2_raddr
+
+  forwardCtrl.in.forward := io.forward
+  forwardCtrl.in.regfile := io.regfile // TODO:这里的连接可能有问题
 
   issue.allow_to_go := io.ctrl.allow_to_go
   issue.instBuffer  := io.instBuffer.info
@@ -111,13 +120,15 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     issue.execute(i).reg_waddr := io.forward(i).exe.waddr
   }
 
-  io.executeStage.inst0.pc            := pc(0)
-  io.executeStage.inst0.inst_info     := inst_info(0)
-  io.executeStage.inst0.ex.flush_req  := DontCare
-  io.executeStage.inst0.ex.tlb_refill := tlb_refill(0)
-  io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
-  io.executeStage.inst0.ex.badvaddr   := pc(0)
-  io.executeStage.inst0.ex.bd         := io.instBuffer.info.inst0_is_in_delayslot
+  io.executeStage.inst0.pc                 := pc(0)
+  io.executeStage.inst0.inst_info          := inst_info(0)
+  io.executeStage.inst0.src_info.src1_data := forwardCtrl.out.inst(0).src1.rdata
+  io.executeStage.inst0.src_info.src2_data := forwardCtrl.out.inst(0).src2.rdata
+  io.executeStage.inst0.ex.flush_req       := DontCare
+  io.executeStage.inst0.ex.tlb_refill      := tlb_refill(0)
+  io.executeStage.inst0.ex.eret            := inst_info(0).op === EXE_ERET
+  io.executeStage.inst0.ex.badvaddr        := pc(0)
+  io.executeStage.inst0.ex.bd              := io.instBuffer.info.inst0_is_in_delayslot
   io.executeStage.inst0.ex.excode := MuxCase(
     EX_NO,
     Seq(
@@ -135,14 +146,16 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst0.jb_info.pred_branch_flag := io.bpu.pred_branch_flag
   io.executeStage.inst0.jb_info.branch_target    := io.bpu.branch_target
 
-  io.executeStage.inst1.allow_to_go   := issue.inst1.allow_to_go
-  io.executeStage.inst1.pc            := pc(1)
-  io.executeStage.inst1.inst_info     := inst_info(1)
-  io.executeStage.inst1.ex.flush_req  := DontCare
-  io.executeStage.inst1.ex.tlb_refill := tlb_refill(1)
-  io.executeStage.inst1.ex.eret       := inst_info(1).op === EXE_ERET
-  io.executeStage.inst1.ex.badvaddr   := pc(1)
-  io.executeStage.inst1.ex.bd         := issue.inst1.is_in_delayslot
+  io.executeStage.inst1.allow_to_go        := issue.inst1.allow_to_go
+  io.executeStage.inst1.pc                 := pc(1)
+  io.executeStage.inst1.inst_info          := inst_info(1)
+  io.executeStage.inst1.src_info.src1_data := forwardCtrl.out.inst(1).src1.rdata
+  io.executeStage.inst1.src_info.src2_data := forwardCtrl.out.inst(1).src2.rdata
+  io.executeStage.inst1.ex.flush_req       := DontCare
+  io.executeStage.inst1.ex.tlb_refill      := tlb_refill(1)
+  io.executeStage.inst1.ex.eret            := inst_info(1).op === EXE_ERET
+  io.executeStage.inst1.ex.badvaddr        := pc(1)
+  io.executeStage.inst1.ex.bd              := issue.inst1.is_in_delayslot
   io.executeStage.inst1.ex.excode := MuxCase(
     EX_NO,
     Seq(

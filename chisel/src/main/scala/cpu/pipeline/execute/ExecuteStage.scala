@@ -7,13 +7,19 @@ import cpu.defines.Const._
 import cpu.pipeline.decoder.{DecodedInst}
 import cpu.CpuConfig
 
+class SrcValue extends Bundle {
+  val src1_data = UInt(DATA_WID.W)
+  val src2_data = UInt(DATA_WID.W)
+}
+
 class IdExInst0 extends Bundle {
   val pc        = UInt(PC_WID.W)
   val inst_info = new DecodedInst()
+  val src_info  = new SrcValue()
   val ex        = new ExceptionInfo()
   val jb_info = new Bundle {
     // jump ctrl
-    val jump_conflict    = Bool()
+    val jump_conflict = Bool()
     // bpu
     val is_branch        = Bool()
     val pred_branch_flag = Bool()
@@ -25,6 +31,7 @@ class IdExInst1 extends Bundle {
   val allow_to_go = Bool()
   val pc          = UInt(PC_WID.W)
   val inst_info   = new DecodedInst()
+  val src_info    = new SrcValue()
   val ex          = new ExceptionInfo()
 }
 
