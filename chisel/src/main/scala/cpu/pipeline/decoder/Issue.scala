@@ -9,8 +9,8 @@ import cpu.CpuConfig
 class Issue(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
-    val inst0_allow_to_go = Input(Bool())
-    val decodeInst        = Input(Vec(config.decoderNum, new DecodedInst()))
+    val allow_to_go = Input(Bool())
+    val decodeInst  = Input(Vec(config.decoderNum, new DecodedInst()))
     val instBuffer = Input(new Bundle {
       val empty        = Bool()
       val almost_empty = Bool()
@@ -52,6 +52,6 @@ class Issue(implicit val config: CpuConfig) extends Module {
   // 指令1是否在延迟槽中
   io.inst1.is_in_delayslot := inst0.fusel === FU_BR && io.inst1.allow_to_go
   // 指令1是否允许执行
-  io.inst1.allow_to_go := io.inst0_allow_to_go &&
+  io.inst1.allow_to_go := io.allow_to_go &&
     !instBuffer_invalid && !inst0.dual_issue && !inst1.dual_issue && !struct_conflict && !data_conflict
 }

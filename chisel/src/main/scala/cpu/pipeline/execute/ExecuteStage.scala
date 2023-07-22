@@ -25,15 +25,16 @@ class IdExInst1 extends Bundle {
   val ex        = new ExceptionInfo()
 }
 
+class DecoderUnitExecuteStage extends Bundle {
+  val inst0 = new IdExInst0()
+  val inst1 = new IdExInst1()
+}
+
 class ExecuteStage(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val clear       = Input(Vec(config.decoderNum, Bool()))
     val allow_to_go = Input(Vec(config.decoderNum, Bool()))
-    val fromDecode = Input(new Bundle {
-      val inst0 = new IdExInst0()
-      val inst1 = new IdExInst1()
-
-    })
+    val fromDecode  = Input(new DecoderUnitExecuteStage())
     val toExecute = Output(new Bundle {
       val inst0 = new IdExInst0()
       val inst1 = new IdExInst1()
