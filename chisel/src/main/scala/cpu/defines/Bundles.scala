@@ -67,3 +67,4 @@ class WriteBackCtrl extends Bundle {
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
 }
+
