@@ -18,6 +18,7 @@ class DecodedInst extends Bundle {
   val imm32      = UInt(DATA_WID.W)
   val cp0_addr   = UInt(CP0_ADDR_WID.W)
   val dual_issue = Bool()
+  val inst       = UInt(INST_WID.W)
 }
 
 class Decoder extends Module {
@@ -205,5 +206,5 @@ class Decoder extends Module {
   )
   io.out.cp0_addr   := Cat(inst(15, 11), inst(2, 0))
   io.out.dual_issue := dual_issue
-
+  io.out.inst       := inst
 }

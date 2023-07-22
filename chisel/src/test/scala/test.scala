@@ -2,21 +2,16 @@ package cpu
 
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.pipeline._
-import cpu.pipeline.fetch._
 import cpu.pipeline.decoder._
-import cpu.pipeline.execute._
-import cpu.pipeline.memory._
-import cpu.pipeline.writeback._
-import cpu.mmu._
-import cpu.ctrl._
-import cpu.axi._
+import cpu.CpuConfig
 
 import chisel3.stage.ChiselGeneratorAnnotation
+import cpu.ctrl.Ctrl
 
 object testMain extends App {
+  implicit val config = new CpuConfig()
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new CP0Reg))
+    Seq(ChiselGeneratorAnnotation(() => new Ctrl()))
   )
 }

@@ -4,8 +4,8 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
+import cpu.pipeline.decoder.{DecodedInst}
 import cpu.CpuConfig
-import cpu.pipeline.decoder.{DecodedInst, ExceptionInfo}
 
 class IdExInst0 extends Bundle {
   val pc        = UInt(PC_WID.W)
