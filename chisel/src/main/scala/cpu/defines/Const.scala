@@ -129,6 +129,17 @@ trait Constants {
   val FU_MUL    = 11.U(FU_SEL_WID.W)
   val FU_DIV    = 12.U(FU_SEL_WID.W)
 
+  // div
+  val DIV_CTRL_WID         = 2
+  val DIV_FREE             = 0.U(DIV_CTRL_WID.W)
+  val DIV_BY_ZERO          = 1.U(DIV_CTRL_WID.W)
+  val DIV_ON               = 2.U(DIV_CTRL_WID.W)
+  val DIV_END              = 3.U(DIV_CTRL_WID.W)
+  val DIV_RESULT_READY     = true.B
+  val DIV_RESULT_NOT_READY = false.B
+  val DIV_START            = true.B
+  val DIV_STOP             = false.B
+
   // inst rom
   val INST_WID           = 32
   val INST_ADDR_BUS      = UInt(32.W)
