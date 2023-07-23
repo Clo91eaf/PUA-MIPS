@@ -12,19 +12,15 @@ class Cp0Info extends Bundle {
   val cp0_cause  = UInt(DATA_WID.W)
 }
 
-class ExeMemInst0 extends Bundle {
-  val pc        = UInt(PC_WID.W)
-  val inst_info = new InstInfo()
-  val rd_info   = new RdInfo()
-  val cp0_info  = new Cp0Info()
-  val ex        = new ExceptionInfo()
-}
-
 class ExeMemInst1 extends Bundle {
   val pc        = UInt(PC_WID.W)
   val inst_info = new InstInfo()
   val rd_info   = new RdInfo()
   val ex        = new ExceptionInfo()
+}
+
+class ExeMemInst0 extends ExeMemInst1 {
+  val cp0_info = new Cp0Info()
 }
 
 class ExecuteUnitMemoryUnit extends Bundle {

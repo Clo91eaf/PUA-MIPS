@@ -8,11 +8,12 @@ import cpu.pipeline.decoder._
 import cpu.CpuConfig
 import cpu.pipeline.execute.Alu
 import cpu.pipeline.memory.MemoryStage
+import cpu.pipeline.writeback.WriteBackStage
 
 object testMain extends App {
   implicit val config = new CpuConfig()
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new MemoryStage())),
+    Seq(ChiselGeneratorAnnotation(() => new WriteBackStage())),
   )
 }
