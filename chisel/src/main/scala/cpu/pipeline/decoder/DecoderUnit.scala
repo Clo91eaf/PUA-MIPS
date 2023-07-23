@@ -5,7 +5,7 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 import cpu.CpuConfig
-import cpu.pipeline.execute.DecoderUnitExecuteStage
+import cpu.pipeline.execute.DecoderUnitExecuteUnit
 
 class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
   val inst = Flipped(
@@ -61,7 +61,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       val pred_branch_flag = Input(Bool())
       val branch_target    = Input(UInt(PC_WID.W))
     }
-    val executeStage = Output(new DecoderUnitExecuteStage())
+    val executeStage = Output(new DecoderUnitExecuteUnit())
     val ctrl         = new DecoderUnitCtrl()
   })
 
