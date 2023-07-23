@@ -1,6 +1,6 @@
 `include "./defines.vh"
 
-module div(
+module DivBlackBox(
     input wire clk,
     input wire rst,
 

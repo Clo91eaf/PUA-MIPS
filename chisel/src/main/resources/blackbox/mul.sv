@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-module mul(
+module MulBlackBox(
     input clk,
     input rst,
     input [31:0] a,
