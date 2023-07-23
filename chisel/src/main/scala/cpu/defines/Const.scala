@@ -148,12 +148,10 @@ trait Constants {
   val DATA_MEMORY_SEL_BUS_INIT = 0.U(4.W)
 
   // GPR RegFile
-  val AREG_NUM         = 32
-  val REG_ADDR_WID     = 5
-  val DATA_WID         = 32
-  val DOUBLE_BUS       = UInt(64.W)
-  val DOUBLE_BUS_INIT  = 0.U(64.W)
-  val DOUBLE_REG_WIDTH = 64
+  val AREG_NUM     = 32
+  val REG_ADDR_WID = 5
+  val DATA_WID     = 32
+  val HILO_WID     = 64
 
   // CP0寄存器
   // CP0 Register (5.w), Select (3.w)

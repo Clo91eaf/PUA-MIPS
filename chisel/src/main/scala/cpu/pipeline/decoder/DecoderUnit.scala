@@ -120,15 +120,23 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     issue.execute(i).reg_waddr := io.forward(i).exe.waddr
   }
 
-  io.executeStage.inst0.pc                 := pc(0)
-  io.executeStage.inst0.inst_info          := inst_info(0)
-  io.executeStage.inst0.src_info.src1_data := forwardCtrl.out.inst(0).src1.rdata
-  io.executeStage.inst0.src_info.src2_data := forwardCtrl.out.inst(0).src2.rdata
-  io.executeStage.inst0.ex.flush_req       := DontCare
-  io.executeStage.inst0.ex.tlb_refill      := tlb_refill(0)
-  io.executeStage.inst0.ex.eret            := inst_info(0).op === EXE_ERET
-  io.executeStage.inst0.ex.badvaddr        := pc(0)
-  io.executeStage.inst0.ex.bd              := io.instBuffer.info.inst0_is_in_delayslot
+  io.executeStage.inst0.pc        := pc(0)
+  io.executeStage.inst0.inst_info := inst_info(0)
+  io.executeStage.inst0.src_info.src1_data := Mux(
+    inst_info(0).reg1_ren,
+    forwardCtrl.out.inst(0).src1.rdata,
+    decoder(0).io.out.imm32,
+  )
+  io.executeStage.inst0.src_info.src2_data := Mux(
+    inst_info(0).reg2_ren,
+    forwardCtrl.out.inst(0).src2.rdata,
+    decoder(0).io.out.imm32,
+  )
+  io.executeStage.inst0.ex.flush_req  := DontCare
+  io.executeStage.inst0.ex.tlb_refill := tlb_refill(0)
+  io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
+  io.executeStage.inst0.ex.badvaddr   := pc(0)
+  io.executeStage.inst0.ex.bd         := io.instBuffer.info.inst0_is_in_delayslot
   io.executeStage.inst0.ex.excode := MuxCase(
     EX_NO,
     Seq(
@@ -146,16 +154,24 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst0.jb_info.pred_branch_flag := io.bpu.pred_branch_flag
   io.executeStage.inst0.jb_info.branch_target    := io.bpu.branch_target
 
-  io.executeStage.inst1.allow_to_go        := issue.inst1.allow_to_go
-  io.executeStage.inst1.pc                 := pc(1)
-  io.executeStage.inst1.inst_info          := inst_info(1)
-  io.executeStage.inst1.src_info.src1_data := forwardCtrl.out.inst(1).src1.rdata
-  io.executeStage.inst1.src_info.src2_data := forwardCtrl.out.inst(1).src2.rdata
-  io.executeStage.inst1.ex.flush_req       := DontCare
-  io.executeStage.inst1.ex.tlb_refill      := tlb_refill(1)
-  io.executeStage.inst1.ex.eret            := inst_info(1).op === EXE_ERET
-  io.executeStage.inst1.ex.badvaddr        := pc(1)
-  io.executeStage.inst1.ex.bd              := issue.inst1.is_in_delayslot
+  io.executeStage.inst1.allow_to_go := issue.inst1.allow_to_go
+  io.executeStage.inst1.pc          := pc(1)
+  io.executeStage.inst1.inst_info   := inst_info(1)
+  io.executeStage.inst1.src_info.src1_data := Mux(
+    inst_info(1).reg1_ren,
+    forwardCtrl.out.inst(1).src1.rdata,
+    decoder(1).io.out.imm32,
+  )
+  io.executeStage.inst1.src_info.src2_data := Mux(
+    inst_info(1).reg2_ren,
+    forwardCtrl.out.inst(1).src2.rdata,
+    decoder(1).io.out.imm32,
+  )
+  io.executeStage.inst1.ex.flush_req  := DontCare
+  io.executeStage.inst1.ex.tlb_refill := tlb_refill(1)
+  io.executeStage.inst1.ex.eret       := inst_info(1).op === EXE_ERET
+  io.executeStage.inst1.ex.badvaddr   := pc(1)
+  io.executeStage.inst1.ex.bd         := issue.inst1.is_in_delayslot
   io.executeStage.inst1.ex.excode := MuxCase(
     EX_NO,
     Seq(
