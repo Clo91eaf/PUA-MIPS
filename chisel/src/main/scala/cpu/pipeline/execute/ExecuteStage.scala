@@ -4,18 +4,12 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.pipeline.decoder.{DecodedInst}
 import cpu.CpuConfig
-
-class SrcValue extends Bundle {
-  val src1_data = UInt(DATA_WID.W)
-  val src2_data = UInt(DATA_WID.W)
-}
 
 class IdExeInst0 extends Bundle {
   val pc        = UInt(PC_WID.W)
-  val inst_info = new DecodedInst()
-  val src_info  = new SrcValue()
+  val inst_info = new InstInfo()
+  val src_info  = new SrcInfo()
   val ex        = new ExceptionInfo()
   val jb_info = new Bundle {
     // jump ctrl
@@ -30,8 +24,8 @@ class IdExeInst0 extends Bundle {
 class IdExeInst1 extends Bundle {
   val allow_to_go = Bool()
   val pc          = UInt(PC_WID.W)
-  val inst_info   = new DecodedInst()
-  val src_info    = new SrcValue()
+  val inst_info   = new InstInfo()
+  val src_info    = new SrcInfo()
   val ex          = new ExceptionInfo()
 }
 

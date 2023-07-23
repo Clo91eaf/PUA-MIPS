@@ -14,7 +14,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
       val empty        = Bool()
       val almost_empty = Bool()
     })
-    val decodeInst = Input(Vec(config.decoderNum, new DecodedInst()))
+    val decodeInst = Input(Vec(config.decoderNum, new InstInfo()))
     val execute    = Input(Vec(config.fuNum, new MemRead()))
     // 输出
     val inst1 = Output(new Bundle {

@@ -54,7 +54,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     }
     val bpu = new Bundle {
       val pc             = Output(UInt(PC_WID.W))
-      val decoded_inst0  = Output(new DecodedInst())
+      val decoded_inst0  = Output(new InstInfo())
       val id_allow_to_go = Output(Bool())
 
       val inst_is_branch   = Input(Bool())

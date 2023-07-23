@@ -12,7 +12,7 @@ class JumpCtrl(implicit val config: CpuConfig) extends Module {
     val in = Input(new Bundle {
       val allow_to_go   = Bool()
       val pc            = UInt(PC_WID.W)
-      val decoded_inst0 = new DecodedInst()
+      val decoded_inst0 = new InstInfo()
       val reg1_data     = UInt(DATA_WID.W)
       val forward       = Vec(config.fuNum, new DataForwardToDecoderUnit())
     })

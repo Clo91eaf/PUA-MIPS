@@ -5,22 +5,6 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class DecodedInst extends Bundle {
-  val inst_valid = Bool()
-  val reg1_ren   = Bool()
-  val reg1_raddr = UInt(REG_ADDR_WID.W)
-  val reg2_ren   = Bool()
-  val reg2_raddr = UInt(REG_ADDR_WID.W)
-  val fusel      = UInt(FU_SEL_WID.W)
-  val op         = UInt(OP_WID.W)
-  val reg_wen    = Bool()
-  val reg_waddr  = UInt(REG_ADDR_WID.W)
-  val imm32      = UInt(DATA_WID.W)
-  val cp0_addr   = UInt(CP0_ADDR_WID.W)
-  val dual_issue = Bool()
-  val inst       = UInt(INST_WID.W)
-}
-
 class Decoder extends Module {
   val io = IO(new Bundle {
     // inputs
@@ -28,7 +12,7 @@ class Decoder extends Module {
       val inst = UInt(INST_WID.W)
     })
     // outputs
-    val out = Output(new DecodedInst())
+    val out = Output(new InstInfo())
   })
   val inst = io.in.inst
 

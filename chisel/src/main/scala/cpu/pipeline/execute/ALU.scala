@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.pipeline.decoder.DecodedInst
 
 class MultDivSignal extends Bundle {
   val ready  = Input(Bool())
@@ -15,8 +14,8 @@ class MultDivSignal extends Bundle {
 }
 class Alu extends Module {
   val io = IO(new Bundle {
-    val inst_info = Input(new DecodedInst())
-    val src_info  = Input(new SrcValue())
+    val inst_info = Input(new InstInfo())
+    val src_info  = Input(new SrcInfo())
     val cp0_rdata = Input(UInt(DATA_WID.W))
     val hilo = new Bundle {
       val rdata = Input(UInt(HILO_WID.W))
