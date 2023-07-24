@@ -5,13 +5,64 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 import cpu.pipeline.memory.Cp0Info
+import cpu.CpuConfig
+import cpu.pipeline.decoder.Cp0DecoderUnit
 
-class Cp0 extends Module {
+class TlbEntry extends Bundle {
+  val vpn2 = UInt(VPN2_WID.W)
+  val asid = UInt(ASID_WID.W)
+  val g    = Bool()
+  val pfn  = Vec(2, UInt(PFN_WID.W))
+  val c    = Vec(2, Bool())
+  val d    = Vec(2, Bool())
+  val v    = Vec(2, Bool())
+}
+
+class Cp0(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val rdata = Output(UInt(DATA_WID.W))
-    val debug = Output(new Cp0Info())
+    val ctrl = Input(new Bundle {
+      val exe_stall = Bool()
+      val mem_stall = Bool()
+    })
+    val decoderUnit = Output(new Cp0DecoderUnit())
+    val executeUnit = new Bundle {
+      val in = Input(new Bundle {
+        val inst_info  = new InstInfo()
+        val mtc0_wdata = UInt(DATA_WID.W)
+        val ext_int    = UInt(EXT_INT_WID.W)
+      })
+      val out = Output(new Bundle {
+        val cp0_rdata = UInt(DATA_WID.W)
+        val debug     = Output(new Cp0Info())
+      })
+    }
+    val memoryUnit = new Bundle {
+      val in = Input(new Bundle {
+        val inst = Vec(
+          config.fuNum,
+          new Bundle {
+            val pc = UInt(PC_WID.W)
+            val ex = new ExceptionInfo()
+          },
+        )
+      })
+      val out = Output(new Bundle {
+        val flush    = Bool()
+        val flush_pc = UInt(PC_WID.W)
+      })
+    }
+    val tlb = Vec(
+      2,
+      new Bundle {
+        val vpn2 = Input(UInt(VPN2_WID.W))
+
+        val found = Output(Bool())
+        val info  = Output(new TlbEntry())
+      },
+    )
   })
 }
+
 //   // input-writeBack stage
 //   val wb_ex       = io.fromWriteBackStage.wb_ex
 //   val wb_bd       = io.fromWriteBackStage.wb_bd

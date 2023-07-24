@@ -9,6 +9,8 @@ trait Constants {
   val PC_WID  = 32
   val PC_INIT = "hbfc00000".U(PC_WID.W)
 
+  val EXT_INT_WID = 5
+
   val WRITE_ENABLE  = true.B
   val WRITE_DISABLE = false.B
   val READ_ENABLE   = true.B
@@ -206,8 +208,12 @@ trait Constants {
 
   val EX_ENTRY            = "h_bfc00380".U(32.W)
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
+
   // TLB MMU
-  val TLB_NUM = 16
+  val TLB_NUM  = 16
+  val PFN_WID  = 20
+  val ASID_WID = 8
+  val VPN2_WID = 19
 }
 trait OptionConst {
 

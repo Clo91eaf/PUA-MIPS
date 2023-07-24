@@ -34,19 +34,21 @@ class DataForwardToDecoderUnit extends Bundle {
   val mem         = new RegWrite()
 }
 
+class Cp0DecoderUnit extends Bundle {
+  val access_allowed    = Bool()
+  val kernel_mode       = Bool()
+  val intterupt_allowed = Bool()
+  val cause_ip          = UInt(8.W)
+  val status_im         = UInt(8.W)
+}
+
 class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
     val instBuffer = new InstBufferDecoderUnit()
     val regfile    = Vec(config.decoderNum, new Src12Read())
     val forward    = Input(Vec(config.fuNum, new DataForwardToDecoderUnit()))
-    val cp0 = Input(new Bundle {
-      val access_allowed    = Bool()
-      val kernel_mode       = Bool()
-      val intterupt_allowed = Bool()
-      val cause_ip          = UInt(8.W)
-      val status_im         = UInt(8.W)
-    })
+    val cp0        = Input(new Cp0DecoderUnit())
     // 输出
     val fetchUnit = new Bundle {
 
