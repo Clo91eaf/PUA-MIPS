@@ -149,10 +149,10 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       (!io.cp0.access_allowed)                                  -> EX_CPU,
     ),
   )
-  io.executeStage.inst0.jb_info.jump_conflict    := jumpCtrl.out.jump_conflict
-  io.executeStage.inst0.jb_info.is_branch        := io.bpu.inst_is_branch
-  io.executeStage.inst0.jb_info.pred_branch_flag := io.bpu.pred_branch_flag
-  io.executeStage.inst0.jb_info.branch_target    := io.bpu.branch_target
+  io.executeStage.inst0.jb_info.jump_regiser_conflict := jumpCtrl.out.jump_register
+  io.executeStage.inst0.jb_info.is_branch             := io.bpu.inst_is_branch
+  io.executeStage.inst0.jb_info.pred_branch_flag      := io.bpu.pred_branch_flag
+  io.executeStage.inst0.jb_info.branch_target         := io.bpu.branch_target
 
   io.executeStage.inst1.allow_to_go := issue.inst1.allow_to_go
   io.executeStage.inst1.pc          := pc(1)

@@ -76,7 +76,7 @@ class DecoderUnitCtrl extends Bundle {
 
 class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
   val inst        = Output(Vec(config.fuNum, new MemRead()))
-  val alu_stall   = Output(Bool())
+  val fu_stall    = Output(Bool())
   val branch_flag = Output(Bool())
 
   val allow_to_go = Input(Bool())

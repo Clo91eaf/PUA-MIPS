@@ -125,8 +125,8 @@ class Alu extends Module {
     Seq(
       EXE_TEQ  -> (src1 === src2),
       EXE_TNE  -> (src1 =/= src2),
-      EXE_TGE  -> ~slt,
-      EXE_TGEU -> ~sltu,
+      EXE_TGE  -> !slt,
+      EXE_TGEU -> !sltu,
       EXE_TLT  -> slt,
       EXE_TLTU -> sltu,
     ),

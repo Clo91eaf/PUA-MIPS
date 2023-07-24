@@ -18,7 +18,7 @@ class JumpCtrl(implicit val config: CpuConfig) extends Module {
     })
     val out = Output(new Bundle {
       val inst_is_jump  = Bool()
-      val jump_conflict = Bool()
+      val jump_register = Bool()
       val jump_flag     = Bool()
       val jump_target   = UInt(PC_WID.W)
     })
@@ -28,8 +28,8 @@ class JumpCtrl(implicit val config: CpuConfig) extends Module {
   val inst_is_j  = VecInit(EXE_J, EXE_JAL).contains(op)
   val inst_is_jr = VecInit(EXE_JR, EXE_JALR).contains(op)
   io.out.inst_is_jump := inst_is_j || inst_is_jr
-  io.out.jump_flag    := io.in.allow_to_go && (inst_is_j || inst_is_jr && !io.out.jump_conflict)
-  io.out.jump_conflict := inst_is_jr &&
+  io.out.jump_flag    := io.in.allow_to_go && (inst_is_j || inst_is_jr && !io.out.jump_register)
+  io.out.jump_register := inst_is_jr &&
     ((io.in.forward(0).exe.wen && io.in.decoded_inst0.reg1_raddr === io.in.forward(0).exe.waddr) ||
       (io.in.forward(1).exe.wen && io.in.decoded_inst0.reg1_raddr === io.in.forward(1).exe.waddr) ||
       (io.in.forward(0).mem.wen && io.in.decoded_inst0.reg1_raddr === io.in.forward(0).mem.waddr) ||
