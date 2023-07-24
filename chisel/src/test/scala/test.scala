@@ -8,11 +8,12 @@ import cpu.pipeline.execute.Mul
 import cpu.pipeline.execute.HiLo
 import cpu.pipeline.execute.Fu
 import cpu.pipeline.execute.BranchCtrl
+import cpu.pipeline.execute.ExeAccessMemCtrl
 
 object testMain extends App {
   implicit val config = new CpuConfig()
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new Fu())),
+    Seq(ChiselGeneratorAnnotation(() => new ExeAccessMemCtrl)),
   )
 }

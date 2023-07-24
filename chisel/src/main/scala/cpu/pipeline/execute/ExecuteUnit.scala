@@ -12,6 +12,72 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     val ctrl         = new ExecuteCtrl()
     val executeStage = Input(new DecoderUnitExecuteUnit())
 
+    val bpu = Output(new Bundle {
+      val pc              = UInt(PC_WID.W)
+      val branch_flag     = Bool()
+      val inst0_is_branch = Bool()
+    })
+    val fetchStage = Output(new Bundle {
+      val branch_flag   = Bool()
+      val branch_target = UInt(PC_WID.W)
+    })
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
   })
+
+  val fu  = Module(new Fu()).io
+  val cp0 = Module(new Cp0()).io
+
+  // input fu
+  fu.ctrl.allow_to_go        := io.ctrl.allow_to_go
+  fu.ctrl.do_flush           := io.ctrl.do_flush
+  fu.inst(0).pc              := io.executeStage.inst0.pc
+  fu.inst(0).hilo_wen        := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst0.inst_info.fusel)
+  fu.inst(0).mul_en          := io.executeStage.inst0.inst_info.fusel === FU_MUL
+  fu.inst(0).div_en          := io.executeStage.inst0.inst_info.fusel === FU_DIV
+  fu.inst(0).inst_info       := io.executeStage.inst0.inst_info
+  fu.inst(0).src_info        := io.executeStage.inst0.src_info
+  fu.inst(0).ex              := io.executeStage.inst0.ex
+  fu.inst(1).pc              := io.executeStage.inst1.pc
+  fu.inst(1).hilo_wen        := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst1.inst_info.fusel)
+  fu.inst(1).mul_en          := io.executeStage.inst1.inst_info.fusel === FU_MUL
+  fu.inst(1).div_en          := io.executeStage.inst1.inst_info.fusel === FU_DIV
+  fu.inst(1).inst_info       := io.executeStage.inst1.inst_info
+  fu.inst(1).src_info        := io.executeStage.inst1.src_info
+  fu.inst(1).ex              := io.executeStage.inst1.ex
+  fu.cp0_rdata               := cp0.rdata
+  fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch_flag
+
+  io.bpu.pc              := io.executeStage.inst0.pc
+  io.bpu.branch_flag     := fu.branch.branch_flag
+  io.bpu.inst0_is_branch := io.executeStage.inst0.inst_info.fusel === FU_BR
+
+  io.fetchStage.branch_flag := io.ctrl.allow_to_go &&
+    (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
+  io.fetchStage.branch_target := MuxCase(
+    io.executeStage.inst0.pc + 4.U, // 默认顺序运行吧
+    Seq(
+      (fu.branch.pred_fail && fu.branch.branch_flag) -> io.executeStage.inst0.jb_info.branch_target,
+      (fu.branch.pred_fail && !fu.branch.branch_flag) -> Mux(
+        io.executeStage.inst0.ex.bd || io.executeStage.inst1.ex.bd,
+        io.executeStage.inst0.pc + 8.U,
+        io.executeStage.inst0.pc + 4.U,
+      ),
+      (io.executeStage.inst0.jb_info.jump_regiser_conflict) -> io.executeStage.inst0.src_info.src1_data,
+    ),
+  )
+
+  io.ctrl.fu_stall := fu.stall_req
+
+  io.memoryStage.inst0.pc        := io.executeStage.inst0.pc
+  io.memoryStage.inst0.inst_info := io.executeStage.inst0.inst_info
+  io.memoryStage.inst0.inst_info.reg_wen := MuxLookup(
+    io.executeStage.inst0.inst_info.op,
+    io.executeStage.inst0.inst_info.reg_wen,
+    Seq(
+      EXE_MOVN -> (io.executeStage.inst0.src_info.src2_data =/= 0.U),
+      EXE_MOVZ -> (io.executeStage.inst0.src_info.src2_data === 0.U),
+    ),
+  )
+  io.memoryStage.inst0.rd_info.wdata := fu.inst(0).result
+//   io.memoryStage.inst0.ex.
 }

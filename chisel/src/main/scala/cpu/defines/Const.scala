@@ -141,22 +141,10 @@ trait Constants {
   val DIV_STOP             = false.B
 
   // inst rom
-  val INST_WID           = 32
-  val INST_ADDR_BUS      = UInt(32.W)
-  val INST_ADDR_BUS_INIT = 0.U(32.W)
-  val INST_BUS           = UInt(32.W)
-  val INST_BUS_INIT      = 0.U(32.W)
-  val INST_MEM_NUM       = 131071 // 2^17-1
+  val INST_WID = 32
 
   // data ram
-  val DATA_ADDR_BUS            = UInt(32.W)
-  val DATA_ADDR_BUS_INIT       = 0.U(32.W)
-  val DATA_BUS                 = UInt(32.W)
-  val DATA_BUS_INIT            = 0.U(32.W)
-  val DATA_MEM_NUM             = 131071 // 2^17-1
-  val BYTE_WIDTH               = UInt(8.W)
-  val DATA_MEMORY_SEL_BUS      = UInt(4.W)
-  val DATA_MEMORY_SEL_BUS_INIT = 0.U(4.W)
+  val DATA_ADDR_WID = 32
 
   // GPR RegFile
   val AREG_NUM     = 32
