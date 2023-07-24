@@ -42,7 +42,6 @@ class ExecuteStage(implicit val config: CpuConfig) extends Module {
     })
     val decoderUnit = Input(new DecoderUnitExecuteUnit())
     val executeUnit = Output(new DecoderUnitExecuteUnit())
-
   })
 
   val inst0_queue = Module(new Queue(new IdExeInst0(), 1, pipe = true, hasFlush = true))

@@ -22,6 +22,7 @@ count_commit:
 
 test:
 	@echo "make test"
+	rm -rf ./generated/*
 	sbt "Test / runMain cpu.testMain"
 
 # Makefile targets
