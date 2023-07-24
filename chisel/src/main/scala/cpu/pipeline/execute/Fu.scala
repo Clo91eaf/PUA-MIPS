@@ -29,12 +29,24 @@ class Fu(implicit val config: CpuConfig) extends Module {
     )
     val cp0_rdata = Input(UInt(DATA_WID.W))
     val stall_req = Output(Bool())
+    val branch = new Bundle {
+      val pred_branch_flag = Input(Bool())
+      val branch_flag      = Output(Bool())
+      val pred_fail        = Output(Bool())
+    }
   })
 
-  val alu  = Seq.fill(config.decoderNum)(Module(new Alu()))
-  val mul  = Module(new Mul()).io
-  val div  = Module(new Div()).io
-  val hilo = Module(new HiLo()).io
+  val alu        = Seq.fill(config.decoderNum)(Module(new Alu()))
+  val mul        = Module(new Mul()).io
+  val div        = Module(new Div()).io
+  val hilo       = Module(new HiLo()).io
+  val branchCtrl = Module(new BranchCtrl()).io
+
+  branchCtrl.in.inst_info        := io.inst(0).inst_info
+  branchCtrl.in.src_info         := io.inst(0).src_info
+  branchCtrl.in.pred_branch_flag := io.branch.pred_branch_flag
+  io.branch.branch_flag          := branchCtrl.out.branch_flag
+  io.branch.pred_fail            := branchCtrl.out.pred_fail
 
   for (i <- 0 until (config.fuNum)) {
     alu(i).io.inst_info  := io.inst(i).inst_info
