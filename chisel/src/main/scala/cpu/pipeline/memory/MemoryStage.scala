@@ -23,7 +23,16 @@ class ExeMemInst0 extends ExeMemInst1 {
   val cp0_info = new Cp0Info()
 }
 
-class ExecuteUnitMemoryUnit extends Bundle {
+class ExecuteUnitMemoryUnit(implicit val config: CpuConfig) extends Bundle {
+  val mem = new Bundle {
+    val en        = Bool()
+    val ren       = Bool()
+    val wen       = Bool()
+    val inst_info = new InstInfo()
+    val addr      = UInt(DATA_ADDR_WID.W)
+    val wdata     = UInt(DATA_WID.W)
+    val sel       = Vec(config.fuNum, Bool())
+  }
   val inst0 = new ExeMemInst0()
   val inst1 = new ExeMemInst1()
 }

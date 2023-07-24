@@ -10,10 +10,8 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val mem = new Bundle {
       val in = Input(new Bundle {
-        val allow_to_go = Bool()
-        val do_flush    = Bool()
-        val sel         = Vec(config.fuNum, Bool())
-        val rdata       = UInt(DATA_WID.W)
+        val sel   = Vec(config.fuNum, Bool())
+        val rdata = UInt(DATA_WID.W)
       })
       val out = Output(new Bundle {
         val en        = Bool()

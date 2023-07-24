@@ -9,11 +9,12 @@ import cpu.pipeline.execute.HiLo
 import cpu.pipeline.execute.Fu
 import cpu.pipeline.execute.BranchCtrl
 import cpu.pipeline.execute.ExeAccessMemCtrl
+import cpu.pipeline.execute.ExecuteUnit
 
 object testMain extends App {
   implicit val config = new CpuConfig()
   (new chisel3.stage.ChiselStage).execute(
     Array("--target-dir", "generated"),
-    Seq(ChiselGeneratorAnnotation(() => new ExeAccessMemCtrl)),
+    Seq(ChiselGeneratorAnnotation(() => new ExecuteUnit)),
   )
 }

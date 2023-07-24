@@ -4,10 +4,12 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
+import cpu.pipeline.memory.Cp0Info
 
 class Cp0 extends Module {
   val io = IO(new Bundle {
     val rdata = Output(UInt(DATA_WID.W))
+    val debug = Output(new Cp0Info())
   })
 }
 //   // input-writeBack stage
