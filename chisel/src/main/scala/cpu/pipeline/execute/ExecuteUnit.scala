@@ -5,8 +5,8 @@ import chisel3.util._
 import cpu.CpuConfig
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.pipeline.memory.ExecuteUnitMemoryUnit
-import cpu.pipeline.memory.Cp0Info
+import cpu.pipeline.decoder.RegWrite
+import cpu.pipeline.memory.{ExecuteUnitMemoryUnit, Cp0Info}
 
 class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
@@ -31,6 +31,15 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       val branch_flag   = Bool()
       val branch_target = UInt(PC_WID.W)
     })
+    val decoderUnit = Output(
+      Vec(
+        config.fuNum,
+        new Bundle {
+          val exe         = new RegWrite()
+          val exe_mem_ren = Bool()
+        },
+      ),
+    )
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
     val memoryUnit = Input(new Bundle {
       val mem = new Bundle {
@@ -160,4 +169,17 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     accessMemCtrl.inst(1).ex.out,
     fu.inst(1).ex.out,
   )
+
+  io.decoderUnit(0).exe.wen   := io.memoryStage.inst0.inst_info.reg_wen
+  io.decoderUnit(0).exe.waddr := io.memoryStage.inst0.inst_info.reg_waddr
+  io.decoderUnit(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata
+  io.decoderUnit(0).exe_mem_ren := io.memoryStage.inst0.inst_info.fusel === FU_MEM &&
+    io.memoryStage.inst0.inst_info.reg_wen
+
+  io.decoderUnit(1).exe.wen   := io.memoryStage.inst1.inst_info.reg_wen
+  io.decoderUnit(1).exe.waddr := io.memoryStage.inst1.inst_info.reg_waddr
+  io.decoderUnit(1).exe.wdata := io.memoryStage.inst1.rd_info.wdata
+  io.decoderUnit(1).exe_mem_ren := io.memoryStage.inst1.inst_info.fusel === FU_MEM &&
+    io.memoryStage.inst1.inst_info.reg_wen
+
 }
