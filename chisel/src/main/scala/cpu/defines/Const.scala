@@ -190,6 +190,8 @@ trait Constants {
 
   val CP0_ADDR_WID = 8
 
+  val PTEBASE_WID = 9
+
   // 例外类型
   val EXCODE_WID = 5
 
