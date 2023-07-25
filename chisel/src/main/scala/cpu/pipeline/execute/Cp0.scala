@@ -61,68 +61,71 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       },
     )
   })
+  // 优先使用inst0的信息
+  val pc = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
+  val ex = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
+  val mtc0_wdata = io.executeUnit.in.mtc0_wdata
+  val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
+  val exe_op     = io.executeUnit.in.inst_info.op
+  val exe_stall  = io.ctrl.exe_stall
+  val mem_stall  = io.ctrl.mem_stall
+
+  val tlb_l2 = Module(new TlbL2()).io
+  tlb_l2.in.tlb1_vpn2 := io.tlb(0).vpn2
+  tlb_l2.in.tlb2_vpn2 := io.tlb(1).vpn2
+  io.tlb(0).found     := tlb_l2.out.tlb1_found
+  io.tlb(1).found     := tlb_l2.out.tlb2_found
+  io.tlb(0).info      := tlb_l2.out.tlb1_entry
+  io.tlb(1).info      := tlb_l2.out.tlb2_entry
+  tlb_l2.in.write.en  := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
+  // tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, index.index, random.random)
+  // tlb_l2.in.write.entry.asid := entryhi.asid
+  // tlb_l2.in.write.entry.vpn2 := entryhi.vpn2
+  // tlb_l2.in.write.entry.g := entrylo0.g || entrylo1.g
+  // tlb_l2.in.write.entry.pfn(0) := entrylo0.pfn
+  // tlb_l2.in.write.entry.pfn(1) := entrylo1.pfn
+  // tlb_l2.in.write.entry.c(0) := entrylo0.c
+  // tlb_l2.in.write.entry.c(1) := entrylo1.c
+  // tlb_l2.in.write.entry.d(0) := entrylo0.d
+  // tlb_l2.in.write.entry.d(1) := entrylo1.d
+  // tlb_l2.in.write.entry.v(0) := entrylo0.v
+  // tlb_l2.in.write.entry.v(1) := entrylo1.v
+
+  // index register
+  val cp0_index = RegInit(new Bundle {
+    val p     = false.B
+    val blank = 0.U((31 - log2Ceil(TLB_NUM)).W)
+    val index = 0.U(log2Ceil(TLB_NUM).W)
+  })
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_wdata === CP0_INDEX_ADDR) {
+      cp0_index.index := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
+    }
+    when(exe_op === EXE_TLBP) {
+      cp0_index.index := Mux(tlb_l2.out.tlb_found, tlb_l2.out.tlb_match_index, cp0_index.index)
+      cp0_index.p     := !tlb_l2.out.tlb_found
+    }
+  }
 }
 
-//   // input-writeBack stage
-//   val wb_ex       = io.fromWriteBackStage.wb_ex
-//   val wb_bd       = io.fromWriteBackStage.wb_bd
-//   val eret_flush  = io.fromWriteBackStage.eret_flush
-//   val wb_excode   = io.fromWriteBackStage.wb_excode
-//   val wb_pc       = io.fromWriteBackStage.wb_pc
-//   val wb_badvaddr = io.fromWriteBackStage.wb_badvaddr
-//   val ext_int_in  = io.fromWriteBackStage.ext_int_in
-//   val cp0_addr    = io.fromWriteBackStage.cp0_addr
-//   val mtc0_we     = io.fromWriteBackStage.mtc0_we
-//   val cp0_wdata   = io.fromWriteBackStage.cp0_wdata
-//   val tlbp        = io.fromWriteBackStage.tlbp
-//   val tlbr        = io.fromWriteBackStage.tlbr
-//   val s1_found    = io.fromWriteBackStage.s1_found
-//   val s1_index    = io.fromWriteBackStage.s1_index
-//   val r_vpn2      = io.fromWriteBackStage.r_vpn2
-//   val r_asid      = io.fromWriteBackStage.r_asid
-//   val r_g         = io.fromWriteBackStage.r_g
-//   val r_pfn0      = io.fromWriteBackStage.r_pfn0
-//   val r_c0        = io.fromWriteBackStage.r_c0
-//   val r_d0        = io.fromWriteBackStage.r_d0
-//   val r_v0        = io.fromWriteBackStage.r_v0
-//   val r_pfn1      = io.fromWriteBackStage.r_pfn1
-//   val r_c1        = io.fromWriteBackStage.r_c1
-//   val r_d1        = io.fromWriteBackStage.r_d1
-//   val r_v1        = io.fromWriteBackStage.r_v1
+//   // INDEX
+//   val index_p = RegInit(false.B)
+//   when(tlbp) {
+//     index_p := !s1_found
+//   }
 
-//   // output-writeBack stage
-//   val flush_pc      = Wire(UInt(32.W))
-//   val cp0_rdata     = Wire(UInt(32.W))
-//   val cp0_status    = Wire(UInt(32.W))
-//   val cp0_cause     = Wire(UInt(32.W))
-//   val cp0_epc       = Wire(UInt(32.W))
-//   val cp0_badvaddr  = Wire(UInt(32.W))
-//   val cp0_count     = Wire(UInt(32.W))
-//   val cp0_compare   = Wire(UInt(32.W))
-//   val cp0_random    = Wire(UInt(32.W))
-//   val cp0_entryhi   = Wire(UInt(32.W))
-//   val cp0_entrylo0  = Wire(UInt(32.W))
-//   val cp0_entrylo1  = Wire(UInt(32.W))
-//   val cp0_index     = Wire(UInt(32.W))
-//   val cp0_ebase     = Wire(UInt(32.W))
-//   val cp0_page_mask = Wire(UInt(32.W))
-//   val cp0_context   = Wire(UInt(32.W))
-//   val cp0_config    = Wire(UInt(32.W))
-//   val cp0_config1   = Wire(UInt(32.W))
-//   val cp0_wired     = Wire(UInt(32.W))
-//   io.writeBackStage.cp0_rdata    := cp0_rdata
-//   io.writeBackStage.cp0_status   := cp0_status
-//   io.writeBackStage.cp0_cause    := cp0_cause
-//   io.writeBackStage.cp0_epc      := cp0_epc
-//   io.writeBackStage.cp0_badvaddr := cp0_badvaddr
-//   io.writeBackStage.cp0_count    := cp0_count
-//   io.writeBackStage.cp0_compare  := cp0_compare
-//   io.writeBackStage.cp0_entryhi  := cp0_entryhi
-//   io.writeBackStage.cp0_entrylo0 := cp0_entrylo0
-//   io.writeBackStage.cp0_entrylo1 := cp0_entrylo1
-//   io.writeBackStage.cp0_index    := cp0_index
-//   io.writeBackStage.cp0_random   := cp0_random
-//   io.writeBackStage.flush_pc     := flush_pc
+//   val index_index = RegInit(0.U(log2Ceil(TLB_NUM).W))
+//   when(mtc0_we && cp0_addr === CP0_INDEX_ADDR) {
+//     index_index := cp0_wdata(3, 0)
+//   }.elsewhen(tlbp) {
+//     index_index := s1_index
+//   }
+
+//   cp0_index := Cat(
+//     index_p,
+//     0.U((31 - log2Ceil(TLB_NUM)).W),
+//     index_index,
+//   )
 
 //   // CP0_STATUS
 //   val cp0_status_bev = RegInit(true.B)
@@ -220,18 +223,6 @@ class Cp0(implicit val config: CpuConfig) extends Module {
 //   }
 
 //   cp0_epc := c0_epc
-
-//   // BADVADDR
-//   val c0_badvaddr = RegInit(0.U(32.W))
-//   val excode_tlb =
-//     (wb_excode === EX_MOD) || (wb_excode === EX_TLBL) || (wb_excode === EX_TLBS)
-//   when(
-//     wb_ex && (wb_excode === EX_ADEL || wb_excode === EX_ADES || excode_tlb),
-//   ) {
-//     c0_badvaddr := wb_badvaddr
-//   }
-
-//   cp0_badvaddr := c0_badvaddr
 
 //   // COUNT
 //   val c0_count = RegInit(0.U(32.W))
@@ -376,25 +367,6 @@ class Cp0(implicit val config: CpuConfig) extends Module {
 //     entrylo1_d,
 //     entrylo1_v,
 //     entrylo1_g,
-//   )
-
-//   // INDEX
-//   val index_p = RegInit(false.B)
-//   when(tlbp) {
-//     index_p := !s1_found
-//   }
-
-//   val index_index = RegInit(0.U(log2Ceil(TLB_NUM).W))
-//   when(mtc0_we && cp0_addr === CP0_INDEX_ADDR) {
-//     index_index := cp0_wdata(3, 0)
-//   }.elsewhen(tlbp) {
-//     index_index := s1_index
-//   }
-
-//   cp0_index := Cat(
-//     index_p,
-//     0.U((31 - log2Ceil(TLB_NUM)).W),
-//     index_index,
 //   )
 
 //   // RANDOM
