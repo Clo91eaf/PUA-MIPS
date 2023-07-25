@@ -122,7 +122,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
 
   // status register (12,0)
   val status_init = Wire(new Cp0Status())
-  status_init     := 0.U
+  status_init     := 0.U.asTypeOf(new Cp0Status())
   status_init.bev := true.B
   val cp0_status = RegInit(status_init)
 
@@ -179,6 +179,9 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   tlb_l2.in.write.entry.d(1)   := cp0_entrylo1.d
   tlb_l2.in.write.entry.v(0)   := cp0_entrylo0.v
   tlb_l2.in.write.entry.v(1)   := cp0_entrylo1.v
+  tlb_l2.in.entry_hi.asid      := cp0_entryhi.asid
+  tlb_l2.in.entry_hi.vpn2      := cp0_entryhi.vpn2
+  tlb_l2.in.read.index         := cp0_index.index
 
   // index register (0,0)
   when(!exe_stall) {
@@ -191,7 +194,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // random register (1,0)
-  cp0_random := Mux(cp0_random.random === cp0_wired.wired, (TLB_NUM - 1).U, (cp0_random.random - 1.U))
+  cp0_random.random := Mux(cp0_random.random === cp0_wired.wired, (TLB_NUM - 1).U, (cp0_random.random - 1.U))
 
   // entrylo0 register (2,0)
   when(!exe_stall) {
@@ -323,7 +326,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }.elsewhen(!exe_stall) {
     when(mtc0_wen) {
       when(mtc0_addr === CP0_COMPARE_ADDR) {
-        cp0_cause.ip(7) := false.B
+        cp0_cause.ip := Cat(false.B, cp0_cause.ip(6, 0))
       }.elsewhen(mtc0_addr === CP0_CAUSE_ADDR) {
         val wdata = mtc0_wdata.asTypeOf(new Cp0Cause())
         cp0_cause.ip := Cat(
@@ -404,4 +407,40 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       CP0_ERROR_EPC_ADDR -> cp0_error_epc.asUInt(),
     ),
   )
+
+  io.decoderUnit.cause_ip  := cp0_cause.ip
+  io.decoderUnit.status_im := cp0_status.im
+  io.decoderUnit.kernel_mode := (cp0_status.exl && !(ex.eret && cp0_status.erl)) ||
+    (cp0_status.erl && !ex.eret) ||
+    !cp0_status.um ||
+    (ex.flush_req && !ex.eret)
+  io.decoderUnit.access_allowed    := io.decoderUnit.kernel_mode || cp0_status.cu0
+  io.decoderUnit.intterupt_allowed := cp0_status.ie && !cp0_status.exl && !cp0_status.erl
+
+  io.executeUnit.out.debug.cp0_cause  := cp0_cause.asUInt()
+  io.executeUnit.out.debug.cp0_count  := cp0_count.asUInt()
+  io.executeUnit.out.debug.cp0_random := cp0_random.asUInt()
+
+  val trap_base = Mux(
+    cp0_status.bev,
+    "hbfc00200".U(PC_WID.W),
+    cp0_ebase.asUInt(),
+  )
+  io.memoryUnit.out.flush    := false.B
+  io.memoryUnit.out.flush_pc := 0.U
+  when(ex.eret) {
+    io.memoryUnit.out.flush    := true.B && !io.ctrl.mem_stall
+    io.memoryUnit.out.flush_pc := Mux(cp0_status.erl, cp0_error_epc.epc, cp0_epc.epc)
+  }.elsewhen(ex.flush_req) {
+    io.memoryUnit.out.flush := true.B && !io.ctrl.mem_stall
+    io.memoryUnit.out.flush_pc := Mux(
+      cp0_status.exl,
+      trap_base + "h180".U,
+      trap_base + Mux(
+        ex.excode === EX_INT && cp0_cause.iv && !cp0_status.bev,
+        "h200".U,
+        Mux(ex.tlb_refill && ex.excode =/= EX_INT, 0.U, "h180".U),
+      ),
+    )
+  }
 }
