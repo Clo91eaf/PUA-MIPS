@@ -122,3 +122,7 @@ class Cp0Config1 extends Bundle {
   val ep = Bool()
   val fp = Bool()
 }
+
+class Cp0ErrorEpc extends Bundle {
+  val errorEpc = UInt(PC_WID.W)
+}

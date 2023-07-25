@@ -157,10 +157,19 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   cp0_config1.il := 5.U
   cp0_config1.ms := (TLB_NUM - 1).U
 
-  tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
-  tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
-  // tlb_l2.in.write.entry.asid := entryhi.asid
-  // tlb_l2.in.write.entry.vpn2 := entryhi.vpn2
+  // taglo register (28,0)
+  val cp0_taglo = RegInit(0.U(DATA_WID.W))
+
+  // taghi register (29,0)
+  val cp0_taghi = RegInit(0.U(DATA_WID.W))
+
+  // error epc register (30,0)
+  val cp0_error_epc = RegInit(0.U.asTypeOf(new Cp0Epc()))
+
+  tlb_l2.in.write.en           := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
+  tlb_l2.in.write.index        := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
+  tlb_l2.in.write.entry.asid   := cp0_entryhi.asid
+  tlb_l2.in.write.entry.vpn2   := cp0_entryhi.vpn2
   tlb_l2.in.write.entry.g      := cp0_entrylo0.g || cp0_entrylo1.g
   tlb_l2.in.write.entry.pfn(0) := cp0_entrylo0.pfn
   tlb_l2.in.write.entry.pfn(1) := cp0_entrylo1.pfn
@@ -342,6 +351,27 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     when(!exe_stall) {
       when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
         cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
+      }
+    }
+
+    // taglo register (28,0)
+    when(!exe_stall) {
+      when(mtc0_wen && mtc0_addr === CP0_TAGLO_ADDR) {
+        cp0_taglo := mtc0_wdata
+      }
+    }
+
+    // taghi register (29,0)
+    when(!exe_stall) {
+      when(mtc0_wen && mtc0_addr === CP0_TAGHI_ADDR) {
+        cp0_taghi := mtc0_wdata
+      }
+    }
+
+    // error epc register (30,0)
+    when(!exe_stall) {
+      when(mtc0_wen && mtc0_addr === CP0_ERROR_EPC_ADDR) {
+        cp0_error_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
       }
     }
 
