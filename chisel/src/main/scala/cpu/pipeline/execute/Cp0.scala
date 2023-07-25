@@ -91,12 +91,26 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // tlb_l2.in.write.entry.v(0) := entrylo0.v
   // tlb_l2.in.write.entry.v(1) := entrylo1.v
 
-  // index register
+  // index register (0,0)
   val cp0_index = RegInit(new Bundle {
     val p     = false.B
     val blank = 0.U((31 - log2Ceil(TLB_NUM)).W)
     val index = 0.U(log2Ceil(TLB_NUM).W)
   })
+
+  // random register (1,0)
+  val cp0_random = RegInit(new Bundle {
+    val blank  = 0.U((32 - log2Ceil(TLB_NUM)).W)
+    val random = (TLB_NUM - 1).U(log2Ceil(TLB_NUM).W)
+  })
+
+  // wired register (6,0)
+  val cp0_wired = RegInit(new Bundle {
+    val blank = 0.U((31 - log2Ceil(TLB_NUM)).W)
+    val wired = 0.U(log2Ceil(TLB_NUM).W)
+  })
+
+  // index register (0,0)
   when(!exe_stall) {
     when(mtc0_wen && mtc0_wdata === CP0_INDEX_ADDR) {
       cp0_index.index := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
@@ -106,6 +120,37 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       cp0_index.p     := !tlb_l2.out.tlb_found
     }
   }
+
+  // random register (1,0)
+  cp0_random := Mux(cp0_random.random === cp0_wired.wired, (TLB_NUM - 1).U, (cp0_random.random - 1.U))
+
+  // wired register (6,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_wdata === CP0_WIRED_ADDR) {
+      cp0_wired.wired   := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
+      cp0_random.random := (TLB_NUM - 1).U
+    }
+  }
+
+  io.executeUnit.out.cp0_rdata := MuxLookup(
+    io.executeUnit.in.inst_info.cp0_addr,
+    0.U,
+    Seq(
+      CP0_INDEX_ADDR -> Cat(
+        cp0_index.p,
+        cp0_index.blank,
+        cp0_index.index,
+      ),
+      CP0_RANDOM_ADDR -> Cat(
+        cp0_random.blank,
+        cp0_random.random,
+      ),
+      CP0_WIRED_ADDR -> Cat(
+        cp0_wired.blank,
+        cp0_wired.wired,
+      ),
+    ),
+  )
 }
 
 //   // INDEX
