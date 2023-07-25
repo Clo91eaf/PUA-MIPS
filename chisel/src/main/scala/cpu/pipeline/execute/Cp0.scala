@@ -85,7 +85,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val cp0_index = RegInit(0.U.asTypeOf(new Cp0Index()))
 
   // random register (1,0)
-  val cp0_random = RegInit(0.U.asTypeOf(new Cp0Random()))
+  val cp0_random = RegInit((TLB_NUM - 1).U.asTypeOf(new Cp0Random()))
 
   // entrylo0 register (2,0)
   val cp0_entrylo0 = RegInit(0.U.asTypeOf(new Cp0EntryLo()))
@@ -105,6 +105,12 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // badvaddr register (8,0)
   val cp0_badvaddr = RegInit(0.U.asTypeOf(new Cp0BadVAddr()))
 
+  // count register (9,0)
+  val cp0_count = RegInit(1.U.asTypeOf(new Cp0Count()))
+
+  // entryhi register (10,0)
+  val cp0_entryhi = RegInit(0.U.asTypeOf(new Cp0EntryHi()))
+
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
   // tlb_l2.in.write.entry.asid := entryhi.asid
@@ -123,8 +129,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   when(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_INDEX_ADDR) {
       cp0_index.index := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
-    }
-    when(exe_op === EXE_TLBP) {
+    }.elsewhen(exe_op === EXE_TLBP) {
       cp0_index.index := Mux(tlb_l2.out.tlb_found, tlb_l2.out.tlb_match_index, cp0_index.index)
       cp0_index.p     := !tlb_l2.out.tlb_found
     }
@@ -142,8 +147,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       cp0_entrylo0.d   := wdata.d
       cp0_entrylo0.v   := wdata.v
       cp0_entrylo0.g   := wdata.g
-    }
-    when(exe_op === EXE_TLBR) {
+    }.elsewhen(exe_op === EXE_TLBR) {
       cp0_entrylo0.pfn := tlb_l2.out.read.entry.pfn(0)
       cp0_entrylo0.g   := tlb_l2.out.read.entry.g
       cp0_entrylo0.c   := Cat(1.U((C_WID - 1).W), tlb_l2.out.read.entry.c(0))
@@ -161,8 +165,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       cp0_entrylo1.d   := wdata.d
       cp0_entrylo1.v   := wdata.v
       cp0_entrylo1.g   := wdata.g
-    }
-    when(exe_op === EXE_TLBR) {
+    }.elsewhen(exe_op === EXE_TLBR) {
       cp0_entrylo1.pfn := tlb_l2.out.read.entry.pfn(1)
       cp0_entrylo1.g   := tlb_l2.out.read.entry.g
       cp0_entrylo1.c   := Cat(1.U((C_WID - 1).W), tlb_l2.out.read.entry.c(1))
@@ -176,8 +179,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     when(VecInit(EX_TLBL, EX_TLBS, EX_MOD).contains(ex.excode)) {
       cp0_context.badvpn2 := ex.badvaddr(31, 13)
     }
-  }
-  when(!exe_stall) {
+  }.elsewhen(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_CONTEXT_ADDR) {
       cp0_context.ptebase := mtc0_wdata.asTypeOf(new Cp0Context()).ptebase
     }
@@ -195,6 +197,27 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   when(!mem_stall && ex.flush_req) {
     when(VecInit(EX_ADEL, EX_TLBL, EX_ADES, EX_TLBS, EX_MOD).contains(ex.excode)) {
       cp0_badvaddr.badvaddr := ex.badvaddr
+    }
+  }
+
+  // count register (9,0)
+  cp0_count.count := cp0_count.count + 1.U
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_COUNT_ADDR) {
+      cp0_count.count := mtc0_wdata.asTypeOf(new Cp0Count()).count
+    }
+  }
+
+  // entryhi register (10,0)
+  when(!mem_stall && ex.flush_req) {
+    when(VecInit(EX_TLBL, EX_TLBS, EX_MOD).contains(ex.excode)) {
+      cp0_entryhi.vpn2 := ex.badvaddr(31, 13)
+    }
+  }.elsewhen(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_ENTRYHI_ADDR) {
+      val wdata = mtc0_wdata.asTypeOf(new Cp0EntryHi())
+      cp0_entryhi.asid := wdata.asid
+      cp0_entryhi.vpn2 := wdata.vpn2
     }
   }
 
