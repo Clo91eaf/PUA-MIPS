@@ -64,8 +64,9 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // 优先使用inst0的信息
   val pc = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
   val ex = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
-  val mtc0_wdata = io.executeUnit.in.mtc0_wdata
   val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
+  val mtc0_wdata = io.executeUnit.in.mtc0_wdata
+  val mtc0_addr  = io.executeUnit.in.inst_info.cp0_addr
   val exe_op     = io.executeUnit.in.inst_info.op
   val exe_stall  = io.ctrl.exe_stall
   val mem_stall  = io.ctrl.mem_stall
@@ -77,19 +78,8 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   io.tlb(1).found     := tlb_l2.out.tlb2_found
   io.tlb(0).info      := tlb_l2.out.tlb1_entry
   io.tlb(1).info      := tlb_l2.out.tlb2_entry
-  tlb_l2.in.write.en  := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
-  // tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, index.index, random.random)
-  // tlb_l2.in.write.entry.asid := entryhi.asid
-  // tlb_l2.in.write.entry.vpn2 := entryhi.vpn2
-  // tlb_l2.in.write.entry.g := entrylo0.g || entrylo1.g
-  // tlb_l2.in.write.entry.pfn(0) := entrylo0.pfn
-  // tlb_l2.in.write.entry.pfn(1) := entrylo1.pfn
-  // tlb_l2.in.write.entry.c(0) := entrylo0.c
-  // tlb_l2.in.write.entry.c(1) := entrylo1.c
-  // tlb_l2.in.write.entry.d(0) := entrylo0.d
-  // tlb_l2.in.write.entry.d(1) := entrylo1.d
-  // tlb_l2.in.write.entry.v(0) := entrylo0.v
-  // tlb_l2.in.write.entry.v(1) := entrylo1.v
+
+  // ---------------cp0-defines-----------------
 
   // index register (0,0)
   val cp0_index = RegInit(new Bundle {
@@ -104,15 +94,49 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     val random = (TLB_NUM - 1).U(log2Ceil(TLB_NUM).W)
   })
 
+  // entrylo0 register (2,0)
+  val cp0_entrylo0 = RegInit(new Bundle {
+    val fill = 0.U((32 - PFN_WID - C_WID - 3).W)
+    val pfn  = 0.U(PFN_WID.W)
+    val c    = 0.U(C_WID.W)
+    val d    = false.B
+    val v    = false.B
+    val g    = false.B
+  })
+
+  // entrylo1 register (3,0)
+  val cp0_entrylo1 = RegInit(new Bundle {
+    val fill = 0.U((32 - PFN_WID - C_WID - 3).W)
+    val pfn  = 0.U(PFN_WID.W)
+    val c    = 0.U(C_WID.W)
+    val d    = false.B
+    val v    = false.B
+    val g    = false.B
+  })
+
   // wired register (6,0)
   val cp0_wired = RegInit(new Bundle {
     val blank = 0.U((31 - log2Ceil(TLB_NUM)).W)
     val wired = 0.U(log2Ceil(TLB_NUM).W)
   })
 
+  tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
+  tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
+  // tlb_l2.in.write.entry.asid := entryhi.asid
+  // tlb_l2.in.write.entry.vpn2 := entryhi.vpn2
+  tlb_l2.in.write.entry.g      := cp0_entrylo0.g || cp0_entrylo1.g
+  tlb_l2.in.write.entry.pfn(0) := cp0_entrylo0.pfn
+  tlb_l2.in.write.entry.pfn(1) := cp0_entrylo1.pfn
+  tlb_l2.in.write.entry.c(0)   := cp0_entrylo0.c
+  tlb_l2.in.write.entry.c(1)   := cp0_entrylo1.c
+  tlb_l2.in.write.entry.d(0)   := cp0_entrylo0.d
+  tlb_l2.in.write.entry.d(1)   := cp0_entrylo1.d
+  tlb_l2.in.write.entry.v(0)   := cp0_entrylo0.v
+  tlb_l2.in.write.entry.v(1)   := cp0_entrylo1.v
+
   // index register (0,0)
   when(!exe_stall) {
-    when(mtc0_wen && mtc0_wdata === CP0_INDEX_ADDR) {
+    when(mtc0_wen && mtc0_addr === CP0_INDEX_ADDR) {
       cp0_index.index := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
     }
     when(exe_op === EXE_TLBP) {
@@ -124,9 +148,45 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // random register (1,0)
   cp0_random := Mux(cp0_random.random === cp0_wired.wired, (TLB_NUM - 1).U, (cp0_random.random - 1.U))
 
+  // entrylo0 register (2,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_ENTRYLO0_ADDR) {
+      cp0_entrylo0.pfn := mtc0_wdata(PFN_WID + C_WID + 3 - 1, C_WID + 3)
+      cp0_entrylo0.c   := mtc0_wdata(C_WID + 3 - 1, 3)
+      cp0_entrylo0.d   := mtc0_wdata(2)
+      cp0_entrylo0.v   := mtc0_wdata(1)
+      cp0_entrylo0.g   := mtc0_wdata(0)
+    }
+    when(exe_op === EXE_TLBR) {
+      cp0_entrylo0.pfn := tlb_l2.out.read.entry.pfn(0)
+      cp0_entrylo0.g   := tlb_l2.out.read.entry.g
+      cp0_entrylo0.c   := Cat(1.U((C_WID - 1).W), tlb_l2.out.read.entry.c(0))
+      cp0_entrylo0.d   := tlb_l2.out.read.entry.d(0)
+      cp0_entrylo0.v   := tlb_l2.out.read.entry.v(0)
+    }
+  }
+
+  // entrylo1 register (3,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_ENTRYLO1_ADDR) {
+      cp0_entrylo1.pfn := mtc0_wdata(PFN_WID + C_WID + 3 - 1, C_WID + 3)
+      cp0_entrylo1.c   := mtc0_wdata(C_WID + 3 - 1, 3)
+      cp0_entrylo1.d   := mtc0_wdata(2)
+      cp0_entrylo1.v   := mtc0_wdata(1)
+      cp0_entrylo1.g   := mtc0_wdata(0)
+    }
+    when(exe_op === EXE_TLBR) {
+      cp0_entrylo1.pfn := tlb_l2.out.read.entry.pfn(1)
+      cp0_entrylo1.g   := tlb_l2.out.read.entry.g
+      cp0_entrylo1.c   := Cat(1.U((C_WID - 1).W), tlb_l2.out.read.entry.c(1))
+      cp0_entrylo1.d   := tlb_l2.out.read.entry.d(1)
+      cp0_entrylo1.v   := tlb_l2.out.read.entry.v(1)
+    }
+  }
+
   // wired register (6,0)
   when(!exe_stall) {
-    when(mtc0_wen && mtc0_wdata === CP0_WIRED_ADDR) {
+    when(mtc0_wen && mtc0_addr === CP0_WIRED_ADDR) {
       cp0_wired.wired   := mtc0_wdata(log2Ceil(TLB_NUM) - 1, 0)
       cp0_random.random := (TLB_NUM - 1).U
     }
@@ -136,19 +196,6 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     io.executeUnit.in.inst_info.cp0_addr,
     0.U,
     Seq(
-      CP0_INDEX_ADDR -> Cat(
-        cp0_index.p,
-        cp0_index.blank,
-        cp0_index.index,
-      ),
-      CP0_RANDOM_ADDR -> Cat(
-        cp0_random.blank,
-        cp0_random.random,
-      ),
-      CP0_WIRED_ADDR -> Cat(
-        cp0_wired.blank,
-        cp0_wired.wired,
-      ),
     ),
   )
 }

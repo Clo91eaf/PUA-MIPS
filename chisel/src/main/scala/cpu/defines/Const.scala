@@ -212,6 +212,7 @@ trait Constants {
   // TLB MMU
   val TLB_NUM  = 8
   val PFN_WID  = 20
+  val C_WID   = 3
   val ASID_WID = 8
   val VPN2_WID = 19
 }
