@@ -12,11 +12,16 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ctrl         = new ExecuteCtrl()
     val executeStage = Input(new DecoderUnitExecuteUnit())
-    val cp0 = Input(new Bundle {
-      val rdata = UInt(DATA_WID.W)
-      val debug = new Cp0Info()
-    })
-
+    val cp0 = new Bundle {
+      val in = Input(new Bundle {
+        val rdata = UInt(DATA_WID.W)
+        val debug = new Cp0Info()
+      })
+      val out = Output(new Bundle {
+        val inst_info  = new InstInfo()
+        val mtc0_wdata = UInt(DATA_WID.W)
+      })
+    }
     val bpu = Output(new Bundle {
       val pc              = UInt(PC_WID.W)
       val branch_flag     = Bool()
@@ -47,6 +52,13 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.branch_flag := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
 
+  io.cp0.out.mtc0_wdata := io.executeStage.inst0.src_info.src2_data
+  io.cp0.out.inst_info := Mux(
+    !io.executeStage.inst0.ex.flush_req,
+    io.executeStage.inst0.inst_info,
+    0.U.asTypeOf(new InstInfo()),
+  )
+
   // input accessMemCtrl
   accessMemCtrl.mem.in.sel        := io.memoryUnit.mem.sel
   accessMemCtrl.mem.in.rdata      := io.memoryUnit.mem.rdata
@@ -74,7 +86,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).inst_info       := io.executeStage.inst1.inst_info
   fu.inst(1).src_info        := io.executeStage.inst1.src_info
   fu.inst(1).ex.in           := io.executeStage.inst1.ex
-  fu.cp0_rdata               := io.cp0.rdata
+  fu.cp0_rdata               := io.cp0.in.rdata
   fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch_flag
 
   io.bpu.pc              := io.executeStage.inst0.pc
@@ -126,7 +138,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     accessMemCtrl.inst(0).ex.out,
     fu.inst(0).ex.out,
   )
-  io.memoryStage.inst0.cp0_info := io.cp0.debug
+  io.memoryStage.inst0.cp0_info := io.cp0.in.debug
 
   io.memoryStage.inst1.pc        := io.executeStage.inst1.pc
   io.memoryStage.inst1.inst_info := io.executeStage.inst1.inst_info
