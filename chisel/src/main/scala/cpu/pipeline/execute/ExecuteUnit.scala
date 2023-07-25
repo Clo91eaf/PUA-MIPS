@@ -138,12 +138,12 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     ),
   )
   io.memoryStage.inst0.rd_info.wdata := Mux(
-    io.executeStage.inst0.inst_info.fusel === FU_MEM,
+    io.executeStage.inst0.inst_info.fusel === FU_MEM && io.executeStage.inst0.inst_info.reg_wen,
     accessMemCtrl.inst(0).mem_rdata,
     fu.inst(0).result,
   )
   io.memoryStage.inst0.ex := Mux(
-    io.executeStage.inst0.inst_info.fusel === FU_MEM,
+    io.executeStage.inst0.inst_info.fusel === FU_MEM && io.executeStage.inst0.inst_info.reg_wen,
     accessMemCtrl.inst(0).ex.out,
     fu.inst(0).ex.out,
   )
@@ -160,19 +160,19 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     ),
   )
   io.memoryStage.inst1.rd_info.wdata := Mux(
-    io.executeStage.inst1.inst_info.fusel === FU_MEM,
+    io.executeStage.inst1.inst_info.fusel === FU_MEM && io.executeStage.inst1.inst_info.reg_wen,
     accessMemCtrl.inst(1).mem_rdata,
     fu.inst(1).result,
   )
   io.memoryStage.inst1.ex := Mux(
-    io.executeStage.inst1.inst_info.fusel === FU_MEM,
+    io.executeStage.inst1.inst_info.fusel === FU_MEM && io.executeStage.inst1.inst_info.reg_wen,
     accessMemCtrl.inst(1).ex.out,
     fu.inst(1).ex.out,
   )
 
   io.decoderUnit(0).exe.wen   := io.memoryStage.inst0.inst_info.reg_wen
   io.decoderUnit(0).exe.waddr := io.memoryStage.inst0.inst_info.reg_waddr
-  io.decoderUnit(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata
+  io.decoderUnit(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata //TODO:这里可能有问题,是否得使用fu的结果
   io.decoderUnit(0).exe_mem_ren := io.memoryStage.inst0.inst_info.fusel === FU_MEM &&
     io.memoryStage.inst0.inst_info.reg_wen
 
