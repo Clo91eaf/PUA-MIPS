@@ -40,11 +40,30 @@ class Cp0BadVAddr extends Bundle {
 }
 
 class Cp0Count extends Bundle {
-  val count = UInt(PC_WID.W)
+  val count = UInt(DATA_WID.W)
 }
 
 class Cp0EntryHi extends Bundle {
   val vpn2  = UInt(VPN2_WID.W)
   val blank = UInt((32 - VPN2_WID - ASID_WID).W)
   val asid  = UInt(ASID_WID.W)
+}
+
+class Cp0Compare extends Bundle {
+  val compare = UInt(DATA_WID.W)
+}
+
+class Cp0Status extends Bundle {
+  val blank3 = UInt(3.W)
+  val cu0    = Bool()
+  val blank2 = UInt(5.W)
+  val bev    = Bool()
+  val blank1 = UInt(6.W)
+  val im     = UInt(8.W)
+  val blank0 = UInt(3.W)
+  val um     = Bool()
+  val r0     = Bool()
+  val erl    = Bool()
+  val exl    = Bool()
+  val ie     = Bool()
 }

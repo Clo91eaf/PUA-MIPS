@@ -85,7 +85,10 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val cp0_index = RegInit(0.U.asTypeOf(new Cp0Index()))
 
   // random register (1,0)
-  val cp0_random = RegInit((TLB_NUM - 1).U.asTypeOf(new Cp0Random()))
+  val random_init = Wire(new Cp0Random())
+  random_init        := 0.U.asTypeOf(new Cp0Random())
+  random_init.random := (TLB_NUM - 1).U
+  val cp0_random = RegInit(random_init)
 
   // entrylo0 register (2,0)
   val cp0_entrylo0 = RegInit(0.U.asTypeOf(new Cp0EntryLo()))
@@ -106,10 +109,22 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val cp0_badvaddr = RegInit(0.U.asTypeOf(new Cp0BadVAddr()))
 
   // count register (9,0)
-  val cp0_count = RegInit(1.U.asTypeOf(new Cp0Count()))
+  val count_init = Wire(new Cp0Count())
+  count_init       := 0.U.asTypeOf(new Cp0Count())
+  count_init.count := 1.U
+  val cp0_count = RegInit(count_init)
 
   // entryhi register (10,0)
   val cp0_entryhi = RegInit(0.U.asTypeOf(new Cp0EntryHi()))
+
+  // compare register (11,0)
+  val cp0_compare = RegInit(0.U.asTypeOf(new Cp0Compare()))
+
+  // status register (12,0)
+  val status_init = Wire(new Cp0Status())
+  status_init     := 0.U
+  status_init.bev := true.B
+  val cp0_status = RegInit(status_init)
 
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
@@ -218,6 +233,37 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       val wdata = mtc0_wdata.asTypeOf(new Cp0EntryHi())
       cp0_entryhi.asid := wdata.asid
       cp0_entryhi.vpn2 := wdata.vpn2
+    }
+  }
+
+  // compare register (11,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_COMPARE_ADDR) {
+      cp0_compare.compare := mtc0_wdata.asTypeOf(new Cp0Compare()).compare
+    }
+  }
+
+  // status register (12,0)
+  when(!mem_stall) {
+    when(ex.eret) {
+      when(cp0_status.erl) {
+        cp0_status.erl := false.B
+      }.otherwise {
+        cp0_status.exl := false.B
+      }
+    }.elsewhen(ex.flush_req) {
+      cp0_status.exl := true.B
+    }
+  }.elsewhen(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_STATUS_ADDR) {
+      val wdata = mtc0_wdata.asTypeOf(new Cp0Status())
+      cp0_status.cu0 := wdata.cu0
+      cp0_status.ie  := wdata.ie
+      cp0_status.exl := wdata.exl
+      cp0_status.erl := wdata.erl
+      cp0_status.um  := wdata.um
+      cp0_status.im  := wdata.im
+      cp0_status.bev := wdata.bev
     }
   }
 
