@@ -129,6 +129,9 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // cause register (13,0)
   val cp0_cause = RegInit(0.U.asTypeOf(new Cp0Cause()))
 
+  // epc register (14,0)
+  val cp0_epc = RegInit(0.U.asTypeOf(new Cp0Epc()))
+
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
   // tlb_l2.in.write.entry.asid := entryhi.asid
@@ -294,6 +297,19 @@ class Cp0(implicit val config: CpuConfig) extends Module {
           wdata.ip(1, 0),
         )
         cp0_cause.iv := wdata.iv
+      }
+    }
+
+    // epc register (14,0)
+    when(!mem_stall) {
+      when(ex.flush_req) {
+        when(!cp0_status.exl) {
+          cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
+        }
+      }
+    }.elsewhen(!exe_stall) {
+      when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
+        cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
       }
     }
 

@@ -78,3 +78,7 @@ class Cp0Cause extends Bundle {
   val excode = UInt(5.W)
   val blank0 = UInt(2.W)
 }
+
+class Cp0Epc extends Bundle {
+  val epc = UInt(PC_WID.W)
+}
