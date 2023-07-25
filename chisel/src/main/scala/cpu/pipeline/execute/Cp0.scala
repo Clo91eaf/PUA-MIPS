@@ -141,6 +141,22 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   ebase_init.fill := true.B
   val cp0_ebase = RegInit(ebase_init)
 
+  // config register (16,0)
+  val cp0_config = Wire(new Cp0Config())
+  cp0_config    := 0.U.asTypeOf(new Cp0Config())
+  cp0_config.k0 := 3.U
+  cp0_config.mt := 1.U
+  cp0_config.m  := true.B
+
+  // config1 register (16,1)
+  val cp0_config1 = Wire(new Cp0Config1())
+  cp0_config1    := 0.U.asTypeOf(new Cp0Config1())
+  cp0_config1.da := 1.U
+  cp0_config1.dl := 5.U
+  cp0_config1.ia := 1.U
+  cp0_config1.il := 5.U
+  cp0_config1.ms := (TLB_NUM - 1).U
+
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
   // tlb_l2.in.write.entry.asid := entryhi.asid

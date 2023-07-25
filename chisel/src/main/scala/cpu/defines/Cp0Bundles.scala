@@ -90,3 +90,35 @@ class Cp0Ebase extends Bundle {
   val blank0 = UInt(2.W)
   val cpuNum = UInt(10.W)
 }
+
+class Cp0Config extends Bundle {
+  val m     = Bool()
+  val k23   = UInt(3.W)
+  val ku    = UInt(3.W)
+  val impl  = UInt(9.W)
+  val be    = Bool()
+  val at    = UInt(2.W)
+  val ar    = UInt(3.W)
+  val mt    = UInt(3.W)
+  val blank = UInt(3.W)
+  val vi    = Bool()
+  val k0    = UInt(3.W)
+}
+
+class Cp0Config1 extends Bundle {
+  val m  = Bool()
+  val ms = UInt(6.W)
+  val is = UInt(3.W)
+  val il = UInt(3.W)
+  val ia = UInt(3.W)
+  val ds = UInt(3.W)
+  val dl = UInt(3.W)
+  val da = UInt(3.W)
+  val c2 = Bool()
+  val md = Bool()
+  val pc = Bool()
+  val wr = Bool()
+  val ca = Bool()
+  val ep = Bool()
+  val fp = Bool()
+}
