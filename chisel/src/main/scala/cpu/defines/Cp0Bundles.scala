@@ -82,3 +82,11 @@ class Cp0Cause extends Bundle {
 class Cp0Epc extends Bundle {
   val epc = UInt(PC_WID.W)
 }
+
+class Cp0Ebase extends Bundle {
+  val fill   = Bool()
+  val blank1 = Bool()
+  val ebase  = UInt(18.W)
+  val blank0 = UInt(2.W)
+  val cpuNum = UInt(10.W)
+}

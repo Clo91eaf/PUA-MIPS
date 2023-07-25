@@ -156,37 +156,37 @@ trait Constants {
 
   // CP0寄存器
   // CP0 Register (5.w), Select (3.w)
-  val CP0_INDEX_ADDR          = "b00000_000".U(8.W) // 0,0
-  val CP0_RANDOM_ADDR         = "b00001_000".U(8.W) // 1,0
-  val CP0_ENTRYLO0_ADDR       = "b00010_000".U(8.W) // 2,0
-  val CP0_ENTRYLO1_ADDR       = "b00011_000".U(8.W) // 3,0
-  val CP0_CONTEXT_ADDR        = "b00100_000".U(8.W) // 4,0
+  val CP0_INDEX_ADDR    = "b00000_000".U(8.W) // 0,0
+  val CP0_RANDOM_ADDR   = "b00001_000".U(8.W) // 1,0
+  val CP0_ENTRYLO0_ADDR = "b00010_000".U(8.W) // 2,0
+  val CP0_ENTRYLO1_ADDR = "b00011_000".U(8.W) // 3,0
+  val CP0_CONTEXT_ADDR  = "b00100_000".U(8.W) // 4,0
   // val CP0_CONTEXT_CONFIG_ADDR = "b00100_001".U(8.W) // 4,1
   // val CP0_USER_LOCAL_ADDR     = "b00100_010".U(8.W) // 4,2
-  val CP0_PAGE_MASK_ADDR      = "b00101_000".U(8.W) // 5,0
+  val CP0_PAGE_MASK_ADDR = "b00101_000".U(8.W) // 5,0
   // val CP0_PAGE_GRAIN_ADDR     = "b00101_001".U(8.W) // 5,1
-  val CP0_WIRED_ADDR          = "b00110_000".U(8.W) // 6,0
+  val CP0_WIRED_ADDR = "b00110_000".U(8.W) // 6,0
   // val CP0_HWRENA_ADDR         = "b00111_000".U(8.W) // 7,0
-  val CP0_BADV_ADDR           = "b01000_000".U(8.W) // 8,0
-  val CP0_COUNT_ADDR          = "b01001_000".U(8.W) // 9,0  (sel保留 6or7)
-  val CP0_ENTRYHI_ADDR        = "b01010_000".U(8.W) // 10,0
-  val CP0_COMPARE_ADDR        = "b01011_000".U(8.W) // 11,0 (sel保留 6or7)
-  val CP0_STATUS_ADDR         = "b01100_000".U(8.W) // 12,0
+  val CP0_BADV_ADDR    = "b01000_000".U(8.W) // 8,0
+  val CP0_COUNT_ADDR   = "b01001_000".U(8.W) // 9,0  (sel保留 6or7)
+  val CP0_ENTRYHI_ADDR = "b01010_000".U(8.W) // 10,0
+  val CP0_COMPARE_ADDR = "b01011_000".U(8.W) // 11,0 (sel保留 6or7)
+  val CP0_STATUS_ADDR  = "b01100_000".U(8.W) // 12,0
   // val CP0_INTCTL_ADDR         = "b01100_001".U(8.W) // 12,1
   // val CP0_SRSCTL_ADDR         = "b01100_010".U(8.W) // 12,2
   // val CP0_SRSMAP_ADDR         = "b01100_011".U(8.W) // 12,3
-  val CP0_CAUSE_ADDR          = "b01101_000".U(8.W) // 13,0
-  val CP0_EPC_ADDR            = "b01110_000".U(8.W) // 14,0
-  val CP0_PI_ADDR             = "b01111_000".U(8.W) // 15,0
-  val CP0_EBASE_ADDR          = "b01111_001".U(8.W) // 15,1
-  val CP0_CDMMBASE_ADDR       = "b01111_010".U(8.W) // 15,2
-  val CP0_CMGCRBASE_ADDR      = "b01111_011".U(8.W) // 15,3
-  val CP0_CONFIG_ADDR         = "b10000_000".U(8.W) // 16,0
-  val CP0_CONFIG1_ADDR        = "b10000_001".U(8.W) // 16,1
-  val CP0_CONFIG2_ADDR        = "b10000_010".U(8.W) // 16,2
-  val CP0_CONFIG3_ADDR        = "b10000_011".U(8.W) // 16,3
-  val CP0_CONFIG4_ADDR        = "b10000_100".U(8.W) // 16,4 (sel保留 6or7)
-  val CP0_LOAD_LINKED_ADDR    = "b10001_000".U(8.W) // 17,0
+  val CP0_CAUSE_ADDR       = "b01101_000".U(8.W) // 13,0
+  val CP0_EPC_ADDR         = "b01110_000".U(8.W) // 14,0
+  val CP0_PRID_ADDR        = "b01111_000".U(8.W) // 15,0
+  val CP0_EBASE_ADDR       = "b01111_001".U(8.W) // 15,1
+  val CP0_CDMMBASE_ADDR    = "b01111_010".U(8.W) // 15,2
+  val CP0_CMGCRBASE_ADDR   = "b01111_011".U(8.W) // 15,3
+  val CP0_CONFIG_ADDR      = "b10000_000".U(8.W) // 16,0
+  val CP0_CONFIG1_ADDR     = "b10000_001".U(8.W) // 16,1
+  val CP0_CONFIG2_ADDR     = "b10000_010".U(8.W) // 16,2
+  val CP0_CONFIG3_ADDR     = "b10000_011".U(8.W) // 16,3
+  val CP0_CONFIG4_ADDR     = "b10000_100".U(8.W) // 16,4 (sel保留 6or7)
+  val CP0_LOAD_LINKED_ADDR = "b10001_000".U(8.W) // 17,0
 
   val CP0_ADDR_WID = 8
 
@@ -214,7 +214,7 @@ trait Constants {
   // TLB MMU
   val TLB_NUM  = 8
   val PFN_WID  = 20
-  val C_WID   = 3
+  val C_WID    = 3
   val ASID_WID = 8
   val VPN2_WID = 19
 }

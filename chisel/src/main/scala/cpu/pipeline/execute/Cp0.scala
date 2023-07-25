@@ -132,6 +132,15 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // epc register (14,0)
   val cp0_epc = RegInit(0.U.asTypeOf(new Cp0Epc()))
 
+  // prid register (15,0)
+  val prid = "h_0001_8003".U
+
+  // ebase register (15,1)
+  val ebase_init = Wire(new Cp0Ebase())
+  ebase_init      := 0.U.asTypeOf(new Cp0Ebase())
+  ebase_init.fill := true.B
+  val cp0_ebase = RegInit(ebase_init)
+
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
   // tlb_l2.in.write.entry.asid := entryhi.asid
@@ -310,6 +319,13 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     }.elsewhen(!exe_stall) {
       when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
         cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
+      }
+    }
+
+    // ebase register (15,1)
+    when(!exe_stall) {
+      when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
+        cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
       }
     }
 
