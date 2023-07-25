@@ -172,9 +172,9 @@ trait Constants {
   val CP0_ENTRYHI_ADDR        = "b01010_000".U(8.W) // 10,0
   val CP0_COMPARE_ADDR        = "b01011_000".U(8.W) // 11,0 (sel保留 6or7)
   val CP0_STATUS_ADDR         = "b01100_000".U(8.W) // 12,0
-  val CP0_INTCTL_ADDR         = "b01100_001".U(8.W) // 12,1
-  val CP0_SRSCTL_ADDR         = "b01100_010".U(8.W) // 12,2
-  val CP0_SRSMAP_ADDR         = "b01100_011".U(8.W) // 12,3
+  // val CP0_INTCTL_ADDR         = "b01100_001".U(8.W) // 12,1
+  // val CP0_SRSCTL_ADDR         = "b01100_010".U(8.W) // 12,2
+  // val CP0_SRSMAP_ADDR         = "b01100_011".U(8.W) // 12,3
   val CP0_CAUSE_ADDR          = "b01101_000".U(8.W) // 13,0
   val CP0_EPC_ADDR            = "b01110_000".U(8.W) // 14,0
   val CP0_PI_ADDR             = "b01111_000".U(8.W) // 15,0

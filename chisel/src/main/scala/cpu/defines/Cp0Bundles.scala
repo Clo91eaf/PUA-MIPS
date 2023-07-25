@@ -67,3 +67,14 @@ class Cp0Status extends Bundle {
   val exl    = Bool()
   val ie     = Bool()
 }
+
+class Cp0Cause extends Bundle {
+  val bd     = Bool()
+  val blank3 = UInt(7.W)
+  val iv     = Bool()
+  val blank2 = UInt(7.W)
+  val ip     = UInt(8.W)
+  val blank1 = Bool()
+  val excode = UInt(5.W)
+  val blank0 = UInt(2.W)
+}
