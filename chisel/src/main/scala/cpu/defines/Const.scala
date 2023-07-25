@@ -161,12 +161,12 @@ trait Constants {
   val CP0_ENTRYLO0_ADDR       = "b00010_000".U(8.W) // 2,0
   val CP0_ENTRYLO1_ADDR       = "b00011_000".U(8.W) // 3,0
   val CP0_CONTEXT_ADDR        = "b00100_000".U(8.W) // 4,0
-  val CP0_CONTEXT_CONFIG_ADDR = "b00100_001".U(8.W) // 4,1
-  val CP0_USER_LOCAL_ADDR     = "b00100_010".U(8.W) // 4,2
+  // val CP0_CONTEXT_CONFIG_ADDR = "b00100_001".U(8.W) // 4,1
+  // val CP0_USER_LOCAL_ADDR     = "b00100_010".U(8.W) // 4,2
   val CP0_PAGE_MASK_ADDR      = "b00101_000".U(8.W) // 5,0
-  val CP0_PAGE_GRAIN_ADDR     = "b00101_001".U(8.W) // 5,1
+  // val CP0_PAGE_GRAIN_ADDR     = "b00101_001".U(8.W) // 5,1
   val CP0_WIRED_ADDR          = "b00110_000".U(8.W) // 6,0
-  val CP0_HWRENA_ADDR         = "b00111_000".U(8.W) // 7,0
+  // val CP0_HWRENA_ADDR         = "b00111_000".U(8.W) // 7,0
   val CP0_BADV_ADDR           = "b01000_000".U(8.W) // 8,0
   val CP0_COUNT_ADDR          = "b01001_000".U(8.W) // 9,0  (sel保留 6or7)
   val CP0_ENTRYHI_ADDR        = "b01010_000".U(8.W) // 10,0

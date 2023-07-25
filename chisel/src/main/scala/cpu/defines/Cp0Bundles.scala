@@ -34,3 +34,7 @@ class Cp0Wired extends Bundle {
   val blank = UInt((31 - log2Ceil(TLB_NUM)).W)
   val wired = UInt(log2Ceil(TLB_NUM).W)
 }
+
+class Cp0BadVAddr extends Bundle {
+  val badvaddr = UInt(PC_WID.W)
+}

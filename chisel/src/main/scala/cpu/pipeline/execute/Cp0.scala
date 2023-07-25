@@ -96,8 +96,14 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   // context register (4,0)
   val cp0_context = RegInit(0.U.asTypeOf(new Cp0Context()))
 
+  // page mask register (5,0)
+  val cp0_pagemask = 0.U
+
   // wired register (6,0)
   val cp0_wired = RegInit(0.U.asTypeOf(new Cp0Wired()))
+
+  // badvaddr register (8,0)
+  val cp0_badvaddr = RegInit(0.U.asTypeOf(new Cp0BadVAddr()))
 
   tlb_l2.in.write.en    := !exe_stall && (exe_op === EXE_TLBWI || exe_op === EXE_TLBWR)
   tlb_l2.in.write.index := Mux(exe_op === EXE_TLBWI, cp0_index.index, cp0_random.random)
@@ -185,12 +191,19 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     }
   }
 
-  io.executeUnit.out.cp0_rdata := MuxLookup(
-    io.executeUnit.in.inst_info.cp0_addr,
-    0.U,
-    Seq(
-    ),
-  )
+  // badvaddr register (8,0)
+  when(!mem_stall && ex.flush_req) {
+    when(VecInit(EX_ADEL, EX_TLBL, EX_ADES, EX_TLBS, EX_MOD).contains(ex.excode)) {
+      cp0_badvaddr.badvaddr := ex.badvaddr
+    }
+  }
+
+  // io.executeUnit.out.cp0_rdata := MuxLookup(
+  //   io.executeUnit.in.inst_info.cp0_addr,
+  //   0.U,
+  //   Seq(
+  //   ),
+  // )
 }
 
 //   // INDEX
