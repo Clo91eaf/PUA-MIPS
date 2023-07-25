@@ -9,7 +9,7 @@ trait Constants {
   val PC_WID  = 32
   val PC_INIT = "hbfc00000".U(PC_WID.W)
 
-  val EXT_INT_WID = 5
+  val EXT_INT_WID = 6
 
   val WRITE_ENABLE  = true.B
   val WRITE_DISABLE = false.B

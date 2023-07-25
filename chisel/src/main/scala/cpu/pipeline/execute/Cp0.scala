@@ -20,6 +20,7 @@ class TlbEntry extends Bundle {
 
 class Cp0(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
+    val ext_int = Input(UInt(EXT_INT_WID.W))
     val ctrl = Input(new Bundle {
       val exe_stall = Bool()
       val mem_stall = Bool()
@@ -29,7 +30,6 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       val in = Input(new Bundle {
         val inst_info  = new InstInfo()
         val mtc0_wdata = UInt(DATA_WID.W)
-        val ext_int    = UInt(EXT_INT_WID.W)
       })
       val out = Output(new Bundle {
         val cp0_rdata = UInt(DATA_WID.W)
@@ -312,8 +312,8 @@ class Cp0(implicit val config: CpuConfig) extends Module {
 
   // cause register (13,0)
   cp0_cause.ip := Cat(
-    cp0_cause.ip(7) || cp0_compare.compare === cp0_count.count,
-    io.executeUnit.in.ext_int,
+    cp0_cause.ip(7) || cp0_compare.compare === cp0_count.count || io.ext_int(5), // TODO:此处的ext_int可能不对
+    io.ext_int(4, 0),
     cp0_cause.ip(1, 0),
   )
   when(!mem_stall) {
