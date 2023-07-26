@@ -21,9 +21,7 @@ class Bank(
     )
   })
   for { i <- 0 until cacheConfig.nway } yield {
-    val bank = Module(
-      new SimpleDualPortRam(cacheConfig.nset * cacheConfig.nbank, cacheConfig.bankWidthBits, byteAddressable),
-    )
+    val bank = Module(new SimpleDualPortRam(cacheConfig.nset * cacheConfig.nbank, cacheConfig.bankWidthBits, byteAddressable))
     bank.suggestName(s"bank_${i}")
 
     // portR
