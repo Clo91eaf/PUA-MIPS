@@ -198,18 +198,31 @@ trait Constants {
   // 例外类型
   val EXCODE_WID = 5
 
-  val EX_INT  = "h00".U(EXCODE_WID.W) // 中断异常
-  val EX_MOD  = "h01".U(EXCODE_WID.W) // TLB 条目修改异常
-  val EX_TLBL = "h02".U(EXCODE_WID.W) // TLB 非法取指令或访问异常
-  val EX_TLBS = "h03".U(EXCODE_WID.W) // TLB 非法存储访问异常
-  val EX_ADEL = "h04".U(EXCODE_WID.W) // 地址未对齐异常（取指令或访问异常）
-  val EX_ADES = "h05".U(EXCODE_WID.W) // 地址未对齐异常（存储访问异常）
-  val EX_SYS  = "h08".U(EXCODE_WID.W) // 系统调用异常
-  val EX_BP   = "h09".U(EXCODE_WID.W) // 断点异常
-  val EX_RI   = "h0a".U(EXCODE_WID.W) // 保留指令异常
-  val EX_CPU  = "h0b".U(EXCODE_WID.W) // 协处理器不可用异常
-  val EX_OV   = "h0c".U(EXCODE_WID.W) // 算术溢出异常
-  val EX_NO   = "h1f".U(EXCODE_WID.W) // 无异常
+  val EX_NO   = 0.U(EXCODE_WID.W)  // 无异常
+  val EX_INT  = 1.U(EXCODE_WID.W)  // 中断异常
+  val EX_MOD  = 2.U(EXCODE_WID.W)  // TLB 条目修改异常
+  val EX_TLBL = 3.U(EXCODE_WID.W)  // TLB 非法取指令或访问异常
+  val EX_TLBS = 4.U(EXCODE_WID.W)  // TLB 非法存储访问异常
+  val EX_ADEL = 5.U(EXCODE_WID.W)  // 地址未对齐异常（取指令或访问异常）
+  val EX_ADES = 6.U(EXCODE_WID.W)  // 地址未对齐异常（存储访问异常）
+  val EX_SYS  = 7.U(EXCODE_WID.W)  // 系统调用异常
+  val EX_BP   = 8.U(EXCODE_WID.W)  // 断点异常
+  val EX_RI   = 9.U(EXCODE_WID.W)  // 保留指令异常
+  val EX_CPU  = 10.U(EXCODE_WID.W) // 协处理器不可用异常
+  val EX_OV   = 11.U(EXCODE_WID.W) // 算术溢出异常
+
+  val EXC_INT  = "h00".U(EXCODE_WID.W) // 中断异常
+  val EXC_MOD  = "h01".U(EXCODE_WID.W) // TLB 条目修改异常
+  val EXC_TLBL = "h02".U(EXCODE_WID.W) // TLB 非法取指令或访问异常
+  val EXC_TLBS = "h03".U(EXCODE_WID.W) // TLB 非法存储访问异常
+  val EXC_ADEL = "h04".U(EXCODE_WID.W) // 地址未对齐异常（取指令或访问异常）
+  val EXC_ADES = "h05".U(EXCODE_WID.W) // 地址未对齐异常（存储访问异常）
+  val EXC_SYS  = "h08".U(EXCODE_WID.W) // 系统调用异常
+  val EXC_BP   = "h09".U(EXCODE_WID.W) // 断点异常
+  val EXC_RI   = "h0a".U(EXCODE_WID.W) // 保留指令异常
+  val EXC_CPU  = "h0b".U(EXCODE_WID.W) // 协处理器不可用异常
+  val EXC_OV   = "h0c".U(EXCODE_WID.W) // 算术溢出异常
+  val EXC_NO   = "h1f".U(EXCODE_WID.W) // 无异常
 
   val EX_ENTRY            = "h_bfc00380".U(32.W)
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
