@@ -22,23 +22,45 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     val cpu = Flipped(new Cache_ICache())
     val axi = new ICache_AXIInterface()
   })
-  // addr organization
+  // * addr organization * //
   // ======================================
   // |        tag         |  index |offset|
   // |31                12|11     6|5    0|
   // ======================================
-
   // ============================
   // |         offset           |
   // | bank index | bank offset |
   // | 5        3 | 2         0 |
   // ============================
 
-  // * meta * //
-  val meta = RegInit(VecInit(Seq.fill(nset * nbank)(0.U.asTypeOf(new Bundle {
-    val valid = Vec(nway, Bool())
-    val lru   = Bool()
-  }))))
+  // * fsm * //
+  val s_idle :: s_tlb_fill :: s_uncached :: s_replace :: s_save :: Nil = Enum(5)
+  val state                                                            = RegInit(s_idle)
+
+  // * nway * nset * //
+  // * 64 bit for 2 inst * //
+  // =========================================================
+  // | valid | tag | data 0 | data 1 | ... | data 6 | data 7 |
+  // | 1     | 20  |   64   |   64   | ... |  64    |  64    |
+  // =========================================================
+
+  val valid    = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(nway)(false.B)))))
+  val bank_ram = Module(new Bank(byteAddressable = true))
+  val tag_ram  = Module(new Tag())
+
+  val data = Wire(Vec(nway, UInt(bankWidthBits.W)))
+  val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
+
+  val bram_addr_choose_next = (state === s_idle) || (state === s_save)
+  val data_raddr            = io.cpu.addr(bram_addr_choose_next)(indexWidth + offsetWidth - 1, bankOffsetWidth)
+  val data_wstrb            = RegInit(VecInit(Seq.fill(nway)(0.U(bankWidth.W))))
+
+  val tag_raddr = io.cpu.addr(bram_addr_choose_next)(indexWidth + offsetWidth - 1, offsetWidth)
+  val tag_wstrb = RegInit(VecInit(Seq.fill(nway)(false.B)))
+  val tag_wdata = RegInit(0.U(tagWidth.W))
+
+  // * lru * //
+  val lru = RegInit(VecInit(Seq.fill(nset * nbank)(false.B)))
 
   // * l1_tlb * //
   val tlb = RegInit(0.U.asTypeOf(new Bundle {
@@ -48,9 +70,6 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     val valid    = Bool()
   }))
 
-  val s_idle :: s_tlb_fill :: s_uncached :: s_replace :: s_save :: Nil = Enum(5)
-  val state                                                            = RegInit(s_idle)
-
   val direct_mapped = io.cpu.addr(0)(31, 30) === 2.U(2.W)
   val uncached      = Mux(direct_mapped, io.cpu.addr(0)(29), tlb.uncached)
   val inst_tag      = Mux(direct_mapped, Cat(0.U(bankOffsetWidth.W), io.cpu.addr(0)(28, 12)), tlb.ppn)
@@ -59,18 +78,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
 
   val translation_ok = direct_mapped || (tlb.vpn === inst_vpn && tlb.valid)
 
-  val replace_line_addr     = RegInit(0.U(6.W))
-  val bram_addr_choose_next = !((state =/= s_idle) && (state =/= s_save))
-
-  val bram_word_addr =
-    io.cpu.addr(bram_addr_choose_next)(indexWidth + offsetWidth - 1, bankOffsetWidth)
-  val bram_line_addr = io.cpu.addr(bram_addr_choose_next)(indexWidth + offsetWidth - 1, offsetWidth)
-  val cache_data     = Wire(Vec(nway, UInt(bankWidthBits.W)))
-  val cache_tag      = Wire(Vec(nway, UInt(tagWidth.W)))
-
-  val data_wen      = RegInit(VecInit(Seq.fill(nway)(0.U(bankWidth.W))))
-  val tag_wen       = RegInit(VecInit(Seq.fill(nway)(false.B)))
-  val tag_ram_wdata = RegInit(0.U(tagWidth.W))
+  val replace_line_addr = RegInit(0.U(6.W))
 
   val tag_compare_valid   = Wire(Vec(nway, Bool()))
   val cache_hit           = tag_compare_valid.contains(true.B)
@@ -85,13 +93,9 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val va_line_addr = io.cpu.addr(0)(indexWidth + offsetWidth - 1, offsetWidth)
   val fence_index  = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
 
-  val cache_inst = Wire(Vec(nway, UInt(32.W)))
-  cache_inst(0) := Mux(
-    io.cpu.addr(0)(2),
-    cache_data(i_cache_sel)(63, 32),
-    cache_data(i_cache_sel)(31, 0),
-  )
-  cache_inst(1) := cache_data(i_cache_sel)(63, 32)
+  val inst = Wire(Vec(nway, UInt(32.W)))
+  inst(0) := Mux(io.cpu.addr(0)(2), data(i_cache_sel)(63, 32), data(i_cache_sel)(31, 0))
+  inst(1) := data(i_cache_sel)(63, 32)
 
   val saved = RegInit(
     VecInit(Seq.fill(nway)(0.U.asTypeOf(new Bundle {
@@ -108,39 +112,38 @@ class ICache(cacheConfig: CacheConfig) extends Module {
 
   io.cpu.inst_valid(0) := Mux(state === s_idle, cache_inst_ok(0), saved(0).valid) && io.cpu.req
   io.cpu.inst_valid(1) := Mux(state === s_idle, cache_inst_ok(1), saved(1).valid) && io.cpu.req
-  io.cpu.inst(0)       := Mux(state === s_idle, cache_inst(0), saved(0).inst)
-  io.cpu.inst(1)       := Mux(state === s_idle, cache_inst(1), saved(1).inst)
+  io.cpu.inst(0)       := Mux(state === s_idle, inst(0), saved(0).inst)
+  io.cpu.inst(1)       := Mux(state === s_idle, inst(1), saved(1).inst)
 
   val axi_cnt = RegInit(0.U(5.W))
 
   // bank tag ram
-  val bank_ram = Module(new Bank(byteAddressable = true))
   for { i <- 0 until nway } {
-    bank_ram.io.way(i).r.addr := bram_word_addr
-    bank_ram.io.way(i).w.en   := data_wen(i)
+    bank_ram.io.way(i).r.addr := data_raddr
+    bank_ram.io.way(i).w.en   := data_wstrb(i)
     bank_ram.io.way(i).w.addr := Cat(replace_line_addr, axi_cnt(3, 1))
     bank_ram.io.way(i).w.data := Mux(
       axi_cnt(0),
       Cat(io.axi.r.bits.data, 0.U(32.W)),
       Cat(0.U(32.W), io.axi.r.bits.data),
     )
-    cache_data(i) := bank_ram.io.way(i).r.data
+    data(i) := bank_ram.io.way(i).r.data
   }
 
-  val tag_ram = Module(new Tag())
+  // tag
   for { i <- 0 until nway } {
-    tag_ram.io.way(i).r.addr := bram_line_addr
-    tag_ram.io.way(i).w.en   := tag_wen(i)
+    tag_ram.io.way(i).r.addr := tag_raddr
+    tag_ram.io.way(i).w.en   := tag_wstrb(i)
     tag_ram.io.way(i).w.addr := replace_line_addr
-    tag_ram.io.way(i).w.data := tag_ram_wdata
-    cache_tag(i)             := tag_ram.io.way(i).r.data
-    tag_compare_valid(i)     := cache_tag(i) === inst_tag && meta(va_line_addr).valid(i)
+    tag_ram.io.way(i).w.data := tag_wdata
+    tag(i)                   := tag_ram.io.way(i).r.data
+    tag_compare_valid(i)     := tag(i) === inst_tag && valid(va_line_addr)(i)
   }
 
   when(io.cpu.fence.tlb && !io.cpu.icache_stall && !io.cpu.cpu_stall) { tlb.valid := false.B }
   when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
-    meta(fence_index).valid(0) := false.B
-    meta(fence_index).valid(1) := false.B
+    valid(fence_index)(0) := false.B
+    valid(fence_index)(1) := false.B
   }
 
   val ar      = RegInit(0.U.asTypeOf(new AR()))
@@ -163,8 +166,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     val vpn = UInt(tagWidth.W)
   }))
   io.cpu.tlb2.vpn <> tlb2.vpn
-
   io.cpu.tlb2.vpn := 0.U
+
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
@@ -184,17 +187,17 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
-          replace_line_addr                                := va_line_addr
-          data_wen(meta(va_line_addr).lru)                 := 0x0f.U
-          tag_wen(meta(va_line_addr).lru)                  := true.B
-          tag_ram_wdata                                    := inst_tag
-          meta(va_line_addr).valid(meta(va_line_addr).lru) := true.B
-          axi_cnt                                          := 0.U
+          replace_line_addr                      := va_line_addr
+          data_wstrb(lru(va_line_addr))          := 0x0f.U
+          tag_wstrb(lru(va_line_addr))           := true.B
+          tag_wdata                              := inst_tag
+          valid(va_line_addr)(lru(va_line_addr)) := true.B
+          axi_cnt                                := 0.U
         }.elsewhen(!io.cpu.icache_stall) {
-          meta(va_line_addr).lru := ~i_cache_sel
+          lru(va_line_addr) := ~i_cache_sel
           when(io.cpu.cpu_stall) {
             state          := s_save
-            saved(1).inst  := cache_data(1)
+            saved(1).inst  := data(1)
             saved(0).valid := cache_inst_ok(0)
             saved(1).valid := cache_inst_ok(1)
           }
@@ -238,19 +241,17 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           arvalid := false.B
           rready  := true.B
         }
-      }.otherwise {
-        when(io.axi.r.fire) {
-          when(!io.axi.r.bits.last) {
-            axi_cnt                          := axi_cnt + 1.U
-            data_wen(meta(va_line_addr).lru) := ~data_wen(meta(va_line_addr).lru)
-          }.otherwise {
-            rready                           := false.B
-            data_wen(meta(va_line_addr).lru) := 0.U
-            tag_wen(meta(va_line_addr).lru)  := 0.U
-          }
-        }.elsewhen(!io.axi.r.ready) {
-          state := s_idle
+      }.elsewhen(io.axi.r.fire) {
+        when(!io.axi.r.bits.last) {
+          axi_cnt                       := axi_cnt + 1.U
+          data_wstrb(lru(va_line_addr)) := ~data_wstrb(lru(va_line_addr))
+        }.otherwise {
+          rready                        := false.B
+          data_wstrb(lru(va_line_addr)) := 0.U
+          tag_wstrb(lru(va_line_addr))  := 0.U
         }
+      }.elsewhen(!io.axi.r.ready) {
+        state := s_idle
       }
     }
     is(s_save) {
