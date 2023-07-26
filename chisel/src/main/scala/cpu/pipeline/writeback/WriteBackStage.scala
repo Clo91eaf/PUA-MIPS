@@ -15,7 +15,6 @@ class MemWbInst1 extends Bundle {
 }
 class MemWbInst0 extends MemWbInst1 {
   val cp0 = new Cp0Info()
-  val int = Bool()
 }
 
 class MemoryUnitWriteBackUnit extends Bundle {

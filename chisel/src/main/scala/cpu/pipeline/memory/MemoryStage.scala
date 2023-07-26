@@ -20,7 +20,7 @@ class ExeMemInst1 extends Bundle {
 }
 
 class ExeMemInst0 extends ExeMemInst1 {
-  val cp0_info = new Cp0Info()
+  val cp0 = new Cp0Info()
 }
 
 class ExecuteUnitMemoryUnit(implicit val config: CpuConfig) extends Bundle {

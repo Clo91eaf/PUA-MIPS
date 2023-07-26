@@ -18,6 +18,22 @@ class TlbEntry extends Bundle {
   val v    = Vec(2, Bool())
 }
 
+class Cp0MemoryUnit(implicit val config: CpuConfig) extends Bundle {
+  val in = Input(new Bundle {
+    val inst = Vec(
+      config.fuNum,
+      new Bundle {
+        val pc = UInt(PC_WID.W)
+        val ex = new ExceptionInfo()
+      },
+    )
+  })
+  val out = Output(new Bundle {
+    val flush    = Bool()
+    val flush_pc = UInt(PC_WID.W)
+  })
+}
+
 class Cp0(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ext_int = Input(UInt(EXT_INT_WID.W))
@@ -36,21 +52,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
         val debug     = Output(new Cp0Info())
       })
     }
-    val memoryUnit = new Bundle {
-      val in = Input(new Bundle {
-        val inst = Vec(
-          config.fuNum,
-          new Bundle {
-            val pc = UInt(PC_WID.W)
-            val ex = new ExceptionInfo()
-          },
-        )
-      })
-      val out = Output(new Bundle {
-        val flush    = Bool()
-        val flush_pc = UInt(PC_WID.W)
-      })
-    }
+    val memoryUnit = new Cp0MemoryUnit()
     val tlb = Vec(
       2,
       new Bundle {

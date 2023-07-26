@@ -147,7 +147,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     accessMemCtrl.inst(0).ex.out,
     fu.inst(0).ex.out,
   )
-  io.memoryStage.inst0.cp0_info := io.cp0.in.debug
+  io.memoryStage.inst0.cp0 := io.cp0.in.debug
 
   io.memoryStage.inst1.pc        := io.executeStage.inst1.pc
   io.memoryStage.inst1.inst_info := io.executeStage.inst1.inst_info

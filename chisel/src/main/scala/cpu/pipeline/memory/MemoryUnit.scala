@@ -6,37 +6,114 @@ import cpu.defines._
 import cpu.defines.Const._
 import cpu.CpuConfig
 import cpu.pipeline.decoder.RegWrite
+import cpu.pipeline.execute.Cp0MemoryUnit
 import cpu.pipeline.writeback.MemoryUnitWriteBackUnit
 
 class MemoryUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val ctrl           = new MemoryCtrl()
-    val memoryUnit     = Input(new ExecuteUnitMemoryUnit())
-    val decoderUnit    = Output(Vec(config.fuNum, new RegWrite()))
+    val ctrl        = new MemoryCtrl()
+    val memoryStage = Input(new ExecuteUnitMemoryUnit())
+    val fetchUnit = Output(new Bundle {
+      val flush    = Bool()
+      val flush_pc = UInt(PC_WID.W)
+      val mtc0 = new Bundle {
+        val flush    = Bool()
+        val flush_pc = UInt(PC_WID.W)
+      }
+    })
+    val decoderUnit = Output(Vec(config.fuNum, new RegWrite()))
+    val executeUnit = Output(new Bundle {
+      val sel       = Vec(config.fuNum, Bool())
+      val mem_rdata = UInt(DATA_WID.W)
+    })
+    val cp0            = Flipped(new Cp0MemoryUnit())
     val writeBackStage = Output(new MemoryUnitWriteBackUnit())
     val dataMemory = new Bundle {
-      val out = Output(new Bundle {
-       
+      val in = Input(new Bundle {
+        val tlb_invalid = Bool()
+        val tlb_refill  = Bool()
+        val tlb_modify  = Bool()
+        val rdata       = UInt(DATA_WID.W)
       })
-      val in = Input(
-        Vec(
-          config.fuNum,
-          new Bundle {
-            val tlb_invalid = Bool()
-            val tlb_refill  = Bool()
-          },
-        ),
-      )
+      val out = Output(new Bundle {
+        val en    = Bool()
+        val rlen  = UInt(2.W)
+        val wen   = UInt(4.W)
+        val addr  = UInt(DATA_ADDR_WID.W)
+        val wdata = UInt(DATA_WID.W)
+      })
     }
   })
 
-  io.decoderUnit(0).wen   := io.memoryUnit.inst0.inst_info.reg_wen
-  io.decoderUnit(0).waddr := io.memoryUnit.inst0.inst_info.reg_waddr
-  io.decoderUnit(0).wdata := io.memoryUnit.inst0.rd_info.wdata
-  io.decoderUnit(1).wen   := io.memoryUnit.inst1.inst_info.reg_wen
-  io.decoderUnit(1).waddr := io.memoryUnit.inst1.inst_info.reg_waddr
-  io.decoderUnit(1).wdata := io.memoryUnit.inst1.rd_info.wdata
+  val dataMemoryAccess = Module(new DataMemoryAccess()).io
+  dataMemoryAccess.memoryUnit.in.mem_en    := io.memoryStage.mem.en
+  dataMemoryAccess.memoryUnit.in.inst_info := io.memoryStage.mem.inst_info
+  dataMemoryAccess.memoryUnit.in.mem_wdata := io.memoryStage.mem.wdata
+  dataMemoryAccess.memoryUnit.in.mem_addr  := io.memoryStage.mem.addr
+  dataMemoryAccess.memoryUnit.in.mem_sel   := io.memoryStage.mem.sel
+  dataMemoryAccess.memoryUnit.in.ex(0)     := io.memoryStage.inst0.ex
+  dataMemoryAccess.memoryUnit.in.ex(1)     := io.memoryStage.inst1.ex
+  dataMemoryAccess.dataMemory.in.rdata     := io.dataMemory.in.rdata
+  io.dataMemory.out                        := dataMemoryAccess.dataMemory.out
+  io.executeUnit.mem_rdata                 := dataMemoryAccess.memoryUnit.out.mem_rdata
+  io.executeUnit.sel                       := io.memoryStage.mem.sel
 
-  io.dataMemory := io.memoryUnit.mem
+  io.decoderUnit(0).wen   := io.memoryStage.inst0.inst_info.reg_wen
+  io.decoderUnit(0).waddr := io.memoryStage.inst0.inst_info.reg_waddr
+  io.decoderUnit(0).wdata := io.memoryStage.inst0.rd_info.wdata
+  io.decoderUnit(1).wen   := io.memoryStage.inst1.inst_info.reg_wen
+  io.decoderUnit(1).waddr := io.memoryStage.inst1.inst_info.reg_waddr
+  io.decoderUnit(1).wdata := io.memoryStage.inst1.rd_info.wdata
+
+  io.writeBackStage.inst0.pc        := io.memoryStage.inst0.pc
+  io.writeBackStage.inst0.inst_info := io.memoryStage.inst0.inst_info
+  io.writeBackStage.inst0.rd_info   := io.memoryStage.inst0.rd_info
+  io.writeBackStage.inst0.ex        := io.memoryStage.inst0.ex
+  val inst0_access_mem =
+    (io.dataMemory.out.en && (io.dataMemory.in.tlb_invalid || io.dataMemory.in.tlb_refill) && io.memoryStage.inst0.inst_info.fusel === FU_MEM)
+  val inst0_tlbmod =
+    (io.dataMemory.in.tlb_modify && io.dataMemory.out.wen.orR && io.memoryStage.inst0.inst_info.fusel === FU_MEM)
+  io.writeBackStage.inst0.ex.excode := MuxCase(
+    io.memoryStage.inst0.ex.excode,
+    Seq(
+      (io.memoryStage.inst0.ex.excode =/= EX_NO) -> io.memoryStage.inst0.ex.excode,
+      inst0_access_mem                           -> Mux(io.dataMemory.out.wen.orR, EX_TLBS, EX_TLBL),
+      inst0_tlbmod                               -> EX_MOD,
+    ),
+  )
+  io.writeBackStage.inst0.ex.tlb_refill := io.dataMemory.in.tlb_refill && io.memoryStage.inst0.inst_info.fusel === FU_MEM
+  io.writeBackStage.inst0.ex.flush_req := io.memoryStage.inst0.ex.flush_req || io.writeBackStage.inst0.ex.excode =/= EX_NO || io.writeBackStage.inst0.ex.tlb_refill
+  io.writeBackStage.inst0.cp0 := io.memoryStage.inst0.cp0
+
+  io.writeBackStage.inst1.pc        := io.memoryStage.inst1.pc
+  io.writeBackStage.inst1.inst_info := io.memoryStage.inst1.inst_info
+  io.writeBackStage.inst1.rd_info   := io.memoryStage.inst1.rd_info
+  io.writeBackStage.inst1.ex        := io.memoryStage.inst1.ex
+  val inst1_access_mem =
+    (io.dataMemory.out.en && (io.dataMemory.in.tlb_invalid || io.dataMemory.in.tlb_refill) && io.memoryStage.inst1.inst_info.fusel === FU_MEM)
+  val inst1_tlbmod =
+    (io.dataMemory.in.tlb_modify && io.dataMemory.out.wen.orR && io.memoryStage.inst1.inst_info.fusel === FU_MEM)
+  io.writeBackStage.inst1.ex.excode := MuxCase(
+    io.memoryStage.inst1.ex.excode,
+    Seq(
+      (io.memoryStage.inst1.ex.excode =/= EX_NO) -> io.memoryStage.inst1.ex.excode,
+      inst1_access_mem                           -> Mux(io.dataMemory.out.wen.orR, EX_TLBS, EX_TLBL),
+      inst1_tlbmod                               -> EX_MOD,
+    ),
+  )
+  io.writeBackStage.inst1.ex.tlb_refill := io.dataMemory.in.tlb_refill && io.memoryStage.inst1.inst_info.fusel === FU_MEM
+  io.writeBackStage.inst1.ex.flush_req := io.memoryStage.inst1.ex.flush_req || io.writeBackStage.inst1.ex.excode =/= EX_NO || io.writeBackStage.inst1.ex.tlb_refill
+
+  io.cp0.in.inst(0).pc := io.memoryStage.inst0.pc
+  io.cp0.in.inst(0).ex := io.memoryStage.inst0.ex
+  io.cp0.in.inst(1).pc := io.memoryStage.inst1.pc
+  io.cp0.in.inst(1).ex := io.memoryStage.inst1.ex
+
+  io.fetchUnit.flush         := io.cp0.out.flush
+  io.fetchUnit.flush_pc      := io.cp0.out.flush_pc
+  io.fetchUnit.mtc0.flush    := io.writeBackStage.inst0.inst_info.op === MTC0 && io.ctrl.allow_to_go
+  io.fetchUnit.mtc0.flush_pc := io.writeBackStage.inst0.pc + 4.U
+
+  io.ctrl.flush_req := io.cp0.out.flush
 
 }
