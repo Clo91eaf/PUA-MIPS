@@ -51,8 +51,8 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     val cp0        = Input(new Cp0DecoderUnit())
     // 输出
     val fetchUnit = new Bundle {
-
-      val jb_target = Output(UInt(PC_WID.W))
+      val branch = Output(Bool())
+      val target = Output(UInt(PC_WID.W))
     }
     val bpu = new Bundle {
       val pc             = Output(UInt(PC_WID.W))
@@ -92,7 +92,8 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val inst0_is_jb   = jumpCtrl.out.inst_is_jump || io.bpu.inst_is_branch
   val inst0_jb_flag = jumpCtrl.out.jump_flag || io.bpu.pred_branch_flag
 
-  io.fetchUnit.jb_target := Mux(io.bpu.pred_branch_flag, io.bpu.branch_target, jumpCtrl.out.jump_target)
+  io.fetchUnit.branch := inst0_jb_flag
+  io.fetchUnit.target := Mux(io.bpu.pred_branch_flag, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
   io.instBuffer.inst(0).ready := io.ctrl.allow_to_go
   io.instBuffer.inst(1).ready := issue.inst1.allow_to_go

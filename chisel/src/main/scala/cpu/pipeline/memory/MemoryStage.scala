@@ -19,11 +19,8 @@ class ExeMemInst1 extends Bundle {
   val ex        = new ExceptionInfo()
 }
 
-class ExeMemInst0 extends ExeMemInst1 {
+class ExeMemInst0(implicit val config: CpuConfig) extends ExeMemInst1 {
   val cp0 = new Cp0Info()
-}
-
-class ExecuteUnitMemoryUnit(implicit val config: CpuConfig) extends Bundle {
   val mem = new Bundle {
     val en        = Bool()
     val ren       = Bool()
@@ -33,6 +30,10 @@ class ExecuteUnitMemoryUnit(implicit val config: CpuConfig) extends Bundle {
     val wdata     = UInt(DATA_WID.W)
     val sel       = Vec(config.fuNum, Bool())
   }
+}
+
+class ExecuteUnitMemoryUnit(implicit val config: CpuConfig) extends Bundle {
+
   val inst0 = new ExeMemInst0()
   val inst1 = new ExeMemInst1()
 }
