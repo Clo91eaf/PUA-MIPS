@@ -34,6 +34,17 @@ class Cp0MemoryUnit(implicit val config: CpuConfig) extends Bundle {
   })
 }
 
+class Cp0ExecuteUnit extends Bundle {
+  val in = Input(new Bundle {
+    val inst_info  = new InstInfo()
+    val mtc0_wdata = UInt(DATA_WID.W)
+  })
+  val out = Output(new Bundle {
+    val cp0_rdata = UInt(DATA_WID.W)
+    val debug     = Output(new Cp0Info())
+  })
+}
+
 class Cp0(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ext_int = Input(UInt(EXT_INT_WID.W))
@@ -42,17 +53,8 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       val mem_stall = Bool()
     })
     val decoderUnit = Output(new Cp0DecoderUnit())
-    val executeUnit = new Bundle {
-      val in = Input(new Bundle {
-        val inst_info  = new InstInfo()
-        val mtc0_wdata = UInt(DATA_WID.W)
-      })
-      val out = Output(new Bundle {
-        val cp0_rdata = UInt(DATA_WID.W)
-        val debug     = Output(new Cp0Info())
-      })
-    }
-    val memoryUnit = new Cp0MemoryUnit()
+    val executeUnit = new Cp0ExecuteUnit()
+    val memoryUnit  = new Cp0MemoryUnit()
     val tlb = Vec(
       2,
       new Bundle {

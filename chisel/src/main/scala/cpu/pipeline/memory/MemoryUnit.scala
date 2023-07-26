@@ -23,8 +23,8 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
     })
     val decoderUnit = Output(Vec(config.fuNum, new RegWrite()))
     val executeUnit = Output(new Bundle {
-      val sel       = Vec(config.fuNum, Bool())
-      val mem_rdata = UInt(DATA_WID.W)
+      val sel   = Vec(config.fuNum, Bool())
+      val rdata = UInt(DATA_WID.W)
     })
     val cp0            = Flipped(new Cp0MemoryUnit())
     val writeBackStage = Output(new MemoryUnitWriteBackUnit())
@@ -46,17 +46,17 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   })
 
   val dataMemoryAccess = Module(new DataMemoryAccess()).io
-  dataMemoryAccess.memoryUnit.in.mem_en    := io.memoryStage.mem.en
-  dataMemoryAccess.memoryUnit.in.inst_info := io.memoryStage.mem.inst_info
-  dataMemoryAccess.memoryUnit.in.mem_wdata := io.memoryStage.mem.wdata
-  dataMemoryAccess.memoryUnit.in.mem_addr  := io.memoryStage.mem.addr
-  dataMemoryAccess.memoryUnit.in.mem_sel   := io.memoryStage.mem.sel
+  dataMemoryAccess.memoryUnit.in.mem_en    := io.memoryStage.inst0.mem.en
+  dataMemoryAccess.memoryUnit.in.inst_info := io.memoryStage.inst0.mem.inst_info
+  dataMemoryAccess.memoryUnit.in.mem_wdata := io.memoryStage.inst0.mem.wdata
+  dataMemoryAccess.memoryUnit.in.mem_addr  := io.memoryStage.inst0.mem.addr
+  dataMemoryAccess.memoryUnit.in.mem_sel   := io.memoryStage.inst0.mem.sel
   dataMemoryAccess.memoryUnit.in.ex(0)     := io.memoryStage.inst0.ex
   dataMemoryAccess.memoryUnit.in.ex(1)     := io.memoryStage.inst1.ex
   dataMemoryAccess.dataMemory.in.rdata     := io.dataMemory.in.rdata
   io.dataMemory.out                        := dataMemoryAccess.dataMemory.out
-  io.executeUnit.mem_rdata                 := dataMemoryAccess.memoryUnit.out.mem_rdata
-  io.executeUnit.sel                       := io.memoryStage.mem.sel
+  io.executeUnit.rdata                     := dataMemoryAccess.memoryUnit.out.mem_rdata
+  io.executeUnit.sel                       := io.memoryStage.inst0.mem.sel
 
   io.decoderUnit(0).wen   := io.memoryStage.inst0.inst_info.reg_wen
   io.decoderUnit(0).waddr := io.memoryStage.inst0.inst_info.reg_waddr

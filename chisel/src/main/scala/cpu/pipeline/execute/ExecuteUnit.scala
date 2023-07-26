@@ -12,24 +12,15 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ctrl         = new ExecuteCtrl()
     val executeStage = Input(new DecoderUnitExecuteUnit())
-    val cp0 = new Bundle {
-      val in = Input(new Bundle {
-        val rdata = UInt(DATA_WID.W)
-        val debug = new Cp0Info()
-      })
-      val out = Output(new Bundle {
-        val inst_info  = new InstInfo()
-        val mtc0_wdata = UInt(DATA_WID.W)
-      })
-    }
+    val cp0          = Flipped(new Cp0ExecuteUnit())
     val bpu = Output(new Bundle {
       val pc              = UInt(PC_WID.W)
       val branch_flag     = Bool()
       val inst0_is_branch = Bool()
     })
     val fetchStage = Output(new Bundle {
-      val branch_flag   = Bool()
-      val branch_target = UInt(PC_WID.W)
+      val branch = Bool()
+      val target = UInt(PC_WID.W)
     })
     val decoderUnit = Output(
       Vec(
@@ -42,10 +33,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     )
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
     val memoryUnit = Input(new Bundle {
-      val mem = new Bundle {
-        val sel   = Vec(config.fuNum, Bool())
-        val rdata = UInt(DATA_WID.W)
-      }
+      val sel   = Vec(config.fuNum, Bool())
+      val rdata = UInt(DATA_WID.W)
     })
   })
 
@@ -61,16 +50,16 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.branch_flag := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
 
-  io.cp0.out.mtc0_wdata := io.executeStage.inst0.src_info.src2_data
-  io.cp0.out.inst_info := Mux(
+  io.cp0.in.mtc0_wdata := io.executeStage.inst0.src_info.src2_data
+  io.cp0.in.inst_info := Mux(
     !io.executeStage.inst0.ex.flush_req,
     io.executeStage.inst0.inst_info,
     0.U.asTypeOf(new InstInfo()),
   )
 
   // input accessMemCtrl
-  accessMemCtrl.mem.in.sel        := io.memoryUnit.mem.sel
-  accessMemCtrl.mem.in.rdata      := io.memoryUnit.mem.rdata
+  accessMemCtrl.mem.in.sel        := io.memoryUnit.sel
+  accessMemCtrl.mem.in.rdata      := io.memoryUnit.rdata
   accessMemCtrl.inst(0).inst_info := io.executeStage.inst0.inst_info
   accessMemCtrl.inst(0).src_info  := io.executeStage.inst0.src_info
   accessMemCtrl.inst(0).ex.in     := io.executeStage.inst0.ex
@@ -95,16 +84,16 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).inst_info       := io.executeStage.inst1.inst_info
   fu.inst(1).src_info        := io.executeStage.inst1.src_info
   fu.inst(1).ex.in           := io.executeStage.inst1.ex
-  fu.cp0_rdata               := io.cp0.in.rdata
+  fu.cp0_rdata               := io.cp0.out.cp0_rdata
   fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch_flag
 
   io.bpu.pc              := io.executeStage.inst0.pc
   io.bpu.branch_flag     := fu.branch.branch_flag
   io.bpu.inst0_is_branch := io.executeStage.inst0.inst_info.fusel === FU_BR
 
-  io.fetchStage.branch_flag := io.ctrl.allow_to_go &&
+  io.fetchStage.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
-  io.fetchStage.branch_target := MuxCase(
+  io.fetchStage.target := MuxCase(
     io.executeStage.inst0.pc + 4.U, // 默认顺序运行吧
     Seq(
       (fu.branch.pred_fail && fu.branch.branch_flag) -> io.executeStage.inst0.jb_info.branch_target,
@@ -119,13 +108,13 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
 
   io.ctrl.fu_stall := fu.stall_req
 
-  io.memoryStage.mem.en        := accessMemCtrl.mem.out.en
-  io.memoryStage.mem.ren       := accessMemCtrl.mem.out.ren
-  io.memoryStage.mem.wen       := accessMemCtrl.mem.out.wen
-  io.memoryStage.mem.addr      := accessMemCtrl.mem.out.addr
-  io.memoryStage.mem.wdata     := accessMemCtrl.mem.out.wdata
-  io.memoryStage.mem.sel       := accessMemCtrl.inst.map(_.mem_sel)
-  io.memoryStage.mem.inst_info := accessMemCtrl.mem.out.inst_info
+  io.memoryStage.inst0.mem.en        := accessMemCtrl.mem.out.en
+  io.memoryStage.inst0.mem.ren       := accessMemCtrl.mem.out.ren
+  io.memoryStage.inst0.mem.wen       := accessMemCtrl.mem.out.wen
+  io.memoryStage.inst0.mem.addr      := accessMemCtrl.mem.out.addr
+  io.memoryStage.inst0.mem.wdata     := accessMemCtrl.mem.out.wdata
+  io.memoryStage.inst0.mem.sel       := accessMemCtrl.inst.map(_.mem_sel)
+  io.memoryStage.inst0.mem.inst_info := accessMemCtrl.mem.out.inst_info
 
   io.memoryStage.inst0.pc        := io.executeStage.inst0.pc
   io.memoryStage.inst0.inst_info := io.executeStage.inst0.inst_info
@@ -147,7 +136,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     accessMemCtrl.inst(0).ex.out,
     fu.inst(0).ex.out,
   )
-  io.memoryStage.inst0.cp0 := io.cp0.in.debug
+  io.memoryStage.inst0.cp0 := io.cp0.out.debug
 
   io.memoryStage.inst1.pc        := io.executeStage.inst1.pc
   io.memoryStage.inst1.inst_info := io.executeStage.inst1.inst_info
@@ -172,7 +161,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
 
   io.decoderUnit(0).exe.wen   := io.memoryStage.inst0.inst_info.reg_wen
   io.decoderUnit(0).exe.waddr := io.memoryStage.inst0.inst_info.reg_waddr
-  io.decoderUnit(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata //TODO:这里可能有问题,是否得使用fu的结果
+  io.decoderUnit(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata // TODO:这里可能有问题,是否得使用fu的结果
   io.decoderUnit(0).exe_mem_ren := io.memoryStage.inst0.inst_info.fusel === FU_MEM &&
     io.memoryStage.inst0.inst_info.reg_wen
 
