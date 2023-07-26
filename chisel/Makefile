@@ -22,6 +22,7 @@ test:
 	@echo "make test"
 	rm -rf ./generated/*
 	sbt "Test / runMain cpu.testMain"
+	cp ./generated/Core.v ../../CDIM/mycpu/0core
 
 # Makefile targets
 .PHONY: get run wave

@@ -325,7 +325,24 @@ class Cp0(implicit val config: CpuConfig) extends Module {
       when(!cp0_status.exl) {
         cp0_cause.bd := ex.bd
       }
-      cp0_cause.excode := ex.excode
+      cp0_cause.excode := MuxLookup(
+        ex.excode,
+        EX_NO,
+        Seq(
+          EX_NO   -> EXC_NO,
+          EX_INT  -> EXC_INT,
+          EX_MOD  -> EXC_MOD,
+          EX_TLBL -> EXC_TLBL,
+          EX_TLBS -> EXC_TLBS,
+          EX_ADEL -> EXC_ADEL,
+          EX_ADES -> EXC_ADES,
+          EX_SYS  -> EXC_SYS,
+          EX_BP   -> EXC_BP,
+          EX_RI   -> EXC_RI,
+          EX_CPU  -> EXC_CPU,
+          EX_OV   -> EXC_OV,
+        ),
+      )
     }
   }.elsewhen(!exe_stall) {
     when(mtc0_wen) {
