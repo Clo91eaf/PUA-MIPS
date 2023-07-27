@@ -9,10 +9,6 @@ import cpu.defines.Const._
 class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val mem = new Bundle {
-      val in = Input(new Bundle {
-        val sel   = Vec(config.fuNum, Bool())
-        val rdata = UInt(DATA_WID.W)
-      })
       val out = Output(new Bundle {
         val en        = Bool()
         val ren       = Bool()
@@ -32,8 +28,7 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
           val in  = Input(new ExceptionInfo())
           val out = Output(new ExceptionInfo())
         }
-        val mem_rdata = Output(UInt(DATA_WID.W))
-        val mem_sel   = Output(Bool())
+        val mem_sel = Output(Bool())
       },
     )
   })
@@ -95,7 +90,6 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
       mem_addr(i),
     )
     io.inst(i).ex.out.flush_req := io.inst(i).ex.in.flush_req || io.inst(i).ex.out.excode =/= EX_NO
-    io.inst(i).mem_rdata        := Mux(io.mem.in.sel(i), io.mem.in.rdata, 0.U)
   }
   io.inst(0).mem_sel := io.inst(0).inst_info.fusel === FU_MEM &&
     !io.inst(0).ex.out.flush_req

@@ -21,11 +21,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
         val flush_pc = UInt(PC_WID.W)
       }
     })
-    val decoderUnit = Output(Vec(config.fuNum, new RegWrite()))
-    val executeUnit = Output(new Bundle {
-      val sel   = Vec(config.fuNum, Bool())
-      val rdata = UInt(DATA_WID.W)
-    })
+    val decoderUnit    = Output(Vec(config.fuNum, new RegWrite()))
     val cp0            = Flipped(new Cp0MemoryUnit())
     val writeBackStage = Output(new MemoryUnitWriteBackUnit())
     val dataMemory = new Bundle {
@@ -55,20 +51,22 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   dataMemoryAccess.memoryUnit.in.ex(1)     := io.memoryStage.inst1.ex
   dataMemoryAccess.dataMemory.in.rdata     := io.dataMemory.in.rdata
   io.dataMemory.out                        := dataMemoryAccess.dataMemory.out
-  io.executeUnit.rdata                     := dataMemoryAccess.memoryUnit.out.mem_rdata
-  io.executeUnit.sel                       := io.memoryStage.inst0.mem.sel
 
-  io.decoderUnit(0).wen   := io.memoryStage.inst0.inst_info.reg_wen
-  io.decoderUnit(0).waddr := io.memoryStage.inst0.inst_info.reg_waddr
-  io.decoderUnit(0).wdata := io.memoryStage.inst0.rd_info.wdata
-  io.decoderUnit(1).wen   := io.memoryStage.inst1.inst_info.reg_wen
-  io.decoderUnit(1).waddr := io.memoryStage.inst1.inst_info.reg_waddr
-  io.decoderUnit(1).wdata := io.memoryStage.inst1.rd_info.wdata
+  io.decoderUnit(0).wen   := io.writeBackStage.inst0.inst_info.reg_wen
+  io.decoderUnit(0).waddr := io.writeBackStage.inst0.inst_info.reg_waddr
+  io.decoderUnit(0).wdata := io.writeBackStage.inst0.rd_info.wdata
+  io.decoderUnit(1).wen   := io.writeBackStage.inst1.inst_info.reg_wen
+  io.decoderUnit(1).waddr := io.writeBackStage.inst1.inst_info.reg_waddr
+  io.decoderUnit(1).wdata := io.writeBackStage.inst1.rd_info.wdata
 
   io.writeBackStage.inst0.pc        := io.memoryStage.inst0.pc
   io.writeBackStage.inst0.inst_info := io.memoryStage.inst0.inst_info
-  io.writeBackStage.inst0.rd_info   := io.memoryStage.inst0.rd_info
-  io.writeBackStage.inst0.ex        := io.memoryStage.inst0.ex
+  io.writeBackStage.inst0.rd_info.wdata := Mux(
+    io.writeBackStage.inst0.inst_info.fusel === FU_MEM && io.memoryStage.inst0.inst_info.reg_wen,
+    io.dataMemory.in.rdata,
+    io.memoryStage.inst0.rd_info.wdata,
+  )
+  io.writeBackStage.inst0.ex := io.memoryStage.inst0.ex
   val inst0_access_mem =
     (io.dataMemory.out.en && (io.dataMemory.in.tlb_invalid || io.dataMemory.in.tlb_refill) && io.memoryStage.inst0.inst_info.fusel === FU_MEM)
   val inst0_tlbmod =
@@ -87,8 +85,12 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
 
   io.writeBackStage.inst1.pc        := io.memoryStage.inst1.pc
   io.writeBackStage.inst1.inst_info := io.memoryStage.inst1.inst_info
-  io.writeBackStage.inst1.rd_info   := io.memoryStage.inst1.rd_info
-  io.writeBackStage.inst1.ex        := io.memoryStage.inst1.ex
+  io.writeBackStage.inst1.rd_info.wdata := Mux(
+    io.writeBackStage.inst1.inst_info.fusel === FU_MEM && io.memoryStage.inst1.inst_info.reg_wen,
+    io.dataMemory.in.rdata,
+    io.memoryStage.inst1.rd_info.wdata,
+  )
+  io.writeBackStage.inst1.ex := io.memoryStage.inst1.ex
   val inst1_access_mem =
     (io.dataMemory.out.en && (io.dataMemory.in.tlb_invalid || io.dataMemory.in.tlb_refill) && io.memoryStage.inst1.inst_info.fusel === FU_MEM)
   val inst1_tlbmod =

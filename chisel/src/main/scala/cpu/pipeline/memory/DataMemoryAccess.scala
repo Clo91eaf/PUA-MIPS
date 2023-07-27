@@ -42,7 +42,7 @@ class DataMemoryAccess(implicit val config: CpuConfig) extends Module {
   val op        = io.memoryUnit.in.inst_info.op
   io.dataMemory.out.en := io.memoryUnit.in.mem_en &&
     (io.memoryUnit.in.mem_sel(0) && !io.memoryUnit.in.ex(0).flush_req ||
-      io.memoryUnit.in.mem_sel(1) && io.memoryUnit.in.ex(0).flush_req && !io.memoryUnit.in.ex(1).flush_req)
+      io.memoryUnit.in.mem_sel(1) && !io.memoryUnit.in.ex(0).flush_req && !io.memoryUnit.in.ex(1).flush_req)
   io.dataMemory.out.addr := mem_addr
 
   io.memoryUnit.out.mem_rdata := MuxLookup(

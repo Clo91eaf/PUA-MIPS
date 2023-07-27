@@ -53,5 +53,10 @@ class Issue(implicit val config: CpuConfig) extends Module {
   io.inst1.is_in_delayslot := inst0.fusel === FU_BR && io.inst1.allow_to_go
   // 指令1是否允许执行
   io.inst1.allow_to_go := io.allow_to_go &&
-    !instBuffer_invalid && inst0.dual_issue && inst1.dual_issue && !struct_conflict && !data_conflict
+    !instBuffer_invalid &&
+    inst0.dual_issue &&
+    inst1.dual_issue &&
+    !struct_conflict &&
+    !data_conflict &&
+    !VecInit(FU_BR, FU_TRAP, FU_EX).contains(io.decodeInst(1).fusel)
 }

@@ -169,7 +169,6 @@ class Core(implicit val config: CpuConfig) extends Module {
   executeUnit.executeStage <> executeStage.executeUnit
   executeUnit.cp0 <> cp0.executeUnit
   executeUnit.memoryStage <> memoryStage.executeUnit
-  executeUnit.memoryUnit <> memoryUnit.executeUnit
 
   cp0.ctrl.exe_stall := !ctrl.executeUnit.allow_to_go
   cp0.ctrl.mem_stall := !ctrl.memoryUnit.allow_to_go

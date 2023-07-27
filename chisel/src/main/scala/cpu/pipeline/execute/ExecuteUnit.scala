@@ -32,10 +32,6 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       ),
     )
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
-    val memoryUnit = Input(new Bundle {
-      val sel   = Vec(config.fuNum, Bool())
-      val rdata = UInt(DATA_WID.W)
-    })
   })
 
   val fu            = Module(new Fu()).io
@@ -58,8 +54,6 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   )
 
   // input accessMemCtrl
-  accessMemCtrl.mem.in.sel        := io.memoryUnit.sel
-  accessMemCtrl.mem.in.rdata      := io.memoryUnit.rdata
   accessMemCtrl.inst(0).inst_info := io.executeStage.inst0.inst_info
   accessMemCtrl.inst(0).src_info  := io.executeStage.inst0.src_info
   accessMemCtrl.inst(0).ex.in     := io.executeStage.inst0.ex
@@ -126,11 +120,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       EXE_MOVZ -> (io.executeStage.inst0.src_info.src2_data === 0.U),
     ),
   )
-  io.memoryStage.inst0.rd_info.wdata := Mux(
-    io.executeStage.inst0.inst_info.fusel === FU_MEM && io.executeStage.inst0.inst_info.reg_wen,
-    accessMemCtrl.inst(0).mem_rdata,
-    fu.inst(0).result,
-  )
+  io.memoryStage.inst0.rd_info.wdata := fu.inst(0).result
   io.memoryStage.inst0.ex := Mux(
     io.executeStage.inst0.inst_info.fusel === FU_MEM && io.executeStage.inst0.inst_info.reg_wen,
     accessMemCtrl.inst(0).ex.out,
@@ -148,11 +138,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       EXE_MOVZ -> (io.executeStage.inst1.src_info.src2_data === 0.U),
     ),
   )
-  io.memoryStage.inst1.rd_info.wdata := Mux(
-    io.executeStage.inst1.inst_info.fusel === FU_MEM && io.executeStage.inst1.inst_info.reg_wen,
-    accessMemCtrl.inst(1).mem_rdata,
-    fu.inst(1).result,
-  )
+  io.memoryStage.inst1.rd_info.wdata := fu.inst(1).result
   io.memoryStage.inst1.ex := Mux(
     io.executeStage.inst1.inst_info.fusel === FU_MEM && io.executeStage.inst1.inst_info.reg_wen,
     accessMemCtrl.inst(1).ex.out,
