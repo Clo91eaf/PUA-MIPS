@@ -24,12 +24,14 @@ class BranchCtrl extends Module {
     io.in.inst_info.op,
     false.B,
     Seq(
-      EXE_BEQ  -> (src1 === src2),
-      EXE_BNE  -> (src1 =/= src2),
-      EXE_BGTZ -> (!src1(31) && (src1 =/= 0.U)),
-      EXE_BLEZ -> (src1(31) || src1 === 0.U),
-      EXE_BGEZ -> (!src1(31)),
-      EXE_BLTZ -> (src1(31)),
+      EXE_BEQ    -> (src1 === src2),
+      EXE_BNE    -> (src1 =/= src2),
+      EXE_BGTZ   -> (!src1(31) && (src1 =/= 0.U)),
+      EXE_BLEZ   -> (src1(31) || src1 === 0.U),
+      EXE_BGEZ   -> (!src1(31)),
+      EXE_BGEZAL -> (!src1(31)),
+      EXE_BLTZ   -> (src1(31)),
+      EXE_BLTZAL -> (src1(31)),
     ),
   )
 }
