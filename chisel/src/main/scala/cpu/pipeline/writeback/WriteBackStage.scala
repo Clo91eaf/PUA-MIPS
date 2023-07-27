@@ -30,20 +30,21 @@ class WriteBackStage(implicit val config: CpuConfig) extends Module {
     val memoryUnit    = Input(new MemoryUnitWriteBackUnit())
     val writeBackUnit = Output(new MemoryUnitWriteBackUnit())
   })
-  val inst0_queue = Module(new Queue(new MemWbInst0(), 1, pipe = true, hasFlush = true))
-  val inst1_queue = Module(new Queue(new MemWbInst1(), 1, pipe = true, hasFlush = true))
+  val inst0 = RegInit(0.U.asTypeOf(new MemWbInst0()))
+  val inst1 = RegInit(0.U.asTypeOf(new MemWbInst1()))
 
-  inst0_queue.io.enq.valid := io.ctrl.allow_to_go
-  inst1_queue.io.enq.valid := io.ctrl.allow_to_go
-  inst0_queue.io.deq.ready := io.ctrl.allow_to_go
-  inst1_queue.io.deq.ready := io.ctrl.allow_to_go
+  when(io.ctrl.clear(0)) {
+    inst0 := 0.U.asTypeOf(new MemWbInst0())
+  }.elsewhen(io.ctrl.allow_to_go) {
+    inst0 := io.memoryUnit.inst0
+  }
 
-  inst0_queue.io.enq.bits := io.memoryUnit.inst0
-  inst1_queue.io.enq.bits := io.memoryUnit.inst1
+  when(io.ctrl.clear(1)) {
+    inst1 := 0.U.asTypeOf(new MemWbInst1())
+  }.elsewhen(io.ctrl.allow_to_go) {
+    inst1 := io.memoryUnit.inst1
+  }
 
-  io.writeBackUnit.inst0 := inst0_queue.io.deq.bits
-  io.writeBackUnit.inst1 := inst1_queue.io.deq.bits
-
-  inst0_queue.flush := io.ctrl.clear(0) || reset.asBool()
-  inst1_queue.flush := io.ctrl.clear(1) || reset.asBool()
+  io.writeBackUnit.inst0 := inst0
+  io.writeBackUnit.inst1 := inst1
 }
