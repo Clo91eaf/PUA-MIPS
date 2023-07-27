@@ -6,6 +6,7 @@ import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
 
+// todo depart the tlb component.
 class ICache(cacheConfig: CacheConfig) extends Module {
   implicit val config      = cacheConfig
   val nway: Int            = cacheConfig.nway
@@ -48,8 +49,9 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // ===================
 
   val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(nway)(false.B)))))
-  val data  = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
-  val tag   = Wire(Vec(nway, UInt(tagWidth.W)))
+
+  val data = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
+  val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
 
   // * should choose next addr * //
   val should_next_addr = (state === s_idle) || (state === s_save)
@@ -72,18 +74,30 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     val valid    = Bool()
   }))
 
+  // * tlb * //
   val direct_mapped = io.cpu.addr(0)(31, 30) === 2.U(2.W)
   val uncached      = Mux(direct_mapped, io.cpu.addr(0)(29), tlb.uncached)
   val inst_tag      = Mux(direct_mapped, Cat(0.U(bankOffsetWidth.W), io.cpu.addr(0)(28, 12)), tlb.ppn)
   val inst_vpn      = io.cpu.addr(0)(31, 12)
   val inst_pa       = Cat(inst_tag, io.cpu.addr(0)(11, 0))
 
+  // * fence * //
+  val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
+  when(io.cpu.fence.tlb && !io.cpu.icache_stall && !io.cpu.cpu_stall) { tlb.valid := false.B }
+  when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
+    valid(fence_index) := VecInit(Seq.fill(2)(false.B))
+  }
+
   val translation_ok = direct_mapped || (tlb.vpn === inst_vpn && tlb.valid)
 
-  val replace_line_addr = RegInit(0.U(6.W))
+  // * replace set * //
+  val rset = RegInit(0.U(6.W))
 
-  val va_line_addr        = io.cpu.addr(0)(indexWidth + offsetWidth - 1, offsetWidth)
-  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === inst_tag && valid(va_line_addr)(i)))
+  // * virtual set * //
+  val vset = io.cpu.addr(0)(indexWidth + offsetWidth - 1, offsetWidth)
+
+  // * cache hit * //
+  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === inst_tag && valid(vset)(i)))
   val cache_hit           = tag_compare_valid.contains(true.B)
   val cache_hit_available = cache_hit && translation_ok && !uncached
 
@@ -91,28 +105,16 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   inst_valid(0) := cache_hit_available
   inst_valid(1) := cache_hit_available && !io.cpu.addr(0)(2)
 
-  val i_cache_sel = tag_compare_valid(1)
-  val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
+  val sel = tag_compare_valid(1)
 
-  val inst = VecInit(Seq.tabulate(nway)(i => Mux(io.cpu.addr(0)(2), data(i_cache_sel)(1), data(i_cache_sel)(i))))
+  val inst = VecInit(Seq.tabulate(nway)(i => Mux(io.cpu.addr(0)(2), data(sel)(1), data(sel)(i))))
 
   val saved = RegInit(VecInit(Seq.fill(nway)(0.U.asTypeOf(new Bundle {
     val inst  = UInt(32.W)
     val valid = Bool()
   }))))
 
-  io.cpu.icache_stall := Mux(
-    state === s_idle,
-    (!cache_hit_available && io.cpu.req),
-    state =/= s_save,
-  )
-
-  io.cpu.inst_valid(0) := Mux(state === s_idle, inst_valid(0), saved(0).valid) && io.cpu.req
-  io.cpu.inst_valid(1) := Mux(state === s_idle, inst_valid(1), saved(1).valid) && io.cpu.req
-  io.cpu.inst(0)       := Mux(state === s_idle, inst(0), saved(0).inst)
-  io.cpu.inst(1)       := Mux(state === s_idle, inst(1), saved(1).inst)
-
-  val axi_cnt = RegInit(0.U(5.W))
+  val axi_cnt = Counter(32)
 
   // bank tag ram
   for { i <- 0 until nway; j <- 0 until ninst } {
@@ -122,28 +124,27 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     data(i)(j)    := bank.io.rdata
 
     bank.io.wen   := data_wstrb(i)(j).orR
-    bank.io.waddr := Cat(replace_line_addr, axi_cnt(3, 1))
-    bank.io.wdata := Mux(j.U === axi_cnt(0), io.axi.r.bits.data, 0.U)
+    bank.io.waddr := Cat(rset, axi_cnt.value(3, 1))
+    bank.io.wdata := Mux(j.U === axi_cnt.value(0), io.axi.r.bits.data, 0.U)
     bank.io.wstrb := data_wstrb(i)(j)
-  }
 
-  // tag
-  for { i <- 0 until nway } {
     val tag_bram = Module(new SimpleDualPortRam(nset, tagWidth, false))
     tag_bram.io.ren   := true.B
     tag_bram.io.raddr := tag_raddr
     tag(i)            := tag_bram.io.rdata
 
     tag_bram.io.wen   := tag_wstrb(i).orR
-    tag_bram.io.waddr := replace_line_addr
+    tag_bram.io.waddr := rset
     tag_bram.io.wdata := tag_wdata
     tag_bram.io.wstrb := tag_wstrb(i)
+
+    io.cpu.inst_valid(i) := Mux(state === s_idle, inst_valid(i), saved(i).valid) && io.cpu.req
+    io.cpu.inst(i)       := Mux(state === s_idle, inst(i), saved(i).inst)
   }
 
-  when(io.cpu.fence.tlb && !io.cpu.icache_stall && !io.cpu.cpu_stall) { tlb.valid := false.B }
-  when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
-    valid(fence_index) := VecInit(Seq.fill(2)(false.B))
-  }
+  // * io * //
+  io.cpu.icache_stall := Mux(state === s_idle, (!cache_hit_available && io.cpu.req), state =/= s_save)
+
 
   val ar      = RegInit(0.U.asTypeOf(new AR()))
   val arvalid = RegInit(false.B)
@@ -155,24 +156,16 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   r <> io.axi.r.bits
   rready <> io.axi.r.ready
 
-  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
-    val refill  = Bool()
-    val invalid = Bool()
-  }))
-  tlb1 <> io.cpu.tlb1
+  val tlb1_invalid = RegInit(false.B)
+  io.cpu.tlb1.invalid := tlb1_invalid
 
-  val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn = UInt(tagWidth.W)
-  }))
-  io.cpu.tlb2.vpn <> tlb2.vpn
-  io.cpu.tlb2.vpn := 0.U
+  io.cpu.tlb2.vpn := RegEnable(inst_vpn, state === s_idle && io.cpu.req && !translation_ok)
 
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
         when(!translation_ok) {
-          state    := s_tlb_fill
-          tlb2.vpn := inst_vpn
+          state := s_tlb_fill
         }.elsewhen(uncached) {
           state   := s_uncached
           ar.addr := inst_pa
@@ -186,15 +179,15 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
-          replace_line_addr                      := va_line_addr
-          data_wstrb(lru(va_line_addr))(0)       := 0xf.U
-          data_wstrb(lru(va_line_addr))(1)       := 0x0.U
-          tag_wstrb(lru(va_line_addr))           := true.B
-          tag_wdata                              := inst_tag
-          valid(va_line_addr)(lru(va_line_addr)) := true.B
-          axi_cnt                                := 0.U
+          rset        := vset
+          data_wstrb(lru(vset))(0) := 0xf.U
+          data_wstrb(lru(vset))(1) := 0x0.U
+          tag_wstrb(lru(vset))     := true.B
+          tag_wdata                := inst_tag
+          valid(vset)(lru(vset))   := true.B
+          axi_cnt.reset()
         }.elsewhen(!io.cpu.icache_stall) {
-          lru(va_line_addr) := ~i_cache_sel
+          lru(vset) := ~sel
           when(io.cpu.cpu_stall) {
             state          := s_save
             saved(1).inst  := data(1)(0)
@@ -205,11 +198,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(
-        io.cpu.tlb2.found && (inst_vpn(12) && io.cpu.tlb2.entry.V1 || !inst_vpn(
-          12,
-        ) && io.cpu.tlb2.entry.V0),
-      ) {
+      when(io.cpu.tlb2.found && (inst_vpn(12) && io.cpu.tlb2.entry.V1 || !inst_vpn(12) && io.cpu.tlb2.entry.V0)) {
         state        := s_idle
         tlb.vpn      := io.cpu.tlb2.vpn
         tlb.ppn      := Mux(inst_vpn(12), io.cpu.tlb2.entry.PFN1, io.cpu.tlb2.entry.PFN0)
@@ -217,7 +206,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         tlb.valid    := true.B
       }.otherwise {
         state          := s_save
-        tlb1.invalid   := true.B
+        tlb1_invalid   := true.B
         saved(0).inst  := 0.U
         saved(0).valid := true.B
       }
@@ -243,13 +232,13 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         }
       }.elsewhen(io.axi.r.fire) {
         when(!io.axi.r.bits.last) {
-          axi_cnt                          := axi_cnt + 1.U
-          data_wstrb(lru(va_line_addr))(0) := ~data_wstrb(lru(va_line_addr))(0)
-          data_wstrb(lru(va_line_addr))(1) := ~data_wstrb(lru(va_line_addr))(1)
+          axi_cnt.inc()
+          data_wstrb(lru(vset))(0) := ~data_wstrb(lru(vset))(0)
+          data_wstrb(lru(vset))(1) := ~data_wstrb(lru(vset))(1)
         }.otherwise {
-          rready                        := false.B
-          data_wstrb(lru(va_line_addr)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))
-          tag_wstrb(lru(va_line_addr))  := 0.U
+          rready                := false.B
+          data_wstrb(lru(vset)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))
+          tag_wstrb(lru(vset))  := 0.U
         }
       }.elsewhen(!io.axi.r.ready) {
         state := s_idle
@@ -258,8 +247,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.cpu_stall && !io.cpu.icache_stall) {
         state          := s_idle
-        tlb1.invalid   := false.B
-        tlb1.refill    := false.B
+        tlb1_invalid   := false.B
         saved(0).valid := false.B
         saved(1).valid := false.B
       }

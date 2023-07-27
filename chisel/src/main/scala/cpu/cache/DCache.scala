@@ -61,21 +61,19 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     direct_mapped || (tlb.vpn === data_vpn && tlb.valid && (!M_mem_write || tlb.dirty))
 
   val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
-  val state = RegInit(s_idle)
+  val state                                                                           = RegInit(s_idle)
 
-  // * dcache_meta * //
-  val meta = RegInit(VecInit(Seq.fill(nset)(0.U.asTypeOf(new Bundle {
-    val valid = Vec(nway, Bool())
-    val dirty = Vec(nway, Bool())
-    val lru   = UInt(1.W)
-  }))))
+  // * valid dirty * //
+  val valid = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
+  val dirty = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
+  val lru   = RegInit(VecInit(Seq.fill(nset)(0.U(1.W))))
 
-  val tag_wea          = RegInit(VecInit(Seq.fill(nway)(false.B)))
+  val tag_wstrb        = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val bram_replace_wea = RegInit(VecInit(Seq.fill(nway)(0.U(4.W))))
 
-  val data_wea = Wire(Vec(nway, UInt(4.W)))
+  val data_wstrb = Wire(Vec(nway, UInt(4.W)))
 
-  val tag_ram_wdata = RegInit(0.U(tagWidth.W))
+  val tag_wdata = RegInit(0.U(tagWidth.W))
 
   val addr_tag         = M_mem_pa(31, 12)
   val bram_addr_choose = (state =/= s_idle) && (state =/= s_save)
@@ -100,22 +98,22 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val ar_handshake            = RegInit(false.B)
   val aw_handshake            = RegInit(false.B)
   val replace_writeback       = RegInit(false.B)
-  val fence_way               = meta(fence_line_addr).dirty(1)
+  val fence_way               = dirty(fence_line_addr)(1)
 
-  val bram_word_addr = Mux(
+  val data_raddr = Mux(
     bram_use_replace_addr,
     bram_replace_addr,
     Mux(bram_addr_choose, M_mem_va(11, 2), E_mem_va(11, 2)),
   )
-  val bram_line_addr = Mux(
+  val tag_raddr = Mux(
     bram_use_replace_addr,
     bram_replace_addr(9, 4),
     Mux(bram_addr_choose, M_mem_va(11, 6), E_mem_va(11, 6)),
   )
-  val data_write_addr = Mux(bram_use_replace_addr, bram_replace_write_addr, M_mem_va(11, 2))
+  val data_waddr = Mux(bram_use_replace_addr, bram_replace_write_addr, M_mem_va(11, 2))
 
   val data_bram_wdata_sel = state === s_replace
-  val data_bram_wdata     = Mux(data_bram_wdata_sel, io.axi.r.bits.data, M_wdata)
+  val data_wdata          = Mux(data_bram_wdata_sel, io.axi.r.bits.data, M_wdata)
 
   val cache_data = Wire(Vec(nway, UInt(32.W)))
   val cache_tag  = Wire(Vec(nway, UInt(tagWidth.W)))
@@ -150,45 +148,50 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   io.cpu.M_rdata := Mux(state === s_save, saved_rdata, cache_data_forward(d_cache_sel))
 
   // bank tagv ram
-  val bank_ram = Module(new Bank(byteAddressable = true))
   for { i <- 0 until nway } {
-    bank_ram.io.way(i).r.addr := bram_word_addr
-    bank_ram.io.way(i).w.en   := data_wea(i)
-    bank_ram.io.way(i).w.addr := data_write_addr
-    bank_ram.io.way(i).w.data := data_bram_wdata
-    cache_data(i)             := bank_ram.io.way(i).r.data
-  }
+    val bank_ram = Module(new SimpleDualPortRam(nset * nbank, bankWidthBits, byteAddressable = true))
+    bank_ram.io.ren   := true.B
+    bank_ram.io.raddr := data_raddr
+    cache_data(i)     := bank_ram.io.rdata
 
-  val tag_ram = Module(new Tag())
-  for { i <- 0 until nway } {
-    tag_ram.io.way(i).r.addr := bram_line_addr
-    tag_ram.io.way(i).w.en   := tag_wea(i)
-    tag_ram.io.way(i).w.addr := bram_replace_addr(9, 4)
-    tag_ram.io.way(i).w.data := tag_ram_wdata
-    cache_tag(i)             := tag_ram.io.way(i).r.data
-    tag_compare_valid(i) := cache_tag(i) === data_tag && meta(pa_line_addr).valid(
-      i,
-    ) && translation_ok
+    bank_ram.io.wen   := data_wstrb(i).orR
+    bank_ram.io.waddr := data_waddr
+    bank_ram.io.wdata := data_wdata
+    bank_ram.io.wstrb := data_wstrb(i)
+
+    val tag_ram = Module(new SimpleDualPortRam(nset, tagWidth, byteAddressable = false))
+    tag_ram.io.ren   := true.B
+    tag_ram.io.raddr := tag_raddr
+    cache_tag(i)     := tag_ram.io.rdata
+
+    tag_ram.io.wen   := tag_wstrb(i).orR
+    tag_ram.io.wstrb := tag_wstrb(i)
+    tag_ram.io.waddr := bram_replace_addr(9, 4)
+    tag_ram.io.wdata := tag_wdata
+
+    tag_compare_valid(i) := cache_tag(i) === data_tag && valid(pa_line_addr)(i) && translation_ok
     cache_data_forward(i) := Mux(
       last_line_addr === M_mem_va(11, 2),
       ((last_wea(i) & last_wdata) | (cache_data(i) & (~last_wea(i)))),
       cache_data(i),
     )
-    data_wea(i) := Mux(
+
+    data_wstrb(i) := Mux(
       tag_compare_valid(i) && M_mem_en && M_mem_write && !M_mem_uncached && state === s_idle,
       M_wmask,
       bram_replace_wea(i),
     )
+
     last_wea(i) := Cat(
-      Fill(8, data_wea(i)(3)),
-      Fill(8, data_wea(i)(2)),
-      Fill(8, data_wea(i)(1)),
-      Fill(8, data_wea(i)(0)),
+      Fill(8, data_wstrb(i)(3)),
+      Fill(8, data_wstrb(i)(2)),
+      Fill(8, data_wstrb(i)(1)),
+      Fill(8, data_wstrb(i)(0)),
     )
   }
 
-  last_line_addr := data_write_addr
-  last_wdata     := data_bram_wdata
+  last_line_addr := data_waddr
+  last_wdata     := data_wdata
 
   val write_buffer_axi_busy = RegInit(false.B)
 
@@ -283,13 +286,13 @@ class DCache(cacheConfig: CacheConfig) extends Module {
               current_mmio_write_saved := false.B
             }
           }.elsewhen(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
-              ar.addr := Mux(M_mem_size === 2.U, Cat(M_mem_pa(31, 2), 0.U(2.W)), M_mem_pa)
-              ar.len  := 0.U
-              ar.size := Cat(0.U(1.W), M_mem_size)
-              arvalid := true.B
-              state   := s_uncached
-              rready  := true.B
-            } // when store buffer busy, read will stop at s_idle but stall pipeline.
+            ar.addr := Mux(M_mem_size === 2.U, Cat(M_mem_pa(31, 2), 0.U(2.W)), M_mem_pa)
+            ar.len  := 0.U
+            ar.size := Cat(0.U(1.W), M_mem_size)
+            arvalid := true.B
+            state   := s_uncached
+            rready  := true.B
+          } // when store buffer busy, read will stop at s_idle but stall pipeline.
         }.otherwise {
           when(!cache_hit) {
             state                   := s_replace
@@ -300,13 +303,13 @@ class DCache(cacheConfig: CacheConfig) extends Module {
             bram_replace_cnt        := 0.U
             bram_use_replace_addr   := true.B
             bram_data_valid         := 0.U
-            replace_writeback       := meta(pa_line_addr).dirty(meta(pa_line_addr).lru)
+            replace_writeback       := dirty(pa_line_addr)(lru(pa_line_addr))
           }.otherwise {
             when(!io.cpu.dstall) {
               // update lru and mark dirty
-              meta(pa_line_addr).lru := ~d_cache_sel
+              lru(pa_line_addr) := ~d_cache_sel
               when(M_mem_write) {
-                meta(pa_line_addr).dirty(d_cache_sel) := true.B
+                dirty(pa_line_addr)(d_cache_sel) := true.B
               }
               when(stallM) {
                 saved_rdata := cache_data_forward(d_cache_sel)
@@ -316,7 +319,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
           }
         }
       }.elsewhen(M_fence_d) {
-        when(meta(fence_line_addr).dirty.contains(true.B)) {
+        when(dirty(fence_line_addr).contains(true.B)) {
           when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
             state                 := s_writeback
             axi_wcnt              := 0.U
@@ -327,9 +330,9 @@ class DCache(cacheConfig: CacheConfig) extends Module {
             bram_data_valid       := 0.U
           }
         }.otherwise {
-          when(meta(fence_line_addr).valid.contains(true.B)) {
-            meta(fence_line_addr).valid(0) := false.B
-            meta(fence_line_addr).valid(1) := false.B
+          when(valid(fence_line_addr).contains(true.B)) {
+            valid(fence_line_addr)(0) := false.B
+            valid(fence_line_addr)(1) := false.B
           }
           state := s_save
         }
@@ -399,10 +402,10 @@ class DCache(cacheConfig: CacheConfig) extends Module {
           }
         }
         when(io.axi.b.valid) {
-          meta(fence_line_addr).dirty(fence_way) := false.B
-          fence_working                          := false.B
-          bram_use_replace_addr                  := false.B
-          state                                  := s_idle
+          dirty(fence_line_addr)(fence_way) := false.B
+          fence_working                     := false.B
+          bram_use_replace_addr             := false.B
+          state                             := s_idle
         }
       }.otherwise {
         aw_handshake      := false.B
@@ -418,13 +421,13 @@ class DCache(cacheConfig: CacheConfig) extends Module {
               bram_replace_addr := bram_replace_addr + 1.U
             }
             bram_read_ready_addr                      := bram_replace_addr
-            bram_r_buffer(bram_read_ready_addr(3, 0)) := cache_data(meta(pa_line_addr).lru)
+            bram_r_buffer(bram_read_ready_addr(3, 0)) := cache_data(lru(pa_line_addr))
             when(!aw_handshake) {
-              aw.addr      := Cat(cache_tag(meta(pa_line_addr).lru), pa_line_addr, 0.U(6.W))
+              aw.addr      := Cat(cache_tag(lru(pa_line_addr)), pa_line_addr, 0.U(6.W))
               aw.len       := 15.U
               aw.size      := 2.U(3.W)
               awvalid      := true.B
-              w.data       := cache_data(meta(pa_line_addr).lru)
+              w.data       := cache_data(lru(pa_line_addr))
               w.strb       := 15.U
               w.last       := false.B
               wvalid       := true.B
@@ -439,7 +442,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
               }.otherwise {
                 w.data := Mux(
                   ((axi_wcnt + 1.U) === bram_read_ready_addr(3, 0)),
-                  cache_data(meta(pa_line_addr).lru),
+                  cache_data(lru(pa_line_addr)),
                   bram_r_buffer(axi_wcnt + 1.U),
                 )
                 axi_wcnt := axi_wcnt + 1.U
@@ -449,30 +452,30 @@ class DCache(cacheConfig: CacheConfig) extends Module {
               }
             }
             when(io.axi.b.valid) {
-              meta(pa_line_addr).dirty(meta(pa_line_addr).lru) := false.B
-              replace_writeback                                := false.B
+              dirty(pa_line_addr)(lru(pa_line_addr)) := false.B
+              replace_writeback                      := false.B
             }
           }
           // at here, cache line is writeable from axi read.
           when(!ar_handshake) {
-            ar.addr                                  := Cat(M_mem_pa(31, 6), 0.U(6.W))
-            ar.len                                   := 15.U
-            ar.size                                  := 2.U(3.W)
-            arvalid                                  := true.B
-            rready                                   := true.B
-            ar_handshake                             := true.B
-            bram_replace_wea(meta(pa_line_addr).lru) := 15.U
-            tag_wea(meta(pa_line_addr).lru)          := true.B
-            tag_ram_wdata                            := M_mem_pa(31, 12)
+            ar.addr                             := Cat(M_mem_pa(31, 6), 0.U(6.W))
+            ar.len                              := 15.U
+            ar.size                             := 2.U(3.W)
+            arvalid                             := true.B
+            rready                              := true.B
+            ar_handshake                        := true.B
+            bram_replace_wea(lru(pa_line_addr)) := 15.U
+            tag_wstrb(lru(pa_line_addr))        := true.B
+            tag_wdata                           := M_mem_pa(31, 12)
           }
           when(io.axi.ar.fire) {
-            tag_wea(meta(pa_line_addr).lru) := false.B
-            arvalid                         := false.B
+            tag_wstrb(lru(pa_line_addr)) := false.B
+            arvalid                      := false.B
           }
           when(io.axi.r.fire) {
             when(io.axi.r.bits.last) {
-              rready                                   := false.B
-              bram_replace_wea(meta(pa_line_addr).lru) := 0.U
+              rready                              := false.B
+              bram_replace_wea(lru(pa_line_addr)) := 0.U
             }.otherwise {
               bram_replace_write_addr := bram_replace_write_addr + 1.U
             }
@@ -480,8 +483,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
           when(
             (!replace_writeback || (io.axi.b.valid)) && ((ar_handshake && io.axi.r.valid && io.axi.r.bits.last) || (ar_handshake && !rready)),
           ) {
-            bram_use_replace_addr                            := 0.U
-            meta(pa_line_addr).valid(meta(pa_line_addr).lru) := true.B
+            bram_use_replace_addr                  := 0.U
+            valid(pa_line_addr)(lru(pa_line_addr)) := true.B
           }
           when(!bram_use_replace_addr) {
             replace_working := false.B
@@ -499,9 +502,9 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.dstall && !stallM) {
         state            := s_idle
-        data_tlb.invalid := 0.U
-        data_tlb.refill  := 0.U
-        data_tlb.mod     := 0.U
+        data_tlb.invalid := false.B
+        data_tlb.refill  := false.B
+        data_tlb.mod     := false.B
       }
     }
   }
