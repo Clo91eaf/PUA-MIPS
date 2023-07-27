@@ -118,7 +118,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.master_is_branch := decoderUnit.instBuffer.inst0_is_jb
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch_flag,
-    !(executeUnit.executeStage.inst1.ex.bd || executeUnit.executeStage.inst0.ex.bd),
+    !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(
       ctrl.decoderUnit.branch_flag,
       !decoderUnit.instBuffer.inst(1).ready,
