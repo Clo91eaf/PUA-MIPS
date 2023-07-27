@@ -18,7 +18,7 @@ class DataMemoryAccess(implicit val config: CpuConfig) extends Module {
         val ex        = Vec(config.fuNum, new ExceptionInfo())
       })
       val out = Output(new Bundle {
-        val mem_rdata = Output(UInt(DATA_WID.W))
+        val rdata = Output(UInt(DATA_WID.W))
       })
     }
 
@@ -45,7 +45,7 @@ class DataMemoryAccess(implicit val config: CpuConfig) extends Module {
       io.memoryUnit.in.mem_sel(1) && !io.memoryUnit.in.ex(0).flush_req && !io.memoryUnit.in.ex(1).flush_req)
   io.dataMemory.out.addr := mem_addr
 
-  io.memoryUnit.out.mem_rdata := MuxLookup(
+  io.memoryUnit.out.rdata := MuxLookup(
     op,
     0.U,
     Seq(
