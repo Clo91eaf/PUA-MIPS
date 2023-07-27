@@ -357,48 +357,47 @@ class Cp0(implicit val config: CpuConfig) extends Module {
         cp0_cause.iv := wdata.iv
       }
     }
+  }
 
-    // epc register (14,0)
-    when(!mem_stall) {
-      when(ex.flush_req) {
-        when(!cp0_status.exl) {
-          cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
-        }
-      }
-    }.elsewhen(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
-        cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
+  // epc register (14,0)
+  when(!mem_stall) {
+    when(ex.flush_req) {
+      when(!cp0_status.exl) {
+        cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
       }
     }
-
-    // ebase register (15,1)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
-        cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
-      }
+  }.elsewhen(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
+      cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
     }
+  }
 
-    // taglo register (28,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_TAGLO_ADDR) {
-        cp0_taglo := mtc0_wdata
-      }
+  // ebase register (15,1)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
+      cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
     }
+  }
 
-    // taghi register (29,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_TAGHI_ADDR) {
-        cp0_taghi := mtc0_wdata
-      }
+  // taglo register (28,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_TAGLO_ADDR) {
+      cp0_taglo := mtc0_wdata
     }
+  }
 
-    // error epc register (30,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_ERROR_EPC_ADDR) {
-        cp0_error_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
-      }
+  // taghi register (29,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_TAGHI_ADDR) {
+      cp0_taghi := mtc0_wdata
     }
+  }
 
+  // error epc register (30,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_ERROR_EPC_ADDR) {
+      cp0_error_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
+    }
   }
 
   io.executeUnit.out.cp0_rdata := MuxLookup(
