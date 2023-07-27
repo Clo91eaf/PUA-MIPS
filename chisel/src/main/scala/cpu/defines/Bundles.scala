@@ -81,6 +81,11 @@ class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
 
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
+
+  val fu = new Bundle {
+    val allow_to_go = Input(Bool())
+    val do_flush    = Input(Bool())
+  }
 }
 
 class MemoryCtrl extends Bundle {

@@ -151,8 +151,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.master_is_in_delayslot_o
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
-    decoderUnit.forward(i).exe         := executeUnit.decoderUnit(i).exe
-    decoderUnit.forward(i).exe_mem_ren := executeUnit.decoderUnit(i).exe_mem_ren
+    decoderUnit.forward(i).exe         := executeUnit.decoderUnit.forward(i).exe
+    decoderUnit.forward(i).exe_mem_ren := executeUnit.decoderUnit.forward(i).exe_mem_ren
     decoderUnit.forward(i).mem         := memoryUnit.decoderUnit(i)
   }
   decoderUnit.cp0 <> cp0.decoderUnit
@@ -166,6 +166,7 @@ class Core(implicit val config: CpuConfig) extends Module {
     (ctrl.executeUnit.allow_to_go && !decoderUnit.executeStage.inst1.allow_to_go)
   executeStage.ctrl.inst0_allow_to_go := ctrl.executeUnit.allow_to_go
 
+  executeUnit.decoderUnit.inst0_bd := decoderUnit.executeStage.inst0.ex.bd
   executeUnit.executeStage <> executeStage.executeUnit
   executeUnit.cp0 <> cp0.executeUnit
   executeUnit.memoryStage <> memoryStage.executeUnit
