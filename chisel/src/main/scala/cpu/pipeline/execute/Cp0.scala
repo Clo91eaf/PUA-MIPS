@@ -66,8 +66,8 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     )
   })
   // 优先使用inst0的信息
-  val pc = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
-  val ex = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
+  val pc         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
+  val ex         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
   val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
   val mtc0_wdata = io.executeUnit.in.mtc0_wdata
   val mtc0_addr  = io.executeUnit.in.inst_info.cp0_addr
@@ -291,16 +291,14 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // status register (12,0)
-  when(!mem_stall) {
-    when(ex.eret) {
-      when(cp0_status.erl) {
-        cp0_status.erl := false.B
-      }.otherwise {
-        cp0_status.exl := false.B
-      }
-    }.elsewhen(ex.flush_req) {
-      cp0_status.exl := true.B
+  when(!mem_stall && ex.eret) {
+    when(cp0_status.erl) {
+      cp0_status.erl := false.B
+    }.otherwise {
+      cp0_status.exl := false.B
     }
+  }.elsewhen(!mem_stall && ex.flush_req) {
+    cp0_status.exl := true.B
   }.elsewhen(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_STATUS_ADDR) {
       val wdata = mtc0_wdata.asTypeOf(new Cp0Status())
@@ -320,30 +318,28 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     io.ext_int(4, 0),
     cp0_cause.ip(1, 0),
   )
-  when(!mem_stall) {
-    when(ex.flush_req) {
-      when(!cp0_status.exl) {
-        cp0_cause.bd := ex.bd
-      }
-      cp0_cause.excode := MuxLookup(
-        ex.excode,
-        EX_NO,
-        Seq(
-          EX_NO   -> EXC_NO,
-          EX_INT  -> EXC_INT,
-          EX_MOD  -> EXC_MOD,
-          EX_TLBL -> EXC_TLBL,
-          EX_TLBS -> EXC_TLBS,
-          EX_ADEL -> EXC_ADEL,
-          EX_ADES -> EXC_ADES,
-          EX_SYS  -> EXC_SYS,
-          EX_BP   -> EXC_BP,
-          EX_RI   -> EXC_RI,
-          EX_CPU  -> EXC_CPU,
-          EX_OV   -> EXC_OV,
-        ),
-      )
+  when(!mem_stall && ex.flush_req) {
+    when(!cp0_status.exl) {
+      cp0_cause.bd := ex.bd
     }
+    cp0_cause.excode := MuxLookup(
+      ex.excode,
+      EX_NO,
+      Seq(
+        EX_NO   -> EXC_NO,
+        EX_INT  -> EXC_INT,
+        EX_MOD  -> EXC_MOD,
+        EX_TLBL -> EXC_TLBL,
+        EX_TLBS -> EXC_TLBS,
+        EX_ADEL -> EXC_ADEL,
+        EX_ADES -> EXC_ADES,
+        EX_SYS  -> EXC_SYS,
+        EX_BP   -> EXC_BP,
+        EX_RI   -> EXC_RI,
+        EX_CPU  -> EXC_CPU,
+        EX_OV   -> EXC_OV,
+      ),
+    )
   }.elsewhen(!exe_stall) {
     when(mtc0_wen) {
       when(mtc0_addr === CP0_COMPARE_ADDR) {
@@ -360,11 +356,9 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // epc register (14,0)
-  when(!mem_stall) {
-    when(ex.flush_req) {
-      when(!cp0_status.exl) {
-        cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
-      }
+  when(!mem_stall && ex.flush_req) {
+    when(!cp0_status.exl) {
+      cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
     }
   }.elsewhen(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {

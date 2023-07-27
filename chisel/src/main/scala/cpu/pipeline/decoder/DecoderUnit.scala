@@ -135,7 +135,10 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     forwardCtrl.out.inst(0).src2.rdata,
     decoder(0).io.out.imm32,
   )
-  io.executeStage.inst0.ex.flush_req := io.executeStage.inst0.ex.excode =/= EX_NO || io.executeStage.inst0.ex.tlb_refill
+  io.executeStage.inst0.ex.flush_req :=
+    io.executeStage.inst0.ex.excode =/= EX_NO ||
+      io.executeStage.inst0.ex.tlb_refill ||
+      io.executeStage.inst0.ex.eret
   io.executeStage.inst0.ex.tlb_refill := tlb_refill(0)
   io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
   io.executeStage.inst0.ex.badvaddr   := pc(0)
