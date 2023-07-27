@@ -16,7 +16,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
     val fetchUnit = Output(new Bundle {
       val flush    = Bool()
       val flush_pc = UInt(PC_WID.W)
-      val mtc0 = new Bundle {
+      val ex = new Bundle {
         val flush    = Bool()
         val flush_pc = UInt(PC_WID.W)
       }
@@ -111,11 +111,11 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.cp0.in.inst(1).pc := io.memoryStage.inst1.pc
   io.cp0.in.inst(1).ex := io.memoryStage.inst1.ex
 
-  io.fetchUnit.flush         := io.cp0.out.flush
-  io.fetchUnit.flush_pc      := io.cp0.out.flush_pc
-  io.fetchUnit.mtc0.flush    := io.writeBackStage.inst0.inst_info.op === MTC0 && io.ctrl.allow_to_go
-  io.fetchUnit.mtc0.flush_pc := io.writeBackStage.inst0.pc + 4.U
+  io.fetchUnit.flush       := io.writeBackStage.inst0.inst_info.op === EXE_MTC0 && io.ctrl.allow_to_go
+  io.fetchUnit.flush_pc    := io.writeBackStage.inst0.pc + 4.U
+  io.fetchUnit.ex.flush    := io.cp0.out.flush
+  io.fetchUnit.ex.flush_pc := io.cp0.out.flush_pc
 
-  io.ctrl.flush_req := io.cp0.out.flush
+  io.ctrl.flush_req := io.fetchUnit.ex.flush || io.fetchUnit.flush
 
 }

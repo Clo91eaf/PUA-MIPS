@@ -88,8 +88,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.cacheCtrl.iCache_stall := io.i_stall
   ctrl.cacheCtrl.dCache_stall := io.d_stall
 
-  fetchUnit.memory.ex       := memoryUnit.fetchUnit.mtc0.flush
-  fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.mtc0.flush_pc
+  fetchUnit.memory.ex       := memoryUnit.fetchUnit.ex.flush
+  fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.ex.flush_pc
   fetchUnit.memory.flush    := memoryUnit.fetchUnit.flush
   fetchUnit.memory.flush_pc := memoryUnit.fetchUnit.flush_pc
   fetchUnit.execute <> executeUnit.fetchStage
