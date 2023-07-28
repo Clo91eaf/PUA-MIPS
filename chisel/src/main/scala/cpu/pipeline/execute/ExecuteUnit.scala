@@ -125,7 +125,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   )
   io.memoryStage.inst0.rd_info.wdata := fu.inst(0).result
   io.memoryStage.inst0.ex := Mux(
-    io.executeStage.inst0.inst_info.fusel === FU_MEM && io.executeStage.inst0.inst_info.reg_wen,
+    io.executeStage.inst0.inst_info.fusel === FU_MEM,
     accessMemCtrl.inst(0).ex.out,
     fu.inst(0).ex.out,
   )
@@ -143,7 +143,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   )
   io.memoryStage.inst1.rd_info.wdata := fu.inst(1).result
   io.memoryStage.inst1.ex := Mux(
-    io.executeStage.inst1.inst_info.fusel === FU_MEM && io.executeStage.inst1.inst_info.reg_wen,
+    io.executeStage.inst1.inst_info.fusel === FU_MEM,
     accessMemCtrl.inst(1).ex.out,
     fu.inst(1).ex.out,
   )

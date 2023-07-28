@@ -106,10 +106,10 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.writeBackStage.inst1.ex.tlb_refill := io.dataMemory.in.tlb_refill && io.memoryStage.inst1.inst_info.fusel === FU_MEM
   io.writeBackStage.inst1.ex.flush_req := io.memoryStage.inst1.ex.flush_req || io.writeBackStage.inst1.ex.excode =/= EX_NO || io.writeBackStage.inst1.ex.tlb_refill
 
-  io.cp0.in.inst(0).pc := io.memoryStage.inst0.pc
-  io.cp0.in.inst(0).ex := io.memoryStage.inst0.ex
-  io.cp0.in.inst(1).pc := io.memoryStage.inst1.pc
-  io.cp0.in.inst(1).ex := io.memoryStage.inst1.ex
+  io.cp0.in.inst(0).pc := io.writeBackStage.inst0.pc
+  io.cp0.in.inst(0).ex := io.writeBackStage.inst0.ex
+  io.cp0.in.inst(1).pc := io.writeBackStage.inst1.pc
+  io.cp0.in.inst(1).ex := io.writeBackStage.inst1.ex
 
   io.fetchUnit.flush       := io.writeBackStage.inst0.inst_info.op === EXE_MTC0 && io.ctrl.allow_to_go
   io.fetchUnit.flush_pc    := io.writeBackStage.inst0.pc + 4.U
