@@ -141,8 +141,8 @@ class Decoder extends Module {
       // PREF      -> List( INST_VALID  , READ_DISABLE  , READ_DISABLE , FU_NOP, EXE_NOP , WRITE_ENABLE   , WRA_X  , IMM_N  , DUAL_ISSUE),
       // PREFX     -> List( INST_VALID  , READ_DISABLE  , READ_DISABLE , FU_NOP, EXE_NOP , WRITE_DISABLE  , WRA_X  , IMM_N  , DUAL_ISSUE),
 
-      // // Cache
-      // CACHE     -> List( INST_VALID , READ_ENABLE   , READ_DISABLE    , FU_CACHE, EXE_CAC , WRITE_DISABLE  , WRA_X  , IMM_N  , SINGLE_ISSUE),
+      // Cache
+      CACHE     -> List( INST_VALID , READ_ENABLE   , READ_DISABLE , FU_ALU, EXE_CACHE , WRITE_DISABLE  , WRA_X  , IMM_N  , SINGLE_ISSUE),
     ),
     //@formatter:on
   )

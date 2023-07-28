@@ -218,9 +218,9 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.debug_cp0_random  := writeBackUnit.debug.debug_cp0_random
   io.debug_cp0_cause   := writeBackUnit.debug.debug_cp0_cause
 
-  io.fence_iE      := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U
+  io.fence_iE      := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
   io.fence_addrE   := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.fence_dM      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U
+  io.fence_dM      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
   io.fence_addrM   := memoryUnit.writeBackStage.inst0.rd_info.wdata
   io.fence_tlbE    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
   io.fence_tlbM    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)

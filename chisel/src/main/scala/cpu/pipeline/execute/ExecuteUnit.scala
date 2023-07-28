@@ -86,7 +86,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
 
   io.bpu.pc              := io.executeStage.inst0.pc
   io.bpu.branch_flag     := fu.branch.branch_flag
-  io.bpu.inst0_is_branch := io.executeStage.inst0.inst_info.fusel === FU_BR
+  io.bpu.inst0_is_branch := io.executeStage.inst0.jb_info.is_branch
 
   io.fetchStage.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)

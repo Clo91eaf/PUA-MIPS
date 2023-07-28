@@ -21,7 +21,7 @@ trait Constants {
   val DUAL_ISSUE    = true.B
 
   // AluOp
-  private val OP_NUM = 75
+  private val OP_NUM = 77
   val OP_WID         = log2Ceil(OP_NUM)
   // NOP
   val EXE_NOP = 0.U(OP_WID.W)
@@ -112,6 +112,8 @@ trait Constants {
   val EXE_TLBR  = 73.U(OP_WID.W)
   val EXE_TLBWI = 74.U(OP_WID.W)
   val EXE_TLBWR = 75.U(OP_WID.W)
+  // cache
+  val EXE_CACHE = 76.U(OP_WID.W)
 
   // FUSel
   val FU_SEL_NUM = 10
