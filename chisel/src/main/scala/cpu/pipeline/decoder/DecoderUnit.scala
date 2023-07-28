@@ -114,7 +114,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val inst_info   = decoder.map(_.io.out)
   val tlb_refill  = io.instBuffer.inst.map(_.bits.tlb_refill)
   val tlb_invalid = io.instBuffer.inst.map(_.bits.tlb_invalid)
-  val interrupt   = io.cp0.intterupt_allowed && io.ctrl.allow_to_go && (io.cp0.cause_ip & io.cp0.status_im).orR()
+  val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instBuffer.info.empty
 
   for (i <- 0 until (config.decoderNum)) {
     decoder(i).io.in.inst      := inst(i)
