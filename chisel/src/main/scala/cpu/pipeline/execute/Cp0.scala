@@ -263,7 +263,11 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // count register (9,0)
-  cp0_count.count := cp0_count.count + 1.U
+  val tick = RegInit(false.B)
+  tick := !tick
+  when(tick) {
+    cp0_count.count := cp0_count.count + 1.U
+  }
   when(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_COUNT_ADDR) {
       cp0_count.count := mtc0_wdata.asTypeOf(new Cp0Count()).count
