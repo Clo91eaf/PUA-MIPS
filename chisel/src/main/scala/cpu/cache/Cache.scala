@@ -2,6 +2,7 @@ package cache
 
 import chisel3._
 import chisel3.util._
+import cpu.defines._
 
 class Cache extends Module {
   val io = IO(new Bundle {
