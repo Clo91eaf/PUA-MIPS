@@ -66,8 +66,8 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     )
   })
   // 优先使用inst0的信息
-  val pc = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
-  val ex = Mux(io.memoryUnit.in.inst(0).ex.excode =/= EX_NO, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
+  val pc         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
+  val ex         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
   val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
   val mtc0_wdata = io.executeUnit.in.mtc0_wdata
   val mtc0_addr  = io.executeUnit.in.inst_info.cp0_addr
@@ -264,7 +264,11 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // count register (9,0)
-  cp0_count.count := cp0_count.count + 1.U
+  val tick = RegInit(false.B)
+  tick := !tick
+  when(tick) {
+    cp0_count.count := cp0_count.count + 1.U
+  }
   when(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_COUNT_ADDR) {
       cp0_count.count := mtc0_wdata.asTypeOf(new Cp0Count()).count
@@ -292,16 +296,14 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   }
 
   // status register (12,0)
-  when(!mem_stall) {
-    when(ex.eret) {
-      when(cp0_status.erl) {
-        cp0_status.erl := false.B
-      }.otherwise {
-        cp0_status.exl := false.B
-      }
-    }.elsewhen(ex.flush_req) {
-      cp0_status.exl := true.B
+  when(!mem_stall && ex.eret) {
+    when(cp0_status.erl) {
+      cp0_status.erl := false.B
+    }.otherwise {
+      cp0_status.exl := false.B
     }
+  }.elsewhen(!mem_stall && ex.flush_req) {
+    cp0_status.exl := true.B
   }.elsewhen(!exe_stall) {
     when(mtc0_wen && mtc0_addr === CP0_STATUS_ADDR) {
       val wdata = mtc0_wdata.asTypeOf(new Cp0Status())
@@ -321,30 +323,28 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     io.ext_int(4, 0),
     cp0_cause.ip(1, 0),
   )
-  when(!mem_stall) {
-    when(ex.flush_req) {
-      when(!cp0_status.exl) {
-        cp0_cause.bd := ex.bd
-      }
-      cp0_cause.excode := MuxLookup(
-        ex.excode,
-        EX_NO,
-        Seq(
-          EX_NO   -> EXC_NO,
-          EX_INT  -> EXC_INT,
-          EX_MOD  -> EXC_MOD,
-          EX_TLBL -> EXC_TLBL,
-          EX_TLBS -> EXC_TLBS,
-          EX_ADEL -> EXC_ADEL,
-          EX_ADES -> EXC_ADES,
-          EX_SYS  -> EXC_SYS,
-          EX_BP   -> EXC_BP,
-          EX_RI   -> EXC_RI,
-          EX_CPU  -> EXC_CPU,
-          EX_OV   -> EXC_OV,
-        ),
-      )
+  when(!mem_stall && ex.flush_req) {
+    when(!cp0_status.exl) {
+      cp0_cause.bd := ex.bd
     }
+    cp0_cause.excode := MuxLookup(
+      ex.excode,
+      EX_NO,
+      Seq(
+        EX_NO   -> EXC_NO,
+        EX_INT  -> EXC_INT,
+        EX_MOD  -> EXC_MOD,
+        EX_TLBL -> EXC_TLBL,
+        EX_TLBS -> EXC_TLBS,
+        EX_ADEL -> EXC_ADEL,
+        EX_ADES -> EXC_ADES,
+        EX_SYS  -> EXC_SYS,
+        EX_BP   -> EXC_BP,
+        EX_RI   -> EXC_RI,
+        EX_CPU  -> EXC_CPU,
+        EX_OV   -> EXC_OV,
+      ),
+    )
   }.elsewhen(!exe_stall) {
     when(mtc0_wen) {
       when(mtc0_addr === CP0_COMPARE_ADDR) {
@@ -358,48 +358,45 @@ class Cp0(implicit val config: CpuConfig) extends Module {
         cp0_cause.iv := wdata.iv
       }
     }
+  }
 
-    // epc register (14,0)
-    when(!mem_stall) {
-      when(ex.flush_req) {
-        when(!cp0_status.exl) {
-          cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
-        }
-      }
-    }.elsewhen(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
-        cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
-      }
+  // epc register (14,0)
+  when(!mem_stall && ex.flush_req) {
+    when(!cp0_status.exl) {
+      cp0_epc.epc := Mux(ex.bd, pc - 4.U, pc)
     }
-
-    // ebase register (15,1)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
-        cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
-      }
+  }.elsewhen(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_EPC_ADDR) {
+      cp0_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
     }
+  }
 
-    // taglo register (28,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_TAGLO_ADDR) {
-        cp0_taglo := mtc0_wdata
-      }
+  // ebase register (15,1)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_EBASE_ADDR) {
+      cp0_ebase.ebase := mtc0_wdata.asTypeOf(new Cp0Ebase()).ebase
     }
+  }
 
-    // taghi register (29,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_TAGHI_ADDR) {
-        cp0_taghi := mtc0_wdata
-      }
+  // taglo register (28,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_TAGLO_ADDR) {
+      cp0_taglo := mtc0_wdata
     }
+  }
 
-    // error epc register (30,0)
-    when(!exe_stall) {
-      when(mtc0_wen && mtc0_addr === CP0_ERROR_EPC_ADDR) {
-        cp0_error_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
-      }
+  // taghi register (29,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_TAGHI_ADDR) {
+      cp0_taghi := mtc0_wdata
     }
+  }
 
+  // error epc register (30,0)
+  when(!exe_stall) {
+    when(mtc0_wen && mtc0_addr === CP0_ERROR_EPC_ADDR) {
+      cp0_error_epc.epc := mtc0_wdata.asTypeOf(new Cp0Epc()).epc
+    }
   }
 
   io.executeUnit.out.cp0_rdata := MuxLookup(

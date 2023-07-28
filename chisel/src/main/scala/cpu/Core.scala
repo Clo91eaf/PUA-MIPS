@@ -42,8 +42,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.cacheCtrl.iCache_stall := io.inst.icache_stall
   ctrl.cacheCtrl.dCache_stall := io.data.dstall
 
-  fetchUnit.memory.ex       := memoryUnit.fetchUnit.mtc0.flush
-  fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.mtc0.flush_pc
+  fetchUnit.memory.ex       := memoryUnit.fetchUnit.ex.flush
+  fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.ex.flush_pc
   fetchUnit.memory.flush    := memoryUnit.fetchUnit.flush
   fetchUnit.memory.flush_pc := memoryUnit.fetchUnit.flush_pc
   fetchUnit.execute <> executeUnit.fetchStage
@@ -71,7 +71,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.master_is_branch := decoderUnit.instBuffer.inst0_is_jb
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch_flag,
-    !(executeUnit.executeStage.inst1.ex.bd || executeUnit.executeStage.inst0.ex.bd),
+    !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(
       ctrl.decoderUnit.branch_flag,
       !decoderUnit.instBuffer.inst(1).ready,
@@ -103,8 +103,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.master_is_in_delayslot_o
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
-    decoderUnit.forward(i).exe         := executeUnit.decoderUnit(i).exe
-    decoderUnit.forward(i).exe_mem_ren := executeUnit.decoderUnit(i).exe_mem_ren
+    decoderUnit.forward(i).exe         := executeUnit.decoderUnit.forward(i).exe
+    decoderUnit.forward(i).exe_mem_ren := executeUnit.decoderUnit.forward(i).exe_mem_ren
     decoderUnit.forward(i).mem         := memoryUnit.decoderUnit(i)
   }
   decoderUnit.cp0 <> cp0.decoderUnit
@@ -118,10 +118,10 @@ class Core(implicit val config: CpuConfig) extends Module {
     (ctrl.executeUnit.allow_to_go && !decoderUnit.executeStage.inst1.allow_to_go)
   executeStage.ctrl.inst0_allow_to_go := ctrl.executeUnit.allow_to_go
 
+  executeUnit.decoderUnit.inst0_bd := decoderUnit.executeStage.inst0.ex.bd
   executeUnit.executeStage <> executeStage.executeUnit
   executeUnit.cp0 <> cp0.executeUnit
   executeUnit.memoryStage <> memoryStage.executeUnit
-  executeUnit.memoryUnit <> memoryUnit.executeUnit
 
   cp0.ctrl.exe_stall := !ctrl.executeUnit.allow_to_go
   cp0.ctrl.mem_stall := !ctrl.memoryUnit.allow_to_go
@@ -170,16 +170,15 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.debug.cp0_random  := writeBackUnit.debug.cp0_random
   io.debug.cp0_cause   := writeBackUnit.debug.cp0_cause
 
-  io.inst.fence.value  := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U
-  io.inst.fence.addr   := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.data.M_fence_d    := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U
-  io.data.M_fence_addr := memoryUnit.writeBackStage.inst0.rd_info.wdata
-  io.inst.fence.tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
-  io.data.fence_tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
-  io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
-  io.data.M_mem_va     := memoryUnit.memoryStage.inst0.mem.addr
-  io.inst.req          := !(reset.asBool || instBuffer.full)
-  io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
-  io.data.stallM       := !ctrl.memoryUnit.allow_to_go
-
+  io.inst.fence.value    := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
+  io.inst.fence.addr     := executeUnit.memoryStage.inst0.rd_info.wdata
+  io.data.M_fence_d      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
+  io.data.M_fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
+  io.inst.fence.tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
+  io.data.fence_tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
+  io.data.E_mem_va       := executeUnit.memoryStage.inst0.mem.addr
+  io.data.M_mem_va       := memoryUnit.memoryStage.inst0.mem.addr
+  io.inst.req            := !(reset.asBool || instBuffer.full)
+  io.inst.cpu_stall      := !ctrl.fetchUnit.allow_to_go
+  io.data.stallM         := !ctrl.memoryUnit.allow_to_go
 }

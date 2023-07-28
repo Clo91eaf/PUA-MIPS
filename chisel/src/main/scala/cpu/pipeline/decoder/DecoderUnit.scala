@@ -114,7 +114,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val inst_info   = decoder.map(_.io.out)
   val tlb_refill  = io.instBuffer.inst.map(_.bits.tlb_refill)
   val tlb_invalid = io.instBuffer.inst.map(_.bits.tlb_invalid)
-  val interrupt   = io.cp0.intterupt_allowed && io.ctrl.allow_to_go && (io.cp0.cause_ip & io.cp0.status_im).orR()
+  val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instBuffer.info.empty
 
   for (i <- 0 until (config.decoderNum)) {
     decoder(i).io.in.inst      := inst(i)
@@ -135,7 +135,10 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
     forwardCtrl.out.inst(0).src2.rdata,
     decoder(0).io.out.imm32,
   )
-  io.executeStage.inst0.ex.flush_req := io.executeStage.inst0.ex.excode =/= EX_NO || io.executeStage.inst0.ex.tlb_refill
+  io.executeStage.inst0.ex.flush_req :=
+    io.executeStage.inst0.ex.excode =/= EX_NO ||
+      io.executeStage.inst0.ex.tlb_refill ||
+      io.executeStage.inst0.ex.eret
   io.executeStage.inst0.ex.tlb_refill := tlb_refill(0)
   io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
   io.executeStage.inst0.ex.badvaddr   := pc(0)

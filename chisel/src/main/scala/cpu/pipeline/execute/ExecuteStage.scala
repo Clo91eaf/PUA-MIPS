@@ -44,21 +44,21 @@ class ExecuteStage(implicit val config: CpuConfig) extends Module {
     val executeUnit = Output(new DecoderUnitExecuteUnit())
   })
 
-  val inst0_queue = Module(new Queue(new IdExeInst0(), 1, pipe = true, hasFlush = true))
-  val inst1_queue = Module(new Queue(new IdExeInst1(), 1, pipe = true, hasFlush = true))
+  val inst0 = RegInit(0.U.asTypeOf(new IdExeInst0()))
+  val inst1 = RegInit(0.U.asTypeOf(new IdExeInst1()))
 
-  inst0_queue.io.enq.valid := io.ctrl.inst0_allow_to_go
-  inst1_queue.io.enq.valid := io.decoderUnit.inst1.allow_to_go
-  inst0_queue.io.deq.ready := io.ctrl.inst0_allow_to_go
-  inst1_queue.io.deq.ready := io.decoderUnit.inst1.allow_to_go
+  when(io.ctrl.clear(0)) {
+    inst0 := 0.U.asTypeOf(new IdExeInst0())
+  }.elsewhen(io.ctrl.inst0_allow_to_go) {
+    inst0 := io.decoderUnit.inst0
+  }
 
-  inst0_queue.io.enq.bits := io.decoderUnit.inst0
-  inst1_queue.io.enq.bits := io.decoderUnit.inst1
+  when(io.ctrl.clear(1)) {
+    inst1 := 0.U.asTypeOf(new IdExeInst1())
+  }.elsewhen(io.decoderUnit.inst1.allow_to_go) {
+    inst1 := io.decoderUnit.inst1
+  }
 
-  io.executeUnit.inst0 := inst0_queue.io.deq.bits
-  io.executeUnit.inst1 := inst1_queue.io.deq.bits
-
-  inst0_queue.flush := io.ctrl.clear(0) || reset.asBool()
-  inst1_queue.flush := io.ctrl.clear(1) || reset.asBool()
-
+  io.executeUnit.inst0 := inst0
+  io.executeUnit.inst1 := inst1
 }
