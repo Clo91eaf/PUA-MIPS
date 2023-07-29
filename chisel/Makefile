@@ -4,6 +4,7 @@ PUA_MIPS=./generated/PuaMips.v
 
 verilog:
 	@echo "make verilog"
+	find ./generated ! -name 'mycpu_top.v' -type f -delete
 	sbt 'runMain Elaborate'
 
 # run trace target
@@ -20,9 +21,8 @@ count_commit:
 
 test:
 	@echo "make test"
-	rm -rf ./generated/*
+	find ./generated ! -name 'mycpu_top.v' -delete
 	sbt "Test / runMain cpu.testMain"
-	cp ./generated/Core.v ../../CDIM/mycpu/0core
 
 # Makefile targets
 .PHONY: get run wave
