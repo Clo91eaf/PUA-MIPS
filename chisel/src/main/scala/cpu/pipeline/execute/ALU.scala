@@ -98,7 +98,7 @@ class Alu extends Module {
       EXE_MFLO -> io.hilo.rdata(31, 0),
       EXE_MFC0 -> io.cp0_rdata,
       EXE_MOVN -> src1,
-      EXE_MOVN -> src1,
+      EXE_MOVZ -> src1,
       // 前导记数指令
       EXE_CLZ -> clz,
       EXE_CLO -> clo,
