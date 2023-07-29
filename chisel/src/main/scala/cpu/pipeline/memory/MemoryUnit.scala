@@ -79,7 +79,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
       inst0_tlbmod                               -> EX_MOD,
     ),
   )
-  io.writeBackStage.inst0.ex.tlb_refill := io.dataMemory.in.tlb_refill && io.memoryStage.inst0.inst_info.fusel === FU_MEM
+  io.writeBackStage.inst0.ex.tlb_refill := io.memoryStage.inst0.ex.tlb_refill && io.memoryStage.inst0.ex.excode === EX_TLBL || io.dataMemory.in.tlb_refill && io.memoryStage.inst0.inst_info.fusel === FU_MEM
   io.writeBackStage.inst0.ex.flush_req := io.memoryStage.inst0.ex.flush_req || io.writeBackStage.inst0.ex.excode =/= EX_NO || io.writeBackStage.inst0.ex.tlb_refill
   io.writeBackStage.inst0.cp0 := io.memoryStage.inst0.cp0
 
@@ -103,7 +103,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
       inst1_tlbmod                               -> EX_MOD,
     ),
   )
-  io.writeBackStage.inst1.ex.tlb_refill := io.dataMemory.in.tlb_refill && io.memoryStage.inst1.inst_info.fusel === FU_MEM
+  io.writeBackStage.inst1.ex.tlb_refill := io.memoryStage.inst1.ex.tlb_refill && io.memoryStage.inst1.ex.excode === EX_TLBL || io.dataMemory.in.tlb_refill && io.memoryStage.inst1.inst_info.fusel === FU_MEM
   io.writeBackStage.inst1.ex.flush_req := io.memoryStage.inst1.ex.flush_req || io.writeBackStage.inst1.ex.excode =/= EX_NO || io.writeBackStage.inst1.ex.tlb_refill
 
   io.cp0.in.inst(0).pc := io.writeBackStage.inst0.pc
