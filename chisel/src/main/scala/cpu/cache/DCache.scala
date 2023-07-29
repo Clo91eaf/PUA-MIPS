@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
+import cpu.defines._
 
 class WriteBufferUnit extends Bundle {
   val data = UInt(32.W)
@@ -340,11 +341,11 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     }
     is(s_tlb_fill) {
       when(io.cpu.tlb.found) {
-        when((data_vpn(0) & io.cpu.tlb.entry.V1) | (!data_vpn(0) & io.cpu.tlb.entry.V0)) {
+        when((data_vpn(0) & io.cpu.tlb.entry.v(1)) | (!data_vpn(0) & io.cpu.tlb.entry.v(0))) {
           tlb.vpn      := data_vpn
-          tlb.ppn      := Mux(data_vpn(0), io.cpu.tlb.entry.PFN1, io.cpu.tlb.entry.PFN0)
-          tlb.uncached := Mux(data_vpn(0), !io.cpu.tlb.entry.C1, !io.cpu.tlb.entry.C0)
-          tlb.dirty    := Mux(data_vpn(0), io.cpu.tlb.entry.D1, io.cpu.tlb.entry.D0)
+          tlb.ppn      := io.cpu.tlb.entry.pfn(data_vpn(0))
+          tlb.uncached := !io.cpu.tlb.entry.c(data_vpn(0))
+          tlb.dirty    := io.cpu.tlb.entry.d(data_vpn(0))
           tlb.valid    := true.B
           state        := s_idle
         }.otherwise {

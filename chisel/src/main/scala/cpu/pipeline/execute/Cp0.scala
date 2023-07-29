@@ -77,6 +77,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val mem_stall  = io.ctrl.mem_stall
 
   val tlb_l2 = Module(new TlbL2()).io
+
   tlb_l2.in.tlb1_vpn2 := io.tlb(0).vpn2
   tlb_l2.in.tlb2_vpn2 := io.tlb(1).vpn2
   io.tlb(0).found     := tlb_l2.out.tlb1_found

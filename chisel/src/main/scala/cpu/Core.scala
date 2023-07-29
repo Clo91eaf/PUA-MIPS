@@ -12,59 +12,13 @@ import pipeline.execute._
 import pipeline.memory._
 import pipeline.writeback._
 import ctrl._
-import cpu.pipeline.fetch.FetchStage
 
 class Core(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val ext_int           = Input(UInt(6.W))
-    val i_stall           = Input(Bool())
-    val stallF            = Output(Bool())
-    val inst_sram_en      = Output(Bool())
-    val F_pc              = Output(UInt(32.W))
-    val F_pc_next         = Output(UInt(32.W))
-    val inst_data_ok1     = Input(Bool())
-    val inst_data_ok2     = Input(Bool())
-    val inst_rdata1       = Input(UInt(32.W))
-    val inst_rdata2       = Input(UInt(32.W))
-    val inst_tlb_refill   = Input(Bool())
-    val inst_tlb_invalid  = Input(Bool())
-    val fence_iE          = Output(Bool())
-    val fence_addrE       = Output(UInt(32.W))
-    val fence_dM          = Output(Bool())
-    val fence_addrM       = Output(UInt(32.W))
-    val fence_tlbE        = Output(Bool())
-    val itlb_vpn2         = Input(UInt(19.W))
-    val itlb_found        = Output(Bool())
-    val itlb_entry        = Output(new TlbEntry())
-    val d_stall           = Input(Bool())
-    val stallM            = Output(Bool())
-    val mem_read_enE      = Output(Bool())
-    val mem_write_enE     = Output(Bool())
-    val E_mem_va          = Output(UInt(32.W))
-    val mem_addrE         = Output(UInt(32.W)) // TODO: delete
-    val data_sram_rdataM  = Input(UInt(32.W))
-    val data_sram_enM     = Output(Bool())
-    val data_sram_rlenM   = Output(UInt(2.W))
-    val data_sram_wenM    = Output(UInt(4.W))
-    val M_mem_va          = Output(UInt(32.W))
-    val data_sram_addrM   = Output(UInt(32.W)) // TODO: delete
-    val data_sram_wdataM  = Output(UInt(32.W))
-    val dtlb_vpn2         = Input(UInt(19.W))
-    val dtlb_found        = Output(Bool())
-    val dtlb_entry        = Output(new TlbEntry())
-    val fence_tlbM        = Output(Bool())
-    val data_tlb_refill   = Input(Bool())
-    val data_tlb_invalid  = Input(Bool())
-    val data_tlb_mod      = Input(Bool())
-    val debug_wb_pc       = Output(UInt(32.W))
-    val debug_wb_rf_wen   = Output(UInt(4.W))
-    val debug_wb_rf_wnum  = Output(UInt(5.W))
-    val debug_wb_rf_wdata = Output(UInt(32.W))
-    val debug_cp0_count   = Output(UInt(32.W))
-    val debug_cp0_random  = Output(UInt(32.W))
-    val debug_cp0_cause   = Output(UInt(32.W))
-    val debug_int         = Output(Bool())
-    val debug_commit      = Output(Bool())
+    val ext_int = Input(UInt(6.W))
+    val inst    = new Cache_ICache()
+    val data    = new Cache_DCache()
+    val debug   = new DEBUG()
   })
 
   val ctrl           = Module(new Ctrl()).io
@@ -85,8 +39,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.executeUnit <> executeUnit.ctrl
   ctrl.memoryUnit <> memoryUnit.ctrl
   ctrl.writeBackUnit <> writeBackUnit.ctrl
-  ctrl.cacheCtrl.iCache_stall := io.i_stall
-  ctrl.cacheCtrl.dCache_stall := io.d_stall
+  ctrl.cacheCtrl.iCache_stall := io.inst.icache_stall
+  ctrl.cacheCtrl.dCache_stall := io.data.dstall
 
   fetchUnit.memory.ex       := memoryUnit.fetchUnit.ex.flush
   fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.ex.flush_pc
@@ -94,11 +48,10 @@ class Core(implicit val config: CpuConfig) extends Module {
   fetchUnit.memory.flush_pc := memoryUnit.fetchUnit.flush_pc
   fetchUnit.execute <> executeUnit.fetchStage
   fetchUnit.decoder <> decoderUnit.fetchUnit
-  fetchUnit.instBuffer.full      := instBuffer.full
-  fetchUnit.iCache.inst_valid(0) := io.inst_data_ok1
-  fetchUnit.iCache.inst_valid(1) := io.inst_data_ok2
-  io.F_pc                        := fetchUnit.iCache.pc
-  io.F_pc_next                   := fetchUnit.iCache.pc_next
+  fetchUnit.instBuffer.full   := instBuffer.full
+  fetchUnit.iCache.inst_valid := io.inst.inst_valid
+  io.inst.addr(0)             := fetchUnit.iCache.pc
+  io.inst.addr(1)             := fetchUnit.iCache.pc_next
 
   bpu.enaD                         := ctrl.decoderUnit.allow_to_go
   bpu.instrD                       := decoderUnit.bpu.decoded_inst0.inst
@@ -114,7 +67,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.fifo_rst         := reset.asBool || ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
-  instBuffer.i_stall          := io.i_stall
+  instBuffer.i_stall          := io.inst.icache_stall
   instBuffer.master_is_branch := decoderUnit.instBuffer.inst0_is_jb
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch_flag,
@@ -135,16 +88,15 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en(0)          := io.inst_data_ok1
-  instBuffer.write_en(1)          := io.inst_data_ok2
-  instBuffer.write(0).tlb.refill  := io.inst_tlb_refill
-  instBuffer.write(1).tlb.refill  := io.inst_tlb_refill
-  instBuffer.write(0).tlb.invalid := io.inst_tlb_invalid
-  instBuffer.write(1).tlb.invalid := io.inst_tlb_invalid
-  instBuffer.write(0).addr        := io.F_pc
-  instBuffer.write(1).addr        := io.F_pc + 4.U
-  instBuffer.write(0).data        := io.inst_rdata1
-  instBuffer.write(1).data        := io.inst_rdata2
+  instBuffer.write_en          := io.inst.inst_valid
+  instBuffer.write(0).tlb.refill  := false.B
+  instBuffer.write(1).tlb.refill  := false.B
+  instBuffer.write(0).tlb.invalid := io.inst.tlb1.invalid
+  instBuffer.write(1).tlb.invalid := io.inst.tlb1.invalid
+  instBuffer.write(0).addr        := io.inst.addr(0)
+  instBuffer.write(1).addr        := io.inst.addr(0) + 4.U
+  instBuffer.write(0).data        := io.inst.inst(0)
+  instBuffer.write(1).data        := io.inst.inst(1)
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty
@@ -173,13 +125,13 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   cp0.ctrl.exe_stall := !ctrl.executeUnit.allow_to_go
   cp0.ctrl.mem_stall := !ctrl.memoryUnit.allow_to_go
-  cp0.tlb(0).vpn2    := io.itlb_vpn2
-  cp0.tlb(1).vpn2    := io.dtlb_vpn2
+  cp0.tlb(0).vpn2    := io.inst.tlb2.vpn
+  cp0.tlb(1).vpn2    := io.data.tlb.vpn2
   cp0.ext_int        := io.ext_int
-  io.itlb_found      := cp0.tlb(0).found
-  io.dtlb_found      := cp0.tlb(1).found
-  io.itlb_entry      := cp0.tlb(0).info
-  io.dtlb_entry      := cp0.tlb(1).info
+  io.inst.tlb2.found := cp0.tlb(0).found
+  io.data.tlb.found  := cp0.tlb(1).found
+  io.inst.tlb2.entry := cp0.tlb(0).info
+  io.data.tlb.entry  := cp0.tlb(1).info
 
   memoryStage.ctrl.allow_to_go := ctrl.memoryUnit.allow_to_go
   memoryStage.ctrl.clear(0)    := ctrl.memoryUnit.do_flush
@@ -188,16 +140,16 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.memoryStage <> memoryStage.memoryUnit
   memoryUnit.cp0 <> cp0.memoryUnit
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
-  memoryUnit.dataMemory.in.tlb_invalid := io.data_tlb_invalid
-  memoryUnit.dataMemory.in.tlb_refill  := io.data_tlb_refill
-  memoryUnit.dataMemory.in.tlb_modify  := io.data_tlb_mod
-  memoryUnit.dataMemory.in.rdata       := io.data_sram_rdataM
-  io.data_sram_enM                     := memoryUnit.dataMemory.out.en
-  io.data_sram_rlenM                   := memoryUnit.dataMemory.out.rlen
-  io.data_sram_wenM                    := memoryUnit.dataMemory.out.wen
-  io.data_sram_wdataM                  := memoryUnit.dataMemory.out.wdata
-  io.data_sram_addrM                   := memoryUnit.dataMemory.out.addr
-  io.data_sram_wdataM                  := memoryUnit.dataMemory.out.wdata
+
+  memoryUnit.dataMemory.in.tlb_invalid := io.data.data_tlb_invalid
+  memoryUnit.dataMemory.in.tlb_refill  := io.data.data_tlb_refill
+  memoryUnit.dataMemory.in.tlb_modify  := io.data.data_tlb_mod
+  memoryUnit.dataMemory.in.rdata       := io.data.M_rdata
+  io.data.M_mem_en                     := memoryUnit.dataMemory.out.en
+  io.data.M_mem_write                  := memoryUnit.dataMemory.out.wen.orR
+  io.data.M_mem_size                   := memoryUnit.dataMemory.out.rlen
+  io.data.M_wmask                      := memoryUnit.dataMemory.out.wen
+  io.data.M_wdata                      := memoryUnit.dataMemory.out.wdata
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
@@ -208,29 +160,25 @@ class Core(implicit val config: CpuConfig) extends Module {
   writeBackUnit.ctrl <> ctrl.writeBackUnit
   regfile.write <> writeBackUnit.regfile
 
-  io.debug_commit      := writeBackUnit.debug.debug_commit
-  io.debug_int         := writeBackUnit.debug.debug_int
-  io.debug_wb_pc       := writeBackUnit.debug.debug_wb_pc
-  io.debug_wb_rf_wen   := writeBackUnit.debug.debug_wb_rf_wen
-  io.debug_wb_rf_wnum  := writeBackUnit.debug.debug_wb_rf_wnum
-  io.debug_wb_rf_wdata := writeBackUnit.debug.debug_wb_rf_wdata
-  io.debug_cp0_count   := writeBackUnit.debug.debug_cp0_count
-  io.debug_cp0_random  := writeBackUnit.debug.debug_cp0_random
-  io.debug_cp0_cause   := writeBackUnit.debug.debug_cp0_cause
+  io.debug.commit      := writeBackUnit.debug.commit
+  io.debug.int         := writeBackUnit.debug.int
+  io.debug.wb_pc       := writeBackUnit.debug.wb_pc
+  io.debug.wb_rf_wen   := writeBackUnit.debug.wb_rf_wen
+  io.debug.wb_rf_wnum  := writeBackUnit.debug.wb_rf_wnum
+  io.debug.wb_rf_wdata := writeBackUnit.debug.wb_rf_wdata
+  io.debug.cp0_count   := writeBackUnit.debug.cp0_count
+  io.debug.cp0_random  := writeBackUnit.debug.cp0_random
+  io.debug.cp0_cause   := writeBackUnit.debug.cp0_cause
 
-  io.fence_iE      := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
-  io.fence_addrE   := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.fence_dM      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
-  io.fence_addrM   := memoryUnit.writeBackStage.inst0.rd_info.wdata
-  io.fence_tlbE    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
-  io.fence_tlbM    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
-  io.mem_addrE     := executeUnit.memoryStage.inst0.mem.addr
-  io.E_mem_va      := executeUnit.memoryStage.inst0.mem.addr
-  io.M_mem_va      := memoryUnit.memoryStage.inst0.mem.addr
-  io.inst_sram_en  := !(reset.asBool || instBuffer.full)
-  io.stallF        := !ctrl.fetchUnit.allow_to_go
-  io.stallM        := !ctrl.memoryUnit.allow_to_go
-  io.mem_read_enE  := executeUnit.memoryStage.inst0.mem.ren
-  io.mem_write_enE := executeUnit.memoryStage.inst0.mem.wen
-
+  io.inst.fence.value    := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
+  io.inst.fence.addr     := executeUnit.memoryStage.inst0.rd_info.wdata
+  io.data.M_fence_d      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
+  io.data.M_fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
+  io.inst.fence.tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
+  io.data.fence_tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
+  io.data.E_mem_va       := executeUnit.memoryStage.inst0.mem.addr
+  io.data.M_mem_va       := memoryUnit.memoryStage.inst0.mem.addr
+  io.inst.req            := !(reset.asBool || instBuffer.full)
+  io.inst.cpu_stall      := !ctrl.fetchUnit.allow_to_go
+  io.data.stallM         := !ctrl.memoryUnit.allow_to_go
 }

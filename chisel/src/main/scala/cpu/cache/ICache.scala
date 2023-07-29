@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
+import cpu.defines._
 
 // todo depart the tlb component.
 class ICache(cacheConfig: CacheConfig) extends Module {
@@ -145,7 +146,6 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // * io * //
   io.cpu.icache_stall := Mux(state === s_idle, (!cache_hit_available && io.cpu.req), state =/= s_save)
 
-
   val ar      = RegInit(0.U.asTypeOf(new AR()))
   val arvalid = RegInit(false.B)
   ar <> io.axi.ar.bits
@@ -179,7 +179,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
-          rset        := vset
+          rset                     := vset
           data_wstrb(lru(vset))(0) := 0xf.U
           data_wstrb(lru(vset))(1) := 0x0.U
           tag_wstrb(lru(vset))     := true.B
@@ -198,11 +198,11 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(io.cpu.tlb2.found && (inst_vpn(12) && io.cpu.tlb2.entry.V1 || !inst_vpn(12) && io.cpu.tlb2.entry.V0)) {
+      when(io.cpu.tlb2.found && (inst_vpn(12) && io.cpu.tlb2.entry.v(1) || !inst_vpn(12) && io.cpu.tlb2.entry.v(0))) {
         state        := s_idle
         tlb.vpn      := io.cpu.tlb2.vpn
-        tlb.ppn      := Mux(inst_vpn(12), io.cpu.tlb2.entry.PFN1, io.cpu.tlb2.entry.PFN0)
-        tlb.uncached := Mux(inst_vpn(12), io.cpu.tlb2.entry.C1, io.cpu.tlb2.entry.C0)
+        tlb.ppn      := io.cpu.tlb2.entry.pfn(inst_vpn(12))
+        tlb.uncached := io.cpu.tlb2.entry.c(inst_vpn(12))
         tlb.valid    := true.B
       }.otherwise {
         state          := s_save
