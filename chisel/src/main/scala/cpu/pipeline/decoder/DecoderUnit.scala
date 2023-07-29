@@ -143,6 +143,9 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
   io.executeStage.inst0.ex.badvaddr   := pc(0)
   io.executeStage.inst0.ex.bd         := io.instBuffer.info.inst0_is_in_delayslot
+  val inst0_ex_cpu =
+    !io.cp0.access_allowed && VecInit(EXE_MFC0, EXE_MTC0, EXE_TLBR, EXE_TLBWI, EXE_TLBWR, EXE_TLBP, EXE_ERET, EXE_WAIT)
+      .contains(inst_info(0).op)
   io.executeStage.inst0.ex.excode := MuxCase(
     EX_NO,
     Seq(
@@ -152,7 +155,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       (inst_info(0).inst_valid === INST_INVALID)                -> EX_RI,
       (inst_info(0).op === EXE_SYSCALL)                         -> EX_SYS,
       (inst_info(0).op === EXE_BREAK)                           -> EX_BP,
-      (!io.cp0.access_allowed)                                  -> EX_CPU,
+      (inst0_ex_cpu)                                            -> EX_CPU,
     ),
   )
   io.executeStage.inst0.jb_info.jump_regiser_conflict := jumpCtrl.out.jump_register
@@ -178,6 +181,9 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst1.ex.eret       := inst_info(1).op === EXE_ERET
   io.executeStage.inst1.ex.badvaddr   := pc(1)
   io.executeStage.inst1.ex.bd         := issue.inst1.is_in_delayslot
+  val inst1_ex_cpu =
+    !io.cp0.access_allowed && VecInit(EXE_MFC0, EXE_MTC0, EXE_TLBR, EXE_TLBWI, EXE_TLBWR, EXE_TLBP, EXE_ERET, EXE_WAIT)
+      .contains(inst_info(1).op)
   io.executeStage.inst1.ex.excode := MuxCase(
     EX_NO,
     Seq(
@@ -186,7 +192,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       (inst_info(1).inst_valid === INST_INVALID)                -> EX_RI,
       (inst_info(1).op === EXE_SYSCALL)                         -> EX_SYS,
       (inst_info(1).op === EXE_BREAK)                           -> EX_BP,
-      (!io.cp0.access_allowed)                                  -> EX_CPU,
+      (inst1_ex_cpu)                                            -> EX_CPU,
     ),
   )
 }
