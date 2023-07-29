@@ -66,8 +66,9 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     )
   })
   // 优先使用inst0的信息
-  val pc         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
-  val ex         = Mux(io.memoryUnit.in.inst(0).ex.flush_req, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
+  val ex_sel     = io.memoryUnit.in.inst(0).ex.flush_req || !io.memoryUnit.in.inst(1).ex.flush_req
+  val pc         = Mux(ex_sel, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
+  val ex         = Mux(ex_sel, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
   val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
   val mtc0_wdata = io.executeUnit.in.mtc0_wdata
   val mtc0_addr  = io.executeUnit.in.inst_info.cp0_addr
@@ -322,13 +323,13 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     io.ext_int(4, 0),
     cp0_cause.ip(1, 0),
   )
-  when(!mem_stall && ex.flush_req) {
+  when(!mem_stall && ex.flush_req && !ex.eret) {
     when(!cp0_status.exl) {
       cp0_cause.bd := ex.bd
     }
     cp0_cause.excode := MuxLookup(
       ex.excode,
-      EX_NO,
+      cp0_cause.excode,
       Seq(
         EX_NO   -> EXC_NO,
         EX_INT  -> EXC_INT,
