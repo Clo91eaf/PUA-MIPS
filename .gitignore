@@ -12,3 +12,4 @@ chisel/generated/*
 chisel/target/
 chisel/vivado*
 chisel/.Xil/
+chisel/inst/u-boot.s

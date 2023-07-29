@@ -3,6 +3,7 @@ package cpu.pipeline.execute
 import chisel3._
 import chisel3.util._
 import cpu.defines._
+import cpu.defines.TlbEntry
 import cpu.defines.Const._
 
 class TlbL2 extends Module {

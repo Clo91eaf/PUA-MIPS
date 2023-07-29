@@ -8,16 +8,6 @@ import cpu.pipeline.memory.Cp0Info
 import cpu.CpuConfig
 import cpu.pipeline.decoder.Cp0DecoderUnit
 
-class TlbEntry extends Bundle {
-  val vpn2 = UInt(VPN2_WID.W)
-  val asid = UInt(ASID_WID.W)
-  val g    = Bool()
-  val pfn  = Vec(2, UInt(PFN_WID.W))
-  val c    = Vec(2, Bool())
-  val d    = Vec(2, Bool())
-  val v    = Vec(2, Bool())
-}
-
 class Cp0MemoryUnit(implicit val config: CpuConfig) extends Bundle {
   val in = Input(new Bundle {
     val inst = Vec(
