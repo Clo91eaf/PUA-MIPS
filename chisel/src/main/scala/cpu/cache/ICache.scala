@@ -157,20 +157,22 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   rready <> io.axi.r.ready
 
   val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
-    val invalid = RegInit(false.B)
-    val refill  = RegInit(false.B)
+    val invalid = Bool()
+    val refill  = Bool()
   }))
   io.cpu.tlb1 := tlb1
 
-  val tlb2_vpn2 = RegInit(0.U(19.W))
-  io.cpu.tlb2.vpn2 := tlb2_vpn2
+  val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
+    val vpn2 = UInt(19.W)
+  }))
+  io.cpu.tlb2.vpn2 := tlb2.vpn2
 
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
         when(!translation_ok) {
           state     := s_tlb_fill
-          tlb2_vpn2 := inst_vpn(19, 1)
+          tlb2.vpn2 := inst_vpn(19, 1)
         }.elsewhen(uncached) {
           state   := s_uncached
           ar.addr := inst_pa
@@ -207,9 +209,9 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         when(io.cpu.tlb2.entry.v(inst_vpn(0))) {
           state         := s_idle
 
-          itlb.vpn      := io.cpu.tlb2.vpn2
+          itlb.vpn      := inst_vpn
           itlb.ppn      := io.cpu.tlb2.entry.pfn(inst_vpn(0))
-          itlb.uncached := io.cpu.tlb2.entry.c(inst_vpn(0))
+          itlb.uncached := !io.cpu.tlb2.entry.c(inst_vpn(0))
           itlb.valid    := true.B
         }.otherwise {
           state          := s_save

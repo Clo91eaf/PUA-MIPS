@@ -44,8 +44,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
 
   // * l1_tlb * //
   val dtlb = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn      = UInt(tagWidth.W)
-    val ppn      = UInt(tagWidth.W)
+    val vpn      = UInt(20.W)
+    val ppn      = UInt(20.W)
     val uncached = Bool()
     val dirty    = Bool()
     val valid    = Bool()
@@ -69,7 +69,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val dirty = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
   val lru   = RegInit(VecInit(Seq.fill(nset)(0.U(1.W))))
 
-  val tag_wstrb        = RegInit(VecInit(Seq.fill(nway)(false.B)))
+  val tag_wen          = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val bram_replace_wea = RegInit(VecInit(Seq.fill(nway)(0.U(4.W))))
 
   val data_wstrb = Wire(Vec(nway, UInt(4.W)))
@@ -165,8 +165,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     tag_ram.io.raddr := tag_raddr
     cache_tag(i)     := tag_ram.io.rdata
 
-    tag_ram.io.wen   := tag_wstrb(i).orR
-    tag_ram.io.wstrb := tag_wstrb(i)
+    tag_ram.io.wen   := tag_wen(i).orR
+    tag_ram.io.wstrb := tag_wen(i)
     tag_ram.io.waddr := bram_replace_addr(9, 4)
     tag_ram.io.wdata := tag_wdata
 
@@ -464,12 +464,12 @@ class DCache(cacheConfig: CacheConfig) extends Module {
             rready                              := true.B
             ar_handshake                        := true.B
             bram_replace_wea(lru(pa_line_addr)) := 15.U
-            tag_wstrb(lru(pa_line_addr))        := true.B
+            tag_wen(lru(pa_line_addr))          := true.B
             tag_wdata                           := M_mem_pa(31, 12)
           }
           when(io.axi.ar.fire) {
-            tag_wstrb(lru(pa_line_addr)) := false.B
-            arvalid                      := false.B
+            tag_wen(lru(pa_line_addr)) := false.B
+            arvalid                    := false.B
           }
           when(io.axi.r.fire) {
             when(io.axi.r.bits.last) {
