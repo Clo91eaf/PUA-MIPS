@@ -156,8 +156,11 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   r <> io.axi.r.bits
   rready <> io.axi.r.ready
 
-  val tlb1_invalid = RegInit(false.B)
-  io.cpu.tlb1.invalid := tlb1_invalid
+  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
+    val invalid = RegInit(false.B)
+    val refill  = RegInit(false.B)
+  }))
+  io.cpu.tlb1 := tlb1
 
   val tlb2_vpn2 = RegInit(0.U(19.W))
   io.cpu.tlb2.vpn2 := tlb2_vpn2
@@ -166,7 +169,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     is(s_idle) {
       when(io.cpu.req) {
         when(!translation_ok) {
-          state := s_tlb_fill
+          state     := s_tlb_fill
           tlb2_vpn2 := inst_vpn(19, 1)
         }.elsewhen(uncached) {
           state   := s_uncached
@@ -200,15 +203,23 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(io.cpu.tlb2.found && io.cpu.tlb2.entry.v(inst_vpn(0))) {
-        state         := s_idle
-        itlb.vpn      := io.cpu.tlb2.vpn2
-        itlb.ppn      := io.cpu.tlb2.entry.pfn(inst_vpn(0))
-        itlb.uncached := io.cpu.tlb2.entry.c(inst_vpn(0))
-        itlb.valid    := true.B
+      when(io.cpu.tlb2.found) {
+        when(io.cpu.tlb2.entry.v(inst_vpn(0))) {
+          state         := s_idle
+
+          itlb.vpn      := io.cpu.tlb2.vpn2
+          itlb.ppn      := io.cpu.tlb2.entry.pfn(inst_vpn(0))
+          itlb.uncached := io.cpu.tlb2.entry.c(inst_vpn(0))
+          itlb.valid    := true.B
+        }.otherwise {
+          state          := s_save
+          tlb1.invalid   := true.B
+          saved(0).inst  := 0.U
+          saved(0).valid := true.B
+        }
       }.otherwise {
         state          := s_save
-        tlb1_invalid   := true.B
+        tlb1.refill    := true.B
         saved(0).inst  := 0.U
         saved(0).valid := true.B
       }
@@ -249,7 +260,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.cpu_stall && !io.cpu.icache_stall) {
         state          := s_idle
-        tlb1_invalid   := false.B
+        tlb1.invalid   := false.B
+        tlb1.refill    := false.B
         saved(0).valid := false.B
         saved(1).valid := false.B
       }

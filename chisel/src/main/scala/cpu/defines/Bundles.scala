@@ -129,6 +129,7 @@ class Cache_ICache(
   // l1 tlb
   val tlb1 = Input(new Bundle {
     val invalid = Bool()
+    val refill  = Bool()
   })
 
   // l2 tlb

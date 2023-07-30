@@ -89,8 +89,8 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
   instBuffer.write_en             := io.inst.inst_valid
-  instBuffer.write(0).tlb.refill  := false.B
-  instBuffer.write(1).tlb.refill  := false.B
+  instBuffer.write(0).tlb.refill  := io.inst.tlb1.refill
+  instBuffer.write(1).tlb.refill  := io.inst.tlb1.refill
   instBuffer.write(0).tlb.invalid := io.inst.tlb1.invalid
   instBuffer.write(1).tlb.invalid := io.inst.tlb1.invalid
   instBuffer.write(0).addr        := io.inst.addr(0)
