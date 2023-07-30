@@ -14,9 +14,9 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     val executeStage = Input(new DecoderUnitExecuteUnit())
     val cp0          = Flipped(new Cp0ExecuteUnit())
     val bpu = Output(new Bundle {
-      val pc              = UInt(PC_WID.W)
-      val branch_flag     = Bool()
-      val inst0_is_branch = Bool()
+      val pc          = UInt(PC_WID.W)
+      val branch      = Bool()
+      val branch_inst = Bool()
     })
     val fetchStage = Output(new Bundle {
       val branch = Bool()
@@ -47,7 +47,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     io.executeStage.inst1.inst_info.reg_wen
   io.ctrl.inst(1).reg_waddr := io.executeStage.inst1.inst_info.reg_waddr
   io.ctrl.branch_flag := io.ctrl.allow_to_go &&
-    (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
+    (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
 
   io.cp0.in.mtc0_wdata := io.executeStage.inst0.src_info.src2_data
   io.cp0.in.inst_info := Mux(
@@ -82,14 +82,14 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).src_info        := io.executeStage.inst1.src_info
   fu.inst(1).ex.in           := io.executeStage.inst1.ex
   fu.cp0_rdata               := io.cp0.out.cp0_rdata
-  fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch_flag
+  fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch
 
-  io.bpu.pc              := io.executeStage.inst0.pc
-  io.bpu.branch_flag     := fu.branch.branch_flag
-  io.bpu.inst0_is_branch := io.executeStage.inst0.jb_info.is_branch
+  io.bpu.pc          := io.executeStage.inst0.pc
+  io.bpu.branch      := fu.branch.branch_flag
+  io.bpu.branch_inst := io.executeStage.inst0.jb_info.branch_inst
 
   io.fetchStage.branch := io.ctrl.allow_to_go &&
-    (io.executeStage.inst0.jb_info.jump_regiser_conflict || fu.branch.pred_fail)
+    (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
   io.fetchStage.target := MuxCase(
     io.executeStage.inst0.pc + 4.U, // 默认顺序运行吧
     Seq(
@@ -99,7 +99,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
         io.executeStage.inst0.pc + 8.U,
         io.executeStage.inst0.pc + 4.U,
       ),
-      (io.executeStage.inst0.jb_info.jump_regiser_conflict) -> io.executeStage.inst0.src_info.src1_data,
+      (io.executeStage.inst0.jb_info.jump_regiser) -> io.executeStage.inst0.src_info.src1_data,
     ),
   )
 

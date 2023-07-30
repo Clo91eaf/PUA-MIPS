@@ -53,16 +53,16 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.inst.addr(0)             := fetchUnit.iCache.pc
   io.inst.addr(1)             := fetchUnit.iCache.pc_next
 
-  bpu.enaD                         := ctrl.decoderUnit.allow_to_go
-  bpu.instrD                       := decoderUnit.bpu.decoded_inst0.inst
-  bpu.pcD                          := decoderUnit.bpu.pc
-  bpu.pc_plus4D                    := decoderUnit.bpu.pc + 4.U
-  bpu.pcE                          := executeUnit.bpu.pc
-  bpu.branchE                      := executeUnit.bpu.inst0_is_branch
-  bpu.actual_takeE                 := executeUnit.bpu.branch_flag
-  decoderUnit.bpu.inst_is_branch   := bpu.branchD
-  decoderUnit.bpu.pred_branch_flag := bpu.pred_takeD
-  decoderUnit.bpu.branch_target    := bpu.branch_targetD
+  bpu.enaD                      := ctrl.decoderUnit.allow_to_go
+  bpu.instrD                    := decoderUnit.bpu.decoded_inst0.inst
+  bpu.pcD                       := decoderUnit.bpu.pc
+  bpu.pc_plus4D                 := decoderUnit.bpu.pc + 4.U
+  bpu.pcE                       := executeUnit.bpu.pc
+  bpu.branchE                   := executeUnit.bpu.branch_inst
+  bpu.actual_takeE              := executeUnit.bpu.branch
+  decoderUnit.bpu.branch_inst   := bpu.branchD
+  decoderUnit.bpu.pred_branch   := bpu.pred_takeD
+  decoderUnit.bpu.branch_target := bpu.branch_targetD
 
   instBuffer.fifo_rst         := reset.asBool || ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
@@ -103,9 +103,9 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.master_is_in_delayslot_o
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
-    decoderUnit.forward(i).exe         := executeUnit.decoderUnit.forward(i).exe
-    decoderUnit.forward(i).exe_mem_ren := executeUnit.decoderUnit.forward(i).exe_mem_ren
-    decoderUnit.forward(i).mem         := memoryUnit.decoderUnit(i)
+    decoderUnit.forward(i).exe      := executeUnit.decoderUnit.forward(i).exe
+    decoderUnit.forward(i).exe_rmem := executeUnit.decoderUnit.forward(i).exe_mem_ren
+    decoderUnit.forward(i).mem      := memoryUnit.decoderUnit(i)
   }
   decoderUnit.cp0 <> cp0.decoderUnit
   decoderUnit.executeStage <> executeStage.decoderUnit

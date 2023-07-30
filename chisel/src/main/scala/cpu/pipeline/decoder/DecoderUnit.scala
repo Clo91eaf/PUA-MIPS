@@ -29,9 +29,9 @@ class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
 }
 
 class DataForwardToDecoderUnit extends Bundle {
-  val exe         = new RegWrite()
-  val exe_mem_ren = Bool()
-  val mem         = new RegWrite()
+  val exe      = new RegWrite()
+  val exe_rmem = Bool()
+  val mem      = new RegWrite()
 }
 
 class Cp0DecoderUnit extends Bundle {
@@ -59,9 +59,9 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       val decoded_inst0  = Output(new InstInfo())
       val id_allow_to_go = Output(Bool())
 
-      val inst_is_branch   = Input(Bool())
-      val pred_branch_flag = Input(Bool())
-      val branch_target    = Input(UInt(PC_WID.W))
+      val branch_inst   = Input(Bool())
+      val pred_branch   = Input(Bool())
+      val branch_target = Input(UInt(PC_WID.W))
     }
     val executeStage = Output(new DecoderUnitExecuteUnit())
     val ctrl         = new DecoderUnitCtrl()
@@ -89,11 +89,11 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   jumpCtrl.in.pc            := io.instBuffer.inst(0).bits.pc
   jumpCtrl.in.reg1_data     := io.regfile(0).src1.rdata
 
-  val inst0_is_jb   = jumpCtrl.out.inst_is_jump || io.bpu.inst_is_branch
-  val inst0_jb_flag = jumpCtrl.out.jump_flag || io.bpu.pred_branch_flag
+  val inst0_is_jb   = jumpCtrl.out.inst_is_jump || io.bpu.branch_inst
+  val inst0_jb_flag = jumpCtrl.out.jump_flag || io.bpu.pred_branch
 
   io.fetchUnit.branch := inst0_jb_flag
-  io.fetchUnit.target := Mux(io.bpu.pred_branch_flag, io.bpu.branch_target, jumpCtrl.out.jump_target)
+  io.fetchUnit.target := Mux(io.bpu.pred_branch, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
   io.instBuffer.inst(0).ready := io.ctrl.allow_to_go
   io.instBuffer.inst(1).ready := issue.inst1.allow_to_go
@@ -119,7 +119,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   for (i <- 0 until (config.decoderNum)) {
     decoder(i).io.in.inst      := inst(i)
     issue.decodeInst(i)        := inst_info(i)
-    issue.execute(i).mem_ren   := io.forward(i).exe_mem_ren
+    issue.execute(i).mem_ren   := io.forward(i).exe_rmem
     issue.execute(i).reg_waddr := io.forward(i).exe.waddr
   }
 
@@ -158,10 +158,10 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       (inst0_ex_cpu)                                            -> EX_CPU,
     ),
   )
-  io.executeStage.inst0.jb_info.jump_regiser_conflict := jumpCtrl.out.jump_register
-  io.executeStage.inst0.jb_info.is_branch             := io.bpu.inst_is_branch
-  io.executeStage.inst0.jb_info.pred_branch_flag      := io.bpu.pred_branch_flag
-  io.executeStage.inst0.jb_info.branch_target         := io.bpu.branch_target
+  io.executeStage.inst0.jb_info.jump_regiser  := jumpCtrl.out.jump_register
+  io.executeStage.inst0.jb_info.branch_inst   := io.bpu.branch_inst
+  io.executeStage.inst0.jb_info.pred_branch   := io.bpu.pred_branch
+  io.executeStage.inst0.jb_info.branch_target := io.bpu.branch_target
 
   io.executeStage.inst1.allow_to_go := issue.inst1.allow_to_go
   io.executeStage.inst1.pc          := pc(1)
