@@ -23,6 +23,7 @@ test:
 	@echo "make test"
 	find ./generated ! -name 'mycpu_top.v' -delete
 	sbt "Test / runMain cpu.testMain"
+	cp ./generated/Core.v ../../PUA/mycpu/0core
 
 # Makefile targets
 .PHONY: get run wave
