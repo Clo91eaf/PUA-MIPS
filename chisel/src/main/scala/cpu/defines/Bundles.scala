@@ -133,7 +133,7 @@ class Cache_ICache(
 
   // l2 tlb
   val tlb2 = new Bundle {
-    val vpn   = Input(UInt(19.W))
+    val vpn2  = Input(UInt(19.W))
     val found = Output(Bool())
     val entry = Output(new TlbEntry())
   }
@@ -161,16 +161,18 @@ class Cache_DCache extends Bundle {
   val M_rdata      = Input(UInt(32.W))
 
   // to l2 tlb
-  val tlb = new Bundle {
+  val tlb2 = new Bundle {
     val vpn2  = Input(UInt(19.W))
     val found = Output(Bool())
     val entry = Output(new TlbEntry())
   }
   val fence_tlb = Output(Bool())
   // M_tlb_except
-  val data_tlb_refill  = Input(Bool())
-  val data_tlb_invalid = Input(Bool())
-  val data_tlb_mod     = Input(Bool())
+  val tlb1 = new Bundle {
+    val refill  = Input(Bool())
+    val invalid = Input(Bool())
+    val mod     = Input(Bool())
+  }
 }
 
 // axi

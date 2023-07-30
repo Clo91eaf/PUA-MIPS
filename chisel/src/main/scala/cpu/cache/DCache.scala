@@ -43,7 +43,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val M_wdata      = io.cpu.M_wdata
 
   // * l1_tlb * //
-  val tlb = RegInit(0.U.asTypeOf(new Bundle {
+  val dtlb = RegInit(0.U.asTypeOf(new Bundle {
     val vpn      = UInt(tagWidth.W)
     val ppn      = UInt(tagWidth.W)
     val uncached = Bool()
@@ -52,14 +52,14 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   }))
 
   val direct_mapped  = M_mem_va(31, 30) === 2.U(2.W)
-  val M_mem_uncached = Mux(direct_mapped, M_mem_va(29), tlb.uncached)
-  val data_tag       = Mux(direct_mapped, Cat(0.U(3.W), M_mem_va(28, 12)), tlb.ppn)
+  val M_mem_uncached = Mux(direct_mapped, M_mem_va(29), dtlb.uncached)
+  val data_tag       = Mux(direct_mapped, Cat(0.U(3.W), M_mem_va(28, 12)), dtlb.ppn)
   val data_vpn       = M_mem_va(31, 12)
   val M_mem_pa       = Cat(data_tag, M_mem_va(11, 0))
 
-  val l1tlb_ok = (tlb.vpn === data_vpn && tlb.valid)
+  val tlb1_ok = (dtlb.vpn === data_vpn && dtlb.valid)
   val translation_ok =
-    direct_mapped || (tlb.vpn === data_vpn && tlb.valid && (!M_mem_write || tlb.dirty))
+    direct_mapped || (dtlb.vpn === data_vpn && dtlb.valid && (!M_mem_write || dtlb.dirty))
 
   val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
   val state                                                                           = RegInit(s_idle)
@@ -245,25 +245,23 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
     val vpn = UInt(19.W)
   }))
-  io.cpu.tlb.vpn2 := tlb2.vpn
+  io.cpu.tlb2.vpn2 := tlb2.vpn
 
-  val data_tlb = RegInit(0.U.asTypeOf(new Bundle {
+  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
     val refill  = Bool()
     val invalid = Bool()
     val mod     = Bool()
   }))
 
-  io.cpu.data_tlb_refill  := data_tlb.refill
-  io.cpu.data_tlb_invalid := data_tlb.invalid
-  io.cpu.data_tlb_mod     := data_tlb.mod
+  io.cpu.tlb1 <> tlb1
 
   switch(state) {
     is(s_idle) {
       when(M_mem_en) {
         when(!translation_ok) {
-          when(l1tlb_ok) { // tlbmod
+          when(tlb1_ok) { // tlbmod
             state        := s_save
-            data_tlb.mod := true.B
+            tlb1.mod := true.B
           }.otherwise {
             state    := s_tlb_fill
             tlb2.vpn := data_vpn
@@ -340,21 +338,21 @@ class DCache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(io.cpu.tlb.found) {
-        when((data_vpn(0) & io.cpu.tlb.entry.v(1)) | (!data_vpn(0) & io.cpu.tlb.entry.v(0))) {
-          tlb.vpn      := data_vpn
-          tlb.ppn      := io.cpu.tlb.entry.pfn(data_vpn(0))
-          tlb.uncached := !io.cpu.tlb.entry.c(data_vpn(0))
-          tlb.dirty    := io.cpu.tlb.entry.d(data_vpn(0))
-          tlb.valid    := true.B
+      when(io.cpu.tlb2.found) {
+        when(io.cpu.tlb2.entry.v(data_vpn(0))) {
+          dtlb.vpn      := data_vpn
+          dtlb.ppn      := io.cpu.tlb2.entry.pfn(data_vpn(0))
+          dtlb.uncached := !io.cpu.tlb2.entry.c(data_vpn(0))
+          dtlb.dirty    := io.cpu.tlb2.entry.d(data_vpn(0))
+          dtlb.valid    := true.B
           state        := s_idle
         }.otherwise {
           state            := s_save
-          data_tlb.invalid := true.B
+          tlb1.invalid := true.B
         }
       }.otherwise {
         state           := s_save
-        data_tlb.refill := true.B
+        tlb1.refill := true.B
       }
     }
     is(s_uncached) {
@@ -503,14 +501,14 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.dstall && !stallM) {
         state            := s_idle
-        data_tlb.invalid := false.B
-        data_tlb.refill  := false.B
-        data_tlb.mod     := false.B
+        tlb1.invalid := false.B
+        tlb1.refill  := false.B
+        tlb1.mod     := false.B
       }
     }
   }
 
   when(io.cpu.fence_tlb) {
-    tlb.valid := false.B
+    dtlb.valid := false.B
   }
 }

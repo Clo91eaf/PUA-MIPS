@@ -88,7 +88,7 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en          := io.inst.inst_valid
+  instBuffer.write_en             := io.inst.inst_valid
   instBuffer.write(0).tlb.refill  := false.B
   instBuffer.write(1).tlb.refill  := false.B
   instBuffer.write(0).tlb.invalid := io.inst.tlb1.invalid
@@ -125,13 +125,13 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   cp0.ctrl.exe_stall := !ctrl.executeUnit.allow_to_go
   cp0.ctrl.mem_stall := !ctrl.memoryUnit.allow_to_go
-  cp0.tlb(0).vpn2    := io.inst.tlb2.vpn
-  cp0.tlb(1).vpn2    := io.data.tlb.vpn2
+  cp0.tlb(0).vpn2    := io.inst.tlb2.vpn2
+  cp0.tlb(1).vpn2    := io.data.tlb2.vpn2
   cp0.ext_int        := io.ext_int
   io.inst.tlb2.found := cp0.tlb(0).found
-  io.data.tlb.found  := cp0.tlb(1).found
+  io.data.tlb2.found := cp0.tlb(1).found
   io.inst.tlb2.entry := cp0.tlb(0).info
-  io.data.tlb.entry  := cp0.tlb(1).info
+  io.data.tlb2.entry := cp0.tlb(1).info
 
   memoryStage.ctrl.allow_to_go := ctrl.memoryUnit.allow_to_go
   memoryStage.ctrl.clear(0)    := ctrl.memoryUnit.do_flush
@@ -141,9 +141,9 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.cp0 <> cp0.memoryUnit
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
 
-  memoryUnit.dataMemory.in.tlb_invalid := io.data.data_tlb_invalid
-  memoryUnit.dataMemory.in.tlb_refill  := io.data.data_tlb_refill
-  memoryUnit.dataMemory.in.tlb_modify  := io.data.data_tlb_mod
+  memoryUnit.dataMemory.in.tlb_invalid := io.data.tlb1.invalid
+  memoryUnit.dataMemory.in.tlb_refill  := io.data.tlb1.refill
+  memoryUnit.dataMemory.in.tlb_modify  := io.data.tlb1.mod
   memoryUnit.dataMemory.in.rdata       := io.data.M_rdata
   io.data.M_mem_en                     := memoryUnit.dataMemory.out.en
   io.data.M_mem_write                  := memoryUnit.dataMemory.out.wen.orR
@@ -170,15 +170,17 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.debug.cp0_random  := writeBackUnit.debug.cp0_random
   io.debug.cp0_cause   := writeBackUnit.debug.cp0_cause
 
-  io.inst.fence.value    := executeUnit.memoryStage.inst0.inst_info.inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
-  io.inst.fence.addr     := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.data.M_fence_d      := memoryUnit.writeBackStage.inst0.inst_info.inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
-  io.data.M_fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
-  io.inst.fence.tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
-  io.data.fence_tlb      := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
-  io.data.E_mem_va       := executeUnit.memoryStage.inst0.mem.addr
-  io.data.M_mem_va       := memoryUnit.memoryStage.inst0.mem.addr
-  io.inst.req            := !(reset.asBool || instBuffer.full)
-  io.inst.cpu_stall      := !ctrl.fetchUnit.allow_to_go
-  io.data.stallM         := !ctrl.memoryUnit.allow_to_go
+  io.inst.fence.value := executeUnit.memoryStage.inst0.inst_info
+    .inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
+  io.inst.fence.addr := executeUnit.memoryStage.inst0.rd_info.wdata
+  io.data.M_fence_d := memoryUnit.writeBackStage.inst0.inst_info
+    .inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
+  io.data.M_fence_addr := memoryUnit.writeBackStage.inst0.rd_info.wdata
+  io.inst.fence.tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
+  io.data.fence_tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
+  io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
+  io.data.M_mem_va     := memoryUnit.memoryStage.inst0.mem.addr
+  io.inst.req          := !(reset.asBool || instBuffer.full)
+  io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
+  io.data.stallM       := !ctrl.memoryUnit.allow_to_go
 }
