@@ -42,10 +42,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.cacheCtrl.iCache_stall := io.inst.icache_stall
   ctrl.cacheCtrl.dCache_stall := io.data.dstall
 
-  fetchUnit.memory.ex       := memoryUnit.fetchUnit.ex.flush
-  fetchUnit.memory.ex_pc    := memoryUnit.fetchUnit.ex.flush_pc
-  fetchUnit.memory.flush    := memoryUnit.fetchUnit.flush
-  fetchUnit.memory.flush_pc := memoryUnit.fetchUnit.flush_pc
+  fetchUnit.memory <> memoryUnit.fetchUnit
   fetchUnit.execute <> executeUnit.fetchStage
   fetchUnit.decoder <> decoderUnit.fetchUnit
   fetchUnit.instBuffer.full   := instBuffer.full
@@ -161,15 +158,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   writeBackUnit.ctrl <> ctrl.writeBackUnit
   regfile.write <> writeBackUnit.regfile
 
-  io.debug.commit      := writeBackUnit.debug.commit
-  io.debug.int         := writeBackUnit.debug.int
-  io.debug.wb_pc       := writeBackUnit.debug.wb_pc
-  io.debug.wb_rf_wen   := writeBackUnit.debug.wb_rf_wen
-  io.debug.wb_rf_wnum  := writeBackUnit.debug.wb_rf_wnum
-  io.debug.wb_rf_wdata := writeBackUnit.debug.wb_rf_wdata
-  io.debug.cp0_count   := writeBackUnit.debug.cp0_count
-  io.debug.cp0_random  := writeBackUnit.debug.cp0_random
-  io.debug.cp0_cause   := writeBackUnit.debug.cp0_cause
+  io.debug <> writeBackUnit.debug
 
   io.inst.fence.value := executeUnit.memoryStage.inst0.inst_info
     .inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE

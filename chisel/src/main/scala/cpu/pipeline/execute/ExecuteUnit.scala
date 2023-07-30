@@ -65,24 +65,24 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   accessMemCtrl.inst(1).ex.in     := io.executeStage.inst1.ex
 
   // input fu
-  fu.ctrl.allow_to_go        := io.ctrl.fu.allow_to_go
-  fu.ctrl.do_flush           := io.ctrl.fu.do_flush
-  fu.inst(0).pc              := io.executeStage.inst0.pc
-  fu.inst(0).hilo_wen        := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst0.inst_info.fusel)
-  fu.inst(0).mul_en          := io.executeStage.inst0.inst_info.fusel === FU_MUL
-  fu.inst(0).div_en          := io.executeStage.inst0.inst_info.fusel === FU_DIV
-  fu.inst(0).inst_info       := io.executeStage.inst0.inst_info
-  fu.inst(0).src_info        := io.executeStage.inst0.src_info
-  fu.inst(0).ex.in           := io.executeStage.inst0.ex
-  fu.inst(1).pc              := io.executeStage.inst1.pc
-  fu.inst(1).hilo_wen        := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst1.inst_info.fusel)
-  fu.inst(1).mul_en          := io.executeStage.inst1.inst_info.fusel === FU_MUL
-  fu.inst(1).div_en          := io.executeStage.inst1.inst_info.fusel === FU_DIV
-  fu.inst(1).inst_info       := io.executeStage.inst1.inst_info
-  fu.inst(1).src_info        := io.executeStage.inst1.src_info
-  fu.inst(1).ex.in           := io.executeStage.inst1.ex
-  fu.cp0_rdata               := io.cp0.out.cp0_rdata
-  fu.branch.pred_branch_flag := io.executeStage.inst0.jb_info.pred_branch
+  fu.ctrl.allow_to_go   := io.ctrl.fu.allow_to_go
+  fu.ctrl.do_flush      := io.ctrl.fu.do_flush
+  fu.inst(0).pc         := io.executeStage.inst0.pc
+  fu.inst(0).hilo_wen   := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst0.inst_info.fusel)
+  fu.inst(0).mul_en     := io.executeStage.inst0.inst_info.fusel === FU_MUL
+  fu.inst(0).div_en     := io.executeStage.inst0.inst_info.fusel === FU_DIV
+  fu.inst(0).inst_info  := io.executeStage.inst0.inst_info
+  fu.inst(0).src_info   := io.executeStage.inst0.src_info
+  fu.inst(0).ex.in      := io.executeStage.inst0.ex
+  fu.inst(1).pc         := io.executeStage.inst1.pc
+  fu.inst(1).hilo_wen   := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(io.executeStage.inst1.inst_info.fusel)
+  fu.inst(1).mul_en     := io.executeStage.inst1.inst_info.fusel === FU_MUL
+  fu.inst(1).div_en     := io.executeStage.inst1.inst_info.fusel === FU_DIV
+  fu.inst(1).inst_info  := io.executeStage.inst1.inst_info
+  fu.inst(1).src_info   := io.executeStage.inst1.src_info
+  fu.inst(1).ex.in      := io.executeStage.inst1.ex
+  fu.cp0_rdata          := io.cp0.out.cp0_rdata
+  fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
 
   io.bpu.pc          := io.executeStage.inst0.pc
   io.bpu.branch      := fu.branch.branch_flag

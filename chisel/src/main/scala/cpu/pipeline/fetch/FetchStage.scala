@@ -6,8 +6,6 @@ import chisel3.util._
 class FetchStage extends Module {
   val io = IO(new Bundle {
     val memory = new Bundle {
-      val ex       = Input(Bool())
-      val ex_pc    = Input(UInt(32.W))
       val flush    = Input(Bool())
       val flush_pc = Input(UInt(32.W))
     }
@@ -36,7 +34,6 @@ class FetchStage extends Module {
   io.iCache.pc_next := MuxCase(
     pc,
     Seq(
-      io.memory.ex            -> io.memory.ex_pc,
       io.memory.flush         -> io.memory.flush_pc,
       io.execute.branch       -> io.execute.target,
       io.decoder.branch       -> io.decoder.target,

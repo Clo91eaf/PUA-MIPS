@@ -16,10 +16,6 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
     val fetchUnit = Output(new Bundle {
       val flush    = Bool()
       val flush_pc = UInt(PC_WID.W)
-      val ex = new Bundle {
-        val flush    = Bool()
-        val flush_pc = UInt(PC_WID.W)
-      }
     })
     val decoderUnit    = Output(Vec(config.fuNum, new RegWrite()))
     val cp0            = Flipped(new Cp0MemoryUnit())
@@ -115,11 +111,13 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.cp0.in.inst(1).pc := io.writeBackStage.inst1.pc
   io.cp0.in.inst(1).ex := io.writeBackStage.inst1.ex
 
-  io.fetchUnit.flush       := io.writeBackStage.inst0.inst_info.op === EXE_MTC0 && io.ctrl.allow_to_go
-  io.fetchUnit.flush_pc    := io.writeBackStage.inst0.pc + 4.U
-  io.fetchUnit.ex.flush    := io.cp0.out.flush
-  io.fetchUnit.ex.flush_pc := io.cp0.out.flush_pc
+  io.fetchUnit.flush := Mux(
+    io.cp0.out.flush,
+    io.cp0.out.flush,
+    io.writeBackStage.inst0.inst_info.op === EXE_MTC0 && io.ctrl.allow_to_go,
+  )
+  io.fetchUnit.flush_pc := Mux(io.cp0.out.flush, io.cp0.out.flush_pc, io.writeBackStage.inst0.pc + 4.U)
 
-  io.ctrl.flush_req := io.fetchUnit.ex.flush || io.fetchUnit.flush
+  io.ctrl.flush_req := io.fetchUnit.flush
 
 }
