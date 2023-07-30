@@ -150,6 +150,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.data.M_mem_size                   := memoryUnit.dataMemory.out.rlen
   io.data.M_wmask                      := memoryUnit.dataMemory.out.wen
   io.data.M_wdata                      := memoryUnit.dataMemory.out.wdata
+  io.data.M_mem_va                     := memoryUnit.dataMemory.out.addr
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
@@ -179,7 +180,6 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.inst.fence.tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
   io.data.fence_tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
   io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
-  io.data.M_mem_va     := memoryUnit.memoryStage.inst0.mem.addr
   io.inst.req          := !(reset.asBool || instBuffer.full)
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
   io.data.stallM       := !ctrl.memoryUnit.allow_to_go

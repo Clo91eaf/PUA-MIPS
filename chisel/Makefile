@@ -21,7 +21,7 @@ count_commit:
 
 test:
 	@echo "make test"
-	find ./generated ! -name 'mycpu_top.v' -delete
+	find ./generated ! -name 'mycpu_top.v' -type f -delete
 	sbt "Test / runMain cpu.testMain"
 	cp ./generated/Core.v ../../PUA/mycpu/0core
 
