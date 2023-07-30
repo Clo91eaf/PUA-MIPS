@@ -250,7 +250,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
     val refill  = Bool()
     val invalid = Bool()
-    val mod     = Bool()
+    val modify  = Bool()
   }))
 
   io.cpu.tlb1 <> tlb1
@@ -260,8 +260,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
       when(M_mem_en) {
         when(!translation_ok) {
           when(tlb1_ok) { // tlbmod
-            state    := s_save
-            tlb1.mod := true.B
+            state       := s_save
+            tlb1.modify := true.B
           }.otherwise {
             state    := s_tlb_fill
             tlb2.vpn := data_vpn(19, 1)
@@ -503,7 +503,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
         state        := s_idle
         tlb1.invalid := false.B
         tlb1.refill  := false.B
-        tlb1.mod     := false.B
+        tlb1.modify  := false.B
       }
     }
   }

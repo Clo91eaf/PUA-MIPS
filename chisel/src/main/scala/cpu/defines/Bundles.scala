@@ -172,7 +172,7 @@ class Cache_DCache extends Bundle {
   val tlb1 = new Bundle {
     val refill  = Input(Bool())
     val invalid = Input(Bool())
-    val mod     = Input(Bool())
+    val modify  = Input(Bool())
   }
 }
 

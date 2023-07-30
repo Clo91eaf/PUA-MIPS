@@ -138,16 +138,14 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.cp0 <> cp0.memoryUnit
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
 
-  memoryUnit.dataMemory.in.tlb_invalid := io.data.tlb1.invalid
-  memoryUnit.dataMemory.in.tlb_refill  := io.data.tlb1.refill
-  memoryUnit.dataMemory.in.tlb_modify  := io.data.tlb1.mod
-  memoryUnit.dataMemory.in.rdata       := io.data.M_rdata
-  io.data.M_mem_en                     := memoryUnit.dataMemory.out.en
-  io.data.M_mem_write                  := memoryUnit.dataMemory.out.wen.orR
-  io.data.M_mem_size                   := memoryUnit.dataMemory.out.rlen
-  io.data.M_wmask                      := memoryUnit.dataMemory.out.wen
-  io.data.M_wdata                      := memoryUnit.dataMemory.out.wdata
-  io.data.M_mem_va                     := memoryUnit.dataMemory.out.addr
+  memoryUnit.dataMemory.in.tlb <> io.data.tlb1
+  memoryUnit.dataMemory.in.rdata := io.data.M_rdata
+  io.data.M_mem_en               := memoryUnit.dataMemory.out.en
+  io.data.M_mem_write            := memoryUnit.dataMemory.out.wen.orR
+  io.data.M_mem_size             := memoryUnit.dataMemory.out.rlen
+  io.data.M_wmask                := memoryUnit.dataMemory.out.wen
+  io.data.M_wdata                := memoryUnit.dataMemory.out.wdata
+  io.data.M_mem_va               := memoryUnit.dataMemory.out.addr
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
