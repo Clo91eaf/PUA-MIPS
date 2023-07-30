@@ -6,6 +6,7 @@ import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
 import cpu.defines._
+import cpu.mmu._
 
 class WriteBufferUnit extends Bundle {
   val data = UInt(32.W)
@@ -43,13 +44,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val M_wdata      = io.cpu.M_wdata
 
   // * l1_tlb * //
-  val dtlb = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn      = UInt(20.W)
-    val ppn      = UInt(20.W)
-    val uncached = Bool()
-    val dirty    = Bool()
-    val valid    = Bool()
-  }))
+  val dtlb = RegInit(0.U.asTypeOf(new DTLB()))
 
   val direct_mapped  = M_mem_va(31, 30) === 2.U(2.W)
   val M_mem_uncached = Mux(direct_mapped, M_mem_va(29), dtlb.uncached)
@@ -57,9 +52,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val data_vpn       = M_mem_va(31, 12)
   val M_mem_pa       = Cat(data_tag, M_mem_va(11, 0))
 
-  val tlb1_ok = (dtlb.vpn === data_vpn && dtlb.valid)
-  val translation_ok =
-    direct_mapped || (dtlb.vpn === data_vpn && dtlb.valid && (!M_mem_write || dtlb.dirty))
+  val tlb1_ok        = (dtlb.vpn === data_vpn && dtlb.valid)
+  val translation_ok = direct_mapped || (dtlb.vpn === data_vpn && dtlb.valid && (!M_mem_write || dtlb.dirty))
 
   val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
   val state                                                                           = RegInit(s_idle)
