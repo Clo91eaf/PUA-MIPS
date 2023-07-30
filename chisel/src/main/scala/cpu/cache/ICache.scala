@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
+import cpu.defines._
 
 // todo depart the tlb component.
 class ICache(cacheConfig: CacheConfig) extends Module {
@@ -67,28 +68,28 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val lru = RegInit(VecInit(Seq.fill(nset * nbank)(false.B)))
 
   // * l1_tlb * //
-  val tlb = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn      = UInt(tagWidth.W)
-    val ppn      = UInt(tagWidth.W)
+  val itlb = RegInit(0.U.asTypeOf(new Bundle {
+    val vpn      = UInt(20.W)
+    val ppn      = UInt(20.W)
     val uncached = Bool()
     val valid    = Bool()
   }))
 
   // * tlb * //
   val direct_mapped = io.cpu.addr(0)(31, 30) === 2.U(2.W)
-  val uncached      = Mux(direct_mapped, io.cpu.addr(0)(29), tlb.uncached)
-  val inst_tag      = Mux(direct_mapped, Cat(0.U(bankOffsetWidth.W), io.cpu.addr(0)(28, 12)), tlb.ppn)
+  val uncached      = Mux(direct_mapped, io.cpu.addr(0)(29), itlb.uncached)
+  val inst_tag      = Mux(direct_mapped, Cat(0.U(3.W), io.cpu.addr(0)(28, 12)), itlb.ppn)
   val inst_vpn      = io.cpu.addr(0)(31, 12)
   val inst_pa       = Cat(inst_tag, io.cpu.addr(0)(11, 0))
 
   // * fence * //
   val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
-  when(io.cpu.fence.tlb && !io.cpu.icache_stall && !io.cpu.cpu_stall) { tlb.valid := false.B }
+  when(io.cpu.fence.tlb && !io.cpu.icache_stall && !io.cpu.cpu_stall) { itlb.valid := false.B }
   when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
     valid(fence_index) := VecInit(Seq.fill(2)(false.B))
   }
 
-  val translation_ok = direct_mapped || (tlb.vpn === inst_vpn && tlb.valid)
+  val translation_ok = direct_mapped || (itlb.vpn === inst_vpn && itlb.valid)
 
   // * replace set * //
   val rset = RegInit(0.U(6.W))
@@ -145,7 +146,6 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // * io * //
   io.cpu.icache_stall := Mux(state === s_idle, (!cache_hit_available && io.cpu.req), state =/= s_save)
 
-
   val ar      = RegInit(0.U.asTypeOf(new AR()))
   val arvalid = RegInit(false.B)
   ar <> io.axi.ar.bits
@@ -156,16 +156,23 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   r <> io.axi.r.bits
   rready <> io.axi.r.ready
 
-  val tlb1_invalid = RegInit(false.B)
-  io.cpu.tlb1.invalid := tlb1_invalid
+  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
+    val invalid = Bool()
+    val refill  = Bool()
+  }))
+  io.cpu.tlb1 := tlb1
 
-  io.cpu.tlb2.vpn := RegEnable(inst_vpn, state === s_idle && io.cpu.req && !translation_ok)
+  val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
+    val vpn2 = UInt(19.W)
+  }))
+  io.cpu.tlb2.vpn2 := tlb2.vpn2
 
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
         when(!translation_ok) {
-          state := s_tlb_fill
+          state     := s_tlb_fill
+          tlb2.vpn2 := inst_vpn(19, 1)
         }.elsewhen(uncached) {
           state   := s_uncached
           ar.addr := inst_pa
@@ -179,7 +186,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
-          rset        := vset
+          rset                     := vset
           data_wstrb(lru(vset))(0) := 0xf.U
           data_wstrb(lru(vset))(1) := 0x0.U
           tag_wstrb(lru(vset))     := true.B
@@ -198,15 +205,23 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(io.cpu.tlb2.found && (inst_vpn(12) && io.cpu.tlb2.entry.V1 || !inst_vpn(12) && io.cpu.tlb2.entry.V0)) {
-        state        := s_idle
-        tlb.vpn      := io.cpu.tlb2.vpn
-        tlb.ppn      := Mux(inst_vpn(12), io.cpu.tlb2.entry.PFN1, io.cpu.tlb2.entry.PFN0)
-        tlb.uncached := Mux(inst_vpn(12), io.cpu.tlb2.entry.C1, io.cpu.tlb2.entry.C0)
-        tlb.valid    := true.B
+      when(io.cpu.tlb2.found) {
+        when(io.cpu.tlb2.entry.v(inst_vpn(0))) {
+          state         := s_idle
+
+          itlb.vpn      := inst_vpn
+          itlb.ppn      := io.cpu.tlb2.entry.pfn(inst_vpn(0))
+          itlb.uncached := !io.cpu.tlb2.entry.c(inst_vpn(0))
+          itlb.valid    := true.B
+        }.otherwise {
+          state          := s_save
+          tlb1.invalid   := true.B
+          saved(0).inst  := 0.U
+          saved(0).valid := true.B
+        }
       }.otherwise {
         state          := s_save
-        tlb1_invalid   := true.B
+        tlb1.refill    := true.B
         saved(0).inst  := 0.U
         saved(0).valid := true.B
       }
@@ -247,7 +262,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.cpu_stall && !io.cpu.icache_stall) {
         state          := s_idle
-        tlb1_invalid   := false.B
+        tlb1.invalid   := false.B
+        tlb1.refill    := false.B
         saved(0).valid := false.B
         saved(1).valid := false.B
       }

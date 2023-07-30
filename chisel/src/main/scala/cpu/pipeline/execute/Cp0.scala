@@ -8,16 +8,6 @@ import cpu.pipeline.memory.Cp0Info
 import cpu.CpuConfig
 import cpu.pipeline.decoder.Cp0DecoderUnit
 
-class TlbEntry extends Bundle {
-  val vpn2 = UInt(VPN2_WID.W)
-  val asid = UInt(ASID_WID.W)
-  val g    = Bool()
-  val pfn  = Vec(2, UInt(PFN_WID.W))
-  val c    = Vec(2, Bool())
-  val d    = Vec(2, Bool())
-  val v    = Vec(2, Bool())
-}
-
 class Cp0MemoryUnit(implicit val config: CpuConfig) extends Bundle {
   val in = Input(new Bundle {
     val inst = Vec(
@@ -77,6 +67,7 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val mem_stall  = io.ctrl.mem_stall
 
   val tlb_l2 = Module(new TlbL2()).io
+
   tlb_l2.in.tlb1_vpn2 := io.tlb(0).vpn2
   tlb_l2.in.tlb2_vpn2 := io.tlb(1).vpn2
   io.tlb(0).found     := tlb_l2.out.tlb1_found

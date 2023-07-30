@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import memoryBanks.metaBanks._
 import memoryBanks.SimpleDualPortRam
+import cpu.defines._
 
 class WriteBufferUnit extends Bundle {
   val data = UInt(32.W)
@@ -42,23 +43,23 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val M_wdata      = io.cpu.M_wdata
 
   // * l1_tlb * //
-  val tlb = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn      = UInt(tagWidth.W)
-    val ppn      = UInt(tagWidth.W)
+  val dtlb = RegInit(0.U.asTypeOf(new Bundle {
+    val vpn      = UInt(20.W)
+    val ppn      = UInt(20.W)
     val uncached = Bool()
     val dirty    = Bool()
     val valid    = Bool()
   }))
 
   val direct_mapped  = M_mem_va(31, 30) === 2.U(2.W)
-  val M_mem_uncached = Mux(direct_mapped, M_mem_va(29), tlb.uncached)
-  val data_tag       = Mux(direct_mapped, Cat(0.U(3.W), M_mem_va(28, 12)), tlb.ppn)
+  val M_mem_uncached = Mux(direct_mapped, M_mem_va(29), dtlb.uncached)
+  val data_tag       = Mux(direct_mapped, Cat(0.U(3.W), M_mem_va(28, 12)), dtlb.ppn)
   val data_vpn       = M_mem_va(31, 12)
   val M_mem_pa       = Cat(data_tag, M_mem_va(11, 0))
 
-  val l1tlb_ok = (tlb.vpn === data_vpn && tlb.valid)
+  val tlb1_ok = (dtlb.vpn === data_vpn && dtlb.valid)
   val translation_ok =
-    direct_mapped || (tlb.vpn === data_vpn && tlb.valid && (!M_mem_write || tlb.dirty))
+    direct_mapped || (dtlb.vpn === data_vpn && dtlb.valid && (!M_mem_write || dtlb.dirty))
 
   val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
   val state                                                                           = RegInit(s_idle)
@@ -68,7 +69,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val dirty = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
   val lru   = RegInit(VecInit(Seq.fill(nset)(0.U(1.W))))
 
-  val tag_wstrb        = RegInit(VecInit(Seq.fill(nway)(false.B)))
+  val tag_wen          = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val bram_replace_wea = RegInit(VecInit(Seq.fill(nway)(0.U(4.W))))
 
   val data_wstrb = Wire(Vec(nway, UInt(4.W)))
@@ -164,8 +165,8 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     tag_ram.io.raddr := tag_raddr
     cache_tag(i)     := tag_ram.io.rdata
 
-    tag_ram.io.wen   := tag_wstrb(i).orR
-    tag_ram.io.wstrb := tag_wstrb(i)
+    tag_ram.io.wen   := tag_wen(i).orR
+    tag_ram.io.wstrb := tag_wen(i)
     tag_ram.io.waddr := bram_replace_addr(9, 4)
     tag_ram.io.wdata := tag_wdata
 
@@ -244,28 +245,26 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
     val vpn = UInt(19.W)
   }))
-  io.cpu.tlb.vpn2 := tlb2.vpn
+  io.cpu.tlb2.vpn2 := tlb2.vpn
 
-  val data_tlb = RegInit(0.U.asTypeOf(new Bundle {
+  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
     val refill  = Bool()
     val invalid = Bool()
     val mod     = Bool()
   }))
 
-  io.cpu.data_tlb_refill  := data_tlb.refill
-  io.cpu.data_tlb_invalid := data_tlb.invalid
-  io.cpu.data_tlb_mod     := data_tlb.mod
+  io.cpu.tlb1 <> tlb1
 
   switch(state) {
     is(s_idle) {
       when(M_mem_en) {
         when(!translation_ok) {
-          when(l1tlb_ok) { // tlbmod
-            state        := s_save
-            data_tlb.mod := true.B
+          when(tlb1_ok) { // tlbmod
+            state    := s_save
+            tlb1.mod := true.B
           }.otherwise {
             state    := s_tlb_fill
-            tlb2.vpn := data_vpn
+            tlb2.vpn := data_vpn(19, 1)
           }
         }.elsewhen(M_mem_uncached) {
           when(M_mem_write) {
@@ -339,21 +338,21 @@ class DCache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(io.cpu.tlb.found) {
-        when((data_vpn(0) & io.cpu.tlb.entry.V1) | (!data_vpn(0) & io.cpu.tlb.entry.V0)) {
-          tlb.vpn      := data_vpn
-          tlb.ppn      := Mux(data_vpn(0), io.cpu.tlb.entry.PFN1, io.cpu.tlb.entry.PFN0)
-          tlb.uncached := Mux(data_vpn(0), !io.cpu.tlb.entry.C1, !io.cpu.tlb.entry.C0)
-          tlb.dirty    := Mux(data_vpn(0), io.cpu.tlb.entry.D1, io.cpu.tlb.entry.D0)
-          tlb.valid    := true.B
-          state        := s_idle
+      when(io.cpu.tlb2.found) {
+        when(io.cpu.tlb2.entry.v(data_vpn(0))) {
+          dtlb.vpn      := data_vpn
+          dtlb.ppn      := io.cpu.tlb2.entry.pfn(data_vpn(0))
+          dtlb.uncached := !io.cpu.tlb2.entry.c(data_vpn(0))
+          dtlb.dirty    := io.cpu.tlb2.entry.d(data_vpn(0))
+          dtlb.valid    := true.B
+          state         := s_idle
         }.otherwise {
-          state            := s_save
-          data_tlb.invalid := true.B
+          state        := s_save
+          tlb1.invalid := true.B
         }
       }.otherwise {
-        state           := s_save
-        data_tlb.refill := true.B
+        state       := s_save
+        tlb1.refill := true.B
       }
     }
     is(s_uncached) {
@@ -465,12 +464,12 @@ class DCache(cacheConfig: CacheConfig) extends Module {
             rready                              := true.B
             ar_handshake                        := true.B
             bram_replace_wea(lru(pa_line_addr)) := 15.U
-            tag_wstrb(lru(pa_line_addr))        := true.B
+            tag_wen(lru(pa_line_addr))          := true.B
             tag_wdata                           := M_mem_pa(31, 12)
           }
           when(io.axi.ar.fire) {
-            tag_wstrb(lru(pa_line_addr)) := false.B
-            arvalid                      := false.B
+            tag_wen(lru(pa_line_addr)) := false.B
+            arvalid                    := false.B
           }
           when(io.axi.r.fire) {
             when(io.axi.r.bits.last) {
@@ -501,15 +500,15 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     }
     is(s_save) {
       when(!io.cpu.dstall && !stallM) {
-        state            := s_idle
-        data_tlb.invalid := false.B
-        data_tlb.refill  := false.B
-        data_tlb.mod     := false.B
+        state        := s_idle
+        tlb1.invalid := false.B
+        tlb1.refill  := false.B
+        tlb1.mod     := false.B
       }
     }
   }
 
   when(io.cpu.fence_tlb) {
-    tlb.valid := false.B
+    dtlb.valid := false.B
   }
 }
