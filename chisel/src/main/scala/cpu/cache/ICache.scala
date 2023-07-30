@@ -91,7 +91,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val vset = io.cpu.addr(0)(indexWidth + offsetWidth - 1, offsetWidth)
 
   // * cache hit * //
-  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === l1tlb.io.inst_tag && valid(vset)(i)))
+  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === l1tlb.io.tag && valid(vset)(i)))
   val cache_hit           = tag_compare_valid.contains(true.B)
   val cache_hit_available = cache_hit && l1tlb.io.translation_ok && !l1tlb.io.uncached
 
@@ -156,13 +156,13 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           state := s_tlb_fill
         }.elsewhen(l1tlb.io.uncached) {
           state   := s_uncached
-          ar.addr := l1tlb.io.inst_pa
+          ar.addr := l1tlb.io.pa
           ar.len  := 0.U(bankWidth.W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
         }.elsewhen(!cache_hit) {
           state   := s_replace
-          ar.addr := Cat(l1tlb.io.inst_pa(31, 6), 0.U(6.W))
+          ar.addr := Cat(l1tlb.io.pa(31, 6), 0.U(6.W))
           ar.len  := 15.U(bankWidth.W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
@@ -171,7 +171,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           data_wstrb(lru(vset))(0) := 0xf.U
           data_wstrb(lru(vset))(1) := 0x0.U
           tag_wstrb(lru(vset))     := true.B
-          tag_wdata                := l1tlb.io.inst_tag
+          tag_wdata                := l1tlb.io.tag
           valid(vset)(lru(vset))   := true.B
           axi_cnt.reset()
         }.elsewhen(!io.cpu.icache_stall) {

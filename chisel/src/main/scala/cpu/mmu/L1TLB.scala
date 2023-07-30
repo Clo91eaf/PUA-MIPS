@@ -35,28 +35,20 @@ class L1TLBI extends Module {
     }
     val translation_ok = Output(Bool())
     val hit            = Output(Bool())
-    val inst_tag       = Output(UInt(20.W))
-    val inst_pa        = Output(UInt(32.W))
+    val tag            = Output(UInt(20.W))
+    val pa             = Output(UInt(32.W))
   })
   val itlb          = RegInit(0.U.asTypeOf(new ITLB()))
-  val inst_vpn      = io.addr(31, 12)
+  val vpn           = io.addr(31, 12)
   val direct_mapped = io.addr(31, 30) === 2.U(2.W)
 
   io.uncached       := Mux(direct_mapped, io.addr(29), itlb.uncached)
-  io.translation_ok := direct_mapped || (itlb.vpn === inst_vpn && itlb.valid)
+  io.translation_ok := direct_mapped || (itlb.vpn === vpn && itlb.valid)
+  io.tlb2.vpn2      := vpn(19, 1)
+  io.hit            := io.tlb2.found && io.tlb2.entry.v(vpn(0))
+  io.tag            := Mux(direct_mapped, Cat(0.U(3.W), io.addr(28, 12)), itlb.ppn)
+  io.pa             := Cat(io.tag, io.addr(11, 0))
 
-  when(io.icache_is_tlb_fill) {
-    itlb.vpn      := inst_vpn
-    itlb.ppn      := io.tlb2.entry.pfn(inst_vpn(0))
-    itlb.uncached := !io.tlb2.entry.c(inst_vpn(0))
-    itlb.valid    := true.B
-  }
-
-  io.inst_tag := Mux(direct_mapped, Cat(0.U(3.W), io.addr(28, 12)), itlb.ppn)
-  io.inst_pa  := Cat(io.inst_tag, io.addr(11, 0))
-
-  io.tlb2.vpn2 := inst_vpn(19, 1)
-  io.hit       := io.tlb2.found && io.tlb2.entry.v(inst_vpn(0))
   when(io.fence && !io.icache_stall && !io.cpu_stall) { itlb.valid := false.B }
 
   // * tlb1 * //
@@ -68,16 +60,20 @@ class L1TLBI extends Module {
   tlb1 <> io.tlb1
 
   when(io.icache_is_tlb_fill) {
-    when(io.tlb2.found && !io.hit) {
-      tlb1.invalid := true.B
-    }.elsewhen(!io.tlb2.found) {
+    when(io.tlb2.found) {
+      when(io.tlb2.entry.v(vpn(0))) {
+        itlb.vpn      := vpn
+        itlb.ppn      := io.tlb2.entry.pfn(vpn(0))
+        itlb.uncached := !io.tlb2.entry.c(vpn(0))
+        itlb.valid    := true.B
+      }.otherwise {
+        tlb1.invalid := true.B
+      }
+    }.otherwise {
       tlb1.refill := true.B
     }
-  }.elsewhen(io.icache_is_save) {
-    when(!io.cpu_stall && !io.icache_stall) {
-      tlb1.invalid := false.B
-      tlb1.refill  := false.B
-    }
+  }.elsewhen(io.icache_is_save && !io.cpu_stall && !io.icache_stall) {
+    tlb1.invalid := false.B
+    tlb1.refill  := false.B
   }
 }
-
