@@ -69,8 +69,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
 
   // * l1_tlb * //
   val itlb = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn      = UInt(tagWidth.W)
-    val ppn      = UInt(tagWidth.W)
+    val vpn      = UInt(20.W)
+    val ppn      = UInt(20.W)
     val uncached = Bool()
     val valid    = Bool()
   }))
@@ -78,7 +78,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // * tlb * //
   val direct_mapped = io.cpu.addr(0)(31, 30) === 2.U(2.W)
   val uncached      = Mux(direct_mapped, io.cpu.addr(0)(29), itlb.uncached)
-  val inst_tag      = Mux(direct_mapped, Cat(0.U(bankOffsetWidth.W), io.cpu.addr(0)(28, 12)), itlb.ppn)
+  val inst_tag      = Mux(direct_mapped, Cat(0.U(3.W), io.cpu.addr(0)(28, 12)), itlb.ppn)
   val inst_vpn      = io.cpu.addr(0)(31, 12)
   val inst_pa       = Cat(inst_tag, io.cpu.addr(0)(11, 0))
 
@@ -159,13 +159,15 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val tlb1_invalid = RegInit(false.B)
   io.cpu.tlb1.invalid := tlb1_invalid
 
-  io.cpu.tlb2.vpn2 := RegEnable(inst_vpn(19, 1), state === s_idle && io.cpu.req && !translation_ok)
+  val tlb2_vpn2 = RegInit(0.U(19.W))
+  io.cpu.tlb2.vpn2 := tlb2_vpn2
 
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
         when(!translation_ok) {
           state := s_tlb_fill
+          tlb2_vpn2 := inst_vpn(19, 1)
         }.elsewhen(uncached) {
           state   := s_uncached
           ar.addr := inst_pa

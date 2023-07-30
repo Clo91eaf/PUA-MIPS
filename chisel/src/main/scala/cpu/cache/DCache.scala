@@ -260,11 +260,11 @@ class DCache(cacheConfig: CacheConfig) extends Module {
       when(M_mem_en) {
         when(!translation_ok) {
           when(tlb1_ok) { // tlbmod
-            state        := s_save
+            state    := s_save
             tlb1.mod := true.B
           }.otherwise {
             state    := s_tlb_fill
-            tlb2.vpn := data_vpn
+            tlb2.vpn := data_vpn(19, 1)
           }
         }.elsewhen(M_mem_uncached) {
           when(M_mem_write) {
@@ -345,13 +345,13 @@ class DCache(cacheConfig: CacheConfig) extends Module {
           dtlb.uncached := !io.cpu.tlb2.entry.c(data_vpn(0))
           dtlb.dirty    := io.cpu.tlb2.entry.d(data_vpn(0))
           dtlb.valid    := true.B
-          state        := s_idle
+          state         := s_idle
         }.otherwise {
-          state            := s_save
+          state        := s_save
           tlb1.invalid := true.B
         }
       }.otherwise {
-        state           := s_save
+        state       := s_save
         tlb1.refill := true.B
       }
     }
@@ -500,7 +500,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     }
     is(s_save) {
       when(!io.cpu.dstall && !stallM) {
-        state            := s_idle
+        state        := s_idle
         tlb1.invalid := false.B
         tlb1.refill  := false.B
         tlb1.mod     := false.B
