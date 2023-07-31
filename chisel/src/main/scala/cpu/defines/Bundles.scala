@@ -110,6 +110,21 @@ class WriteBackCtrl extends Bundle {
   val do_flush    = Input(Bool())
 }
 
+class Tlb1InfoI extends Bundle {
+  val invalid = Bool()
+  val refill  = Bool()
+}
+
+class Tlb1InfoD extends Tlb1InfoI {
+  val modify  = Bool()
+}
+
+class Tlb2Info extends Bundle {
+  val vpn2  = Input(UInt(19.W))
+  val found = Output(Bool())
+  val entry = Output(new TlbEntry())
+}
+
 // cpu to icache
 class Cache_ICache(
     ninst: Int = 2,
@@ -127,17 +142,10 @@ class Cache_ICache(
   val icache_stall = Input(Bool())
 
   // l1 tlb
-  val tlb1 = Input(new Bundle {
-    val invalid = Bool()
-    val refill  = Bool()
-  })
+  val tlb1 = Input(new Tlb1InfoI())
 
   // l2 tlb
-  val tlb2 = new Bundle {
-    val vpn2  = Input(UInt(19.W))
-    val found = Output(Bool())
-    val entry = Output(new TlbEntry())
-  }
+  val tlb2 = new Tlb2Info()
 
   val fence = Output(new Bundle {
     val value = Bool()
@@ -161,19 +169,13 @@ class Cache_DCache extends Bundle {
   val M_wdata      = Output(UInt(32.W))
   val M_rdata      = Input(UInt(32.W))
 
-  // to l2 tlb
-  val tlb2 = new Bundle {
-    val vpn2  = Input(UInt(19.W))
-    val found = Output(Bool())
-    val entry = Output(new TlbEntry())
-  }
+  // * l1 tlb * //
+  val tlb1 = Input(new Tlb1InfoD())
+
+  // * l2 tlb * //
+  val tlb2 = new Tlb2Info()
+
   val fence_tlb = Output(Bool())
-  // M_tlb_except
-  val tlb1 = new Bundle {
-    val refill  = Input(Bool())
-    val invalid = Input(Bool())
-    val modify  = Input(Bool())
-  }
 }
 
 // axi

@@ -48,7 +48,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val state                                                                           = RegInit(s_idle)
 
   // * l1_tlb * //
-  val l1tlb = Module(new L1TLBD())
+  val l1tlb = Module(new TlbL1D())
   l1tlb.io.addr               := M_mem_va
   l1tlb.io.mem_write          := M_mem_write
   l1tlb.io.fence              := io.cpu.fence_tlb

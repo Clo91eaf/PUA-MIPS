@@ -68,7 +68,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val lru = RegInit(VecInit(Seq.fill(nset * nbank)(false.B)))
 
   // * itlb * //
-  val l1tlb = Module(new L1TLBI())
+  val l1tlb = Module(new TlbL1I())
   l1tlb.io.addr := io.cpu.addr(0)
   l1tlb.io.tlb1 <> io.cpu.tlb1
   l1tlb.io.tlb2 <> io.cpu.tlb2

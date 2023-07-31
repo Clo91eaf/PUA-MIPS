@@ -2,12 +2,13 @@ package cpu.mmu
 
 import chisel3._
 import chisel3.util._
+import cpu.defines._
 
 class DTLB extends ITLB {
   val dirty = Bool()
 }
 
-class L1TLBD extends Module {
+class TlbL1D extends Module {
   val io = IO(new Bundle {
     val fence              = Input(Bool())
     val cpu_stall          = Input(Bool())
@@ -22,16 +23,8 @@ class L1TLBD extends Module {
     val mem_write = Input(Bool())
     val tlb1_ok   = Output(Bool())
 
-    val tlb1 = new Bundle {
-      val refill  = Output(Bool())
-      val invalid = Output(Bool())
-      val mod     = Output(Bool())
-    }
-    val tlb2 = new Bundle {
-      val vpn2  = Output(UInt(19.W))
-      val found = Input(Bool())
-      val entry = Input(new TlbEntry())
-    }
+    val tlb1 = Output(new Tlb1InfoD())
+    val tlb2 = Flipped(new Tlb2Info())
 
     val translation_ok = Output(Bool())
     val hit            = Output(Bool())
@@ -52,21 +45,15 @@ class L1TLBD extends Module {
 
   when(io.fence) { dtlb.valid := false.B }
 
-  val tlb1 = RegInit(0.U.asTypeOf(new Bundle {
-    val refill  = Bool()
-    val invalid = Bool()
-    val mod     = Bool()
-  }))
+  val tlb1 = RegInit(0.U.asTypeOf(new Tlb1InfoD()))
   io.tlb1 <> tlb1
 
-  val tlb2 = RegInit(0.U.asTypeOf(new Bundle {
-    val vpn2 = UInt(19.W)
-  }))
+  val tlb2 = RegInit(0.U.asTypeOf(new Bundle { val vpn2 = UInt(19.W) }))
   io.tlb2.vpn2 <> tlb2.vpn2
 
   when(io.dcache_is_idle && io.mem_en && !io.translation_ok) {
     when(io.tlb1_ok) {
-      tlb1.mod := true.B
+      tlb1.modify := true.B
     }.otherwise {
       tlb2.vpn2 := vpn(19, 1)
     }
@@ -87,6 +74,6 @@ class L1TLBD extends Module {
   }.elsewhen(io.dcache_is_save && !io.cpu_stall && !io.dcache_stall) {
     tlb1.invalid := false.B
     tlb1.refill  := false.B
-    tlb1.mod     := false.B
+    tlb1.modify  := false.B
   }
 }
