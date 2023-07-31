@@ -11,9 +11,7 @@ class ITLB extends Bundle {
   val valid    = Bool()
 }
 
-class DTLB extends ITLB {
-  val dirty = Bool()
-}
+
 
 class L1TLBI extends Module {
   val io = IO(new Bundle {
