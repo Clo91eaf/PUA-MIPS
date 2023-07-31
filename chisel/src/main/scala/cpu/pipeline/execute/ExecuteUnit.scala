@@ -46,7 +46,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.inst(1).mem_ren := io.executeStage.inst1.inst_info.fusel === FU_MEM &&
     io.executeStage.inst1.inst_info.reg_wen
   io.ctrl.inst(1).reg_waddr := io.executeStage.inst1.inst_info.reg_waddr
-  io.ctrl.branch_flag := io.ctrl.allow_to_go &&
+  io.ctrl.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
 
   io.cp0.in.mtc0_wdata := io.executeStage.inst0.src_info.src2_data

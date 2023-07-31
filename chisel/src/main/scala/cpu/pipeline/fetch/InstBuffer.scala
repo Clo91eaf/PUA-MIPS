@@ -2,6 +2,7 @@ package cpu.pipeline.fetch
 
 import chisel3._
 import chisel3.util._
+import cpu.CpuConfig
 
 class BufferUnit extends Bundle {
   val tlb = new Bundle {
@@ -13,9 +14,10 @@ class BufferUnit extends Bundle {
 }
 
 class InstBuffer(
-    ninst: Int = 2,
+    ninst: Int = 4,
     depth: Int = 16,
-) extends Module {
+)(implicit val config: CpuConfig)
+    extends Module {
   val io = IO(new Bundle {
     val fifo_rst                 = Input(Bool())
     val flush_delay_slot         = Input(Bool())
@@ -27,8 +29,8 @@ class InstBuffer(
     val master_is_branch         = Input(Bool())
     val master_is_in_delayslot_o = Output(Bool())
 
-    val read_en = Input(Vec(ninst, Bool()))
-    val read    = Output(Vec(ninst, new BufferUnit()))
+    val read_en = Input(Vec(config.decoderNum, Bool()))
+    val read    = Output(Vec(config.decoderNum, new BufferUnit()))
 
     val write_en = Input(Vec(ninst, Bool()))
     val write    = Input(Vec(ninst, new BufferUnit()))
@@ -125,6 +127,10 @@ class InstBuffer(
 
   when(io.fifo_rst) {
     enq_ptr := 0.U
+  }.elsewhen(io.write_en(0) && io.write_en(1) && io.write_en(2) && io.write_en(3)) {
+    enq_ptr := enq_ptr + 4.U
+  }.elsewhen(io.write_en(0) && io.write_en(1) && io.write_en(2)) {
+    enq_ptr := enq_ptr + 3.U
   }.elsewhen(io.write_en(0) && io.write_en(1)) {
     enq_ptr := enq_ptr + 2.U
   }.elsewhen(io.write_en(0)) {

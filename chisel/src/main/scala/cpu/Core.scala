@@ -65,18 +65,18 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
   instBuffer.i_stall          := io.inst.icache_stall
-  instBuffer.master_is_branch := decoderUnit.instBuffer.inst0_is_jb
+  instBuffer.master_is_branch := decoderUnit.instBuffer.jump_branch_inst
   instBuffer.delay_sel_rst := Mux(
-    ctrl.executeUnit.branch_flag,
+    ctrl.executeUnit.branch,
     !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(
-      ctrl.decoderUnit.branch_flag,
+      ctrl.decoderUnit.branch,
       !decoderUnit.instBuffer.inst(1).ready,
       0.U,
     ),
   )
-  instBuffer.D_delay_rst := ctrl.decoderUnit.branch_flag
-  instBuffer.E_delay_rst := ctrl.executeUnit.branch_flag
+  instBuffer.D_delay_rst := ctrl.decoderUnit.branch
+  instBuffer.E_delay_rst := ctrl.executeUnit.branch
   for (i <- 0 until config.decoderNum) {
     instBuffer.read_en(i)                           := decoderUnit.instBuffer.inst(i).ready
     decoderUnit.instBuffer.inst(i).valid            := true.B
@@ -85,15 +85,26 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en             := io.inst.inst_valid
+  instBuffer.write_en(0)          := io.inst.inst_valid(0)
+  instBuffer.write_en(1)          := io.inst.inst_valid(1)
+  instBuffer.write_en(2)          := io.inst.inst_valid(1) // TODO:改成2
+  instBuffer.write_en(3)          := io.inst.inst_valid(1) // TODO:改成3
   instBuffer.write(0).tlb.refill  := io.inst.tlb1.refill
   instBuffer.write(1).tlb.refill  := io.inst.tlb1.refill
+  instBuffer.write(2).tlb.refill  := io.inst.tlb1.refill
+  instBuffer.write(3).tlb.refill  := io.inst.tlb1.refill
   instBuffer.write(0).tlb.invalid := io.inst.tlb1.invalid
   instBuffer.write(1).tlb.invalid := io.inst.tlb1.invalid
+  instBuffer.write(2).tlb.invalid := io.inst.tlb1.invalid
+  instBuffer.write(3).tlb.invalid := io.inst.tlb1.invalid
   instBuffer.write(0).addr        := io.inst.addr(0)
   instBuffer.write(1).addr        := io.inst.addr(0) + 4.U
+  instBuffer.write(2).addr        := io.inst.addr(0) + 8.U
+  instBuffer.write(3).addr        := io.inst.addr(0) + 12.U
   instBuffer.write(0).data        := io.inst.inst(0)
   instBuffer.write(1).data        := io.inst.inst(1)
+  instBuffer.write(2).data        := 0.U                   // TODO:改成2
+  instBuffer.write(3).data        := 0.U                   // TODO:改成3
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty

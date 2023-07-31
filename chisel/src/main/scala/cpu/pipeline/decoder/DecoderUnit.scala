@@ -25,7 +25,7 @@ class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
     val almost_empty          = Bool()
   })
 
-  val inst0_is_jb = Output(Bool())
+  val jump_branch_inst = Output(Bool())
 }
 
 class DataForwardToDecoderUnit extends Bundle {
@@ -97,7 +97,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
 
   io.instBuffer.inst(0).ready := io.ctrl.allow_to_go
   io.instBuffer.inst(1).ready := issue.inst1.allow_to_go
-  io.instBuffer.inst0_is_jb   := inst0_is_jb
+  io.instBuffer.jump_branch_inst   := inst0_is_jb
 
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
   io.bpu.pc             := io.instBuffer.inst(0).bits.pc
@@ -107,7 +107,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.inst0.src1.raddr := decoder(0).io.out.reg1_raddr
   io.ctrl.inst0.src2.ren   := decoder(0).io.out.reg2_ren
   io.ctrl.inst0.src2.raddr := decoder(0).io.out.reg2_raddr
-  io.ctrl.branch_flag      := inst0_jb_flag
+  io.ctrl.branch      := inst0_jb_flag
 
   val pc          = io.instBuffer.inst.map(_.bits.pc)
   val inst        = io.instBuffer.inst.map(_.bits.inst)

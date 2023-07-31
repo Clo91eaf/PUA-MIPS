@@ -78,7 +78,7 @@ class DecoderUnitCtrl extends Bundle {
     val src1 = new SrcReadSignal()
     val src2 = new SrcReadSignal()
   })
-  val branch_flag = Output(Bool())
+  val branch = Output(Bool())
 
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
@@ -87,7 +87,7 @@ class DecoderUnitCtrl extends Bundle {
 class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
   val inst        = Output(Vec(config.fuNum, new MemRead()))
   val fu_stall    = Output(Bool())
-  val branch_flag = Output(Bool())
+  val branch = Output(Bool())
 
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
