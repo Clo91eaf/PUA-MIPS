@@ -101,7 +101,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
     decoderUnit.forward(i).exe      := executeUnit.decoderUnit.forward(i).exe
-    decoderUnit.forward(i).exe_rmem := executeUnit.decoderUnit.forward(i).exe_mem_ren
+    decoderUnit.forward(i).exe_rmem := executeUnit.decoderUnit.forward(i).exe_rmem
     decoderUnit.forward(i).mem      := memoryUnit.decoderUnit(i)
   }
   decoderUnit.cp0 <> cp0.decoderUnit

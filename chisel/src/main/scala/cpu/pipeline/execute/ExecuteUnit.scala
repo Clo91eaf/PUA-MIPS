@@ -27,8 +27,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
         Vec(
           config.fuNum,
           new Bundle {
-            val exe         = new RegWrite()
-            val exe_mem_ren = Bool()
+            val exe      = new RegWrite()
+            val exe_rmem = Bool()
           },
         ),
       )
@@ -151,13 +151,13 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.decoderUnit.forward(0).exe.wen   := io.memoryStage.inst0.inst_info.reg_wen
   io.decoderUnit.forward(0).exe.waddr := io.memoryStage.inst0.inst_info.reg_waddr
   io.decoderUnit.forward(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata // TODO:这里可能有问题,是否得使用fu的结果
-  io.decoderUnit.forward(0).exe_mem_ren := io.memoryStage.inst0.inst_info.fusel === FU_MEM &&
+  io.decoderUnit.forward(0).exe_rmem := io.memoryStage.inst0.inst_info.fusel === FU_MEM &&
     io.memoryStage.inst0.inst_info.reg_wen
 
   io.decoderUnit.forward(1).exe.wen   := io.memoryStage.inst1.inst_info.reg_wen
   io.decoderUnit.forward(1).exe.waddr := io.memoryStage.inst1.inst_info.reg_waddr
   io.decoderUnit.forward(1).exe.wdata := io.memoryStage.inst1.rd_info.wdata
-  io.decoderUnit.forward(1).exe_mem_ren := io.memoryStage.inst1.inst_info.fusel === FU_MEM &&
+  io.decoderUnit.forward(1).exe_rmem := io.memoryStage.inst1.inst_info.fusel === FU_MEM &&
     io.memoryStage.inst1.inst_info.reg_wen
 
 }
