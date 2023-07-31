@@ -160,13 +160,14 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         }.elsewhen(l1tlb.io.uncached) {
           state   := s_uncached
           ar.addr := l1tlb.io.pa
-          ar.len  := 0.U(bankWidth.W)
+          // * 4 inst per bank and 4 bank per set * //
+          ar.len  := 0.U(log2Ceil((nbank * bankWidth) / 4).W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
         }.elsewhen(!cache_hit) {
           state   := s_replace
           ar.addr := Cat(l1tlb.io.pa(31, 6), 0.U(6.W))
-          ar.len  := 15.U(bankWidth.W)
+          ar.len  := 15.U(log2Ceil((nbank * bankWidth) / 4).W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
