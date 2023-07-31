@@ -13,14 +13,14 @@ class BranchCtrl extends Module {
       val pred_branch = Input(Bool())
     }
     val out = new Bundle {
-      val branch_flag = Output(Bool())
-      val pred_fail   = Output(Bool())
+      val branch    = Output(Bool())
+      val pred_fail = Output(Bool())
     }
   })
   val src1 = io.in.src_info.src1_data
   val src2 = io.in.src_info.src2_data
-  io.out.pred_fail := io.in.pred_branch =/= io.out.branch_flag
-  io.out.branch_flag := MuxLookup(
+  io.out.pred_fail := io.in.pred_branch =/= io.out.branch
+  io.out.branch := MuxLookup(
     io.in.inst_info.op,
     false.B,
     Seq(

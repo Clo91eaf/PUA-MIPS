@@ -85,7 +85,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
 
   io.bpu.pc          := io.executeStage.inst0.pc
-  io.bpu.branch      := fu.branch.branch_flag
+  io.bpu.branch      := fu.branch.branch
   io.bpu.branch_inst := io.executeStage.inst0.jb_info.branch_inst
 
   io.fetchStage.branch := io.ctrl.allow_to_go &&
@@ -93,8 +93,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.fetchStage.target := MuxCase(
     io.executeStage.inst0.pc + 4.U, // 默认顺序运行吧
     Seq(
-      (fu.branch.pred_fail && fu.branch.branch_flag) -> io.executeStage.inst0.jb_info.branch_target,
-      (fu.branch.pred_fail && !fu.branch.branch_flag) -> Mux(
+      (fu.branch.pred_fail && fu.branch.branch) -> io.executeStage.inst0.jb_info.branch_target,
+      (fu.branch.pred_fail && !fu.branch.branch) -> Mux(
         io.decoderUnit.inst0_bd || io.executeStage.inst1.ex.bd,
         io.executeStage.inst0.pc + 8.U,
         io.executeStage.inst0.pc + 4.U,

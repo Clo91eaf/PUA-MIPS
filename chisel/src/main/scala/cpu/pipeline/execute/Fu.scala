@@ -32,7 +32,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
     val stall_req = Output(Bool())
     val branch = new Bundle {
       val pred_branch = Input(Bool())
-      val branch_flag = Output(Bool())
+      val branch      = Output(Bool())
       val pred_fail   = Output(Bool())
     }
   })
@@ -46,7 +46,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
   branchCtrl.in.inst_info   := io.inst(0).inst_info
   branchCtrl.in.src_info    := io.inst(0).src_info
   branchCtrl.in.pred_branch := io.branch.pred_branch
-  io.branch.branch_flag     := branchCtrl.out.branch_flag
+  io.branch.branch          := branchCtrl.out.branch
   io.branch.pred_fail       := branchCtrl.out.pred_fail
 
   for (i <- 0 until (config.fuNum)) {
