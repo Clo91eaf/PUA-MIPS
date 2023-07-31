@@ -49,7 +49,7 @@ class InstBuffer(
 
   // depth - 1 is the last element, depth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
-  io.full         := count >= (depth - 2).U
+  io.full         := count >= (depth - config.instFetchNum).U
   io.empty        := count === 0.U
   io.almost_empty := count === 1.U
 

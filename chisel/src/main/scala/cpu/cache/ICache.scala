@@ -32,7 +32,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // ======================================
   // |         offset           |
   // | bank index | bank offset |
-  // | 5        4 | 3         0 |
+  // | 5        4 | 3         2 |
   // ============================
 
   // * fsm * //
@@ -45,7 +45,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // | valid | tag |  bank 0 | bank 1  |  bank 2 | bank 3 |
   // | 1     | 20  |   128   |   128   |   128   |  128   |
   // =========================================================
-  // |                bank               |  
+  // |                bank               |
   // | inst 0 | inst 1 | inst 2 | inst 3 |
   // |   32   |   32   |   32   |   32   |
   // =====================================
@@ -95,13 +95,13 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val cache_hit           = tag_compare_valid.contains(true.B)
   val cache_hit_available = cache_hit && l1tlb.io.translation_ok && !l1tlb.io.uncached
 
-  val inst_valid = Wire(Vec(ninst, Bool()))
-  inst_valid(0) := cache_hit_available
-  (1 until ninst).foreach(i => inst_valid(i) := cache_hit_available && !io.cpu.addr(0)(log2Ceil(ninst) + 1))
+  val bank_offset = io.cpu.addr(0)(log2Ceil(ninst) + 1, 2)
+  val inst_valid  = Wire(Vec(ninst, Bool()))
+  (0 until ninst).foreach(i => inst_valid(i) := cache_hit_available && i.U <= (3.U - bank_offset))
 
   val sel = tag_compare_valid(1)
 
-  val inst = VecInit(Seq.tabulate(ninst)(i => Mux(!io.cpu.addr(0)(2), data(sel)(0), data(sel)(i))))
+  val inst = VecInit(Seq.tabulate(ninst)(i => Mux(i.U <= (3.U - bank_offset), data(sel)(i.U + bank_offset), 0.U)))
 
   val saved = RegInit(VecInit(Seq.fill(ninst)(0.U.asTypeOf(new Bundle {
     val inst  = UInt(32.W)
@@ -182,8 +182,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         }.elsewhen(!io.cpu.icache_stall) {
           lru(vset) := ~sel
           when(io.cpu.cpu_stall) {
-            state         := s_save
-            saved(1).inst := data(1)(0)
+            state := s_save
+            (1 until ninst).foreach(i => saved(i).inst := data(sel)(i))
             (0 until ninst).foreach(i => saved(i).valid := inst_valid(i))
           }
         }
@@ -220,7 +220,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }.elsewhen(io.axi.r.fire) {
         when(!io.axi.r.bits.last) {
           axi_cnt.inc()
-          (0 until ninst).foreach(i => data_wstrb(lru(vset))(i) := ~data_wstrb(lru(vset))(i))
+          (1 until ninst).foreach(i => data_wstrb(lru(vset))(i) := data_wstrb(lru(vset))(i - 1))
+          data_wstrb(lru(vset))(0) := data_wstrb(lru(vset))(ninst - 1)
         }.otherwise {
           rready                := false.B
           data_wstrb(lru(vset)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))
@@ -233,7 +234,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     is(s_save) {
       when(!io.cpu.cpu_stall && !io.cpu.icache_stall) {
         state := s_idle
-        (0 until ninst).foreach(i => inst_valid(i) := false.B)
+        (0 until ninst).foreach(i => saved(i).valid := false.B)
       }
     }
   }
