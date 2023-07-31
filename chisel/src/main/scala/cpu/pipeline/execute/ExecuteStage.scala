@@ -13,11 +13,11 @@ class IdExeInst0 extends Bundle {
   val ex        = new ExceptionInfo()
   val jb_info = new Bundle {
     // jump ctrl
-    val jump_regiser_conflict = Bool()
+    val jump_regiser = Bool()
     // bpu
-    val is_branch        = Bool()
-    val pred_branch_flag = Bool()
-    val branch_target    = UInt(PC_WID.W)
+    val branch_inst   = Bool()
+    val pred_branch   = Bool()
+    val branch_target = UInt(PC_WID.W)
   }
 }
 

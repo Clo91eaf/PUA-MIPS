@@ -146,7 +146,12 @@ class Cp0(implicit val config: CpuConfig) extends Module {
 
   // config1 register (16,1)
   val cp0_config1 = Wire(new Cp0Config1())
-  cp0_config1 := "h3e291480".U.asTypeOf(new Cp0Config1()) // for u-boot
+  cp0_config1    := 0.U.asTypeOf(new Cp0Config1())
+  cp0_config1.il := 5.U
+  cp0_config1.ia := 1.U
+  cp0_config1.dl := 5.U
+  cp0_config1.da := 1.U
+  cp0_config1.ms := (TLB_NUM - 1).U
 
   // taglo register (28,0)
   val cp0_taglo = RegInit(0.U(DATA_WID.W))
