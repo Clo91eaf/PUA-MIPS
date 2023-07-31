@@ -19,15 +19,15 @@ class InstBuffer(
 )(implicit val config: CpuConfig)
     extends Module {
   val io = IO(new Bundle {
-    val fifo_rst                 = Input(Bool())
-    val flush_delay_slot         = Input(Bool())
-    val delay_sel_rst            = Input(Bool())
-    val D_delay_rst              = Input(Bool())
-    val E_delay_rst              = Input(Bool())
-    val D_ena                    = Input(Bool())
-    val i_stall                  = Input(Bool())
-    val master_is_branch         = Input(Bool())
-    val master_is_in_delayslot_o = Output(Bool())
+    val fifo_rst              = Input(Bool())
+    val flush_delay_slot      = Input(Bool())
+    val delay_sel_rst         = Input(Bool())
+    val D_delay_rst           = Input(Bool())
+    val E_delay_rst           = Input(Bool())
+    val D_ena                 = Input(Bool())
+    val i_stall               = Input(Bool())
+    val jump_branch_inst      = Input(Bool()) // 译码阶段的inst0是否为跳转指令
+    val inst0_is_in_delayslot = Output(Bool())
 
     val read_en = Input(Vec(config.decoderNum, Bool()))
     val read    = Output(Vec(config.decoderNum, new BufferUnit()))
@@ -53,14 +53,14 @@ class InstBuffer(
   io.empty        := count === 0.U
   io.almost_empty := count === 1.U
 
-  val master_is_in_delayslot = RegInit(false.B)
-  io.master_is_in_delayslot_o := master_is_in_delayslot
-  master_is_in_delayslot := MuxCase(
+  val inst0_is_in_delayslot = RegInit(false.B)
+  io.inst0_is_in_delayslot := inst0_is_in_delayslot
+  inst0_is_in_delayslot := MuxCase(
     false.B,
     Seq(
       io.flush_delay_slot                     -> false.B,
-      !io.read_en(0)                          -> master_is_in_delayslot,
-      (io.master_is_branch && !io.read_en(1)) -> true.B,
+      !io.read_en(0)                          -> inst0_is_in_delayslot,
+      (io.jump_branch_inst && !io.read_en(1)) -> true.B,
     ),
   )
 

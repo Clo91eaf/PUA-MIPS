@@ -85,9 +85,9 @@ class DecoderUnitCtrl extends Bundle {
 }
 
 class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
-  val inst        = Output(Vec(config.fuNum, new MemRead()))
-  val fu_stall    = Output(Bool())
-  val branch = Output(Bool())
+  val inst     = Output(Vec(config.fuNum, new MemRead()))
+  val fu_stall = Output(Bool())
+  val branch   = Output(Bool())
 
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
@@ -116,7 +116,7 @@ class Tlb1InfoI extends Bundle {
 }
 
 class Tlb1InfoD extends Tlb1InfoI {
-  val modify  = Bool()
+  val modify = Bool()
 }
 
 class Tlb2Info extends Bundle {
@@ -159,15 +159,16 @@ class Cache_DCache extends Bundle {
   val stallM       = Output(Bool())
   val dstall       = Input(Bool())
   val E_mem_va     = Output(UInt(32.W))
-  val M_mem_va     = Output(UInt(32.W))
   val M_fence_addr = Output(UInt(32.W))
   val M_fence_d    = Output(Bool())
-  val M_mem_en     = Output(Bool())
-  val M_mem_write  = Output(Bool())
-  val M_wmask      = Output(UInt(4.W))
-  val M_mem_size   = Output(UInt(2.W))
-  val M_wdata      = Output(UInt(32.W))
-  val M_rdata      = Input(UInt(32.W))
+
+  // 连接 mem unit
+  val rdata = Input(UInt(32.W))
+  val en    = Output(Bool())
+  val wen   = Output(UInt(4.W))
+  val rlen  = Output(UInt(2.W))
+  val wdata = Output(UInt(32.W))
+  val addr  = Output(UInt(32.W))
 
   // * l1 tlb * //
   val tlb1 = Input(new Tlb1InfoD())

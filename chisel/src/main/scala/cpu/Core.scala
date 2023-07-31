@@ -67,14 +67,14 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
   instBuffer.i_stall          := io.inst.icache_stall
-  instBuffer.master_is_branch := decoderUnit.instBuffer.jump_branch_inst
+  instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch,
     !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(
       ctrl.decoderUnit.branch,
       !decoderUnit.instBuffer.inst(1).ready,
-      0.U,
+      false.B,
     ),
   )
   instBuffer.D_delay_rst := ctrl.decoderUnit.branch
@@ -110,7 +110,7 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty
-  decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.master_is_in_delayslot_o
+  decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.inst0_is_in_delayslot
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
     decoderUnit.forward(i).exe      := executeUnit.decoderUnit.forward(i).exe
@@ -152,13 +152,12 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
 
   memoryUnit.dataMemory.in.tlb <> io.data.tlb1
-  memoryUnit.dataMemory.in.rdata := io.data.M_rdata
-  io.data.M_mem_en               := memoryUnit.dataMemory.out.en
-  io.data.M_mem_write            := memoryUnit.dataMemory.out.wen.orR
-  io.data.M_mem_size             := memoryUnit.dataMemory.out.rlen
-  io.data.M_wmask                := memoryUnit.dataMemory.out.wen
-  io.data.M_wdata                := memoryUnit.dataMemory.out.wdata
-  io.data.M_mem_va               := memoryUnit.dataMemory.out.addr
+  memoryUnit.dataMemory.in.rdata := io.data.rdata
+  io.data.en                     := memoryUnit.dataMemory.out.en
+  io.data.rlen                   := memoryUnit.dataMemory.out.rlen
+  io.data.wen                    := memoryUnit.dataMemory.out.wen
+  io.data.wdata                  := memoryUnit.dataMemory.out.wdata
+  io.data.addr                   := memoryUnit.dataMemory.out.addr
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
