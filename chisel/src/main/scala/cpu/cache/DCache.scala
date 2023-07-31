@@ -15,7 +15,6 @@ class WriteBufferUnit extends Bundle {
   val size = UInt(2.W)
 }
 
-
 class DCache(cacheConfig: CacheConfig) extends Module {
   implicit val config      = cacheConfig
   val nway: Int            = cacheConfig.nway
@@ -35,14 +34,14 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   // * cpu io * //
   val stallM       = io.cpu.stallM
   val E_mem_va     = io.cpu.E_mem_va
-  val M_mem_va     = io.cpu.M_mem_va
+  val M_mem_va     = io.cpu.addr
   val M_fence_addr = io.cpu.M_fence_addr
   val M_fence_d    = io.cpu.M_fence_d
-  val M_mem_en     = io.cpu.M_mem_en
-  val M_mem_write  = io.cpu.M_mem_write
-  val M_wmask      = io.cpu.M_wmask
-  val M_mem_size   = io.cpu.M_mem_size
-  val M_wdata      = io.cpu.M_wdata
+  val M_mem_en     = io.cpu.en
+  val M_mem_write  = io.cpu.wen.orR
+  val M_wmask      = io.cpu.wen
+  val M_mem_size   = io.cpu.rlen
+  val M_wdata      = io.cpu.wdata
 
   val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
   val state                                                                           = RegInit(s_idle)
@@ -142,7 +141,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val last_wdata         = RegInit(0.U(32.W))
   val cache_data_forward = Wire(Vec(nway, UInt(32.W)))
 
-  io.cpu.M_rdata := Mux(state === s_save, saved_rdata, cache_data_forward(d_cache_sel))
+  io.cpu.rdata := Mux(state === s_save, saved_rdata, cache_data_forward(d_cache_sel))
 
   // bank tagv ram
   for { i <- 0 until nway } {

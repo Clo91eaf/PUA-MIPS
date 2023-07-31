@@ -45,10 +45,13 @@ class Core(implicit val config: CpuConfig) extends Module {
   fetchUnit.memory <> memoryUnit.fetchUnit
   fetchUnit.execute <> executeUnit.fetchStage
   fetchUnit.decoder <> decoderUnit.fetchUnit
-  fetchUnit.instBuffer.full   := instBuffer.full
-  fetchUnit.iCache.inst_valid := io.inst.inst_valid
-  io.inst.addr(0)             := fetchUnit.iCache.pc
-  io.inst.addr(1)             := fetchUnit.iCache.pc_next
+  fetchUnit.instBuffer.full      := instBuffer.full
+  fetchUnit.iCache.inst_valid(0) := io.inst.inst_valid(0)
+  fetchUnit.iCache.inst_valid(1) := io.inst.inst_valid(1)
+  fetchUnit.iCache.inst_valid(2) := false.B
+  fetchUnit.iCache.inst_valid(3) := false.B
+  io.inst.addr(0)                := fetchUnit.iCache.pc
+  io.inst.addr(1)                := fetchUnit.iCache.pc_next
 
   bpu.enaD                      := ctrl.decoderUnit.allow_to_go
   bpu.instrD                    := decoderUnit.bpu.decoded_inst0.inst
@@ -65,14 +68,14 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
   instBuffer.i_stall          := io.inst.icache_stall
-  instBuffer.master_is_branch := decoderUnit.instBuffer.jump_branch_inst
+  instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch,
     !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(
       ctrl.decoderUnit.branch,
       !decoderUnit.instBuffer.inst(1).ready,
-      0.U,
+      false.B,
     ),
   )
   instBuffer.D_delay_rst := ctrl.decoderUnit.branch
@@ -85,30 +88,26 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en(0)          := io.inst.inst_valid(0)
-  instBuffer.write_en(1)          := io.inst.inst_valid(1)
-  instBuffer.write_en(2)          := io.inst.inst_valid(1) // TODO:改成2
-  instBuffer.write_en(3)          := io.inst.inst_valid(1) // TODO:改成3
-  instBuffer.write(0).tlb.refill  := io.inst.tlb1.refill
-  instBuffer.write(1).tlb.refill  := io.inst.tlb1.refill
-  instBuffer.write(2).tlb.refill  := io.inst.tlb1.refill
-  instBuffer.write(3).tlb.refill  := io.inst.tlb1.refill
-  instBuffer.write(0).tlb.invalid := io.inst.tlb1.invalid
-  instBuffer.write(1).tlb.invalid := io.inst.tlb1.invalid
-  instBuffer.write(2).tlb.invalid := io.inst.tlb1.invalid
-  instBuffer.write(3).tlb.invalid := io.inst.tlb1.invalid
-  instBuffer.write(0).addr        := io.inst.addr(0)
-  instBuffer.write(1).addr        := io.inst.addr(0) + 4.U
-  instBuffer.write(2).addr        := io.inst.addr(0) + 8.U
-  instBuffer.write(3).addr        := io.inst.addr(0) + 12.U
-  instBuffer.write(0).data        := io.inst.inst(0)
-  instBuffer.write(1).data        := io.inst.inst(1)
-  instBuffer.write(2).data        := 0.U                   // TODO:改成2
-  instBuffer.write(3).data        := 0.U                   // TODO:改成3
+  instBuffer.write_en(0) := io.inst.inst_valid(0)
+  instBuffer.write_en(1) := io.inst.inst_valid(1)
+  instBuffer.write_en(2) := false.B // TODO:改成2
+  instBuffer.write_en(3) := false.B // TODO:改成3
+  for (i <- 0 until (config.instFetchNum)) {
+    instBuffer.write(i).tlb.refill  := io.inst.tlb1.refill
+    instBuffer.write(i).tlb.invalid := io.inst.tlb1.invalid
+  }
+  instBuffer.write(0).addr := io.inst.addr(0)
+  instBuffer.write(1).addr := io.inst.addr(0) + 4.U
+  instBuffer.write(2).addr := io.inst.addr(0) + 8.U
+  instBuffer.write(3).addr := io.inst.addr(0) + 12.U
+  instBuffer.write(0).data := io.inst.inst(0)
+  instBuffer.write(1).data := io.inst.inst(1)
+  instBuffer.write(2).data := 0.U // TODO:改成2
+  instBuffer.write(3).data := 0.U // TODO:改成3
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty
-  decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.master_is_in_delayslot_o
+  decoderUnit.instBuffer.info.inst0_is_in_delayslot := instBuffer.inst0_is_in_delayslot
   decoderUnit.regfile <> regfile.read
   for (i <- 0 until (config.fuNum)) {
     decoderUnit.forward(i).exe      := executeUnit.decoderUnit.forward(i).exe
@@ -150,13 +149,12 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
 
   memoryUnit.dataMemory.in.tlb <> io.data.tlb1
-  memoryUnit.dataMemory.in.rdata := io.data.M_rdata
-  io.data.M_mem_en               := memoryUnit.dataMemory.out.en
-  io.data.M_mem_write            := memoryUnit.dataMemory.out.wen.orR
-  io.data.M_mem_size             := memoryUnit.dataMemory.out.rlen
-  io.data.M_wmask                := memoryUnit.dataMemory.out.wen
-  io.data.M_wdata                := memoryUnit.dataMemory.out.wdata
-  io.data.M_mem_va               := memoryUnit.dataMemory.out.addr
+  memoryUnit.dataMemory.in.rdata := io.data.rdata
+  io.data.en                     := memoryUnit.dataMemory.out.en
+  io.data.rlen                   := memoryUnit.dataMemory.out.rlen
+  io.data.wen                    := memoryUnit.dataMemory.out.wen
+  io.data.wdata                  := memoryUnit.dataMemory.out.wdata
+  io.data.addr                   := memoryUnit.dataMemory.out.addr
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
