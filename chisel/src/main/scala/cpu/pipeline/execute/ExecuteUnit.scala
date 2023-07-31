@@ -18,7 +18,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       val branch      = Bool()
       val branch_inst = Bool()
     })
-    val fetchStage = Output(new Bundle {
+    val fetchUnit = Output(new Bundle {
       val branch = Bool()
       val target = UInt(PC_WID.W)
     })
@@ -88,9 +88,9 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.bpu.branch      := fu.branch.branch
   io.bpu.branch_inst := io.executeStage.inst0.jb_info.branch_inst
 
-  io.fetchStage.branch := io.ctrl.allow_to_go &&
+  io.fetchUnit.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
-  io.fetchStage.target := MuxCase(
+  io.fetchUnit.target := MuxCase(
     io.executeStage.inst0.pc + 4.U, // 默认顺序运行吧
     Seq(
       (fu.branch.pred_fail && fu.branch.branch) -> io.executeStage.inst0.jb_info.branch_target,

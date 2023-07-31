@@ -13,7 +13,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val nway: Int            = cacheConfig.nway
   val nset: Int            = cacheConfig.nset
   val nbank: Int           = cacheConfig.nbank
-  val ninst: Int           = 2
+  val ninst: Int           = 4
   val bankOffsetWidth: Int = cacheConfig.bankOffsetWidth
   val bankWidth: Int       = cacheConfig.bankWidth
   val bankWidthBits: Int   = cacheConfig.bankWidthBits
@@ -21,9 +21,10 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val indexWidth: Int      = cacheConfig.indexWidth
   val offsetWidth: Int     = cacheConfig.offsetWidth
   val io = IO(new Bundle {
-    val cpu = Flipped(new Cache_ICache())
+    val cpu = Flipped(new Cache_ICache(ninst))
     val axi = new ICache_AXIInterface()
   })
+  require(isPow2(ninst), "ninst must be power of 2")
   // * addr organization * //
   // ======================================
   // |        tag         |  index |offset|
@@ -31,7 +32,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // ======================================
   // |         offset           |
   // | bank index | bank offset |
-  // | 5        3 | 2         0 |
+  // | 5        4 | 3         0 |
   // ============================
 
   // * fsm * //
@@ -39,17 +40,16 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val state                                                            = RegInit(s_idle)
 
   // * nway * nset * //
-  // * 64 bit for 2 inst * //
+  // * 128 bit for 4 inst * //
   // =========================================================
-  // | valid | tag | data 0 | data 1 | ... | data 6 | data 7 |
-  // | 1     | 20  |   64   |   64   | ... |  64    |  64    |
+  // | valid | tag |  bank 0 | bank 1  |  bank 2 | bank 3 |
+  // | 1     | 20  |   128   |   128   |   128   |  128   |
   // =========================================================
-  // |       data      |
-  // | inst 0 | inst 1 |
-  // |   32   |   32   |
-  // ===================
-
-  val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(nway)(false.B)))))
+  // |                bank               |  
+  // | inst 0 | inst 1 | inst 2 | inst 3 |
+  // |   32   |   32   |   32   |   32   |
+  // =====================================
+  val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(ninst)(false.B)))))
 
   val data = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
   val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
@@ -81,7 +81,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   // * fence * //
   val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
   when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
-    valid(fence_index) := VecInit(Seq.fill(2)(false.B))
+    valid(fence_index) := VecInit(Seq.fill(ninst)(false.B))
   }
 
   // * replace set * //
@@ -95,15 +95,15 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val cache_hit           = tag_compare_valid.contains(true.B)
   val cache_hit_available = cache_hit && l1tlb.io.translation_ok && !l1tlb.io.uncached
 
-  val inst_valid = Wire(Vec(nway, Bool()))
+  val inst_valid = Wire(Vec(ninst, Bool()))
   inst_valid(0) := cache_hit_available
-  inst_valid(1) := cache_hit_available && !io.cpu.addr(0)(2)
+  (1 until ninst).foreach(i => inst_valid(i) := cache_hit_available && !io.cpu.addr(0)(log2Ceil(ninst) + 1))
 
   val sel = tag_compare_valid(1)
 
-  val inst = VecInit(Seq.tabulate(nway)(i => Mux(io.cpu.addr(0)(2), data(sel)(1), data(sel)(i))))
+  val inst = VecInit(Seq.tabulate(ninst)(i => Mux(!io.cpu.addr(0)(2), data(sel)(0), data(sel)(i))))
 
-  val saved = RegInit(VecInit(Seq.fill(nway)(0.U.asTypeOf(new Bundle {
+  val saved = RegInit(VecInit(Seq.fill(ninst)(0.U.asTypeOf(new Bundle {
     val inst  = UInt(32.W)
     val valid = Bool()
   }))))
@@ -118,10 +118,17 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     data(i)(j)    := bank.io.rdata
 
     bank.io.wen   := data_wstrb(i)(j).orR
-    bank.io.waddr := Cat(rset, axi_cnt.value(3, 1))
-    bank.io.wdata := Mux(j.U === axi_cnt.value(0), io.axi.r.bits.data, 0.U)
+    bank.io.waddr := Cat(rset, axi_cnt.value(3, log2Ceil(ninst)))
+    bank.io.wdata := Mux(j.U === axi_cnt.value(log2Ceil(ninst) - 1, 0), io.axi.r.bits.data, 0.U)
     bank.io.wstrb := data_wstrb(i)(j)
+  }
 
+  for { i <- 0 until ninst } {
+    io.cpu.inst_valid(i) := Mux(state === s_idle, inst_valid(i), saved(i).valid) && io.cpu.req
+    io.cpu.inst(i)       := Mux(state === s_idle, inst(i), saved(i).inst)
+  }
+
+  for { i <- 0 until nway } {
     val tag_bram = Module(new SimpleDualPortRam(nset, tagWidth, false))
     tag_bram.io.ren   := true.B
     tag_bram.io.raddr := tag_raddr
@@ -131,12 +138,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     tag_bram.io.waddr := rset
     tag_bram.io.wdata := tag_wdata
     tag_bram.io.wstrb := tag_wstrb(i)
-
-    io.cpu.inst_valid(i) := Mux(state === s_idle, inst_valid(i), saved(i).valid) && io.cpu.req
-    io.cpu.inst(i)       := Mux(state === s_idle, inst(i), saved(i).inst)
   }
 
-  // * io * //
   io.cpu.icache_stall := Mux(state === s_idle, (!cache_hit_available && io.cpu.req), state =/= s_save)
 
   val ar      = RegInit(0.U.asTypeOf(new AR()))
@@ -170,6 +173,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
           rset                     := vset
           data_wstrb(lru(vset))(0) := 0xf.U
           data_wstrb(lru(vset))(1) := 0x0.U
+          data_wstrb(lru(vset))(2) := 0x0.U
+          data_wstrb(lru(vset))(3) := 0x0.U
           tag_wstrb(lru(vset))     := true.B
           tag_wdata                := l1tlb.io.tag
           valid(vset)(lru(vset))   := true.B
@@ -177,10 +182,9 @@ class ICache(cacheConfig: CacheConfig) extends Module {
         }.elsewhen(!io.cpu.icache_stall) {
           lru(vset) := ~sel
           when(io.cpu.cpu_stall) {
-            state          := s_save
-            saved(1).inst  := data(1)(0)
-            saved(0).valid := inst_valid(0)
-            saved(1).valid := inst_valid(1)
+            state         := s_save
+            saved(1).inst := data(1)(0)
+            (0 until ninst).foreach(i => saved(i).valid := inst_valid(i))
           }
         }
       }
@@ -216,8 +220,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }.elsewhen(io.axi.r.fire) {
         when(!io.axi.r.bits.last) {
           axi_cnt.inc()
-          data_wstrb(lru(vset))(0) := ~data_wstrb(lru(vset))(0)
-          data_wstrb(lru(vset))(1) := ~data_wstrb(lru(vset))(1)
+          (0 until ninst).foreach(i => data_wstrb(lru(vset))(i) := ~data_wstrb(lru(vset))(i))
         }.otherwise {
           rready                := false.B
           data_wstrb(lru(vset)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))
@@ -229,9 +232,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
     }
     is(s_save) {
       when(!io.cpu.cpu_stall && !io.cpu.icache_stall) {
-        state          := s_idle
-        saved(0).valid := false.B
-        saved(1).valid := false.B
+        state := s_idle
+        (0 until ninst).foreach(i => inst_valid(i) := false.B)
       }
     }
   }

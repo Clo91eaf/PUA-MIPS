@@ -127,7 +127,7 @@ class Tlb2Info extends Bundle {
 
 // cpu to icache
 class Cache_ICache(
-    ninst: Int = 2,
+    ninst: Int = 4,
 ) extends Bundle {
   // read inst request from cpu
   val req  = Output(Bool())

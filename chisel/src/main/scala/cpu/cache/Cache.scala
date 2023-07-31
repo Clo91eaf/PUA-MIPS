@@ -11,7 +11,7 @@ class Cache extends Module {
     val axi  = new AXI()
   })
 
-  implicit val iCacheConfig = CacheConfig(nset = 64, bankWidth = 8)
+  implicit val iCacheConfig = CacheConfig(nset = 64, nbank = 4, bankWidth = 16)
   implicit val dCacheConfig = CacheConfig(nset = 128, bankWidth = 4)
 
   val icache        = Module(new ICache(iCacheConfig))

@@ -22,7 +22,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   })
 
   val ctrl           = Module(new Ctrl()).io
-  val fetchUnit      = Module(new FetchStage()).io
+  val fetchUnit      = Module(new FetchUnit()).io
   val bpu            = Module(new BPU()).io
   val instBuffer     = Module(new InstBuffer()).io
   val decoderUnit    = Module(new DecoderUnit()).io
@@ -43,12 +43,14 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.cacheCtrl.dCache_stall := io.data.dstall
 
   fetchUnit.memory <> memoryUnit.fetchUnit
-  fetchUnit.execute <> executeUnit.fetchStage
+  fetchUnit.execute <> executeUnit.fetchUnit
   fetchUnit.decoder <> decoderUnit.fetchUnit
   fetchUnit.instBuffer.full   := instBuffer.full
   fetchUnit.iCache.inst_valid := io.inst.inst_valid
   io.inst.addr(0)             := fetchUnit.iCache.pc
   io.inst.addr(1)             := fetchUnit.iCache.pc_next
+  io.inst.addr(2)             := fetchUnit.iCache.pc_next + 4.U
+  io.inst.addr(3)             := fetchUnit.iCache.pc_next + 8.U
 
   bpu.enaD                      := ctrl.decoderUnit.allow_to_go
   bpu.instrD                    := decoderUnit.bpu.decoded_inst0.inst
@@ -87,8 +89,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   }
   instBuffer.write_en(0)          := io.inst.inst_valid(0)
   instBuffer.write_en(1)          := io.inst.inst_valid(1)
-  instBuffer.write_en(2)          := io.inst.inst_valid(1) // TODO:改成2
-  instBuffer.write_en(3)          := io.inst.inst_valid(1) // TODO:改成3
+  instBuffer.write_en(2)          := io.inst.inst_valid(2)
+  instBuffer.write_en(3)          := io.inst.inst_valid(3)
   instBuffer.write(0).tlb.refill  := io.inst.tlb1.refill
   instBuffer.write(1).tlb.refill  := io.inst.tlb1.refill
   instBuffer.write(2).tlb.refill  := io.inst.tlb1.refill
@@ -103,8 +105,8 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.write(3).addr        := io.inst.addr(0) + 12.U
   instBuffer.write(0).data        := io.inst.inst(0)
   instBuffer.write(1).data        := io.inst.inst(1)
-  instBuffer.write(2).data        := 0.U                   // TODO:改成2
-  instBuffer.write(3).data        := 0.U                   // TODO:改成3
+  instBuffer.write(2).data        := io.inst.inst(2)
+  instBuffer.write(3).data        := io.inst.inst(3)
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty

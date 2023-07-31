@@ -3,7 +3,9 @@ package cpu.pipeline.fetch
 import chisel3._
 import chisel3.util._
 
-class FetchStage extends Module {
+class FetchUnit(
+    ninst: Int = 4,
+) extends Module {
   val io = IO(new Bundle {
     val memory = new Bundle {
       val flush    = Input(Bool())
@@ -21,7 +23,7 @@ class FetchStage extends Module {
       val full = Input(Bool())
     }
     val iCache = new Bundle {
-      val inst_valid = Input(Vec(2, Bool()))
+      val inst_valid = Input(Vec(ninst, Bool()))
       val pc         = Output(UInt(32.W))
       val pc_next    = Output(UInt(32.W))
     }
@@ -38,6 +40,8 @@ class FetchStage extends Module {
       io.execute.branch       -> io.execute.target,
       io.decoder.branch       -> io.decoder.target,
       io.instBuffer.full      -> pc,
+      io.iCache.inst_valid(3) -> (pc + 16.U),
+      io.iCache.inst_valid(2) -> (pc + 12.U),
       io.iCache.inst_valid(1) -> (pc + 8.U),
       io.iCache.inst_valid(0) -> (pc + 4.U),
     ),
