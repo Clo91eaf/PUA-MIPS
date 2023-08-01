@@ -169,20 +169,16 @@ class Cache_ICache(
 
   val tlb = new Tlb_ICache()
 
-  val fence = Output(new Bundle {
-    val value = Bool()
-    val addr  = UInt(32.W)
-  })
+  val fence = Output(Bool())
+  val fence_addr = Output(UInt(32.W))
 }
 
 // cpu to dcache
 class Cache_DCache extends Bundle {
-  val stallM       = Output(Bool())
-  val dstall       = Input(Bool())
-  val E_mem_va     = Output(UInt(32.W))
-  val M_fence_addr = Output(UInt(32.W))
-  val M_fence_d    = Output(Bool())
-
+  val cpu_stall       = Output(Bool())
+  val dcache_stall       = Input(Bool())
+  
+  val execute_addr     = Output(UInt(32.W))
   // 连接 mem unit
   val rdata = Input(UInt(32.W))
   val en    = Output(Bool())
@@ -190,8 +186,11 @@ class Cache_DCache extends Bundle {
   val rlen  = Output(UInt(2.W))
   val wdata = Output(UInt(32.W))
   val addr  = Output(UInt(32.W))
-
+  
   val tlb = new Tlb_DCache()
+  
+  val fence = Output(Bool())
+  val fence_addr = Output(UInt(32.W))
 }
 
 // axi

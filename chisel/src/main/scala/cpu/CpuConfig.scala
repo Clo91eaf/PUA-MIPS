@@ -6,4 +6,5 @@ case class CpuConfig(
     val fuNum: Int = 2,              // 功能单元数
     val hasMonitor: Boolean = false, // 是否有监控模块
     val instFetchNum: Int = 4,       // iCache取到的指令数量
+    val build: Boolean = false,      // 是否为build模式
 ) {}

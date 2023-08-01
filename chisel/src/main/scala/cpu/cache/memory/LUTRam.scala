@@ -1,8 +1,7 @@
-package cache.memoryBanks
+package cache.memory
 
 import chisel3._
 import chisel3.util._
-import cache.memip.LUTRamIP
 import cache.CacheConfig
 
 /** LUT ram for XPM, one port for read/write, one port for read
