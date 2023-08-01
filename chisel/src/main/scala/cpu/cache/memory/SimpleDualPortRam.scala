@@ -49,7 +49,6 @@ class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean)(
     )
     memory.io.clka := clock
     memory.io.clkb := clock
-    memory.io.rsta := reset
     memory.io.rstb := reset
 
     memory.io.addra := io.waddr

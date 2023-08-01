@@ -21,7 +21,7 @@ class SimpleDualPortRamIP(
     byteWriteWidth: Int = 8,
     numberOfLines: Int,
     waddridth: Int,
-    memoryPrimitive: String = "auto",
+    memoryPrimitive: String = "block",
 ) extends BlackBox(
       Map(
         "ADDR_WIDTH_A"       -> waddridth,
@@ -33,7 +33,6 @@ class SimpleDualPortRamIP(
         "READ_LATENCY_B"     -> 1,
         "MEMORY_SIZE"        -> numberOfLines * wdataidth,
         "MEMORY_PRIMITIVE"   -> memoryPrimitive,
-        "WRITE_MODE_A"       -> "write_first",
       ),
     ) {
   override def desiredName: String = "xpm_memory_sdpram"
@@ -54,7 +53,6 @@ class SimpleDualPortRamIP(
     // clock and reset
     val clka = Input(Clock())
     val clkb = Input(Clock())
-    val rsta = Input(Reset())
     val rstb = Input(Reset())
 
     val addra = Input(UInt(waddridth.W))
