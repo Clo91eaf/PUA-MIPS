@@ -128,11 +128,25 @@ class Tlb2Info extends Bundle {
 class Tlb_ICache extends Bundle {
   val icache_is_tlb_fill = Input(Bool())
   val icache_is_save     = Input(Bool())
+  val uncached           = Output(Bool())
+  
   val translation_ok     = Output(Bool())
   val hit                = Output(Bool())
   val tag                = Output(UInt(20.W))
   val pa                 = Output(UInt(32.W))
+}
+
+class Tlb_DCache extends Bundle {
+  val dcache_is_idle     = Input(Bool())
+  val dcahce_is_tlb_fill = Input(Bool())
+  val dcache_is_save     = Input(Bool())
   val uncached           = Output(Bool())
+  val tlb1_ok            = Output(Bool())
+
+  val translation_ok = Output(Bool())
+  val hit            = Output(Bool())
+  val tag            = Output(UInt(20.W))
+  val pa             = Output(UInt(32.W))
 }
 
 // cpu to icache
@@ -175,13 +189,7 @@ class Cache_DCache extends Bundle {
   val wdata = Output(UInt(32.W))
   val addr  = Output(UInt(32.W))
 
-  // * l1 tlb * //
-  val tlb1 = Input(new Tlb1InfoD())
-
-  // * l2 tlb * //
-  val tlb2 = new Tlb2Info()
-
-  val fence_tlb = Output(Bool())
+  val tlb = new Tlb_DCache()
 }
 
 // axi

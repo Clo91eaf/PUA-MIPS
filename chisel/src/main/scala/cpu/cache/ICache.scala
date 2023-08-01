@@ -87,12 +87,11 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === io.cpu.tlb.tag && valid(vset)(i)))
   val cache_hit           = tag_compare_valid.contains(true.B)
   val cache_hit_available = cache_hit && io.cpu.tlb.translation_ok && !io.cpu.tlb.uncached
+  val sel                 = tag_compare_valid(1)
 
   val bank_offset = io.cpu.addr(0)(log2Ceil(ninst) + 1, 2)
-  val inst = VecInit(Seq.tabulate(ninst)(i => Mux(i.U <= (3.U - bank_offset), data(sel)(i.U + bank_offset), 0.U)))
-  val inst_valid  = VecInit(Seq.tabulate(ninst)(i => cache_hit_available && i.U <= (3.U - bank_offset)))
-
-  val sel = tag_compare_valid(1)
+  val inst       = VecInit(Seq.tabulate(ninst)(i => Mux(i.U <= (3.U - bank_offset), data(sel)(i.U + bank_offset), 0.U)))
+  val inst_valid = VecInit(Seq.tabulate(ninst)(i => cache_hit_available && i.U <= (3.U - bank_offset)))
 
   val saved = RegInit(VecInit(Seq.fill(ninst)(0.U.asTypeOf(new Bundle {
     val inst  = UInt(32.W)

@@ -36,13 +36,21 @@ class Core(implicit val config: CpuConfig) extends Module {
   val writeBackStage = Module(new WriteBackStage()).io
   val writeBackUnit  = Module(new WriteBackUnit()).io
   val tlbL1I         = Module(new TlbL1I()).io
-  // val TlbL1D         = Module(new TlbL1D()).io
+  val tlbL1D         = Module(new TlbL1D()).io
 
   tlbL1I.addr         := fetchUnit.iCache.pc
   tlbL1I.fence        := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
   tlbL1I.cpu_stall    := !ctrl.fetchUnit.allow_to_go
   tlbL1I.icache_stall := io.inst.icache_stall
   tlbL1I.cache <> io.inst.tlb
+
+  tlbL1D.addr         := memoryUnit.dataMemory.out.addr
+  tlbL1D.fence        := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
+  tlbL1D.cpu_stall    := !ctrl.memoryUnit.allow_to_go
+  tlbL1D.dcache_stall := io.data.dstall
+  tlbL1D.mem_write    := memoryUnit.dataMemory.out.wen.orR
+  tlbL1D.mem_en       := memoryUnit.dataMemory.out.en
+  tlbL1D.cache <> io.data.tlb
 
   ctrl.decoderUnit <> decoderUnit.ctrl
   ctrl.executeUnit <> executeUnit.ctrl
@@ -145,12 +153,12 @@ class Core(implicit val config: CpuConfig) extends Module {
   cp0.ctrl.exe_stall := !ctrl.executeUnit.allow_to_go
   cp0.ctrl.mem_stall := !ctrl.memoryUnit.allow_to_go
   cp0.tlb(0).vpn2    := tlbL1I.tlb2.vpn2
-  cp0.tlb(1).vpn2    := io.data.tlb2.vpn2
+  cp0.tlb(1).vpn2    := tlbL1D.tlb2.vpn2
   cp0.ext_int        := io.ext_int
   tlbL1I.tlb2.found  := cp0.tlb(0).found
-  io.data.tlb2.found := cp0.tlb(1).found
+  tlbL1D.tlb2.found  := cp0.tlb(1).found
   tlbL1I.tlb2.entry  := cp0.tlb(0).info
-  io.data.tlb2.entry := cp0.tlb(1).info
+  tlbL1D.tlb2.entry  := cp0.tlb(1).info
 
   memoryStage.ctrl.allow_to_go := ctrl.memoryUnit.allow_to_go
   memoryStage.ctrl.clear(0)    := ctrl.memoryUnit.do_flush
@@ -160,7 +168,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   memoryUnit.cp0 <> cp0.memoryUnit
   memoryUnit.writeBackStage <> writeBackStage.memoryUnit
 
-  memoryUnit.dataMemory.in.tlb <> io.data.tlb1
+  memoryUnit.dataMemory.in.tlb <> tlbL1D.tlb1
   memoryUnit.dataMemory.in.rdata := io.data.rdata
   io.data.en                     := memoryUnit.dataMemory.out.en
   io.data.rlen                   := memoryUnit.dataMemory.out.rlen
@@ -185,7 +193,6 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.data.M_fence_d := memoryUnit.writeBackStage.inst0.inst_info
     .inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
   io.data.M_fence_addr := memoryUnit.writeBackStage.inst0.rd_info.wdata
-  io.data.fence_tlb    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
   io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
   io.inst.req          := !(reset.asBool || instBuffer.full)
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
