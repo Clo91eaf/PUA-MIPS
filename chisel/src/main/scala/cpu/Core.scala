@@ -52,6 +52,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   tlbL1D.mem_en       := memoryUnit.dataMemory.out.en
   tlbL1D.cache <> io.data.tlb
 
+  ctrl.instBuffer.has2insts := !(instBuffer.empty || instBuffer.almost_empty)
   ctrl.decoderUnit <> decoderUnit.ctrl
   ctrl.executeUnit <> executeUnit.ctrl
   ctrl.memoryUnit <> memoryUnit.ctrl
@@ -194,7 +195,7 @@ class Core(implicit val config: CpuConfig) extends Module {
     .inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
   io.data.M_fence_addr := memoryUnit.writeBackStage.inst0.rd_info.wdata
   io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
-  io.inst.req          := !(reset.asBool || instBuffer.full)
+  io.inst.req          := !instBuffer.full
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
   io.data.stallM       := !ctrl.memoryUnit.allow_to_go
 }

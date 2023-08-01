@@ -71,6 +71,8 @@ class FetchUnitCtrl extends Bundle {
 
 class InstBufferCtrl extends Bundle {
   val delay_slot_do_flush = Input(Bool())
+
+  val has2insts = Output(Bool())
 }
 
 class DecoderUnitCtrl extends Bundle {
