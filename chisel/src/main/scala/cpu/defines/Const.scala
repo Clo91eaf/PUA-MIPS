@@ -120,14 +120,14 @@ trait Constants {
   val FU_SEL_WID = log2Ceil(FU_SEL_NUM)
 
   val FU_NOP    = 0.U(FU_SEL_WID.W)
-  val FU_ALU    = 1.U(FU_SEL_WID.W) // 加、减、移位
-  val FU_MTC0   = 2.U(FU_SEL_WID.W)
-  val FU_MFC0   = 3.U(FU_SEL_WID.W)
+  val FU_ALU    = 1.U(FU_SEL_WID.W) // TODO:可能可以删除的用-表示,-
+  val FU_MTC0   = 2.U(FU_SEL_WID.W) // -
+  val FU_MFC0   = 3.U(FU_SEL_WID.W) // -
   val FU_MEM    = 4.U(FU_SEL_WID.W)
   val FU_BR     = 5.U(FU_SEL_WID.W)
-  val FU_TLB    = 6.U(FU_SEL_WID.W)
+  val FU_TLB    = 6.U(FU_SEL_WID.W) // -
   val FU_EX     = 7.U(FU_SEL_WID.W)
-  val FU_TRAP   = 8.U(FU_SEL_WID.W)
+  val FU_TRAP   = 8.U(FU_SEL_WID.W) // -
   val FU_MTHILO = 9.U(FU_SEL_WID.W)
   val FU_MFHILO = 10.U(FU_SEL_WID.W)
   val FU_MUL    = 11.U(FU_SEL_WID.W)
