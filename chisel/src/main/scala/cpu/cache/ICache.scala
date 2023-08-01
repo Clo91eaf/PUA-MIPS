@@ -72,8 +72,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   io.cpu.tlb.icache_is_save     := (state === s_save)
 
   // * fence * //
-  val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
-  when(io.cpu.fence.value && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
+  val fence_index = io.cpu.fence_addr(indexWidth + offsetWidth - 1, offsetWidth)
+  when(io.cpu.fence && !io.cpu.icache_stall && !io.cpu.cpu_stall) {
     valid(fence_index) := VecInit(Seq.fill(ninst)(false.B))
   }
 

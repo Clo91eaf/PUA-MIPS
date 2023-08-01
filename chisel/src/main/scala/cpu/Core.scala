@@ -47,7 +47,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   tlbL1D.addr         := memoryUnit.dataMemory.out.addr
   tlbL1D.fence        := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
   tlbL1D.cpu_stall    := !ctrl.memoryUnit.allow_to_go
-  tlbL1D.dcache_stall := io.data.dstall
+  tlbL1D.dcache_stall := io.data.dcache_stall
   tlbL1D.mem_write    := memoryUnit.dataMemory.out.wen.orR
   tlbL1D.mem_en       := memoryUnit.dataMemory.out.en
   tlbL1D.cache <> io.data.tlb
@@ -57,7 +57,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   ctrl.memoryUnit <> memoryUnit.ctrl
   ctrl.writeBackUnit <> writeBackUnit.ctrl
   ctrl.cacheCtrl.iCache_stall := io.inst.icache_stall
-  ctrl.cacheCtrl.dCache_stall := io.data.dstall
+  ctrl.cacheCtrl.dCache_stall := io.data.dcache_stall
 
   fetchUnit.memory <> memoryUnit.fetchUnit
   fetchUnit.execute <> executeUnit.fetchUnit
@@ -187,14 +187,14 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   io.debug <> writeBackUnit.debug
 
-  io.inst.fence.value := executeUnit.memoryStage.inst0.inst_info
+  io.inst.fence := executeUnit.memoryStage.inst0.inst_info
     .inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
-  io.inst.fence.addr := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.data.M_fence_d := memoryUnit.writeBackStage.inst0.inst_info
+  io.inst.fence_addr := executeUnit.memoryStage.inst0.rd_info.wdata
+  io.data.fence := memoryUnit.writeBackStage.inst0.inst_info
     .inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
-  io.data.M_fence_addr := memoryUnit.writeBackStage.inst0.rd_info.wdata
-  io.data.E_mem_va     := executeUnit.memoryStage.inst0.mem.addr
+  io.data.fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
+  io.data.execute_addr := executeUnit.memoryStage.inst0.mem.addr
   io.inst.req          := !(reset.asBool || instBuffer.full)
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
-  io.data.stallM       := !ctrl.memoryUnit.allow_to_go
+  io.data.cpu_stall       := !ctrl.memoryUnit.allow_to_go
 }
