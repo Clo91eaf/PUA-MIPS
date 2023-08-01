@@ -47,18 +47,9 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val state                                                                           = RegInit(s_idle)
 
   // * l1_tlb * //
-  val l1tlb = Module(new TlbL1D())
-  l1tlb.io.addr               := M_mem_va
-  l1tlb.io.mem_write          := M_mem_write
-  l1tlb.io.fence              := io.cpu.fence_tlb
-  l1tlb.io.dcahce_is_tlb_fill := state === s_tlb_fill
-  l1tlb.io.dcache_is_idle     := state === s_idle
-  l1tlb.io.dcache_is_save     := state === s_save
-  l1tlb.io.mem_en             := M_mem_en
-  l1tlb.io.cpu_stall          := stallM
-  l1tlb.io.dcache_stall       := io.cpu.dstall
-  l1tlb.io.tlb2 <> io.cpu.tlb2
-  l1tlb.io.tlb1 <> io.cpu.tlb1
+  io.cpu.tlb.dcahce_is_tlb_fill := state === s_tlb_fill
+  io.cpu.tlb.dcache_is_idle     := state === s_idle
+  io.cpu.tlb.dcache_is_save     := state === s_save
 
   // * valid dirty * //
   val valid = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
@@ -117,10 +108,10 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   val tag_compare_valid = Wire(Vec(nway, Bool()))
   val cache_hit         = tag_compare_valid.contains(true.B)
 
-  val mmio_read_stall  = l1tlb.io.uncached && !M_mem_write
-  val mmio_write_stall = l1tlb.io.uncached && M_mem_write && !write_buffer.io.enq.ready
-  val cached_stall     = !l1tlb.io.uncached && !cache_hit
-  val tlb_stall        = !l1tlb.io.translation_ok
+  val mmio_read_stall  = io.cpu.tlb.uncached && !M_mem_write
+  val mmio_write_stall = io.cpu.tlb.uncached && M_mem_write && !write_buffer.io.enq.ready
+  val cached_stall     = !io.cpu.tlb.uncached && !cache_hit
+  val tlb_stall        = !io.cpu.tlb.translation_ok
 
   // Note, when 2 > 2, we should mux one hot from tag_compare_valid
   val d_cache_sel = tag_compare_valid(1)
@@ -165,7 +156,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     tag_ram.io.waddr := bram_replace_addr(9, 4)
     tag_ram.io.wdata := tag_wdata
 
-    tag_compare_valid(i) := cache_tag(i) === l1tlb.io.tag && valid(pa_line_addr)(i) && l1tlb.io.translation_ok
+    tag_compare_valid(i) := cache_tag(i) === io.cpu.tlb.tag && valid(pa_line_addr)(i) && io.cpu.tlb.translation_ok
     cache_data_forward(i) := Mux(
       last_line_addr === M_mem_va(11, 2),
       ((last_wea(i) & last_wdata) | (cache_data(i) & (~last_wea(i)))),
@@ -173,7 +164,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
     )
 
     data_wstrb(i) := Mux(
-      tag_compare_valid(i) && M_mem_en && M_mem_write && !l1tlb.io.uncached && state === s_idle,
+      tag_compare_valid(i) && M_mem_en && M_mem_write && !io.cpu.tlb.uncached && state === s_idle,
       M_wmask,
       bram_replace_wea(i),
     )
@@ -240,20 +231,20 @@ class DCache(cacheConfig: CacheConfig) extends Module {
   switch(state) {
     is(s_idle) {
       when(M_mem_en) {
-        when(!l1tlb.io.translation_ok) {
-          when(l1tlb.io.tlb1_ok) {
+        when(!io.cpu.tlb.translation_ok) {
+          when(io.cpu.tlb.tlb1_ok) {
             state := s_save
           }.otherwise {
             state := s_tlb_fill
           }
-        }.elsewhen(l1tlb.io.uncached) {
+        }.elsewhen(io.cpu.tlb.uncached) {
           when(M_mem_write) {
             when(write_buffer.io.enq.ready && !current_mmio_write_saved) {
               write_buffer.io.enq.valid := true.B
               write_buffer.io.enq.bits.addr := Mux(
                 M_mem_size === 2.U,
-                Cat(l1tlb.io.pa(31, 2), 0.U(2.W)),
-                l1tlb.io.pa,
+                Cat(io.cpu.tlb.pa(31, 2), 0.U(2.W)),
+                io.cpu.tlb.pa,
               )
               write_buffer.io.enq.bits.size := M_mem_size
               write_buffer.io.enq.bits.strb := M_wmask
@@ -265,7 +256,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
               current_mmio_write_saved := false.B
             }
           }.elsewhen(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
-            ar.addr := Mux(M_mem_size === 2.U, Cat(l1tlb.io.pa(31, 2), 0.U(2.W)), l1tlb.io.pa)
+            ar.addr := Mux(M_mem_size === 2.U, Cat(io.cpu.tlb.pa(31, 2), 0.U(2.W)), io.cpu.tlb.pa)
             ar.len  := 0.U
             ar.size := Cat(0.U(1.W), M_mem_size)
             arvalid := true.B
@@ -318,7 +309,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(l1tlb.io.hit) {
+      when(io.cpu.tlb.hit) {
         state := s_idle
       }.otherwise {
         state := s_save
@@ -426,7 +417,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
           }
           // at here, cache line is writeable from axi read.
           when(!ar_handshake) {
-            ar.addr                             := Cat(l1tlb.io.pa(31, 6), 0.U(6.W))
+            ar.addr                             := Cat(io.cpu.tlb.pa(31, 6), 0.U(6.W))
             ar.len                              := 15.U
             ar.size                             := 2.U(3.W)
             arvalid                             := true.B
@@ -434,7 +425,7 @@ class DCache(cacheConfig: CacheConfig) extends Module {
             ar_handshake                        := true.B
             bram_replace_wea(lru(pa_line_addr)) := 15.U
             tag_wen(lru(pa_line_addr))          := true.B
-            tag_wdata                           := l1tlb.io.pa(31, 12)
+            tag_wdata                           := io.cpu.tlb.pa(31, 12)
           }
           when(io.axi.ar.fire) {
             tag_wen(lru(pa_line_addr)) := false.B

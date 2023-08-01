@@ -68,15 +68,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val lru = RegInit(VecInit(Seq.fill(nset * nbank)(false.B)))
 
   // * itlb * //
-  val l1tlb = Module(new TlbL1I())
-  l1tlb.io.addr := io.cpu.addr(0)
-  l1tlb.io.tlb1 <> io.cpu.tlb1
-  l1tlb.io.tlb2 <> io.cpu.tlb2
-  l1tlb.io.icache_is_tlb_fill := (state === s_tlb_fill)
-  l1tlb.io.icache_is_save     := (state === s_save)
-  l1tlb.io.fence              := io.cpu.fence.tlb
-  l1tlb.io.cpu_stall          := io.cpu.cpu_stall
-  l1tlb.io.icache_stall       := io.cpu.icache_stall
+  io.cpu.tlb.icache_is_tlb_fill := (state === s_tlb_fill)
+  io.cpu.tlb.icache_is_save     := (state === s_save)
 
   // * fence * //
   val fence_index = io.cpu.fence.addr(indexWidth + offsetWidth - 1, offsetWidth)
@@ -91,17 +84,14 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   val vset = io.cpu.addr(0)(indexWidth + offsetWidth - 1, offsetWidth)
 
   // * cache hit * //
-  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === l1tlb.io.tag && valid(vset)(i)))
+  val tag_compare_valid   = VecInit(Seq.tabulate(nway)(i => tag(i) === io.cpu.tlb.tag && valid(vset)(i)))
   val cache_hit           = tag_compare_valid.contains(true.B)
-  val cache_hit_available = cache_hit && l1tlb.io.translation_ok && !l1tlb.io.uncached
+  val cache_hit_available = cache_hit && io.cpu.tlb.translation_ok && !io.cpu.tlb.uncached
+  val sel                 = tag_compare_valid(1)
 
   val bank_offset = io.cpu.addr(0)(log2Ceil(ninst) + 1, 2)
-  val inst_valid  = Wire(Vec(ninst, Bool()))
-  (0 until ninst).foreach(i => inst_valid(i) := cache_hit_available && i.U <= (3.U - bank_offset))
-
-  val sel = tag_compare_valid(1)
-
-  val inst = VecInit(Seq.tabulate(ninst)(i => Mux(i.U <= (3.U - bank_offset), data(sel)(i.U + bank_offset), 0.U)))
+  val inst       = VecInit(Seq.tabulate(ninst)(i => Mux(i.U <= (3.U - bank_offset), data(sel)(i.U + bank_offset), 0.U)))
+  val inst_valid = VecInit(Seq.tabulate(ninst)(i => cache_hit_available && i.U <= (3.U - bank_offset)))
 
   val saved = RegInit(VecInit(Seq.fill(ninst)(0.U.asTypeOf(new Bundle {
     val inst  = UInt(32.W)
@@ -155,30 +145,28 @@ class ICache(cacheConfig: CacheConfig) extends Module {
   switch(state) {
     is(s_idle) {
       when(io.cpu.req) {
-        when(!l1tlb.io.translation_ok) {
+        when(!io.cpu.tlb.translation_ok) {
           state := s_tlb_fill
-        }.elsewhen(l1tlb.io.uncached) {
+        }.elsewhen(io.cpu.tlb.uncached) {
           state   := s_uncached
-          ar.addr := l1tlb.io.pa
+          ar.addr := io.cpu.tlb.pa
           // * 4 inst per bank and 4 bank per set * //
           ar.len  := 0.U(log2Ceil((nbank * bankWidth) / 4).W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
         }.elsewhen(!cache_hit) {
           state   := s_replace
-          ar.addr := Cat(l1tlb.io.pa(31, 6), 0.U(6.W))
+          ar.addr := Cat(io.cpu.tlb.pa(31, 6), 0.U(6.W))
           ar.len  := 15.U(log2Ceil((nbank * bankWidth) / 4).W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
           rset                     := vset
           data_wstrb(lru(vset))(0) := 0xf.U
-          data_wstrb(lru(vset))(1) := 0x0.U
-          data_wstrb(lru(vset))(2) := 0x0.U
-          data_wstrb(lru(vset))(3) := 0x0.U
-          tag_wstrb(lru(vset))     := true.B
-          tag_wdata                := l1tlb.io.tag
-          valid(vset)(lru(vset))   := true.B
+          (1 until ninst).foreach(i => data_wstrb(lru(vset))(i) := 0x0.U)
+          tag_wstrb(lru(vset))   := true.B
+          tag_wdata              := io.cpu.tlb.tag
+          valid(vset)(lru(vset)) := true.B
           axi_cnt.reset()
         }.elsewhen(!io.cpu.icache_stall) {
           lru(vset) := ~sel
@@ -191,7 +179,7 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }
     }
     is(s_tlb_fill) {
-      when(l1tlb.io.hit) {
+      when(io.cpu.tlb.hit) {
         state := s_idle
       }.otherwise {
         state          := s_save
@@ -221,8 +209,8 @@ class ICache(cacheConfig: CacheConfig) extends Module {
       }.elsewhen(io.axi.r.fire) {
         when(!io.axi.r.bits.last) {
           axi_cnt.inc()
-          (1 until ninst).foreach(i => data_wstrb(lru(vset))(i) := data_wstrb(lru(vset))(i - 1))
           data_wstrb(lru(vset))(0) := data_wstrb(lru(vset))(ninst - 1)
+          (1 until ninst).foreach(i => data_wstrb(lru(vset))(i) := data_wstrb(lru(vset))(i - 1))
         }.otherwise {
           rready                := false.B
           data_wstrb(lru(vset)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))

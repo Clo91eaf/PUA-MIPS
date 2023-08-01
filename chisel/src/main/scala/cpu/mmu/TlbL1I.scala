@@ -13,39 +13,33 @@ class ITLB extends Bundle {
 
 class TlbL1I extends Module {
   val io = IO(new Bundle {
-    val fence              = Input(Bool())
-    val cpu_stall          = Input(Bool())
-    val icache_stall       = Input(Bool())
-    val addr               = Input(UInt(32.W))
-    val icache_is_tlb_fill = Input(Bool())
-    val icache_is_save     = Input(Bool())
-    val uncached           = Output(Bool())
-    val tlb1               = Output(new Tlb1InfoI())
-    val tlb2               = Flipped(new Tlb2Info())
-    val translation_ok     = Output(Bool())
-    val hit                = Output(Bool())
-    val tag                = Output(UInt(20.W))
-    val pa                 = Output(UInt(32.W))
+    val addr         = Input(UInt(32.W))
+    val fence        = Input(Bool())
+    val cpu_stall    = Input(Bool())
+    val icache_stall = Input(Bool())
+    val cache        = new Tlb_ICache()
+    val tlb1         = Output(new Tlb1InfoI())
+    val tlb2         = Flipped(new Tlb2Info())
   })
   val itlb          = RegInit(0.U.asTypeOf(new ITLB()))
   val vpn           = io.addr(31, 12)
   val direct_mapped = io.addr(31, 30) === 2.U(2.W)
 
-  io.uncached       := Mux(direct_mapped, io.addr(29), itlb.uncached)
-  io.translation_ok := direct_mapped || (itlb.vpn === vpn && itlb.valid)
-  io.hit            := io.tlb2.found && io.tlb2.entry.v(vpn(0))
-  io.tag            := Mux(direct_mapped, Cat(0.U(3.W), io.addr(28, 12)), itlb.ppn)
-  io.pa             := Cat(io.tag, io.addr(11, 0))
-  
+  io.cache.uncached       := Mux(direct_mapped, io.addr(29), itlb.uncached)
+  io.cache.translation_ok := direct_mapped || (itlb.vpn === vpn && itlb.valid)
+  io.cache.hit            := io.tlb2.found && io.tlb2.entry.v(vpn(0))
+  io.cache.tag            := Mux(direct_mapped, Cat(0.U(3.W), io.addr(28, 12)), itlb.ppn)
+  io.cache.pa             := Cat(io.cache.tag, io.addr(11, 0))
+
   when(io.fence && !io.icache_stall && !io.cpu_stall) { itlb.valid := false.B }
-  
+
   // * tlb1 * //
   val tlb1 = RegInit(0.U.asTypeOf(new Tlb1InfoI()))
   tlb1 <> io.tlb1
 
-  io.tlb2.vpn2      := vpn(19, 1)
+  io.tlb2.vpn2 := vpn(19, 1)
 
-  when(io.icache_is_tlb_fill) {
+  when(io.cache.icache_is_tlb_fill) {
     when(io.tlb2.found) {
       when(io.tlb2.entry.v(vpn(0))) {
         itlb.vpn      := vpn
@@ -58,7 +52,7 @@ class TlbL1I extends Module {
     }.otherwise {
       tlb1.refill := true.B
     }
-  }.elsewhen(io.icache_is_save && !io.cpu_stall && !io.icache_stall) {
+  }.elsewhen(io.cache.icache_is_save && !io.cpu_stall && !io.icache_stall) {
     tlb1.invalid := false.B
     tlb1.refill  := false.B
   }
