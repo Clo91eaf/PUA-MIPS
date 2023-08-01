@@ -89,15 +89,15 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   jumpCtrl.in.pc            := io.instBuffer.inst(0).bits.pc
   jumpCtrl.in.reg1_data     := io.regfile(0).src1.rdata
 
-  val inst0_is_jb   = jumpCtrl.out.inst_is_jump || io.bpu.branch_inst
-  val inst0_jb_flag = jumpCtrl.out.jump_flag || io.bpu.pred_branch
+  val jump_branch_inst0 = jumpCtrl.out.jump_inst || io.bpu.branch_inst
+  val inst0_branch      = jumpCtrl.out.jump || io.bpu.pred_branch
 
-  io.fetchUnit.branch := inst0_jb_flag
+  io.fetchUnit.branch := inst0_branch
   io.fetchUnit.target := Mux(io.bpu.pred_branch, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
-  io.instBuffer.inst(0).ready := io.ctrl.allow_to_go
-  io.instBuffer.inst(1).ready := issue.inst1.allow_to_go
-  io.instBuffer.jump_branch_inst   := inst0_is_jb
+  io.instBuffer.inst(0).ready    := io.ctrl.allow_to_go
+  io.instBuffer.inst(1).ready    := issue.inst1.allow_to_go
+  io.instBuffer.jump_branch_inst := jump_branch_inst0
 
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
   io.bpu.pc             := io.instBuffer.inst(0).bits.pc
@@ -107,7 +107,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.inst0.src1.raddr := decoder(0).io.out.reg1_raddr
   io.ctrl.inst0.src2.ren   := decoder(0).io.out.reg2_ren
   io.ctrl.inst0.src2.raddr := decoder(0).io.out.reg2_raddr
-  io.ctrl.branch      := inst0_jb_flag
+  io.ctrl.branch           := inst0_branch
 
   val pc          = io.instBuffer.inst.map(_.bits.pc)
   val inst        = io.instBuffer.inst.map(_.bits.inst)
