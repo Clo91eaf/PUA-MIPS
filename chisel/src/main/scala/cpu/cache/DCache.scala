@@ -14,22 +14,18 @@ class WriteBufferUnit extends Bundle {
   val size = UInt(2.W)
 }
 
-class DCache(
-    cacheConfig: CacheConfig,
-    writeBufferDepth: Int = 16,
-)(implicit cpuConfig: CpuConfig)
-    extends Module {
-  implicit val config      = cacheConfig
-  val nway: Int            = cacheConfig.nway
-  val nset: Int            = cacheConfig.nset
-  val nbank: Int           = cacheConfig.nbank
-  val ninst: Int           = 2
-  val bankOffsetWidth: Int = cacheConfig.bankOffsetWidth
-  val bankWidth: Int       = cacheConfig.bankWidth
-  val bankWidthBits: Int   = cacheConfig.bankWidthBits
-  val tagWidth: Int        = cacheConfig.tagWidth
-  val indexWidth: Int      = cacheConfig.indexWidth
-  val offsetWidth: Int     = cacheConfig.offsetWidth
+class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Module {
+  val nway: Int             = cacheConfig.nway
+  val nset: Int             = cacheConfig.nset
+  val nbank: Int            = cacheConfig.nbank
+  val ninst: Int            = 2
+  val bankOffsetWidth: Int  = cacheConfig.bankOffsetWidth
+  val bankWidth: Int        = cacheConfig.bankWidth
+  val bankWidthBits: Int    = cacheConfig.bankWidthBits
+  val tagWidth: Int         = cacheConfig.tagWidth
+  val indexWidth: Int       = cacheConfig.indexWidth
+  val offsetWidth: Int      = cacheConfig.offsetWidth
+  val writeBufferDepth: Int = 16
 
   val io = IO(new Bundle {
     val cpu = Flipped(new Cache_DCache())
