@@ -24,13 +24,13 @@ class Cp0MemoryUnit(implicit val config: CpuConfig) extends Bundle {
   })
 }
 
-class Cp0ExecuteUnit extends Bundle {
+class Cp0ExecuteUnit(implicit val config: CpuConfig) extends Bundle {
   val in = Input(new Bundle {
-    val inst_info  = new InstInfo()
+    val inst_info  = Vec(config.fuNum, new InstInfo())
     val mtc0_wdata = UInt(DATA_WID.W)
   })
   val out = Output(new Bundle {
-    val cp0_rdata = UInt(DATA_WID.W)
+    val cp0_rdata = Vec(config.fuNum, UInt(DATA_WID.W))
     val debug     = Output(new Cp0Info())
   })
 }
@@ -59,10 +59,10 @@ class Cp0(implicit val config: CpuConfig) extends Module {
   val ex_sel     = io.memoryUnit.in.inst(0).ex.flush_req || !io.memoryUnit.in.inst(1).ex.flush_req
   val pc         = Mux(ex_sel, io.memoryUnit.in.inst(0).pc, io.memoryUnit.in.inst(1).pc)
   val ex         = Mux(ex_sel, io.memoryUnit.in.inst(0).ex, io.memoryUnit.in.inst(1).ex)
-  val mtc0_wen   = io.executeUnit.in.inst_info.op === EXE_MTC0
+  val mtc0_wen   = io.executeUnit.in.inst_info(0).op === EXE_MTC0
   val mtc0_wdata = io.executeUnit.in.mtc0_wdata
-  val mtc0_addr  = io.executeUnit.in.inst_info.cp0_addr
-  val exe_op     = io.executeUnit.in.inst_info.op
+  val mtc0_addr  = io.executeUnit.in.inst_info(0).cp0_addr
+  val exe_op     = io.executeUnit.in.inst_info(0).op
   val exe_stall  = io.ctrl.exe_stall
   val mem_stall  = io.ctrl.mem_stall
 
@@ -390,34 +390,35 @@ class Cp0(implicit val config: CpuConfig) extends Module {
     }
   }
 
-  io.executeUnit.out.cp0_rdata := MuxLookup(
-    io.executeUnit.in.inst_info.cp0_addr,
-    0.U,
-    Seq(
-      CP0_INDEX_ADDR     -> cp0_index.asUInt(),
-      CP0_RANDOM_ADDR    -> cp0_random.asUInt(),
-      CP0_ENTRYLO0_ADDR  -> cp0_entrylo0.asUInt(),
-      CP0_ENTRYLO1_ADDR  -> cp0_entrylo1.asUInt(),
-      CP0_CONTEXT_ADDR   -> cp0_context.asUInt(),
-      CP0_PAGE_MASK_ADDR -> cp0_pagemask,
-      CP0_WIRED_ADDR     -> cp0_wired.asUInt(),
-      CP0_BADV_ADDR      -> cp0_badvaddr.asUInt(),
-      CP0_COUNT_ADDR     -> cp0_count.asUInt(),
-      CP0_ENTRYHI_ADDR   -> cp0_entryhi.asUInt(),
-      CP0_COMPARE_ADDR   -> cp0_compare.asUInt(),
-      CP0_STATUS_ADDR    -> cp0_status.asUInt(),
-      CP0_CAUSE_ADDR     -> cp0_cause.asUInt(),
-      CP0_EPC_ADDR       -> cp0_epc.asUInt(),
-      CP0_PRID_ADDR      -> prid,
-      CP0_EBASE_ADDR     -> cp0_ebase.asUInt(),
-      CP0_CONFIG_ADDR    -> cp0_config.asUInt(),
-      CP0_CONFIG1_ADDR   -> cp0_config1.asUInt(),
-      CP0_TAGLO_ADDR     -> cp0_taglo,
-      CP0_TAGHI_ADDR     -> cp0_taghi,
-      CP0_ERROR_EPC_ADDR -> cp0_error_epc.asUInt(),
-    ),
-  )
-
+  for (i <- 0 until config.fuNum) {
+    io.executeUnit.out.cp0_rdata(i) := MuxLookup(
+      io.executeUnit.in.inst_info(i).cp0_addr,
+      0.U,
+      Seq(
+        CP0_INDEX_ADDR     -> cp0_index.asUInt(),
+        CP0_RANDOM_ADDR    -> cp0_random.asUInt(),
+        CP0_ENTRYLO0_ADDR  -> cp0_entrylo0.asUInt(),
+        CP0_ENTRYLO1_ADDR  -> cp0_entrylo1.asUInt(),
+        CP0_CONTEXT_ADDR   -> cp0_context.asUInt(),
+        CP0_PAGE_MASK_ADDR -> cp0_pagemask,
+        CP0_WIRED_ADDR     -> cp0_wired.asUInt(),
+        CP0_BADV_ADDR      -> cp0_badvaddr.asUInt(),
+        CP0_COUNT_ADDR     -> cp0_count.asUInt(),
+        CP0_ENTRYHI_ADDR   -> cp0_entryhi.asUInt(),
+        CP0_COMPARE_ADDR   -> cp0_compare.asUInt(),
+        CP0_STATUS_ADDR    -> cp0_status.asUInt(),
+        CP0_CAUSE_ADDR     -> cp0_cause.asUInt(),
+        CP0_EPC_ADDR       -> cp0_epc.asUInt(),
+        CP0_PRID_ADDR      -> prid,
+        CP0_EBASE_ADDR     -> cp0_ebase.asUInt(),
+        CP0_CONFIG_ADDR    -> cp0_config.asUInt(),
+        CP0_CONFIG1_ADDR   -> cp0_config1.asUInt(),
+        CP0_TAGLO_ADDR     -> cp0_taglo,
+        CP0_TAGHI_ADDR     -> cp0_taghi,
+        CP0_ERROR_EPC_ADDR -> cp0_error_epc.asUInt(),
+      ),
+    )
+  }
   io.decoderUnit.cause_ip  := cp0_cause.ip
   io.decoderUnit.status_im := cp0_status.im
   io.decoderUnit.kernel_mode := (cp0_status.exl && !(ex.eret && cp0_status.erl)) ||

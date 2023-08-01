@@ -46,7 +46,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
   val raw_hilo = VecInit(FU_DIV, FU_MUL, FU_MTHILO).contains(inst0.fusel) &&
     VecInit(FU_DIV, FU_MUL, FU_MFHILO).contains(inst1.fusel)
   val raw_cp0 =
-    inst0.fusel === FU_MTC0 && inst1.fusel === FU_MFC0 // && inst0.cp0_addr === inst1.cp0_addr
+    inst0.fusel === FU_MTC0 && inst1.fusel === FU_MFC0 && inst0.cp0_addr === inst1.cp0_addr
   val data_conflict = raw_reg || raw_hilo || raw_cp0 || load_stall
 
   // 指令1是否在延迟槽中

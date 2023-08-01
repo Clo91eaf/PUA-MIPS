@@ -50,11 +50,12 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
 
   io.cp0.in.mtc0_wdata := io.executeStage.inst0.src_info.src2_data
-  io.cp0.in.inst_info := Mux(
+  io.cp0.in.inst_info(0) := Mux(
     !io.executeStage.inst0.ex.flush_req,
     io.executeStage.inst0.inst_info,
     0.U.asTypeOf(new InstInfo()),
   )
+  io.cp0.in.inst_info(1) := io.executeStage.inst1.inst_info
 
   // input accessMemCtrl
   accessMemCtrl.inst(0).inst_info := io.executeStage.inst0.inst_info
