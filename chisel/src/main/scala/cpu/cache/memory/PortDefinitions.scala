@@ -1,4 +1,4 @@
-package cache.memoryBanks.metaBanks
+package cache.memory
 
 import chisel3._
 import chisel3.util._

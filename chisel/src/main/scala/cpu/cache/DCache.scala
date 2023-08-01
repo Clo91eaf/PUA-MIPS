@@ -3,10 +3,9 @@ package cache
 
 import chisel3._
 import chisel3.util._
-import memoryBanks.metaBanks._
-import memoryBanks.SimpleDualPortRam
+import memory._
 import cpu.defines._
-import cpu.mmu._
+import cpu.CpuConfig
 
 class WriteBufferUnit extends Bundle {
   val data = UInt(32.W)
@@ -18,7 +17,8 @@ class WriteBufferUnit extends Bundle {
 class DCache(
     cacheConfig: CacheConfig,
     writeBufferDepth: Int = 16,
-) extends Module {
+)(implicit cpuConfig: CpuConfig)
+    extends Module {
   implicit val config      = cacheConfig
   val nway: Int            = cacheConfig.nway
   val nset: Int            = cacheConfig.nset

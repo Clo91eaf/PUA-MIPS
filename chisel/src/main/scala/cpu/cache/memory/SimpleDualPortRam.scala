@@ -1,9 +1,9 @@
-package cache.memoryBanks
+package cache.memory
 
 import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
-import cache.memip.SDPRamIP
+import cpu.CpuConfig
 import firrtl.options.TargetDirAnnotation
 
 /** simple dual port ram, with a port for reading and a port for writing
@@ -17,7 +17,9 @@ import firrtl.options.TargetDirAnnotation
   * @param cpuCfg
   *   the implicit configuration for simulation and elaboration
   */
-class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean) extends Module {
+class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean)(
+  implicit val cpuConfig: CpuConfig
+) extends Module {
   require(isPow2(depth))
   require(
     width % 8 == 0 || !byteAddressable,
@@ -36,9 +38,9 @@ class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean) extend
     val wdata = Input(UInt(width.W))
   })
 
-  if (false) {
+  if (cpuConfig.build) {
     val memory = Module(
-      new SDPRamIP(
+      new SimpleDualPortRamIP(
         wdataidth = width,
         byteWriteWidth = if (byteAddressable) 8 else width,
         numberOfLines = depth,
@@ -88,14 +90,4 @@ class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean) extend
       }
     }
   }
-}
-
-object SimpleDualPortRamEla extends App {
-  (new ChiselStage).execute(
-    Array(),
-    Seq(
-      ChiselGeneratorAnnotation(() => new SimpleDualPortRam(32, 32, false)),
-      TargetDirAnnotation("generation"),
-    ),
-  )
 }
