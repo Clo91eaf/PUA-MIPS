@@ -28,7 +28,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
         val result = Output(UInt(DATA_WID.W))
       },
     )
-    val cp0_rdata = Input(UInt(DATA_WID.W))
+    val cp0_rdata = Input(Vec(config.fuNum, UInt(DATA_WID.W)))
     val stall_req = Output(Bool())
     val branch = new Bundle {
       val pred_branch = Input(Bool())
@@ -67,8 +67,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
       ),
     )
   }
-  alu(0).io.cp0_rdata := io.cp0_rdata
-  alu(1).io.cp0_rdata := 0.U
+  alu(0).io.cp0_rdata := io.cp0_rdata(0)
+  alu(1).io.cp0_rdata := io.cp0_rdata(1)
 
   mul.src1   := Mux(io.inst(0).mul_en, io.inst(0).src_info.src1_data, io.inst(1).src_info.src1_data)
   mul.src2   := Mux(io.inst(0).mul_en, io.inst(0).src_info.src2_data, io.inst(1).src_info.src2_data)
@@ -94,4 +94,9 @@ class Fu(implicit val config: CpuConfig) extends Module {
   hilo.wen := ((io.inst(0).hilo_wen && !io.inst.map(_.ex.out.flush_req).reduce(_ || _)) ||
     (io.inst(1).hilo_wen && !io.inst(1).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
+  when(io.inst(0).inst_info.op === EXE_MTHI && io.inst(1).inst_info.op === EXE_MTLO) {
+    hilo.wdata := Cat(alu(0).io.hilo.wdata(63, 32), alu(1).io.hilo.wdata(31, 0))
+  }.elsewhen(io.inst(0).inst_info.op === EXE_MTLO && io.inst(1).inst_info.op === EXE_MTHI) {
+    hilo.wdata := Cat(alu(1).io.hilo.wdata(63, 32), alu(0).io.hilo.wdata(31, 0))
+  }
 }
