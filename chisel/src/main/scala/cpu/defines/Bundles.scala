@@ -125,6 +125,16 @@ class Tlb2Info extends Bundle {
   val entry = Output(new TlbEntry())
 }
 
+class Tlb_ICache extends Bundle {
+  val icache_is_tlb_fill = Input(Bool())
+  val icache_is_save     = Input(Bool())
+  val translation_ok     = Output(Bool())
+  val hit                = Output(Bool())
+  val tag                = Output(UInt(20.W))
+  val pa                 = Output(UInt(32.W))
+  val uncached           = Output(Bool())
+}
+
 // cpu to icache
 class Cache_ICache(
     ninst: Int = 4,
@@ -141,16 +151,11 @@ class Cache_ICache(
   val cpu_stall    = Output(Bool())
   val icache_stall = Input(Bool())
 
-  // l1 tlb
-  val tlb1 = Input(new Tlb1InfoI())
-
-  // l2 tlb
-  val tlb2 = new Tlb2Info()
+  val tlb = new Tlb_ICache()
 
   val fence = Output(new Bundle {
     val value = Bool()
     val addr  = UInt(32.W)
-    val tlb   = Bool()
   })
 }
 
