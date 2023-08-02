@@ -25,30 +25,48 @@ class WriteBackUnit(implicit val config: CpuConfig) extends Module {
   io.regfile(1).waddr := io.writeBackStage.inst1.inst_info.reg_waddr
   io.regfile(1).wdata := io.writeBackStage.inst1.rd_info.wdata
 
-  io.debug.wb_pc := Mux(
-    clock.asBool,
-    io.writeBackStage.inst0.pc,
-    Mux(io.writeBackStage.inst0.ex.flush_req, 0.U, io.writeBackStage.inst1.pc),
-  )
-  io.debug.wb_rf_wen := Mux(
-    reset.asBool,
-    0.U,
-    Mux(
+  if (config.hasCommitBuffer) {
+    val buffer = Module(new CommitBuffer()).io
+    buffer.enq(0).wb_pc       := io.writeBackStage.inst0.pc
+    buffer.enq(0).wb_rf_wen   := io.regfile(0).wen
+    buffer.enq(0).wb_rf_wnum  := io.regfile(0).waddr
+    buffer.enq(0).wb_rf_wdata := io.regfile(0).wdata
+    buffer.enq(1).wb_pc       := io.writeBackStage.inst1.pc
+    buffer.enq(1).wb_rf_wen   := io.regfile(1).wen
+    buffer.enq(1).wb_rf_wnum  := io.regfile(1).waddr
+    buffer.enq(1).wb_rf_wdata := io.regfile(1).wdata
+    buffer.flush              := io.ctrl.do_flush
+
+    io.debug.wb_pc       := buffer.deq.wb_pc
+    io.debug.wb_rf_wen   := buffer.deq.wb_rf_wen
+    io.debug.wb_rf_wnum  := buffer.deq.wb_rf_wnum
+    io.debug.wb_rf_wdata := buffer.deq.wb_rf_wdata
+  } else {
+    io.debug.wb_pc := Mux(
       clock.asBool,
-      Fill(4, io.regfile(0).wen),
-      Fill(4, io.regfile(1).wen),
-    ),
-  )
-  io.debug.wb_rf_wnum := Mux(
-    clock.asBool,
-    io.regfile(0).waddr,
-    io.regfile(1).waddr,
-  )
-  io.debug.wb_rf_wdata := Mux(
-    clock.asBool,
-    io.regfile(0).wdata,
-    io.regfile(1).wdata,
-  )
+      io.writeBackStage.inst0.pc,
+      Mux(io.writeBackStage.inst0.ex.flush_req, 0.U, io.writeBackStage.inst1.pc),
+    )
+    io.debug.wb_rf_wen := Mux(
+      reset.asBool,
+      0.U,
+      Mux(
+        clock.asBool,
+        Fill(4, io.regfile(0).wen),
+        Fill(4, io.regfile(1).wen),
+      ),
+    )
+    io.debug.wb_rf_wnum := Mux(
+      clock.asBool,
+      io.regfile(0).waddr,
+      io.regfile(1).waddr,
+    )
+    io.debug.wb_rf_wdata := Mux(
+      clock.asBool,
+      io.regfile(0).wdata,
+      io.regfile(1).wdata,
+    )
+  }
   io.debug.cp0_cause  := io.writeBackStage.inst0.cp0.cp0_cause
   io.debug.cp0_count  := io.writeBackStage.inst0.cp0.cp0_count
   io.debug.cp0_random := io.writeBackStage.inst0.cp0.cp0_random
