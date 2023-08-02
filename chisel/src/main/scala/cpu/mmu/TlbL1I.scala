@@ -39,7 +39,7 @@ class TlbL1I extends Module {
 
   io.tlb2.vpn2 := vpn(19, 1)
 
-  when(io.cache.icache_is_tlb_fill) {
+  when(io.cache.fill) {
     when(io.tlb2.found) {
       when(io.tlb2.entry.v(vpn(0))) {
         itlb.vpn      := vpn
