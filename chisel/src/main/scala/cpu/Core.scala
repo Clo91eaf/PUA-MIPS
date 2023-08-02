@@ -24,7 +24,7 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   val ctrl           = Module(new Ctrl()).io
   val fetchUnit      = Module(new FetchUnit()).io
-  val bpu            = Module(new Bpu()).io
+  val bpu            = Module(new BranchPredictorUnit()).io
   val instBuffer     = Module(new InstBuffer()).io
   val decoderUnit    = Module(new DecoderUnit()).io
   val regfile        = Module(new ARegFile()).io
@@ -70,33 +70,29 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.inst.addr(2)             := fetchUnit.iCache.pc_next + 4.U
   io.inst.addr(3)             := fetchUnit.iCache.pc_next + 8.U
 
-  bpu.enaD                      := ctrl.decoderUnit.allow_to_go
-  bpu.instrD                    := decoderUnit.bpu.decoded_inst0.inst
-  bpu.pcD                       := decoderUnit.bpu.pc
-  bpu.pc_plus4D                 := decoderUnit.bpu.pc + 4.U
-  bpu.pcE                       := executeUnit.bpu.pc
-  bpu.branchE                   := executeUnit.bpu.branch_inst
-  bpu.actual_takeE              := executeUnit.bpu.branch
-  decoderUnit.bpu.branch_inst   := bpu.branchD
-  decoderUnit.bpu.pred_branch   := bpu.pred_takeD
-  decoderUnit.bpu.branch_target := bpu.branch_targetD
+  bpu.decoder.ena               := ctrl.decoderUnit.allow_to_go
+  bpu.decoder.op                := decoderUnit.bpu.decoded_inst0.op
+  bpu.decoder.inst              := decoderUnit.bpu.decoded_inst0.inst
+  bpu.decoder.pc                := decoderUnit.bpu.pc
+  bpu.decoder.pc_plus4          := decoderUnit.bpu.pc + 4.U
+  bpu.execute.pc                := executeUnit.bpu.pc
+  bpu.execute.branch            := executeUnit.bpu.branch_inst
+  bpu.execute.actual_take       := executeUnit.bpu.branch
+  decoderUnit.bpu.branch_inst   := bpu.decoder.branch
+  decoderUnit.bpu.pred_branch   := bpu.decoder.pred_take
+  decoderUnit.bpu.branch_target := bpu.decoder.branch_target
 
   instBuffer.do_flush         := reset.asBool || ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
-  instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
-  instBuffer.i_stall          := io.inst.icache_stall
+  instBuffer.icache_stall     := io.inst.icache_stall
   instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst
   instBuffer.delay_sel_rst := Mux(
     ctrl.executeUnit.branch,
     !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
-    Mux(
-      ctrl.decoderUnit.branch,
-      !decoderUnit.instBuffer.inst(1).ready,
-      false.B,
-    ),
+    Mux(ctrl.decoderUnit.branch, !decoderUnit.instBuffer.inst(1).ready, false.B),
   )
-  instBuffer.D_delay_rst := ctrl.decoderUnit.branch
-  instBuffer.E_delay_rst := ctrl.executeUnit.branch
+  instBuffer.decoder_delay_rst := ctrl.decoderUnit.branch
+  instBuffer.execute_delay_rst := ctrl.executeUnit.branch
   for (i <- 0 until config.decoderNum) {
     instBuffer.ren(i)                               := decoderUnit.instBuffer.inst(i).ready
     decoderUnit.instBuffer.inst(i).valid            := true.B
