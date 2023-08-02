@@ -49,8 +49,9 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   write_buffer.io.enq.bits  := 0.U.asTypeOf(new WriteBufferUnit())
   write_buffer.io.deq.ready := false.B
 
-  val axi_cnt         = Counter(burstSize)
-  val read_ready_addr = RegInit(0.U(10.W))
+  val axi_cnt        = Counter(burstSize)
+  val read_ready_cnt = RegInit(0.U(4.W))
+  val read_ready_set = RegInit(0.U(6.W))
 
   // replace and fence control
   val replace = RegInit(0.U.asTypeOf(new Bundle {
@@ -249,7 +250,8 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
             axi_cnt.reset()
             replace.set := pset
             replace_cnt.reset()
-            read_ready_addr    := Cat(pset, 0.U(4.W))
+            read_ready_set     := pset
+            read_ready_cnt     := 0.U
             replace.write_addr := Cat(pset, 0.U(4.W))
             replace.use        := true.B
             replace.writeback  := dirty(pset)(lru(pset))
@@ -274,8 +276,9 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
             axi_cnt.reset()
             replace.set := fset
             replace_cnt.reset()
-            read_ready_addr := Cat(fset, 0.U(4.W))
-            replace.use     := true.B
+            read_ready_set := fset
+            read_ready_cnt := 0.U
+            replace.use    := true.B
           }
         }.otherwise {
           when(valid(fset).contains(true.B)) {
@@ -300,8 +303,9 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
         when(replace_cnt.value =/= (burstSize - 1).U) {
           replace_cnt.inc()
         }
-        read_ready_addr                    := replace_addr
-        read_buffer(read_ready_addr(3, 0)) := data(dirty(fset)(1))
+        read_ready_set              := replace.set
+        read_ready_cnt              := replace_cnt.value
+        read_buffer(read_ready_cnt) := data(dirty(fset)(1))
         when(!aw_handshake) {
           aw.addr      := Cat(tag(dirty(fset)(1)), fset, 0.U(6.W))
           aw.len       := 15.U
@@ -321,7 +325,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
             wvalid := false.B
           }.otherwise {
             w.data := Mux(
-              ((axi_cnt.value + 1.U) === read_ready_addr(3, 0)),
+              ((axi_cnt.value + 1.U) === read_ready_cnt),
               data(dirty(fset)(1)),
               read_buffer(axi_cnt.value + 1.U),
             )
@@ -350,8 +354,9 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
             when(replace_cnt.value =/= (burstSize - 1).U) {
               replace_cnt.inc()
             }
-            read_ready_addr                    := replace_addr
-            read_buffer(read_ready_addr(3, 0)) := data(lru(pset))
+            read_ready_set              := replace.set
+            read_ready_cnt              := replace_cnt.value
+            read_buffer(read_ready_cnt) := data(lru(pset))
             when(!aw_handshake) {
               aw.addr      := Cat(tag(lru(pset)), pset, 0.U(6.W))
               aw.len       := 15.U
@@ -371,7 +376,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
                 wvalid := false.B
               }.otherwise {
                 w.data := Mux(
-                  ((axi_cnt.value + 1.U) === read_ready_addr(3, 0)),
+                  ((axi_cnt.value + 1.U) === read_ready_cnt),
                   data(lru(pset)),
                   read_buffer(axi_cnt.value + 1.U),
                 )
