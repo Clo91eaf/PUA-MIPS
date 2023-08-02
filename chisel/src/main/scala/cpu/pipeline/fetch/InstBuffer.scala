@@ -19,7 +19,7 @@ class InstBuffer(
 )(implicit val config: CpuConfig)
     extends Module {
   val io = IO(new Bundle {
-    val fifo_rst              = Input(Bool())
+    val do_flush              = Input(Bool())
     val flush_delay_slot      = Input(Bool())
     val delay_sel_rst         = Input(Bool())
     val D_delay_rst           = Input(Bool())
@@ -29,11 +29,11 @@ class InstBuffer(
     val jump_branch_inst      = Input(Bool()) // 译码阶段的inst0是否为跳转指令
     val inst0_is_in_delayslot = Output(Bool())
 
-    val read_en = Input(Vec(config.decoderNum, Bool()))
-    val read    = Output(Vec(config.decoderNum, new BufferUnit()))
+    val ren  = Input(Vec(config.decoderNum, Bool()))
+    val read = Output(Vec(config.decoderNum, new BufferUnit()))
 
-    val write_en = Input(Vec(ninst, Bool()))
-    val write    = Input(Vec(ninst, new BufferUnit()))
+    val wen   = Input(Vec(ninst, Bool()))
+    val write = Input(Vec(ninst, new BufferUnit()))
 
     val empty        = Output(Bool())
     val almost_empty = Output(Bool())
@@ -58,9 +58,9 @@ class InstBuffer(
   inst0_is_in_delayslot := MuxCase(
     false.B,
     Seq(
-      io.flush_delay_slot                     -> false.B,
-      !io.read_en(0)                          -> inst0_is_in_delayslot,
-      (io.jump_branch_inst && !io.read_en(1)) -> true.B,
+      io.flush_delay_slot                 -> false.B,
+      !io.ren(0)                          -> inst0_is_in_delayslot,
+      (io.jump_branch_inst && !io.ren(1)) -> true.B,
     ),
   )
 
@@ -68,14 +68,14 @@ class InstBuffer(
   val delayslot_enable = RegInit(false.B)
   val delayslot_line   = RegInit(0.U.asTypeOf(new BufferUnit()))
   when(
-    io.fifo_rst && io.delay_sel_rst && !io.flush_delay_slot && io.i_stall && (deq_ptr + 1.U === enq_ptr || deq_ptr === enq_ptr),
+    io.do_flush && io.delay_sel_rst && !io.flush_delay_slot && io.i_stall && (deq_ptr + 1.U === enq_ptr || deq_ptr === enq_ptr),
   ) {
     delayslot_stall := true.B
-  }.elsewhen(delayslot_stall && io.write_en(0)) {
+  }.elsewhen(delayslot_stall && io.wen(0)) {
     delayslot_stall := false.B
   }
 
-  when(io.fifo_rst && !io.flush_delay_slot && io.delay_sel_rst) {
+  when(io.do_flush && !io.flush_delay_slot && io.delay_sel_rst) {
     when(io.E_delay_rst) {
       delayslot_enable := true.B
       delayslot_line   := Mux(deq_ptr === enq_ptr, io.write(0), buffer(deq_ptr))
@@ -90,7 +90,7 @@ class InstBuffer(
       delayslot_enable := false.B
       delayslot_line   := 0.U.asTypeOf(new BufferUnit())
     }
-  }.elsewhen(!delayslot_stall && io.read_en(0)) {
+  }.elsewhen(!delayslot_stall && io.ren(0)) {
     delayslot_enable := false.B
     delayslot_line   := 0.U.asTypeOf(new BufferUnit())
   }
@@ -112,28 +112,28 @@ class InstBuffer(
       io.almost_empty  -> 0.U.asTypeOf(new BufferUnit()),
     ),
   )
-  when(io.fifo_rst) {
+  when(io.do_flush) {
     deq_ptr := 0.U
   }.elsewhen(io.empty || delayslot_enable) {
     deq_ptr := deq_ptr
-  }.elsewhen(io.read_en(0) && io.read_en(1)) {
+  }.elsewhen(io.ren(0) && io.ren(1)) {
     deq_ptr := deq_ptr + 2.U
-  }.elsewhen(io.read_en(0)) {
+  }.elsewhen(io.ren(0)) {
     deq_ptr := deq_ptr + 1.U
   }
 
   // * enq * //
-  for { i <- 0 until ninst } { when(io.write_en(i)) { buffer(enq_ptr + i.U) := io.write(i) } }
+  for { i <- 0 until ninst } { when(io.wen(i)) { buffer(enq_ptr + i.U) := io.write(i) } }
 
-  when(io.fifo_rst) {
+  when(io.do_flush) {
     enq_ptr := 0.U
-  }.elsewhen(io.write_en(0) && io.write_en(1) && io.write_en(2) && io.write_en(3)) {
+  }.elsewhen(io.wen(0) && io.wen(1) && io.wen(2) && io.wen(3)) {
     enq_ptr := enq_ptr + 4.U
-  }.elsewhen(io.write_en(0) && io.write_en(1) && io.write_en(2)) {
+  }.elsewhen(io.wen(0) && io.wen(1) && io.wen(2)) {
     enq_ptr := enq_ptr + 3.U
-  }.elsewhen(io.write_en(0) && io.write_en(1)) {
+  }.elsewhen(io.wen(0) && io.wen(1)) {
     enq_ptr := enq_ptr + 2.U
-  }.elsewhen(io.write_en(0)) {
+  }.elsewhen(io.wen(0)) {
     enq_ptr := enq_ptr + 1.U
   }
 }

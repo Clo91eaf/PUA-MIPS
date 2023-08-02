@@ -24,7 +24,7 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   val ctrl           = Module(new Ctrl()).io
   val fetchUnit      = Module(new FetchUnit()).io
-  val bpu            = Module(new BPU()).io
+  val bpu            = Module(new Bpu()).io
   val instBuffer     = Module(new InstBuffer()).io
   val decoderUnit    = Module(new DecoderUnit()).io
   val regfile        = Module(new ARegFile()).io
@@ -81,7 +81,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.bpu.pred_branch   := bpu.pred_takeD
   decoderUnit.bpu.branch_target := bpu.branch_targetD
 
-  instBuffer.fifo_rst         := reset.asBool || ctrl.decoderUnit.do_flush
+  instBuffer.do_flush         := reset.asBool || ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.D_ena            := ctrl.decoderUnit.allow_to_go
   instBuffer.i_stall          := io.inst.icache_stall
@@ -98,17 +98,17 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.D_delay_rst := ctrl.decoderUnit.branch
   instBuffer.E_delay_rst := ctrl.executeUnit.branch
   for (i <- 0 until config.decoderNum) {
-    instBuffer.read_en(i)                           := decoderUnit.instBuffer.inst(i).ready
+    instBuffer.ren(i)                               := decoderUnit.instBuffer.inst(i).ready
     decoderUnit.instBuffer.inst(i).valid            := true.B
     decoderUnit.instBuffer.inst(i).bits.tlb_refill  := instBuffer.read(i).tlb.refill
     decoderUnit.instBuffer.inst(i).bits.tlb_invalid := instBuffer.read(i).tlb.invalid
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en(0)          := io.inst.inst_valid(0)
-  instBuffer.write_en(1)          := io.inst.inst_valid(1)
-  instBuffer.write_en(2)          := io.inst.inst_valid(2)
-  instBuffer.write_en(3)          := io.inst.inst_valid(3)
+  instBuffer.wen(0)               := io.inst.inst_valid(0)
+  instBuffer.wen(1)               := io.inst.inst_valid(1)
+  instBuffer.wen(2)               := io.inst.inst_valid(2)
+  instBuffer.wen(3)               := io.inst.inst_valid(3)
   instBuffer.write(0).tlb.refill  := tlbL1I.tlb1.refill
   instBuffer.write(1).tlb.refill  := tlbL1I.tlb1.refill
   instBuffer.write(2).tlb.refill  := tlbL1I.tlb1.refill

@@ -47,6 +47,9 @@ class InstInfo extends Bundle {
   val cp0_addr   = UInt(CP0_ADDR_WID.W)
   val dual_issue = Bool()
   val whilo      = Bool()
+  val rmem       = Bool()
+  val mul        = Bool()
+  val div        = Bool()
   val inst       = UInt(INST_WID.W)
 }
 

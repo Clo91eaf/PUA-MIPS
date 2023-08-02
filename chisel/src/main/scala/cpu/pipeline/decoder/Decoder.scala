@@ -183,4 +183,7 @@ class Decoder extends Module {
   io.out.dual_issue := dual_issue
   io.out.whilo      := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(fusel)
   io.out.inst       := inst
+  io.out.rmem       := fusel === FU_MEM && reg_wen.orR
+  io.out.mul        := fusel === FU_MUL
+  io.out.div        := fusel === FU_DIV
 }

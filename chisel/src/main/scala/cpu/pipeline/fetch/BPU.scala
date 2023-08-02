@@ -3,20 +3,20 @@ package cpu.pipeline.fetch
 import chisel3._
 import chisel3.util._
 
-class BPU(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4) extends Module {
+class Bpu(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4) extends Module {
   val io = IO(new Bundle {
-    val instrD = Input(UInt(32.W))
+    val instrD         = Input(UInt(32.W))
+    val enaD           = Input(Bool())
+    val pcD            = Input(UInt(32.W))
+    val pc_plus4D      = Input(UInt(32.W))
+    val branchD        = Output(Bool())
+    val pred_takeD     = Output(Bool())
+    val branch_targetD = Output(UInt(32.W))
 
-    val enaD         = Input(Bool())
-    val pcD          = Input(UInt(32.W))
-    val pc_plus4D    = Input(UInt(32.W))
     val pcE          = Input(UInt(32.W))
     val branchE      = Input(Bool())
     val actual_takeE = Input(Bool())
 
-    val branchD        = Output(Bool())
-    val pred_takeD     = Output(Bool())
-    val branch_targetD = Output(UInt(32.W))
   })
 
   io.branchD := (io.instrD(31, 26) === 1.U && io.instrD(19, 17) === 0.U) || io.instrD(31, 28) === 1.U
