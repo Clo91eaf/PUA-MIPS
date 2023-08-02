@@ -53,7 +53,6 @@ class Fu(implicit val config: CpuConfig) extends Module {
     alu(i).io.inst_info         := io.inst(i).inst_info
     alu(i).io.src_info          := io.inst(i).src_info
     alu(i).io.hilo.rdata        := hilo.rdata
-    alu(i).io.mul.ready         := DontCare
     alu(i).io.mul.result        := mul.result
     alu(i).io.div.ready         := div.ready
     alu(i).io.div.result        := div.result
@@ -73,12 +72,12 @@ class Fu(implicit val config: CpuConfig) extends Module {
   mul.src1   := Mux(io.inst(0).mul_en, io.inst(0).src_info.src1_data, io.inst(1).src_info.src1_data)
   mul.src2   := Mux(io.inst(0).mul_en, io.inst(0).src_info.src2_data, io.inst(1).src_info.src2_data)
   mul.signed := Mux(io.inst(0).mul_en, alu(0).io.mul.signed, alu(1).io.mul.signed)
-  mul.start  := Mux(io.inst(0).mul_en, alu(0).io.mul.start, alu(1).io.mul.start)
+  mul.start  := Mux(io.inst(0).mul_en, alu(0).io.mul.en, alu(1).io.mul.en)
 
   div.src1        := Mux(io.inst(0).div_en, io.inst(0).src_info.src1_data, io.inst(1).src_info.src1_data)
   div.src2        := Mux(io.inst(0).div_en, io.inst(0).src_info.src2_data, io.inst(1).src_info.src2_data)
   div.signed      := Mux(io.inst(0).div_en, alu(0).io.div.signed, alu(1).io.div.signed)
-  div.start       := Mux(io.inst(0).div_en, alu(0).io.div.start, alu(1).io.div.start)
+  div.start       := Mux(io.inst(0).div_en, alu(0).io.div.en, alu(1).io.div.en)
   div.allow_to_go := io.ctrl.allow_to_go
 
   io.stall_req := (io.inst.map(_.div_en).reduce(_ || _) && !div.ready)

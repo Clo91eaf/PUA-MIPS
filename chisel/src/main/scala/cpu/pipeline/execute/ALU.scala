@@ -5,11 +5,17 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 
-class MultDivSignal extends Bundle {
+class DivSignal extends Bundle {
   val ready  = Input(Bool())
   val result = Input(UInt(HILO_WID.W))
 
-  val start  = Output(Bool())
+  val en     = Output(Bool())
+  val signed = Output(Bool())
+}
+class MultSignal extends Bundle {
+  val result = Input(UInt(HILO_WID.W))
+
+  val en     = Output(Bool())
   val signed = Output(Bool())
 }
 class Alu extends Module {
@@ -21,8 +27,8 @@ class Alu extends Module {
       val rdata = Input(UInt(HILO_WID.W))
       val wdata = Output(UInt(HILO_WID.W))
     }
-    val mul      = new MultDivSignal()
-    val div      = new MultDivSignal()
+    val mul      = new MultSignal()
+    val div      = new DivSignal()
     val result   = Output(UInt(DATA_WID.W))
     val overflow = Output(Bool())
     val trap     = Output(Bool())
@@ -64,14 +70,10 @@ class Alu extends Module {
     ),
   )
 
-  io.mul.signed := Mux(VecInit(EXE_MULT, EXE_MADD, EXE_MSUB).contains(op), true.B, false.B)
-  io.mul.start := Mux(
-    VecInit(EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op),
-    !io.mul.ready,
-    false.B,
-  )
-  io.div.signed := Mux(VecInit(EXE_DIV).contains(op), true.B, false.B)
-  io.div.start  := Mux(VecInit(EXE_DIV, EXE_DIVU).contains(op), !io.div.ready, false.B)
+  io.mul.signed := VecInit(EXE_MULT, EXE_MADD, EXE_MSUB).contains(op)
+  io.mul.en     := VecInit(EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op)
+  io.div.signed := VecInit(EXE_DIV).contains(op)
+  io.div.en     := Mux(VecInit(EXE_DIV, EXE_DIVU).contains(op), !io.div.ready, false.B)
 
   io.result := MuxLookup(
     op,
@@ -105,8 +107,8 @@ class Alu extends Module {
       // 特殊指令
       EXE_SC -> 1.U,
       // 乘除法
-      EXE_MULT  -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
-      EXE_MULTU -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
+      EXE_MULT  -> io.mul.result(31, 0),
+      EXE_MULTU -> io.mul.result(31, 0),
     ),
   )
 
