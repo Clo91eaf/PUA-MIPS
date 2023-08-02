@@ -15,17 +15,12 @@ class WriteBufferUnit extends Bundle {
 }
 
 class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Module {
-  val nway: Int             = cacheConfig.nway
-  val nset: Int             = cacheConfig.nset
-  val nbank: Int            = cacheConfig.nbank
-  val ninst: Int            = 2
-  val bankOffsetWidth: Int  = cacheConfig.bankOffsetWidth
-  val bankWidth: Int        = cacheConfig.bankWidth
-  val bankWidthBits: Int    = cacheConfig.bankWidthBits
-  val tagWidth: Int         = cacheConfig.tagWidth
-  val indexWidth: Int       = cacheConfig.indexWidth
-  val offsetWidth: Int      = cacheConfig.offsetWidth
-  val writeBufferDepth: Int = 16
+  val nway: Int          = cacheConfig.nway
+  val nset: Int          = cacheConfig.nset
+  val nbank: Int         = cacheConfig.nbank
+  val bankWidthBits: Int = cacheConfig.bankWidthBits
+  val tagWidth: Int      = cacheConfig.tagWidth
+  val burstSize: Int     = cacheConfig.burstSize
 
   val io = IO(new Bundle {
     val cpu = Flipped(new Cache_DCache())
@@ -48,23 +43,26 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
 
   val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)
 
-  val write_buffer = Module(new Queue(new WriteBufferUnit(), writeBufferDepth))
+  val write_buffer = Module(new Queue(new WriteBufferUnit(), 4))
+
   write_buffer.io.enq.valid := false.B
   write_buffer.io.enq.bits  := 0.U.asTypeOf(new WriteBufferUnit())
   write_buffer.io.deq.ready := false.B
 
-  val axi_cnt         = Counter(16)
+  val axi_cnt         = Counter(burstSize)
   val read_ready_addr = RegInit(0.U(10.W))
 
   // replace and fence control
   val replace = RegInit(0.U.asTypeOf(new Bundle {
     val use        = Bool()
-    val addr       = UInt(10.W)
+    val set        = UInt(6.W)
     val write_addr = UInt(10.W)
     val wstrb      = Vec(nway, UInt(4.W))
     val working    = Bool()
     val writeback  = Bool()
   }))
+  val replace_cnt  = Counter(burstSize)
+  val replace_addr = Cat(replace.set, replace_cnt.value)
 
   val fset = io.cpu.fence_addr(11, 6)
   val fence = RegInit(0.U.asTypeOf(new Bundle {
@@ -75,12 +73,12 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val ar_handshake = RegInit(false.B)
   val aw_handshake = RegInit(false.B)
 
-  val data_raddr = Mux(replace.use, replace.addr, Mux(should_next_addr, io.cpu.execute_addr(11, 2), io.cpu.addr(11, 2)))
+  val data_raddr = Mux(replace.use, replace_addr, Mux(should_next_addr, io.cpu.execute_addr(11, 2), io.cpu.addr(11, 2)))
   val data_wstrb = Wire(Vec(nway, UInt(4.W)))
   val data_waddr = Mux(replace.use, replace.write_addr, io.cpu.addr(11, 2))
   val data_wdata = Mux(state === s_replace, io.axi.r.bits.data, io.cpu.wdata)
 
-  val tag_raddr = Mux(replace.use, replace.addr(9, 4), Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
+  val tag_raddr = Mux(replace.use, replace.set, Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
   val tag_wstrb = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val tag_wdata = RegInit(0.U(tagWidth.W))
 
@@ -133,7 +131,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     tag(i)           := tag_ram.io.rdata
 
     tag_ram.io.wen   := tag_wstrb(i).orR
-    tag_ram.io.waddr := replace.addr(9, 4)
+    tag_ram.io.waddr := replace.set
     tag_ram.io.wdata := tag_wdata
     tag_ram.io.wstrb := tag_wstrb(i)
 
@@ -249,7 +247,8 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           when(!cache_hit) {
             state := s_replace
             axi_cnt.reset()
-            replace.addr       := Cat(pset, 0.U(4.W))
+            replace.set := pset
+            replace_cnt.reset()
             read_ready_addr    := Cat(pset, 0.U(4.W))
             replace.write_addr := Cat(pset, 0.U(4.W))
             replace.use        := true.B
@@ -273,7 +272,8 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
             state := s_writeback
             axi_cnt.reset()
-            replace.addr    := Cat(fset, 0.U(4.W))
+            replace.set := fset
+            replace_cnt.reset()
             read_ready_addr := Cat(fset, 0.U(4.W))
             replace.use     := true.B
           }
@@ -297,10 +297,10 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     }
     is(s_writeback) {
       when(fence.working) {
-        when(replace.addr(3, 0) =/= 15.U) {
-          replace.addr := replace.addr + 1.U
+        when(replace_cnt.value =/= (burstSize - 1).U) {
+          replace_cnt.inc()
         }
-        read_ready_addr                    := replace.addr
+        read_ready_addr                    := replace_addr
         read_buffer(read_ready_addr(3, 0)) := data(dirty(fset)(1))
         when(!aw_handshake) {
           aw.addr      := Cat(tag(dirty(fset)(1)), fset, 0.U(6.W))
@@ -326,7 +326,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
               read_buffer(axi_cnt.value + 1.U),
             )
             axi_cnt.inc()
-            when(axi_cnt.value + 1.U === 15.U) {
+            when(axi_cnt.value + 1.U === (burstSize - 1).U) {
               w.last := true.B
             }
           }
@@ -340,17 +340,17 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
       }.otherwise {
         aw_handshake  := false.B
         fence.working := true.B
-        replace.addr  := replace.addr + 1.U
+        replace_cnt.inc()
       }
     }
     is(s_replace) {
       when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
         when(replace.working) {
           when(replace.writeback) {
-            when(replace.addr(3, 0) =/= 15.U) {
-              replace.addr := replace.addr + 1.U
+            when(replace_cnt.value =/= (burstSize - 1).U) {
+              replace_cnt.inc()
             }
-            read_ready_addr                    := replace.addr
+            read_ready_addr                    := replace_addr
             read_buffer(read_ready_addr(3, 0)) := data(lru(pset))
             when(!aw_handshake) {
               aw.addr      := Cat(tag(lru(pset)), pset, 0.U(6.W))
@@ -376,7 +376,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
                   read_buffer(axi_cnt.value + 1.U),
                 )
                 axi_cnt.inc()
-                when(axi_cnt.value + 1.U === 15.U) {
+                when(axi_cnt.value + 1.U === (burstSize - 1).U) {
                   w.last := true.B
                 }
               }
@@ -424,7 +424,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           ar_handshake    := false.B
           aw_handshake    := false.B
           replace.working := true.B
-          replace.addr    := replace.addr + 1.U
+          replace_cnt.inc()
         }
       }
     }
