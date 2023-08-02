@@ -5,7 +5,7 @@ import cpu._
 import cpu.defines._
 
 class PuaMips extends Module {
-  implicit val cpuConfig = new CpuConfig(build = false)
+  implicit val cpuConfig = new CpuConfig(hasCommitBuffer = true)
   val io = IO(new Bundle {
     val ext_int = Input(UInt(6.W))
     val axi     = new AXI()
