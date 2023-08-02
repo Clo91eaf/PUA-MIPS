@@ -82,7 +82,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.bpu.pred_branch   := bpu.decoder.pred_take
   decoderUnit.bpu.branch_target := bpu.decoder.branch_target
 
-  instBuffer.flush            := reset.asBool || ctrl.decoderUnit.do_flush
+  instBuffer.do_flush         := reset.asBool || ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.icache_stall     := io.inst.icache_stall
   instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst
@@ -94,17 +94,17 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.decoder_delay_rst := ctrl.decoderUnit.branch
   instBuffer.execute_delay_rst := ctrl.executeUnit.branch
   for (i <- 0 until config.decoderNum) {
-    instBuffer.read_en(i)                           := decoderUnit.instBuffer.inst(i).ready
+    instBuffer.ren(i)                               := decoderUnit.instBuffer.inst(i).ready
     decoderUnit.instBuffer.inst(i).valid            := true.B
     decoderUnit.instBuffer.inst(i).bits.tlb_refill  := instBuffer.read(i).tlb.refill
     decoderUnit.instBuffer.inst(i).bits.tlb_invalid := instBuffer.read(i).tlb.invalid
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.write_en(0)          := io.inst.inst_valid(0)
-  instBuffer.write_en(1)          := io.inst.inst_valid(1)
-  instBuffer.write_en(2)          := io.inst.inst_valid(2)
-  instBuffer.write_en(3)          := io.inst.inst_valid(3)
+  instBuffer.wen(0)               := io.inst.inst_valid(0)
+  instBuffer.wen(1)               := io.inst.inst_valid(1)
+  instBuffer.wen(2)               := io.inst.inst_valid(2)
+  instBuffer.wen(3)               := io.inst.inst_valid(3)
   instBuffer.write(0).tlb.refill  := tlbL1I.tlb1.refill
   instBuffer.write(1).tlb.refill  := tlbL1I.tlb1.refill
   instBuffer.write(2).tlb.refill  := tlbL1I.tlb1.refill

@@ -230,7 +230,7 @@ trait Constants {
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
 
   // TLB MMU
-  val TLB_NUM  = 32
+  val TLB_NUM  = 8
   val PFN_WID  = 20
   val C_WID    = 3
   val ASID_WID = 8
