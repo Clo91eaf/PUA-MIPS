@@ -83,7 +83,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
   io.stall_req := (io.inst.map(_.div_en).reduce(_ || _) && !div.ready)
 
   io.inst(0).result := Mux(
-    VecInit(EXE_JAL, EXE_JALR, EXE_BGEZAL, EXE_BLTZAL).contains(io.inst(0).inst_info.op),
+    io.inst(0).inst_info.branch_link,
     io.inst(0).pc + 8.U,
     alu(0).io.result,
   )
@@ -92,9 +92,9 @@ class Fu(implicit val config: CpuConfig) extends Module {
   hilo.wen := ((io.inst(0).hilo_wen && !io.inst.map(_.ex.out.flush_req).reduce(_ || _)) ||
     (io.inst(1).hilo_wen && !io.inst(1).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
-  when(io.inst(0).inst_info.op === EXE_MTHI && io.inst(1).inst_info.op === EXE_MTLO) {
+  when(io.inst(0).inst_info.mthi && io.inst(1).inst_info.mtlo) {
     hilo.wdata := Cat(alu(0).io.hilo.wdata(63, 32), alu(1).io.hilo.wdata(31, 0))
-  }.elsewhen(io.inst(0).inst_info.op === EXE_MTLO && io.inst(1).inst_info.op === EXE_MTHI) {
+  }.elsewhen(io.inst(0).inst_info.mtlo && io.inst(1).inst_info.mthi) {
     hilo.wdata := Cat(alu(1).io.hilo.wdata(63, 32), alu(0).io.hilo.wdata(31, 0))
   }
 }

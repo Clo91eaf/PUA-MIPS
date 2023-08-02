@@ -33,10 +33,10 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
     )
   })
   io.mem.out.en := io.inst.map(_.mem_sel).reduce(_ || _)
-  io.mem.out.ren := io.inst(0).mem_sel && io.inst(0).inst_info.fusel === FU_MEM && io.inst(0).inst_info.reg_wen ||
-    io.inst(1).mem_sel && io.inst(1).inst_info.fusel === FU_MEM && io.inst(1).inst_info.reg_wen
-  io.mem.out.wen := io.inst(0).mem_sel && io.inst(0).inst_info.fusel === FU_MEM && !io.inst(0).inst_info.reg_wen ||
-    io.inst(1).mem_sel && io.inst(1).inst_info.fusel === FU_MEM && !io.inst(1).inst_info.reg_wen
+  io.mem.out.ren := io.inst(0).mem_sel && io.inst(0).inst_info.rmem ||
+    io.inst(1).mem_sel && io.inst(1).inst_info.rmem
+  io.mem.out.wen := io.inst(0).mem_sel && io.inst(0).inst_info.wmem ||
+    io.inst(1).mem_sel && io.inst(1).inst_info.wmem
   io.mem.out.inst_info := MuxCase(
     DontCare,
     Seq(
@@ -91,9 +91,9 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
     )
     io.inst(i).ex.out.flush_req := io.inst(i).ex.in.flush_req || io.inst(i).ex.out.excode =/= EX_NO
   }
-  io.inst(0).mem_sel := io.inst(0).inst_info.fusel === FU_MEM &&
+  io.inst(0).mem_sel := (io.inst(0).inst_info.wmem || io.inst(0).inst_info.rmem) &&
     !io.inst(0).ex.out.flush_req
-  io.inst(1).mem_sel := io.inst(1).inst_info.fusel === FU_MEM &&
+  io.inst(1).mem_sel := (io.inst(1).inst_info.wmem || io.inst(1).inst_info.rmem) &&
     !io.inst(0).ex.out.flush_req && !io.inst(1).ex.out.flush_req
 
 }

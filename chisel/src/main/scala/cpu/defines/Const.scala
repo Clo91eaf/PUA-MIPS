@@ -116,22 +116,17 @@ trait Constants {
   val EXE_CACHE = 76.U(OP_WID.W)
 
   // FUSel
-  val FU_SEL_NUM = 10
+  val FU_SEL_NUM = 8
   val FU_SEL_WID = log2Ceil(FU_SEL_NUM)
 
-  val FU_NOP    = 0.U(FU_SEL_WID.W)
-  val FU_ALU    = 1.U(FU_SEL_WID.W) // TODO:可能可以删除的用-表示,-
-  val FU_MTC0   = 2.U(FU_SEL_WID.W) // -
-  val FU_MFC0   = 3.U(FU_SEL_WID.W) // -
-  val FU_MEM    = 4.U(FU_SEL_WID.W)
-  val FU_BR     = 5.U(FU_SEL_WID.W)
-  val FU_TLB    = 6.U(FU_SEL_WID.W) // -
-  val FU_EX     = 7.U(FU_SEL_WID.W)
-  val FU_TRAP   = 8.U(FU_SEL_WID.W) // -
-  val FU_MTHILO = 9.U(FU_SEL_WID.W)
-  val FU_MFHILO = 10.U(FU_SEL_WID.W)
-  val FU_MUL    = 11.U(FU_SEL_WID.W)
-  val FU_DIV    = 12.U(FU_SEL_WID.W)
+  val FU_ALU    = 0.U(FU_SEL_WID.W)
+  val FU_MEM    = 1.U(FU_SEL_WID.W)
+  val FU_BR     = 2.U(FU_SEL_WID.W)
+  val FU_EX     = 3.U(FU_SEL_WID.W)
+  val FU_MTHILO = 4.U(FU_SEL_WID.W)
+  val FU_MFHILO = 5.U(FU_SEL_WID.W)
+  val FU_MUL    = 6.U(FU_SEL_WID.W)
+  val FU_DIV    = 7.U(FU_SEL_WID.W)
 
   // div
   val DIV_CTRL_WID         = 2
