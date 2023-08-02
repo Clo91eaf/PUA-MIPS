@@ -181,5 +181,6 @@ class Decoder extends Module {
   )
   io.out.cp0_addr   := Cat(inst(15, 11), inst(2, 0))
   io.out.dual_issue := dual_issue
+  io.out.whilo      := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(fusel)
   io.out.inst       := inst
 }

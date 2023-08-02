@@ -46,6 +46,7 @@ class InstInfo extends Bundle {
   val imm32      = UInt(DATA_WID.W)
   val cp0_addr   = UInt(CP0_ADDR_WID.W)
   val dual_issue = Bool()
+  val whilo      = Bool()
   val inst       = UInt(INST_WID.W)
 }
 
@@ -139,11 +140,11 @@ class Tlb_ICache extends Bundle {
 }
 
 class Tlb_DCache extends Bundle {
-  val fill = Input(Bool())
-  val dcache_is_idle     = Input(Bool())
-  val dcache_is_save     = Input(Bool())
-  val uncached           = Output(Bool())
-  val tlb1_ok            = Output(Bool())
+  val fill           = Input(Bool())
+  val dcache_is_idle = Input(Bool())
+  val dcache_is_save = Input(Bool())
+  val uncached       = Output(Bool())
+  val tlb1_ok        = Output(Bool())
 
   val translation_ok = Output(Bool())
   val hit            = Output(Bool())
