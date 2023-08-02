@@ -12,10 +12,9 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val nway: Int            = cacheConfig.nway
   val nset: Int            = cacheConfig.nset
   val nbank: Int           = cacheConfig.nbank
-  val ninst: Int           = 4
+  val ninst: Int           = cacheConfig.ninst
   val bankOffsetWidth: Int = cacheConfig.bankOffsetWidth
   val bankWidth: Int       = cacheConfig.bankWidth
-  val bankWidthBits: Int   = cacheConfig.bankWidthBits
   val tagWidth: Int        = cacheConfig.tagWidth
   val indexWidth: Int      = cacheConfig.indexWidth
   val offsetWidth: Int     = cacheConfig.offsetWidth
@@ -34,9 +33,10 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   // | 5        4 | 3         2 |
   // ============================
 
+  val tlb_fill = RegInit(false.B)
   // * fsm * //
-  val s_idle :: s_tlb_fill :: s_uncached :: s_replace :: s_save :: Nil = Enum(5)
-  val state                                                            = RegInit(s_idle)
+  val s_idle :: s_uncached :: s_replace :: s_save :: Nil = Enum(4)
+  val state                                              = RegInit(s_idle)
 
   // * nway * nset * //
   // * 128 bit for 4 inst * //
@@ -54,7 +54,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
 
   // * should choose next addr * //
-  val should_next_addr = (state === s_idle) || (state === s_save)
+  val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)
 
   val data_raddr = io.cpu.addr(should_next_addr)(indexWidth + offsetWidth - 1, bankOffsetWidth)
   val data_wstrb = RegInit(VecInit(Seq.fill(nway)(VecInit(Seq.fill(ninst)(0.U(4.W))))))
@@ -67,8 +67,9 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val lru = RegInit(VecInit(Seq.fill(nset * nbank)(false.B)))
 
   // * itlb * //
-  io.cpu.tlb.icache_is_tlb_fill := (state === s_tlb_fill)
-  io.cpu.tlb.icache_is_save     := (state === s_save)
+  when(tlb_fill) { tlb_fill := false.B }
+  io.cpu.tlb.fill           := tlb_fill
+  io.cpu.tlb.icache_is_save := (state === s_save)
 
   // * fence * //
   val fence_index = io.cpu.fence_addr(indexWidth + offsetWidth - 1, offsetWidth)
@@ -97,7 +98,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     val valid = Bool()
   }))))
 
-  val axi_cnt = Counter(32)
+  val axi_cnt = Counter(cacheConfig.burstSize)
 
   // bank tag ram
   for { i <- 0 until nway; j <- 0 until ninst } {
@@ -107,14 +108,14 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     data(i)(j)    := bank.io.rdata
 
     bank.io.wen   := data_wstrb(i)(j).orR
-    bank.io.waddr := Cat(rset, axi_cnt.value(3, log2Ceil(ninst)))
+    bank.io.waddr := Cat(rset, axi_cnt.value(log2Ceil(cacheConfig.burstSize) - 1, log2Ceil(ninst)))
     bank.io.wdata := Mux(j.U === axi_cnt.value(log2Ceil(ninst) - 1, 0), io.axi.r.bits.data, 0.U)
     bank.io.wstrb := data_wstrb(i)(j)
   }
 
   for { i <- 0 until ninst } {
-    io.cpu.inst_valid(i) := Mux(state === s_idle, inst_valid(i), saved(i).valid) && io.cpu.req
-    io.cpu.inst(i)       := Mux(state === s_idle, inst(i), saved(i).inst)
+    io.cpu.inst_valid(i) := Mux(state === s_idle && !tlb_fill, inst_valid(i), saved(i).valid) && io.cpu.req
+    io.cpu.inst(i)       := Mux(state === s_idle && !tlb_fill, inst(i), saved(i).inst)
   }
 
   for { i <- 0 until nway } {
@@ -129,7 +130,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     tag_bram.io.wstrb := tag_wstrb(i)
   }
 
-  io.cpu.icache_stall := Mux(state === s_idle, (!cache_hit_available && io.cpu.req), state =/= s_save)
+  io.cpu.icache_stall := Mux(state === s_idle && !tlb_fill, (!cache_hit_available && io.cpu.req), state =/= s_save)
 
   val ar      = RegInit(0.U.asTypeOf(new AR()))
   val arvalid = RegInit(false.B)
@@ -141,15 +142,24 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   r <> io.axi.r.bits
   rready <> io.axi.r.ready
 
+  when(tlb_fill === true.B) {
+    tlb_fill := false.B
+  }
+
   switch(state) {
     is(s_idle) {
-      when(io.cpu.req) {
+      when(tlb_fill) {
+        when(!io.cpu.tlb.hit) {
+          state          := s_save
+          saved(0).inst  := 0.U
+          saved(0).valid := true.B
+        }
+      }.elsewhen(io.cpu.req) {
         when(!io.cpu.tlb.translation_ok) {
-          state := s_tlb_fill
+          tlb_fill := true.B
         }.elsewhen(io.cpu.tlb.uncached) {
           state   := s_uncached
           ar.addr := io.cpu.tlb.pa
-          // * 4 inst per bank and 4 bank per set * //
           ar.len  := 0.U(log2Ceil((nbank * bankWidth) / 4).W)
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
@@ -160,9 +170,8 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           ar.size := 2.U(bankOffsetWidth.W)
           arvalid := true.B
 
-          rset                     := vset
-          data_wstrb(lru(vset))(0) := 0xf.U
-          (1 until ninst).foreach(i => data_wstrb(lru(vset))(i) := 0x0.U)
+          rset := vset
+          (0 until ninst).foreach(i => data_wstrb(lru(vset))(i) := Mux(i.U === 0.U, 0xf.U, 0x0.U))
           tag_wstrb(lru(vset))   := true.B
           tag_wdata              := io.cpu.tlb.tag
           valid(vset)(lru(vset)) := true.B
@@ -177,15 +186,6 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
         }
       }
     }
-    is(s_tlb_fill) {
-      when(io.cpu.tlb.hit) {
-        state := s_idle
-      }.otherwise {
-        state          := s_save
-        saved(0).inst  := 0.U
-        saved(0).valid := true.B
-      }
-    }
     is(s_uncached) {
       when(io.axi.ar.valid) {
         when(io.axi.ar.ready) {
@@ -193,6 +193,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           rready  := true.B
         }
       }.elsewhen(io.axi.r.fire) {
+        // * uncached not support burst transport * //
         state          := s_save
         saved(0).inst  := io.axi.r.bits.data
         saved(0).valid := true.B
@@ -206,6 +207,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           rready  := true.B
         }
       }.elsewhen(io.axi.r.fire) {
+        // * burst transport * //
         when(!io.axi.r.bits.last) {
           axi_cnt.inc()
           data_wstrb(lru(vset))(0) := data_wstrb(lru(vset))(ninst - 1)

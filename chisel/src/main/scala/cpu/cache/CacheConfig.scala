@@ -15,6 +15,8 @@ case class CacheConfig(
   val tagWidth        = 32 - indexWidth - offsetWidth    // 20
   val tagvWidth       = tagWidth + 1                     // 21
   val bankWidthBits   = bankWidth * 8                    // 64
+  val burstSize       = 16
+  val ninst           = 4
   require(isPow2(nset))
   require(isPow2(nway))
   require(isPow2(nbank))

@@ -31,20 +31,22 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     val cpu = Flipped(new Cache_DCache())
     val axi = new DCache_AXIInterface()
   })
-  // * fsm * //
-  val s_idle :: s_tlb_fill :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(6)
-  val state                                                                           = RegInit(s_idle)
 
-  io.cpu.tlb.dcache_is_idle     := state === s_idle
-  io.cpu.tlb.dcahce_is_tlb_fill := state === s_tlb_fill
-  io.cpu.tlb.dcache_is_save     := state === s_save
+  val tlb_fill = RegInit(false.B)
+  // * fsm * //
+  val s_idle :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(5)
+  val state                                                             = RegInit(s_idle)
+
+  io.cpu.tlb.fill           := tlb_fill
+  io.cpu.tlb.dcache_is_idle := state === s_idle
+  io.cpu.tlb.dcache_is_save := state === s_save
 
   // * valid dirty * //
   val valid = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
   val dirty = RegInit(VecInit(Seq.fill(nset)(VecInit(Seq.fill(nway)(false.B)))))
   val lru   = RegInit(VecInit(Seq.fill(nset)(0.U(1.W))))
 
-  val should_next_addr = (state === s_idle) || (state === s_save)
+  val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)
 
   val write_buffer = Module(new Queue(new WriteBufferUnit(), writeBufferDepth))
   write_buffer.io.enq.valid := false.B
@@ -78,8 +80,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val data_waddr = Mux(replace.use, replace.write_addr, io.cpu.addr(11, 2))
   val data_wdata = Mux(state === s_replace, io.axi.r.bits.data, io.cpu.wdata)
 
-  val tag_raddr =
-    Mux(replace.use, replace.addr(9, 4), Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
+  val tag_raddr = Mux(replace.use, replace.addr(9, 4), Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
   val tag_wstrb = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val tag_wdata = RegInit(0.U(tagWidth.W))
 
@@ -99,7 +100,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val pset = io.cpu.addr(11, 6)
 
   io.cpu.dcache_stall := Mux(
-    state === s_idle,
+    state === s_idle && !tlb_fill,
     Mux(io.cpu.en, (cached_stall || mmio_read_stall || mmio_write_stall || !io.cpu.tlb.translation_ok), io.cpu.fence),
     state =/= s_save,
   )
@@ -144,7 +145,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     )
 
     data_wstrb(i) := Mux(
-      tag_compare_valid(i) && io.cpu.en && io.cpu.wen.orR && !io.cpu.tlb.uncached && state === s_idle,
+      tag_compare_valid(i) && io.cpu.en && io.cpu.wen.orR && !io.cpu.tlb.uncached && state === s_idle && !tlb_fill,
       io.cpu.wen,
       replace.wstrb(i),
     )
@@ -206,12 +207,17 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
 
   switch(state) {
     is(s_idle) {
-      when(io.cpu.en) {
+      when(tlb_fill) {
+        tlb_fill := false.B
+        when(!io.cpu.tlb.hit) {
+          state := s_save
+        }
+      }.elsewhen(io.cpu.en) {
         when(!io.cpu.tlb.translation_ok) {
           when(io.cpu.tlb.tlb1_ok) {
             state := s_save
           }.otherwise {
-            state := s_tlb_fill
+            tlb_fill := true.B
           }
         }.elsewhen(io.cpu.tlb.uncached) {
           when(io.cpu.wen.orR) {
@@ -278,13 +284,6 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
           }
           state := s_save
         }
-      }
-    }
-    is(s_tlb_fill) {
-      when(io.cpu.tlb.hit) {
-        state := s_idle
-      }.otherwise {
-        state := s_save
       }
     }
     is(s_uncached) {

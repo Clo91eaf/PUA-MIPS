@@ -32,7 +32,7 @@ class TlbL1D extends Module {
   io.cache.tag     := Mux(direct_mapped, Cat(0.U(3.W), io.addr(28, 12)), dtlb.ppn)
   io.cache.pa      := Cat(io.cache.tag, io.addr(11, 0))
   io.cache.tlb1_ok := dtlb.vpn === vpn && dtlb.valid
-  io.cache.hit     := io.cache.dcahce_is_tlb_fill && io.tlb2.found && io.tlb2.entry.v(vpn(0))
+  io.cache.hit     := io.cache.fill && io.tlb2.found && io.tlb2.entry.v(vpn(0))
 
   when(io.fence) { dtlb.valid := false.B }
 
@@ -42,13 +42,13 @@ class TlbL1D extends Module {
   val tlb2 = RegInit(0.U.asTypeOf(new Bundle { val vpn2 = UInt(19.W) }))
   io.tlb2.vpn2 <> tlb2.vpn2
 
-  when(io.cache.dcache_is_idle && io.mem_en && !io.cache.translation_ok) {
+  when(io.cache.dcache_is_idle && !io.cache.fill && io.mem_en && !io.cache.translation_ok) {
     when(io.cache.tlb1_ok) {
       tlb1.modify := true.B
     }.otherwise {
       tlb2.vpn2 := vpn(19, 1)
     }
-  }.elsewhen(io.cache.dcahce_is_tlb_fill) {
+  }.elsewhen(io.cache.fill) {
     when(io.tlb2.found) {
       when(io.tlb2.entry.v(vpn(0))) {
         dtlb.vpn      := vpn
