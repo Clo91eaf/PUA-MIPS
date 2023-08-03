@@ -125,6 +125,14 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
 
   io.executeStage.inst0.pc        := pc(0)
   io.executeStage.inst0.inst_info := inst_info(0)
+  io.executeStage.inst0.inst_info.reg_wen := MuxLookup(
+    inst_info(0).op,
+    inst_info(0).reg_wen,
+    Seq(
+      EXE_MOVN -> (io.executeStage.inst0.src_info.src2_data =/= 0.U),
+      EXE_MOVZ -> (io.executeStage.inst0.src_info.src2_data === 0.U),
+    ),
+  )
   io.executeStage.inst0.src_info.src1_data := Mux(
     inst_info(0).reg1_ren,
     forwardCtrl.out.inst(0).src1.rdata,
@@ -166,6 +174,14 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst1.allow_to_go := issue.inst1.allow_to_go
   io.executeStage.inst1.pc          := pc(1)
   io.executeStage.inst1.inst_info   := inst_info(1)
+  io.executeStage.inst1.inst_info.reg_wen := MuxLookup(
+    inst_info(1).op,
+    inst_info(1).reg_wen,
+    Seq(
+      EXE_MOVN -> (io.executeStage.inst1.src_info.src2_data =/= 0.U),
+      EXE_MOVZ -> (io.executeStage.inst1.src_info.src2_data === 0.U),
+    ),
+  )
   io.executeStage.inst1.src_info.src1_data := Mux(
     inst_info(1).reg1_ren,
     forwardCtrl.out.inst(1).src1.rdata,

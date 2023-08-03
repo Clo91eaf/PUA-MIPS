@@ -13,6 +13,7 @@ class DivSignal extends Bundle {
   val signed = Output(Bool())
 }
 class MultSignal extends Bundle {
+  val ready  = Input(Bool())
   val result = Input(UInt(HILO_WID.W))
 
   val en     = Output(Bool())
@@ -59,19 +60,23 @@ class Alu extends Module {
     Seq(
       EXE_MTHI  -> Cat(src1, hilo(31, 0)),
       EXE_MTLO  -> Cat(hilo(63, 32), src1),
-      EXE_MULT  -> (io.mul.result),
-      EXE_MULTU -> (io.mul.result),
-      EXE_MADD  -> (hilo + io.mul.result),
-      EXE_MADDU -> (hilo + io.mul.result),
-      EXE_MSUB  -> (hilo - io.mul.result),
-      EXE_MSUBU -> (hilo - io.mul.result),
+      EXE_MULT  -> Mux(io.mul.ready, io.mul.result, 0.U),
+      EXE_MULTU -> Mux(io.mul.ready, io.mul.result, 0.U),
+      EXE_MADD  -> Mux(io.mul.ready, hilo + io.mul.result, 0.U),
+      EXE_MADDU -> Mux(io.mul.ready, hilo + io.mul.result, 0.U),
+      EXE_MSUB  -> Mux(io.mul.ready, hilo - io.mul.result, 0.U),
+      EXE_MSUBU -> Mux(io.mul.ready, hilo - io.mul.result, 0.U),
       EXE_DIV   -> Mux(io.div.ready, io.div.result, 0.U),
       EXE_DIVU  -> Mux(io.div.ready, io.div.result, 0.U),
     ),
   )
 
   io.mul.signed := VecInit(EXE_MULT, EXE_MADD, EXE_MSUB).contains(op)
-  io.mul.en     := VecInit(EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op)
+  io.mul.en := Mux(
+    VecInit(EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op),
+    !io.mul.ready,
+    false.B,
+  )
   io.div.signed := VecInit(EXE_DIV).contains(op)
   io.div.en     := Mux(VecInit(EXE_DIV, EXE_DIVU).contains(op), !io.div.ready, false.B)
 
@@ -107,8 +112,8 @@ class Alu extends Module {
       // 特殊指令
       EXE_SC -> 1.U,
       // 乘除法
-      EXE_MULT  -> io.mul.result(31, 0),
-      EXE_MULTU -> io.mul.result(31, 0),
+      EXE_MULT  -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
+      EXE_MULTU -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
     ),
   )
 

@@ -82,7 +82,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   decoderUnit.bpu.pred_branch   := bpu.decoder.pred_take
   decoderUnit.bpu.branch_target := bpu.decoder.branch_target
 
-  instBuffer.do_flush         := reset.asBool || ctrl.decoderUnit.do_flush
+  instBuffer.do_flush         := ctrl.decoderUnit.do_flush
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.icache_stall     := io.inst.icache_stall
   instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst

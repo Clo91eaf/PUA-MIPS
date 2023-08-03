@@ -9,4 +9,5 @@ case class CpuConfig(
     val build: Boolean = false,           // 是否为build模式
     val hasCommitBuffer: Boolean = false, // 是否有提交缓存
     val writeBufferDepth: Int = 16,
+    val mulClockNum: Int = 3,
 ) {}

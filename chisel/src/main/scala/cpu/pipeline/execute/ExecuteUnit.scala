@@ -112,16 +112,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.memoryStage.inst0.mem.sel       := accessMemCtrl.inst.map(_.mem_sel)
   io.memoryStage.inst0.mem.inst_info := accessMemCtrl.mem.out.inst_info
 
-  io.memoryStage.inst0.pc        := io.executeStage.inst0.pc
-  io.memoryStage.inst0.inst_info := io.executeStage.inst0.inst_info
-  io.memoryStage.inst0.inst_info.reg_wen := MuxLookup(
-    io.executeStage.inst0.inst_info.op,
-    io.executeStage.inst0.inst_info.reg_wen,
-    Seq(
-      EXE_MOVN -> (io.executeStage.inst0.src_info.src2_data =/= 0.U),
-      EXE_MOVZ -> (io.executeStage.inst0.src_info.src2_data === 0.U),
-    ),
-  )
+  io.memoryStage.inst0.pc            := io.executeStage.inst0.pc
+  io.memoryStage.inst0.inst_info     := io.executeStage.inst0.inst_info
   io.memoryStage.inst0.rd_info.wdata := fu.inst(0).result
   io.memoryStage.inst0.ex := Mux(
     io.executeStage.inst0.inst_info.fusel === FU_MEM,
@@ -130,16 +122,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   )
   io.memoryStage.inst0.cp0 := io.cp0.out.debug
 
-  io.memoryStage.inst1.pc        := io.executeStage.inst1.pc
-  io.memoryStage.inst1.inst_info := io.executeStage.inst1.inst_info
-  io.memoryStage.inst1.inst_info.reg_wen := MuxLookup(
-    io.executeStage.inst1.inst_info.op,
-    io.executeStage.inst1.inst_info.reg_wen,
-    Seq(
-      EXE_MOVN -> (io.executeStage.inst1.src_info.src2_data =/= 0.U),
-      EXE_MOVZ -> (io.executeStage.inst1.src_info.src2_data === 0.U),
-    ),
-  )
+  io.memoryStage.inst1.pc            := io.executeStage.inst1.pc
+  io.memoryStage.inst1.inst_info     := io.executeStage.inst1.inst_info
   io.memoryStage.inst1.rd_info.wdata := fu.inst(1).result
   io.memoryStage.inst1.ex := Mux(
     io.executeStage.inst1.inst_info.fusel === FU_MEM,
