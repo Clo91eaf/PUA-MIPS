@@ -48,13 +48,9 @@ class WriteBackUnit(implicit val config: CpuConfig) extends Module {
       Mux(io.writeBackStage.inst0.ex.flush_req, 0.U, io.writeBackStage.inst1.pc),
     )
     io.debug.wb_rf_wen := Mux(
-      reset.asBool,
-      0.U,
-      Mux(
-        clock.asBool,
-        Fill(4, io.regfile(0).wen),
-        Fill(4, io.regfile(1).wen),
-      ),
+      clock.asBool,
+      Fill(4, io.regfile(0).wen),
+      Fill(4, io.regfile(1).wen),
     )
     io.debug.wb_rf_wnum := Mux(
       clock.asBool,
