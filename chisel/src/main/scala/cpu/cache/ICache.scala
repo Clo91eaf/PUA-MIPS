@@ -51,7 +51,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(ninst)(false.B)))))
 
   val data = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
-  val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
+  val tag  = RegInit(VecInit(Seq.fill(nway)(UInt(tagWidth.W))))
 
   // * should choose next addr * //
   val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)
@@ -119,15 +119,13 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   }
 
   for { i <- 0 until nway } {
-    val tag_bram = Module(new SimpleDualPortRam(nset, tagWidth, false))
-    tag_bram.io.ren   := true.B
+    val tag_bram = Module(new LUTRam(nset, tagWidth))
     tag_bram.io.raddr := tag_raddr
     tag(i)            := tag_bram.io.rdata
 
-    tag_bram.io.wen   := tag_wstrb(i).orR
+    tag_bram.io.wen   := tag_wstrb(i)
     tag_bram.io.waddr := rset
     tag_bram.io.wdata := tag_wdata
-    tag_bram.io.wstrb := tag_wstrb(i)
   }
 
   io.cpu.icache_stall := Mux(state === s_idle && !tlb_fill, (!cache_hit_available && io.cpu.req), state =/= s_save)
@@ -215,7 +213,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
         }.otherwise {
           rready                := false.B
           data_wstrb(lru(vset)) := 0.U.asTypeOf(Vec(ninst, UInt(4.W)))
-          tag_wstrb(lru(vset))  := 0.U
+          tag_wstrb(lru(vset))  := false.B
         }
       }.elsewhen(!io.axi.r.ready) {
         state := s_idle
