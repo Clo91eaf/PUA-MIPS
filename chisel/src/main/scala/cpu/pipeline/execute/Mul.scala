@@ -53,12 +53,15 @@ class Mul(implicit val config: CpuConfig) extends Module {
     io.ready  := cnt >= config.mulClockNum.U
     io.result := signedMul.P(HILO_WID - 1, 0)
   } else {
-    val ready = RegInit(false.B)
-    when(io.start) {
-      ready := true.B
-    }.elsewhen(io.allow_to_go) {
-      ready := false.B
-    }
+    val cnt = RegInit(0.U(log2Ceil(config.mulClockNum + 1).W))
+    cnt := MuxCase(
+      cnt,
+      Seq(
+        (io.start && !io.ready) -> (cnt + 1.U),
+        io.allow_to_go          -> 0.U,
+      ),
+    )
+
     val signed   = RegInit(0.U(HILO_WID.W))
     val unsigned = RegInit(0.U(HILO_WID.W))
     when(io.start) {
@@ -66,7 +69,7 @@ class Mul(implicit val config: CpuConfig) extends Module {
       unsigned := io.src1 * io.src2
     }
     io.result := Mux(io.signed, signed, unsigned)
-    io.ready  := ready
+    io.ready  := cnt >= config.mulClockNum.U
   }
 }
 

@@ -51,7 +51,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(ninst)(false.B)))))
 
   val data = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
-  val tag  = RegInit(VecInit(Seq.fill(nway)(UInt(tagWidth.W))))
+  val tag  = RegInit(VecInit(Seq.fill(nway)(0.U(tagWidth.W))))
 
   // * should choose next addr * //
   val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)

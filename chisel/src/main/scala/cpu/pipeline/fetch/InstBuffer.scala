@@ -15,7 +15,6 @@ class BufferUnit extends Bundle {
 
 class InstBuffer(
     ninst: Int = 4,
-    depth: Int = 16,
 )(implicit val config: CpuConfig)
     extends Module {
   val io = IO(new Bundle {
@@ -24,7 +23,7 @@ class InstBuffer(
     val delay_sel_rst         = Input(Bool())
     val decoder_delay_rst     = Input(Bool())
     val execute_delay_rst     = Input(Bool())
-    val icache_stall               = Input(Bool())
+    val icache_stall          = Input(Bool())
     val jump_branch_inst      = Input(Bool()) // 译码阶段的inst0是否为跳转指令
     val inst0_is_in_delayslot = Output(Bool())
 
@@ -39,16 +38,16 @@ class InstBuffer(
     val full         = Output(Bool())
   })
   // fifo buffer
-  val buffer = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new BufferUnit()))))
+  val buffer = RegInit(VecInit(Seq.fill(config.instBufferDepth)(0.U.asTypeOf(new BufferUnit()))))
 
   // fifo ptr
-  val enq_ptr = RegInit(0.U(log2Ceil(depth).W))
-  val deq_ptr = RegInit(0.U(log2Ceil(depth).W))
-  val count   = Mux(enq_ptr - deq_ptr < 0.U, enq_ptr - deq_ptr + depth.U, enq_ptr - deq_ptr)
+  val enq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
+  val deq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
+  val count   = Mux(enq_ptr - deq_ptr < 0.U, enq_ptr - deq_ptr + config.instBufferDepth.U, enq_ptr - deq_ptr)
 
-  // depth - 1 is the last element, depth - 2 is the last second element
+  // config.instBufferDepth - 1 is the last element, config.instBufferDepth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
-  io.full         := count >= (depth - config.instFetchNum).U
+  io.full         := count >= (config.instBufferDepth - config.instFetchNum).U
   io.empty        := count === 0.U
   io.almost_empty := count === 1.U
 

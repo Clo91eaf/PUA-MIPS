@@ -10,4 +10,6 @@ case class CpuConfig(
     val hasCommitBuffer: Boolean = false, // 是否有提交缓存
     val writeBufferDepth: Int = 16,
     val mulClockNum: Int = 3,
+    val divClockNum: Int = 8,
+    val instBufferDepth: Int = 8,
 ) {}
