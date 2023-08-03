@@ -43,7 +43,7 @@ class InstBuffer(
   // fifo ptr
   val enq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
   val deq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
-  val count   = Mux(enq_ptr - deq_ptr < 0.U, enq_ptr - deq_ptr + config.instBufferDepth.U, enq_ptr - deq_ptr)
+  val count   = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
 
   // config.instBufferDepth - 1 is the last element, config.instBufferDepth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
@@ -134,4 +134,25 @@ class InstBuffer(
   }.elsewhen(io.wen(0)) {
     enq_ptr := enq_ptr + 1.U
   }
+
+  val enq_num = MuxCase(
+    0.U,
+    Seq(
+      io.wen(3) -> 4.U,
+      io.wen(2) -> 3.U,
+      io.wen(1) -> 2.U,
+      io.wen(0) -> 1.U,
+    ),
+  )
+
+  val deq_num = MuxCase(
+    0.U,
+    Seq(
+      (io.empty || delayslot_enable) -> 0.U,
+      io.ren(1)                      -> 2.U,
+      io.ren(0)                      -> 1.U,
+    ),
+  )
+
+  count := Mux(io.do_flush, 0.U, count + enq_num + config.instBufferDepth.U - deq_num)
 }

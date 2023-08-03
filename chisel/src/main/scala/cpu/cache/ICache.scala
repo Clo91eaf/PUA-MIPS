@@ -6,6 +6,7 @@ import chisel3.util._
 import memory._
 import cpu.defines._
 import cpu.CpuConfig
+import cpu.defines.Const._
 
 class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Module {
   implicit val config      = cacheConfig
@@ -50,7 +51,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   // =====================================
   val valid = RegInit(VecInit(Seq.fill(nset * nbank)(VecInit(Seq.fill(ninst)(false.B)))))
 
-  val data = Wire(Vec(nway, Vec(ninst, UInt(32.W))))
+  val data = Wire(Vec(nway, Vec(ninst, UInt(DATA_WID.W))))
   val tag  = RegInit(VecInit(Seq.fill(nway)(0.U(tagWidth.W))))
 
   // * should choose next addr * //
@@ -94,7 +95,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val inst_valid = VecInit(Seq.tabulate(ninst)(i => cache_hit_available && i.U <= (3.U - bank_offset)))
 
   val saved = RegInit(VecInit(Seq.fill(ninst)(0.U.asTypeOf(new Bundle {
-    val inst  = UInt(32.W)
+    val inst  = UInt(PC_WID.W)
     val valid = Bool()
   }))))
 
@@ -102,7 +103,7 @@ class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
 
   // bank tag ram
   for { i <- 0 until nway; j <- 0 until ninst } {
-    val bank = Module(new SimpleDualPortRam(nset * nbank, 32, byteAddressable = true))
+    val bank = Module(new SimpleDualPortRam(nset * nbank, DATA_WID, byteAddressable = true))
     bank.io.ren   := true.B
     bank.io.raddr := data_raddr
     data(i)(j)    := bank.io.rdata
