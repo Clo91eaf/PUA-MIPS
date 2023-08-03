@@ -39,13 +39,13 @@ class Core(implicit val config: CpuConfig) extends Module {
   val tlbL1D         = Module(new TlbL1D()).io
 
   tlbL1I.addr         := fetchUnit.iCache.pc
-  tlbL1I.fence        := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(executeUnit.executeStage.inst0.inst_info.op)
+  tlbL1I.fence        := executeUnit.executeStage.inst0.inst_info.tlbfence
   tlbL1I.cpu_stall    := !ctrl.fetchUnit.allow_to_go
   tlbL1I.icache_stall := io.inst.icache_stall
   tlbL1I.cache <> io.inst.tlb
 
   tlbL1D.addr         := memoryUnit.dataMemory.out.addr
-  tlbL1D.fence        := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(memoryUnit.memoryStage.inst0.inst_info.op)
+  tlbL1D.fence        := memoryUnit.memoryStage.inst0.inst_info.tlbfence
   tlbL1D.cpu_stall    := !ctrl.memoryUnit.allow_to_go
   tlbL1D.dcache_stall := io.data.dcache_stall
   tlbL1D.mem_write    := memoryUnit.dataMemory.out.wen.orR
@@ -184,11 +184,9 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   io.debug <> writeBackUnit.debug
 
-  io.inst.fence := executeUnit.memoryStage.inst0.inst_info
-    .inst(16) === 0.U && executeUnit.memoryStage.inst0.inst_info.op === EXE_CACHE
-  io.inst.fence_addr := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.data.fence := memoryUnit.writeBackStage.inst0.inst_info
-    .inst(16) === 1.U && memoryUnit.writeBackStage.inst0.inst_info.op === EXE_CACHE
+  io.inst.fence        := executeUnit.memoryStage.inst0.inst_info.ifence
+  io.inst.fence_addr   := executeUnit.memoryStage.inst0.rd_info.wdata
+  io.data.fence        := memoryUnit.writeBackStage.inst0.inst_info.dfence
   io.data.fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
   io.data.execute_addr := executeUnit.memoryStage.inst0.mem.addr
   io.inst.req          := !instBuffer.full
