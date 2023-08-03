@@ -6,10 +6,11 @@ import chisel3.util._
 import memory._
 import cpu.defines._
 import cpu.CpuConfig
+import cpu.defines.Const._
 
 class WriteBufferUnit extends Bundle {
-  val data = UInt(32.W)
-  val addr = UInt(32.W)
+  val data = UInt(DATA_WID.W)
+  val addr = UInt(DATA_ADDR_WID.W)
   val strb = UInt(4.W)
   val size = UInt(2.W)
 }
@@ -70,7 +71,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     val working = Bool()
   }))
 
-  val read_buffer  = RegInit(VecInit(Seq.fill(16)(0.U(32.W))))
+  val read_buffer  = RegInit(VecInit(Seq.fill(16)(0.U(DATA_WID.W))))
   val ar_handshake = RegInit(false.B)
   val aw_handshake = RegInit(false.B)
 
@@ -83,7 +84,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val tag_wstrb = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val tag_wdata = RegInit(0.U(tagWidth.W))
 
-  val data = Wire(Vec(nway, UInt(32.W)))
+  val data = Wire(Vec(nway, UInt(DATA_WID.W)))
   val tag  = RegInit(VecInit(Seq.fill(nway)(0.U(tagWidth.W))))
 
   val tag_compare_valid = Wire(Vec(nway, Bool()))
@@ -104,13 +105,13 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     state =/= s_save,
   )
 
-  val saved_rdata = RegInit(0.U(32.W))
+  val saved_rdata = RegInit(0.U(DATA_WID.W))
 
   // forward last stored data in data bram
   val last_waddr         = RegNext(data_waddr)
-  val last_wstrb         = RegInit(VecInit(Seq.fill(nway)(0.U(32.W))))
+  val last_wstrb         = RegInit(VecInit(Seq.fill(nway)(0.U(DATA_WID.W))))
   val last_wdata         = RegNext(data_wdata)
-  val cache_data_forward = Wire(Vec(nway, UInt(32.W)))
+  val cache_data_forward = Wire(Vec(nway, UInt(DATA_WID.W)))
 
   io.cpu.rdata := Mux(state === s_save, saved_rdata, cache_data_forward(sel))
 

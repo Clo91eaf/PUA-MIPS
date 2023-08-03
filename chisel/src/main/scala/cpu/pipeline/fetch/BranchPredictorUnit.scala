@@ -10,16 +10,16 @@ class BranchPredictorUnit(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4) extends Module
       val inst     = Input(UInt(INST_WID.W))
       val op       = Input(UInt(OP_WID.W))
       val ena      = Input(Bool())
-      val pc       = Input(UInt(32.W))
-      val pc_plus4 = Input(UInt(32.W))
+      val pc       = Input(UInt(DATA_ADDR_WID.W))
+      val pc_plus4 = Input(UInt(DATA_ADDR_WID.W))
 
       val branch        = Output(Bool())
       val pred_take     = Output(Bool())
-      val branch_target = Output(UInt(32.W))
+      val branch_target = Output(UInt(DATA_ADDR_WID.W))
     }
 
     val execute = new Bundle {
-      val pc          = Input(UInt(32.W))
+      val pc          = Input(UInt(DATA_ADDR_WID.W))
       val branch      = Input(Bool())
       val actual_take = Input(Bool())
     }

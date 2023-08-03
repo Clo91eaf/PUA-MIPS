@@ -2,6 +2,7 @@ package cpu.pipeline.fetch
 
 import chisel3._
 import chisel3.util._
+import cpu.defines.Const._
 
 class FetchUnit(
     ninst: Int = 4,
@@ -9,23 +10,23 @@ class FetchUnit(
   val io = IO(new Bundle {
     val memory = new Bundle {
       val flush    = Input(Bool())
-      val flush_pc = Input(UInt(32.W))
+      val flush_pc = Input(UInt(PC_WID.W))
     }
     val decoder = new Bundle {
       val branch = Input(Bool())
-      val target = Input(UInt(32.W))
+      val target = Input(UInt(PC_WID.W))
     }
     val execute = new Bundle {
       val branch = Input(Bool())
-      val target = Input(UInt(32.W))
+      val target = Input(UInt(PC_WID.W))
     }
     val instBuffer = new Bundle {
       val full = Input(Bool())
     }
     val iCache = new Bundle {
       val inst_valid = Input(Vec(ninst, Bool()))
-      val pc         = Output(UInt(32.W))
-      val pc_next    = Output(UInt(32.W))
+      val pc         = Output(UInt(PC_WID.W))
+      val pc_next    = Output(UInt(PC_WID.W))
     }
 
   })

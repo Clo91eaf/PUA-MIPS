@@ -24,7 +24,7 @@ class InstBuffer(
     val delay_sel_rst         = Input(Bool())
     val decoder_delay_rst     = Input(Bool())
     val execute_delay_rst     = Input(Bool())
-    val icache_stall               = Input(Bool())
+    val icache_stall          = Input(Bool())
     val jump_branch_inst      = Input(Bool()) // 译码阶段的inst0是否为跳转指令
     val inst0_is_in_delayslot = Output(Bool())
 
@@ -44,7 +44,7 @@ class InstBuffer(
   // fifo ptr
   val enq_ptr = RegInit(0.U(log2Ceil(depth).W))
   val deq_ptr = RegInit(0.U(log2Ceil(depth).W))
-  val count   = Mux(enq_ptr - deq_ptr < 0.U, enq_ptr - deq_ptr + depth.U, enq_ptr - deq_ptr)
+  val count   = RegInit(0.U(log2Ceil(depth).W))
 
   // depth - 1 is the last element, depth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
@@ -135,4 +135,25 @@ class InstBuffer(
   }.elsewhen(io.wen(0)) {
     enq_ptr := enq_ptr + 1.U
   }
+
+  val enq_num = MuxCase(
+    0.U,
+    Seq(
+      io.wen(3) -> 4.U,
+      io.wen(2) -> 3.U,
+      io.wen(1) -> 2.U,
+      io.wen(0) -> 1.U,
+    ),
+  )
+
+  val deq_num = MuxCase(
+    0.U,
+    Seq(
+      (io.empty || delayslot_enable) -> 0.U,
+      io.ren(1)                      -> 2.U,
+      io.ren(0)                      -> 1.U,
+    ),
+  )
+
+  count := Mux(io.do_flush, 0.U, count + enq_num + depth.U - deq_num)
 }
