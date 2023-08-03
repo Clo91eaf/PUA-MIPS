@@ -191,4 +191,5 @@ class Decoder extends Module {
   io.out.dfence      := inst(16) === 1.U && op === EXE_CACHE
   io.out.tlbfence    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(op)
   io.out.branch_link := VecInit(EXE_JAL, EXE_JALR, EXE_BGEZAL, EXE_BLTZAL).contains(op)
+  io.out.mem_addr    := DontCare
 }
