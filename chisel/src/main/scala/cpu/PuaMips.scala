@@ -5,11 +5,12 @@ import cpu._
 import cpu.defines._
 
 class PuaMips extends Module {
-  implicit val cpuConfig = new CpuConfig()
+  implicit val config = new CpuConfig()
   val io = IO(new Bundle {
-    val ext_int = Input(UInt(6.W))
-    val axi     = new AXI()
-    val debug   = new DEBUG()
+    val ext_int   = Input(UInt(6.W))
+    val axi       = new AXI()
+    val debug     = new DEBUG()
+    val statistic = if (!config.build) Some(new GlobalStatic()) else None
   })
   val core  = Module(new Core())
   val cache = Module(new Cache())
@@ -20,4 +21,11 @@ class PuaMips extends Module {
   io.ext_int <> core.io.ext_int
   io.debug <> core.io.debug
   io.axi <> cache.io.axi
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  if (!config.build) {
+    io.statistic.get <> core.io.statistic.get
+  }
 }

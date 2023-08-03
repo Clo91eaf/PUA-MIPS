@@ -13,10 +13,11 @@ class WriteBackUnit(implicit val config: CpuConfig) extends Module {
     val writeBackStage = Input(new MemoryUnitWriteBackUnit())
     val regfile        = Output(Vec(config.commitNum, new RegWrite()))
     val debug          = new DEBUG()
+    val statistic      = if (!config.build) Some(new SocStatic()) else None
   })
 
-  io.regfile(0).wen :=
-    io.writeBackStage.inst0.inst_info.reg_wen && io.ctrl.allow_to_go && !io.writeBackStage.inst0.ex.flush_req
+  io.regfile(0)
+    .wen := io.writeBackStage.inst0.inst_info.reg_wen && io.ctrl.allow_to_go && !io.writeBackStage.inst0.ex.flush_req
   io.regfile(0).waddr := io.writeBackStage.inst0.inst_info.reg_waddr
   io.regfile(0).wdata := io.writeBackStage.inst0.rd_info.wdata
 
@@ -63,9 +64,15 @@ class WriteBackUnit(implicit val config: CpuConfig) extends Module {
       io.regfile(1).wdata,
     )
   }
-  io.debug.cp0_cause  := io.writeBackStage.inst0.cp0.cp0_cause
-  io.debug.cp0_count  := io.writeBackStage.inst0.cp0.cp0_count
-  io.debug.cp0_random := io.writeBackStage.inst0.cp0.cp0_random
-  io.debug.int        := io.writeBackStage.inst0.ex.excode === EX_INT
-  io.debug.commit     := io.ctrl.allow_to_go
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  if (!config.build) {
+    io.statistic.get.cp0_cause  := io.writeBackStage.inst0.cp0.cp0_cause
+    io.statistic.get.cp0_count  := io.writeBackStage.inst0.cp0.cp0_count
+    io.statistic.get.cp0_random := io.writeBackStage.inst0.cp0.cp0_random
+    io.statistic.get.int        := io.writeBackStage.inst0.ex.excode === EX_INT
+    io.statistic.get.commit     := io.ctrl.allow_to_go
+  }
 }

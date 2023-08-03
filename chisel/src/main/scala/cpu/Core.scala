@@ -16,10 +16,11 @@ import mmu._
 
 class Core(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val ext_int = Input(UInt(6.W))
-    val inst    = new Cache_ICache()
-    val data    = new Cache_DCache()
-    val debug   = new DEBUG()
+    val ext_int   = Input(UInt(6.W))
+    val inst      = new Cache_ICache()
+    val data      = new Cache_DCache()
+    val debug     = new DEBUG()
+    val statistic = if (!config.build) Some(new GlobalStatic()) else None
   })
 
   val ctrl           = Module(new Ctrl()).io
@@ -194,4 +195,12 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.inst.req          := !instBuffer.full
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
   io.data.cpu_stall    := !ctrl.memoryUnit.allow_to_go
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  if (!config.build) {
+    io.statistic.get.soc <> writeBackUnit.statistic.get
+    io.statistic.get.bpu <> executeUnit.statistic.get
+  }
 }

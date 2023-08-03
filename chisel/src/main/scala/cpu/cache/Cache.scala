@@ -5,7 +5,7 @@ import chisel3.util._
 import cpu.defines._
 import cpu.CpuConfig
 
-class Cache(implicit cpuConfig: CpuConfig) extends Module {
+class Cache(implicit config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val inst = Flipped(new Cache_ICache())
     val data = Flipped(new Cache_DCache())

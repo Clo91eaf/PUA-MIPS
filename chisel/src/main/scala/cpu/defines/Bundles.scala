@@ -301,14 +301,10 @@ class AXI extends Bundle {
   val b  = Flipped(Decoupled(new AXI_B())) // write response channel
 }
 
-class DEBUG extends Bundle {
+
+class DEBUG(implicit config: CpuConfig) extends Bundle {
   val wb_pc       = Output(UInt(32.W))
   val wb_rf_wen   = Output(UInt(4.W))
   val wb_rf_wnum  = Output(UInt(5.W))
   val wb_rf_wdata = Output(UInt(32.W))
-  val cp0_count   = Output(UInt(32.W))
-  val cp0_random  = Output(UInt(32.W))
-  val cp0_cause   = Output(UInt(32.W))
-  val int         = Output(Bool())
-  val commit      = Output(Bool())
 }

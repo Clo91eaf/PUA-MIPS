@@ -8,8 +8,7 @@ import cpu.defines._
 import cpu.CpuConfig
 import cpu.defines.Const._
 
-class ICache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Module {
-  implicit val config      = cacheConfig
+class ICache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Module {
   val nway: Int            = cacheConfig.nway
   val nset: Int            = cacheConfig.nset
   val nbank: Int           = cacheConfig.nbank

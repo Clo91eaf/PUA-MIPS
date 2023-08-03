@@ -114,7 +114,7 @@ class InstBuffer(
     deq_ptr := 0.U
   }.elsewhen(io.empty || delayslot_enable) {
     deq_ptr := deq_ptr
-  }.elsewhen(io.ren(0) && io.ren(1)) {
+  }.elsewhen(io.ren(1)) {
     deq_ptr := deq_ptr + 2.U
   }.elsewhen(io.ren(0)) {
     deq_ptr := deq_ptr + 1.U
@@ -125,11 +125,11 @@ class InstBuffer(
 
   when(io.do_flush) {
     enq_ptr := 0.U
-  }.elsewhen(io.wen(0) && io.wen(1) && io.wen(2) && io.wen(3)) {
+  }.elsewhen(io.wen(3)) {
     enq_ptr := enq_ptr + 4.U
-  }.elsewhen(io.wen(0) && io.wen(1) && io.wen(2)) {
+  }.elsewhen(io.wen(2)) {
     enq_ptr := enq_ptr + 3.U
-  }.elsewhen(io.wen(0) && io.wen(1)) {
+  }.elsewhen(io.wen(1)) {
     enq_ptr := enq_ptr + 2.U
   }.elsewhen(io.wen(0)) {
     enq_ptr := enq_ptr + 1.U

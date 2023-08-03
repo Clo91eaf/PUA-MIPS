@@ -3,8 +3,11 @@ package cpu.pipeline.fetch
 import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
+import cpu.CpuConfig
 
-class BranchPredictorUnit(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4) extends Module {
+class BranchPredictorUnit(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
+    config: CpuConfig,
+) extends Module {
   val io = IO(new Bundle {
     val decoder = new Bundle {
       val inst     = Input(UInt(INST_WID.W))

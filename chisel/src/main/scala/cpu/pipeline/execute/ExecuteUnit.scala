@@ -35,6 +35,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
       val inst0_bd = Input(Bool())
     }
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
+
+    val statistic = if (!config.build) Some(new BranchPredictorUnitStatic()) else None
   })
 
   val fu            = Module(new Fu()).io
@@ -82,6 +84,9 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).ex.in      := io.executeStage.inst1.ex
   fu.cp0_rdata          := io.cp0.out.cp0_rdata
   fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
+  if (!config.build) {
+    io.statistic.get <> fu.statistic.get
+  }
 
   io.bpu.pc          := io.executeStage.inst0.pc
   io.bpu.branch      := fu.branch.branch

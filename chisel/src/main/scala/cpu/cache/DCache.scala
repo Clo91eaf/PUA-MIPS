@@ -15,7 +15,7 @@ class WriteBufferUnit extends Bundle {
   val size = UInt(2.W)
 }
 
-class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Module {
+class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Module {
   val nway: Int          = cacheConfig.nway
   val nset: Int          = cacheConfig.nset
   val nbank: Int         = cacheConfig.nbank

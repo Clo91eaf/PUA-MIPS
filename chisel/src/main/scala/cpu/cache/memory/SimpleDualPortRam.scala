@@ -17,8 +17,8 @@ import firrtl.options.TargetDirAnnotation
   * @param cpuCfg
   *   the implicit configuration for simulation and elaboration
   */
-class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean)(
-  implicit val cpuConfig: CpuConfig
+class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean)(implicit
+    val config: CpuConfig,
 ) extends Module {
   require(isPow2(depth))
   require(
@@ -38,7 +38,7 @@ class SimpleDualPortRam(depth: Int, width: Int, byteAddressable: Boolean)(
     val wdata = Input(UInt(width.W))
   })
 
-  if (cpuConfig.build) {
+  if (config.build) {
     val memory = Module(
       new SimpleDualPortRamIP(
         wdataidth = width,

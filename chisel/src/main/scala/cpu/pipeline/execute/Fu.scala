@@ -35,6 +35,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
       val branch      = Output(Bool())
       val pred_fail   = Output(Bool())
     }
+
+    val statistic = if (!config.build) Some(new BranchPredictorUnitStatic()) else None
   })
 
   val alu        = Seq.fill(config.decoderNum)(Module(new Alu()))
@@ -99,5 +101,20 @@ class Fu(implicit val config: CpuConfig) extends Module {
     hilo.wdata := Cat(alu(0).io.hilo.wdata(63, 32), alu(1).io.hilo.wdata(31, 0))
   }.elsewhen(io.inst(0).inst_info.mtlo && io.inst(1).inst_info.mthi) {
     hilo.wdata := Cat(alu(1).io.hilo.wdata(63, 32), alu(0).io.hilo.wdata(31, 0))
+  }
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  if (!config.build) {
+    val branch_count = RegInit(0.U(64.W))
+    val failed_count = RegInit(0.U(64.W))
+    val branch = VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(
+      io.inst(0).inst_info.op,
+    )
+    when(branch) { branch_count := branch_count + 1.U }
+    when(branchCtrl.out.pred_fail) { branch_count := failed_count + 1.U }
+    io.statistic.get.branch := branch_count
+    io.statistic.get.failed := failed_count
   }
 }
