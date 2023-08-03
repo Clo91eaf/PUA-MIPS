@@ -15,7 +15,6 @@ class BufferUnit extends Bundle {
 
 class InstBuffer(
     ninst: Int = 4,
-    depth: Int = 16,
 )(implicit val config: CpuConfig)
     extends Module {
   val io = IO(new Bundle {
@@ -39,16 +38,16 @@ class InstBuffer(
     val full         = Output(Bool())
   })
   // fifo buffer
-  val buffer = RegInit(VecInit(Seq.fill(depth)(0.U.asTypeOf(new BufferUnit()))))
+  val buffer = RegInit(VecInit(Seq.fill(config.instBufferDepth)(0.U.asTypeOf(new BufferUnit()))))
 
   // fifo ptr
-  val enq_ptr = RegInit(0.U(log2Ceil(depth).W))
-  val deq_ptr = RegInit(0.U(log2Ceil(depth).W))
-  val count   = RegInit(0.U(log2Ceil(depth).W))
+  val enq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
+  val deq_ptr = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
+  val count   = RegInit(0.U(log2Ceil(config.instBufferDepth).W))
 
-  // depth - 1 is the last element, depth - 2 is the last second element
+  // config.instBufferDepth - 1 is the last element, config.instBufferDepth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
-  io.full         := count >= (depth - config.instFetchNum).U
+  io.full         := count >= (config.instBufferDepth - config.instFetchNum).U
   io.empty        := count === 0.U
   io.almost_empty := count === 1.U
 
@@ -155,5 +154,5 @@ class InstBuffer(
     ),
   )
 
-  count := Mux(io.do_flush, 0.U, count + enq_num + depth.U - deq_num)
+  count := Mux(io.do_flush, 0.U, count + enq_num + config.instBufferDepth.U - deq_num)
 }

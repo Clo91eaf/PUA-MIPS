@@ -123,7 +123,14 @@ class Div(implicit config: CpuConfig) extends Module {
       Cat(unsignedDiv.m_axis_dout_tdata(DATA_WID - 1, 0), unsignedDiv.m_axis_dout_tdata(HILO_WID - 1, DATA_WID))
     io.result := Mux(io.signed, signedRes, unsignedRes)
   } else {
-    io.ready := true.B
+    val cnt = RegInit(0.U(log2Ceil(config.divClockNum + 1).W))
+    cnt := MuxCase(
+      cnt,
+      Seq(
+        (io.start && !io.ready) -> (cnt + 1.U),
+        io.allow_to_go          -> 0.U,
+      ),
+    )
 
     val div_signed = io.signed
 
@@ -139,12 +146,15 @@ class Div(implicit config: CpuConfig) extends Module {
     val quotient_abs  = dividend_abs / divisor_abs
     val remainder_abs = dividend_abs - quotient_abs * divisor_abs
 
-    val quotient  = Wire(SInt(32.W))
-    val remainder = Wire(SInt(32.W))
+    val quotient  = RegInit(0.S(32.W))
+    val remainder = RegInit(0.S(32.W))
 
-    quotient  := Mux(quotient_signed, (-quotient_abs).asSInt, quotient_abs.asSInt)
-    remainder := Mux(remainder_signed, (-remainder_abs).asSInt, remainder_abs.asSInt)
+    when(io.start) {
+      quotient  := Mux(quotient_signed, (-quotient_abs).asSInt, quotient_abs.asSInt)
+      remainder := Mux(remainder_signed, (-remainder_abs).asSInt, remainder_abs.asSInt)
+    }
 
+    io.ready  := cnt >= config.divClockNum.U
     io.result := Cat(remainder, quotient)
   }
 }
