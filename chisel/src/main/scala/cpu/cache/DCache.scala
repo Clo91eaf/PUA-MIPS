@@ -84,7 +84,7 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
   val tag_wdata = RegInit(0.U(tagWidth.W))
 
   val data = Wire(Vec(nway, UInt(32.W)))
-  val tag  = Wire(Vec(nway, UInt(tagWidth.W)))
+  val tag  = RegInit(VecInit(Seq.fill(nway)(0.U(tagWidth.W))))
 
   val tag_compare_valid = Wire(Vec(nway, Bool()))
   val cache_hit         = tag_compare_valid.contains(true.B)
@@ -126,15 +126,13 @@ class DCache(cacheConfig: CacheConfig)(implicit cpuConfig: CpuConfig) extends Mo
     bank_ram.io.wdata := data_wdata
     bank_ram.io.wstrb := data_wstrb(i)
 
-    val tag_ram = Module(new SimpleDualPortRam(nset, tagWidth, byteAddressable = false))
-    tag_ram.io.ren   := true.B
+    val tag_ram = Module(new LUTRam(nset, tagWidth))
     tag_ram.io.raddr := tag_raddr
     tag(i)           := tag_ram.io.rdata
 
-    tag_ram.io.wen   := tag_wstrb(i).orR
+    tag_ram.io.wen   := tag_wstrb(i)
     tag_ram.io.waddr := replace.set
     tag_ram.io.wdata := tag_wdata
-    tag_ram.io.wstrb := tag_wstrb(i)
 
     tag_compare_valid(i) := tag(i) === io.cpu.tlb.tag && valid(pset)(i) && io.cpu.tlb.translation_ok
     cache_data_forward(i) := Mux(
