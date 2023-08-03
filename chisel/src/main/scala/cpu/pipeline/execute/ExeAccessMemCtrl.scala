@@ -45,8 +45,8 @@ class ExeAccessMemCtrl(implicit val config: CpuConfig) extends Module {
     ),
   )
   val mem_addr = Wire(Vec(config.fuNum, UInt(DATA_ADDR_WID.W)))
-  mem_addr(0) := io.inst(0).src_info.src1_data + Util.signedExtend(io.inst(0).inst_info.inst(15, 0))
-  mem_addr(1) := io.inst(1).src_info.src1_data + Util.signedExtend(io.inst(1).inst_info.inst(15, 0))
+  mem_addr(0) := io.inst(0).inst_info.mem_addr
+  mem_addr(1) := io.inst(1).inst_info.mem_addr
   io.mem.out.addr := MuxCase(
     0.U,
     Seq(

@@ -187,7 +187,9 @@ class Decoder extends Module {
   io.out.rmem        := fusel === FU_MEM && reg_wen.orR
   io.out.mul         := fusel === FU_MUL
   io.out.div         := fusel === FU_DIV
+  io.out.ifence      := inst(16) === 0.U && op === EXE_CACHE
+  io.out.dfence      := inst(16) === 1.U && op === EXE_CACHE
+  io.out.tlbfence    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(op)
   io.out.branch_link := VecInit(EXE_JAL, EXE_JALR, EXE_BGEZAL, EXE_BLTZAL).contains(op)
-  io.out.mthi        := op === EXE_MTHI
-  io.out.mtlo        := op === EXE_MTLO
+  io.out.mem_addr    := DontCare
 }
