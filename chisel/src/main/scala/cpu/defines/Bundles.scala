@@ -51,8 +51,6 @@ class InstInfo extends Bundle {
   val wmem        = Bool()
   val mul         = Bool()
   val div         = Bool()
-  val mthi        = Bool()
-  val mtlo        = Bool()
   val branch_link = Bool()
   val inst        = UInt(INST_WID.W)
 }

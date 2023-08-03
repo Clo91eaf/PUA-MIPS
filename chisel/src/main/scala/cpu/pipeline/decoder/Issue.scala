@@ -44,7 +44,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
   val raw_reg =
     inst0.reg_wen && (inst0.reg_waddr === inst1.reg1_raddr && inst1.reg1_ren || inst0.reg_waddr === inst1.reg2_raddr && inst1.reg2_ren)
   val raw_hilo = VecInit(FU_DIV, FU_MUL, FU_MTHILO).contains(inst0.fusel) &&
-    VecInit(FU_DIV, FU_MUL, FU_MFHILO).contains(inst1.fusel)
+    VecInit(FU_DIV, FU_MUL, FU_MFHILO, FU_MTHILO).contains(inst1.fusel)
   val raw_cp0 =
     inst0.op === EXE_MTC0 && inst1.op === EXE_MFC0 && inst0.cp0_addr === inst1.cp0_addr
   val data_conflict = raw_reg || raw_hilo || raw_cp0 || load_stall

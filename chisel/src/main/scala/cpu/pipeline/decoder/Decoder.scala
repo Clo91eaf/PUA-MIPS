@@ -188,6 +188,4 @@ class Decoder extends Module {
   io.out.mul         := fusel === FU_MUL
   io.out.div         := fusel === FU_DIV
   io.out.branch_link := VecInit(EXE_JAL, EXE_JALR, EXE_BGEZAL, EXE_BLTZAL).contains(op)
-  io.out.mthi        := op === EXE_MTHI
-  io.out.mtlo        := op === EXE_MTLO
 }
