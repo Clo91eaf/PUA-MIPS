@@ -133,6 +133,8 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       EXE_MOVZ -> (io.executeStage.inst0.src_info.src2_data === 0.U),
     ),
   )
+  io.executeStage.inst0.inst_info.mem_addr :=
+    io.executeStage.inst0.src_info.src1_data + Util.signedExtend(io.executeStage.inst0.inst_info.inst(15, 0))
   io.executeStage.inst0.src_info.src1_data := Mux(
     inst_info(0).reg1_ren,
     forwardCtrl.out.inst(0).src1.rdata,
@@ -182,6 +184,8 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       EXE_MOVZ -> (io.executeStage.inst1.src_info.src2_data === 0.U),
     ),
   )
+  io.executeStage.inst1.inst_info.mem_addr :=
+    io.executeStage.inst1.src_info.src1_data + Util.signedExtend(io.executeStage.inst1.inst_info.inst(15, 0))
   io.executeStage.inst1.src_info.src1_data := Mux(
     inst_info(1).reg1_ren,
     forwardCtrl.out.inst(1).src1.rdata,

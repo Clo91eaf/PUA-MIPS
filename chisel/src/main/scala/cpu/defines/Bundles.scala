@@ -55,6 +55,7 @@ class InstInfo extends Bundle {
   val ifence      = Bool()
   val dfence      = Bool()
   val tlbfence    = Bool()
+  val mem_addr    = UInt(DATA_ADDR_WID.W)
   val inst        = UInt(INST_WID.W)
 }
 
