@@ -52,6 +52,9 @@ class InstInfo extends Bundle {
   val mul         = Bool()
   val div         = Bool()
   val branch_link = Bool()
+  val ifence      = Bool()
+  val dfence      = Bool()
+  val tlbfence    = Bool()
   val inst        = UInt(INST_WID.W)
 }
 
