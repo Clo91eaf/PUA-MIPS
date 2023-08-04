@@ -14,11 +14,11 @@ class SocStatic extends Bundle {
 }
 
 class BranchPredictorUnitStatic extends Bundle {
-  val branch = Output(Bool())
-  val failed = Output(Bool())
+  val branch = Output(UInt(32.W))
+  val failed = Output(UInt(32.W))
 }
 
 class GlobalStatic extends Bundle {
-  val soc = new SocStatic()
-  val bpu = new BranchPredictorUnitStatic()
+  val soc   = new SocStatic()
+  val bpu   = new BranchPredictorUnitStatic()
 }

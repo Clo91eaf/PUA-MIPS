@@ -5,7 +5,8 @@ import chisel3.util._
 import cpu.defines.Const._
 import cpu.CpuConfig
 
-class BranchPredictorUnit(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
+// TODO add RAS
+class BranchPredictorUnit(PHT_DEPTH: Int = 7, BHT_DEPTH: Int = 5)(implicit
     config: CpuConfig,
 ) extends Module {
   val io = IO(new Bundle {
@@ -34,18 +35,16 @@ class BranchPredictorUnit(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
 
-  val BHT       = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(6.W))))
-  val PHT       = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_not_taken)))
+  val BHT       = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(PHT_DEPTH.W))))
+  val PHT       = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_taken)))
   val BHT_index = io.decoder.pc(1 + BHT_DEPTH, 2)
-  val BHR_value = BHT(BHT_index)
-  val PHT_index = BHR_value
+  val PHT_index = BHT(BHT_index)
 
   io.decoder.pred_take := io.decoder.ena && io.decoder.branch && (PHT(PHT_index) === weakly_taken || PHT(
     PHT_index,
   ) === strongly_taken)
   val update_BHT_index = io.execute.pc(1 + BHT_DEPTH, 2)
-  val update_BHR_value = BHT(update_BHT_index)
-  val update_PHT_index = update_BHR_value
+  val update_PHT_index = BHT(update_BHT_index)
 
   when(io.execute.branch) {
     BHT(update_BHT_index) := Cat(BHT(update_BHT_index)(5, 1), io.execute.actual_take)
