@@ -36,7 +36,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     }
     val memoryStage = Output(new ExecuteUnitMemoryUnit())
 
-    val statistic = if (!config.build) Some(new BranchPredictorUnitStatic()) else None
+    val statistic = if (!config.build) Some(new BranchPredictorUnitStatistic()) else None
   })
 
   val fu            = Module(new Fu()).io

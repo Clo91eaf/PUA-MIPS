@@ -36,7 +36,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
       val pred_fail   = Output(Bool())
     }
 
-    val statistic = if (!config.build) Some(new BranchPredictorUnitStatic()) else None
+    val statistic = if (!config.build) Some(new BranchPredictorUnitStatistic()) else None
   })
 
   val alu        = Seq.fill(config.decoderNum)(Module(new Alu()))
