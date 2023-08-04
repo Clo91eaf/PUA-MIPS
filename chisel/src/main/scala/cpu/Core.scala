@@ -77,9 +77,9 @@ class Core(implicit val config: CpuConfig) extends Module {
   bpu.decoder.pc                := decoderUnit.bpu.pc
   bpu.decoder.pc_plus4          := decoderUnit.bpu.pc + 4.U
   bpu.execute.pc                := executeUnit.bpu.pc
-  bpu.execute.branch            := executeUnit.bpu.branch_inst
-  bpu.execute.actual_take       := executeUnit.bpu.branch
-  decoderUnit.bpu.branch_inst   := bpu.decoder.branch
+  bpu.execute.branch_inst       := executeUnit.bpu.branch_inst
+  bpu.execute.branch            := executeUnit.bpu.branch
+  decoderUnit.bpu.branch_inst   := bpu.decoder.branch_inst
   decoderUnit.bpu.pred_branch   := bpu.decoder.pred_take
   decoderUnit.bpu.branch_target := bpu.decoder.branch_target
 
