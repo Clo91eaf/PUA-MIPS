@@ -77,11 +77,13 @@ class PesudoBranchPredictor(implicit config: CpuConfig) extends Module {
 }
 
 class AdaptiveTwoLevelPredictor(
+    // 全局预测的参数↓
     GloblePredictMode: Boolean = false, //  false: 局部预测，true: 全局预测
     GHR_DEPTH: Int = 4,                 // 可以记录的历史记录个数
     PC_HASH_WID: Int = 4,               // 取得PC的宽度
-    PHT_DEPTH: Int = 6,                 // 可以记录的历史个数
-    BHT_DEPTH: Int = 4,                 // 取得PC的宽度
+    // 局部预测的参数↓
+    PHT_DEPTH: Int = 6, // 可以记录的历史个数
+    BHT_DEPTH: Int = 4, // 取得PC的宽度
 )(implicit
     config: CpuConfig,
 ) extends Module {
