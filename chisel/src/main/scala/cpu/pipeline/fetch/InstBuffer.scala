@@ -86,11 +86,9 @@ class InstBuffer(
       )
     }.otherwise {
       delayslot_enable := false.B
-      delayslot_line   := 0.U.asTypeOf(new BufferUnit())
     }
   }.elsewhen(!delayslot_stall && io.ren(0)) {
     delayslot_enable := false.B
-    delayslot_line   := 0.U.asTypeOf(new BufferUnit())
   }
 
   // * deq * //
