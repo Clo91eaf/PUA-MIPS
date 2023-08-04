@@ -61,8 +61,8 @@ module mycpu_top (
     output [31:0]      debug_cp0_cause,
     output             debug_int,
     output             debug_commit,
-    output             statistic_bpu_branch,
-    output             statistic_bpu_failed
+    output [31:0]      statistic_bpu_branch,
+    output [31:0]      statistic_bpu_failed
 );
 
 PuaMips puamips(
