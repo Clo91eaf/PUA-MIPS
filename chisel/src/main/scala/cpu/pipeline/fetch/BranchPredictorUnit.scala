@@ -82,8 +82,9 @@ class AdaptiveTwoLevelPredictor(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
 ) extends Module {
   val io = IO(new BranchPredictorIO())
 
-  io.decoder.branch := VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL)
-    .contains(io.decoder.op)
+  // TODO:下面可以修改成并行
+  io.decoder.branch :=
+    VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
   io.decoder.branch_target := io.decoder.pc_plus4 + Cat(Fill(14, io.decoder.inst(15)), io.decoder.inst(15, 0), 0.U(2.W))
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
@@ -100,14 +101,14 @@ class AdaptiveTwoLevelPredictor(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
   val update_PHT_index = BHT(update_BHT_index)
 
   when(io.execute.branch) {
-    BHT(update_BHT_index) := Cat(io.execute.actual_take, BHT(update_BHT_index)(PHT_DEPTH - 1, 1))
+    BHT(update_BHT_index) := Cat(BHT(update_BHT_index)(PHT_DEPTH - 2, 0), io.execute.branch)
     switch(PHT(update_PHT_index)) {
       is(strongly_not_taken) {
-        PHT(update_PHT_index) := Mux(io.execute.actual_take, weakly_not_taken, strongly_not_taken)
+        PHT(update_PHT_index) := Mux(io.execute.branch, weakly_not_taken, strongly_not_taken)
       }
-      is(weakly_not_taken) { PHT(update_PHT_index) := Mux(io.execute.actual_take, weakly_taken, strongly_not_taken) }
-      is(weakly_taken) { PHT(update_PHT_index) := Mux(io.execute.actual_take, strongly_taken, weakly_not_taken) }
-      is(strongly_taken) { PHT(update_PHT_index) := Mux(io.execute.actual_take, strongly_taken, weakly_taken) }
+      is(weakly_not_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, weakly_taken, strongly_not_taken) }
+      is(weakly_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, strongly_taken, weakly_not_taken) }
+      is(strongly_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, strongly_taken, weakly_taken) }
     }
   }
 }
