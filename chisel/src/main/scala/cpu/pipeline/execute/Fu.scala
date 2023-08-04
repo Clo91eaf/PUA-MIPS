@@ -102,13 +102,10 @@ class Fu(implicit val config: CpuConfig) extends Module {
   // statistic
   // ===----------------------------------------------------------------===
   if (!config.build) {
-    val branch_count = RegInit(0.U(64.W))
-    val failed_count = RegInit(0.U(64.W))
-    val branch = VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(
-      io.inst(0).inst_info.op,
-    )
-    when(branch) { branch_count := branch_count + 1.U }
-    when(branchCtrl.out.pred_fail) { branch_count := failed_count + 1.U }
+    val branch_count = RegInit(0.U(32.W))
+    val failed_count = RegInit(0.U(32.W))
+    when(io.inst(0).inst_info.fusel === FU_BR) { branch_count := branch_count + 1.U }
+    when(branchCtrl.out.pred_fail) { failed_count := failed_count + 1.U }
     io.statistic.get.branch := branch_count
     io.statistic.get.failed := failed_count
   }
