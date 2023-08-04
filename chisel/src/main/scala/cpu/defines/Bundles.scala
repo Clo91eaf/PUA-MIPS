@@ -163,15 +163,15 @@ class Tlb_DCache extends Bundle {
 
 // cpu to icache
 class Cache_ICache(
-    ninst: Int = 4,
+    implicit val config: CpuConfig,
 ) extends Bundle {
   // read inst request from cpu
   val req  = Output(Bool())
-  val addr = Output(Vec(ninst, UInt(32.W))) // virtual address and next virtual address
+  val addr = Output(Vec(config.instFetchNum, UInt(32.W))) // virtual address and next virtual address
 
   // read inst result
-  val inst       = Input(Vec(ninst, UInt(32.W)))
-  val inst_valid = Input(Vec(ninst, Bool()))
+  val inst       = Input(Vec(config.instFetchNum, UInt(32.W)))
+  val inst_valid = Input(Vec(config.instFetchNum, Bool()))
 
   // control
   val cpu_stall    = Output(Bool())

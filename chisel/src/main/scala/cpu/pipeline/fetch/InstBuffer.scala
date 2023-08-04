@@ -13,10 +13,7 @@ class BufferUnit extends Bundle {
   val addr = UInt(32.W)
 }
 
-class InstBuffer(
-    ninst: Int = 4,
-)(implicit val config: CpuConfig)
-    extends Module {
+class InstBuffer(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val do_flush              = Input(Bool())
     val flush_delay_slot      = Input(Bool())
@@ -30,8 +27,8 @@ class InstBuffer(
     val ren  = Input(Vec(config.decoderNum, Bool()))
     val read = Output(Vec(config.decoderNum, new BufferUnit()))
 
-    val wen   = Input(Vec(ninst, Bool()))
-    val write = Input(Vec(ninst, new BufferUnit()))
+    val wen   = Input(Vec(config.instFetchNum, Bool()))
+    val write = Input(Vec(config.instFetchNum, new BufferUnit()))
 
     val empty        = Output(Bool())
     val almost_empty = Output(Bool())
@@ -119,29 +116,22 @@ class InstBuffer(
   }
 
   // * enq * //
-  for { i <- 0 until ninst } { when(io.wen(i)) { buffer(enq_ptr + i.U) := io.write(i) } }
+  val enq_num = Wire(UInt(log2Ceil(config.instFetchNum + 1).W))
+
+  for { i <- 0 until config.instFetchNum } { when(io.wen(i)) { buffer(enq_ptr + i.U) := io.write(i) } }
 
   when(io.do_flush) {
     enq_ptr := 0.U
-  }.elsewhen(io.wen(3)) {
-    enq_ptr := enq_ptr + 4.U
-  }.elsewhen(io.wen(2)) {
-    enq_ptr := enq_ptr + 3.U
-  }.elsewhen(io.wen(1)) {
-    enq_ptr := enq_ptr + 2.U
-  }.elsewhen(io.wen(0)) {
-    enq_ptr := enq_ptr + 1.U
+  }.otherwise {
+    enq_ptr := enq_ptr + enq_num
   }
 
-  val enq_num = MuxCase(
-    0.U,
-    Seq(
-      io.wen(3) -> 4.U,
-      io.wen(2) -> 3.U,
-      io.wen(1) -> 2.U,
-      io.wen(0) -> 1.U,
-    ),
-  )
+  enq_num := 0.U
+  for (i <- 0 until config.instFetchNum) {
+    when(io.wen(i)) {
+      enq_num := (i + 1).U
+    }
+  }
 
   val deq_num = MuxCase(
     0.U,

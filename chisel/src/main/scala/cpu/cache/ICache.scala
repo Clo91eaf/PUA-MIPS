@@ -19,7 +19,7 @@ class ICache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val indexWidth: Int      = cacheConfig.indexWidth
   val offsetWidth: Int     = cacheConfig.offsetWidth
   val io = IO(new Bundle {
-    val cpu = Flipped(new Cache_ICache(ninst))
+    val cpu = Flipped(new Cache_ICache())
     val axi = new ICache_AXIInterface()
   })
   require(isPow2(ninst), "ninst must be power of 2")
