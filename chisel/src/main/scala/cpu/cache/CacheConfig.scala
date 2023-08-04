@@ -16,7 +16,7 @@ case class CacheConfig(
   val tagvWidth       = tagWidth + 1                     // 21
   val bankWidthBits   = bankWidth * 8                    // 64
   val burstSize       = 16
-  val ninst           = 4
+  val ninst           = 4                                // TODO:改成可随意修改的参数
   require(isPow2(nset))
   require(isPow2(nway))
   require(isPow2(nbank))

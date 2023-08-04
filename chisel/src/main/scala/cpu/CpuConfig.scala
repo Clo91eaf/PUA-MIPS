@@ -1,7 +1,7 @@
 package cpu
 
 case class CpuConfig(
-    val build: Boolean = false,            // 是否为build模式
+    val build: Boolean = false,           // 是否为build模式
     val hasCommitBuffer: Boolean = false, // 是否有提交缓存
     val decoderNum: Int = 2,              // 同时访问寄存器的指令数
     val commitNum: Int = 2,               // 同时提交的指令数
@@ -12,5 +12,5 @@ case class CpuConfig(
     val divClockNum: Int = 8,             // 除法器的时钟周期数
     val instBufferDepth: Int = 16,        // 指令缓存深度
     // val branchPredictor: String = "pesudo" // adaptive, pesudo
-    val branchPredictor: String = "adaptive" // adaptive, pesudo
+    val branchPredictor: String = "adaptive", // adaptive, pesudo
 ) {}

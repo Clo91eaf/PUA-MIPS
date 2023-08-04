@@ -69,8 +69,9 @@ class Core(implicit val config: CpuConfig) extends Module {
   fetchUnit.iCache.inst_valid := io.inst.inst_valid
   io.inst.addr(0)             := fetchUnit.iCache.pc
   io.inst.addr(1)             := fetchUnit.iCache.pc_next
-  io.inst.addr(2)             := fetchUnit.iCache.pc_next + 4.U
-  io.inst.addr(3)             := fetchUnit.iCache.pc_next + 8.U
+  for (i <- 2 until config.instFetchNum) {
+    io.inst.addr(i) := fetchUnit.iCache.pc_next + ((i - 1) * 4).U
+  }
 
   bpu.decoder.ena         := ctrl.decoderUnit.allow_to_go
   bpu.decoder.op          := decoderUnit.bpu.decoded_inst0.op
@@ -108,26 +109,14 @@ class Core(implicit val config: CpuConfig) extends Module {
     decoderUnit.instBuffer.inst(i).bits.pc          := instBuffer.read(i).addr
     decoderUnit.instBuffer.inst(i).bits.inst        := instBuffer.read(i).data
   }
-  instBuffer.wen(0)               := io.inst.inst_valid(0)
-  instBuffer.wen(1)               := io.inst.inst_valid(1)
-  instBuffer.wen(2)               := io.inst.inst_valid(2)
-  instBuffer.wen(3)               := io.inst.inst_valid(3)
-  instBuffer.write(0).tlb.refill  := tlbL1I.tlb1.refill
-  instBuffer.write(1).tlb.refill  := tlbL1I.tlb1.refill
-  instBuffer.write(2).tlb.refill  := tlbL1I.tlb1.refill
-  instBuffer.write(3).tlb.refill  := tlbL1I.tlb1.refill
-  instBuffer.write(0).tlb.invalid := tlbL1I.tlb1.invalid
-  instBuffer.write(1).tlb.invalid := tlbL1I.tlb1.invalid
-  instBuffer.write(2).tlb.invalid := tlbL1I.tlb1.invalid
-  instBuffer.write(3).tlb.invalid := tlbL1I.tlb1.invalid
-  instBuffer.write(0).addr        := io.inst.addr(0)
-  instBuffer.write(1).addr        := io.inst.addr(0) + 4.U
-  instBuffer.write(2).addr        := io.inst.addr(0) + 8.U
-  instBuffer.write(3).addr        := io.inst.addr(0) + 12.U
-  instBuffer.write(0).data        := io.inst.inst(0)
-  instBuffer.write(1).data        := io.inst.inst(1)
-  instBuffer.write(2).data        := io.inst.inst(2)
-  instBuffer.write(3).data        := io.inst.inst(3)
+
+  for (i <- 0 until config.instFetchNum) {
+    instBuffer.wen(i)               := io.inst.inst_valid(i)
+    instBuffer.write(i).tlb.refill  := tlbL1I.tlb1.refill
+    instBuffer.write(i).tlb.invalid := tlbL1I.tlb1.invalid
+    instBuffer.write(i).addr        := io.inst.addr(0) + (i * 4).U
+    instBuffer.write(i).data        := io.inst.inst(i)
+  }
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
   decoderUnit.instBuffer.info.almost_empty          := instBuffer.almost_empty

@@ -76,38 +76,98 @@ class PesudoBranchPredictor(implicit config: CpuConfig) extends Module {
   io.decoder.pred_branch := io.decoder.ena && io.decoder.branch_inst && pred_branch
 }
 
-class AdaptiveTwoLevelPredictor(PHT_DEPTH: Int = 6, BHT_DEPTH: Int = 4)(implicit
+class AdaptiveTwoLevelPredictor(
+    // 全局预测的参数↓
+    GloblePredictMode: Boolean = false, //  false: 局部预测，true: 全局预测
+    GHR_DEPTH: Int = 4,                 // 可以记录的历史记录个数
+    PC_HASH_WID: Int = 4,               // 取得PC的宽度
+    // 局部预测的参数↓
+    PHT_DEPTH: Int = 6, // 可以记录的历史个数
+    BHT_DEPTH: Int = 4, // 取得PC的宽度
+)(implicit
     config: CpuConfig,
 ) extends Module {
   val io = IO(new BranchPredictorIO())
 
+  val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
+
   // TODO:下面可以修改成并行
   io.decoder.branch_inst :=
     VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
-  io.decoder.branch_target := io.decoder.pc_plus4 + Cat(Fill(14, io.decoder.inst(15)), io.decoder.inst(15, 0), 0.U(2.W))
+  io.decoder.branch_target := io.decoder.pc_plus4 + Cat(
+    Fill(14, io.decoder.inst(15)),
+    io.decoder.inst(15, 0),
+    0.U(2.W),
+  )
 
-  val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
+  if (!GloblePredictMode) {
+    // 局部预测模式
 
-  val BHT       = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(PHT_DEPTH.W))))
-  val PHT       = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_taken)))
-  val BHT_index = io.decoder.pc(1 + BHT_DEPTH, 2)
-  val PHT_index = BHT(BHT_index)
+    val bht       = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(PHT_DEPTH.W))))
+    val pht       = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_taken)))
+    val bht_index = io.decoder.pc(1 + BHT_DEPTH, 2)
+    val pht_index = bht(bht_index)
 
-  io.decoder.pred_branch := io.decoder.ena && io.decoder.branch_inst && (PHT(PHT_index) === weakly_taken || PHT(
-    PHT_index,
-  ) === strongly_taken)
-  val update_BHT_index = io.execute.pc(1 + BHT_DEPTH, 2)
-  val update_PHT_index = BHT(update_BHT_index)
+    io.decoder.pred_branch :=
+      io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(pht_index) === strongly_taken)
+    val update_bht_index = io.execute.pc(1 + BHT_DEPTH, 2)
+    val update_pht_index = bht(update_bht_index)
 
-  when(io.execute.branch_inst) {
-    BHT(update_BHT_index) := Cat(BHT(update_BHT_index)(PHT_DEPTH - 2, 0), io.execute.branch)
-    switch(PHT(update_PHT_index)) {
-      is(strongly_not_taken) {
-        PHT(update_PHT_index) := Mux(io.execute.branch, weakly_not_taken, strongly_not_taken)
+    when(io.execute.branch_inst) {
+      bht(update_bht_index) := Cat(bht(update_bht_index)(PHT_DEPTH - 2, 0), io.execute.branch)
+      switch(pht(update_pht_index)) {
+        is(strongly_not_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, weakly_not_taken, strongly_not_taken)
+        }
+        is(weakly_not_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, weakly_taken, strongly_not_taken)
+        }
+        is(weakly_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, strongly_taken, weakly_not_taken)
+        }
+        is(strongly_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, strongly_taken, weakly_taken)
+        }
       }
-      is(weakly_not_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, weakly_taken, strongly_not_taken) }
-      is(weakly_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, strongly_taken, weakly_not_taken) }
-      is(strongly_taken) { PHT(update_PHT_index) := Mux(io.execute.branch, strongly_taken, weakly_taken) }
+    }
+  } else {
+    // 全局预测模式
+
+    val ghr = RegInit(0.U(GHR_DEPTH.W))                                                  // global history register
+    val gcp = Seq.fill(2)(RegInit(0.U(GHR_DEPTH.W)))                                     // ghr check point
+    val pht = RegInit(VecInit(Seq.fill(1 << (GHR_DEPTH + PC_HASH_WID))(strongly_taken))) // pattern history table
+
+    ghr    := Cat(ghr(GHR_DEPTH - 2, 1), io.decoder.pred_branch)
+    gcp(0) := Cat(ghr(GHR_DEPTH - 2, 1), !io.decoder.pred_branch)
+    gcp(1) := gcp(0)
+
+    val pht_index = Wire(UInt((GHR_DEPTH + PC_HASH_WID).W))
+    pht_index := Cat(io.decoder.pc(PC_HASH_WID + 1, 2), ghr)
+    val update_pht_index = Wire(UInt((GHR_DEPTH + PC_HASH_WID).W))
+    update_pht_index := Cat(io.execute.pc(PC_HASH_WID + 1, 2), ghr)
+
+    io.decoder.pred_branch :=
+      io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(pht_index) === strongly_taken)
+
+    when(io.execute.branch_inst) {
+      when(ghr(1) =/= io.execute.branch) {
+        ghr              := gcp(1)
+        update_pht_index := Cat(io.execute.pc(PC_HASH_WID + 1, 2), gcp(1))
+      }
+      switch(pht(update_pht_index)) {
+        is(strongly_not_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, weakly_not_taken, strongly_not_taken)
+        }
+        is(weakly_not_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, weakly_taken, strongly_not_taken)
+        }
+        is(weakly_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, strongly_taken, weakly_not_taken)
+        }
+        is(strongly_taken) {
+          pht(update_pht_index) := Mux(io.execute.branch, strongly_taken, weakly_taken)
+        }
+      }
     }
   }
 }
