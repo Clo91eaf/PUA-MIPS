@@ -62,7 +62,31 @@ module mycpu_top (
     output             statistic_soc_int,
     output             statistic_soc_commit,
     output [31:0]      statistic_bpu_branch,
-    output [31:0]      statistic_bpu_failed
+    output [31:0]      statistic_bpu_failed,
+    output             statistic_bpu_instInfo_inst_valid,
+    output             statistic_bpu_instInfo_reg1_ren,
+    output [4:0]       statistic_bpu_instInfo_reg1_raddr,
+    output             statistic_bpu_instInfo_reg2_ren,
+    output [4:0]       statistic_bpu_instInfo_reg2_raddr,
+    output [2:0]       statistic_bpu_instInfo_fusel,
+    output [6:0]       statistic_bpu_instInfo_op,
+    output             statistic_bpu_instInfo_reg_wen,
+    output [4:0]       statistic_bpu_instInfo_reg_waddr,
+    output [31:0]      statistic_bpu_instInfo_imm32,
+    output [7:0]       statistic_bpu_instInfo_cp0_addr,
+    output             statistic_bpu_instInfo_dual_issue,
+    output             statistic_bpu_instInfo_whilo,
+    output             statistic_bpu_instInfo_rmem,
+    output             statistic_bpu_instInfo_wmem,
+    output             statistic_bpu_instInfo_mul,
+    output             statistic_bpu_instInfo_div,
+    output             statistic_bpu_instInfo_branch_link,
+    output             statistic_bpu_instInfo_ifence,
+    output             statistic_bpu_instInfo_dfence,
+    output             statistic_bpu_instInfo_tlbfence,
+    output [31:0]      statistic_bpu_instInfo_mem_addr,
+    output [31:0]      statistic_bpu_instInfo_inst,
+    output             statistic_bpu_isBranch
 );
 
 PuaMips puamips(
@@ -115,7 +139,32 @@ PuaMips puamips(
   .io_statistic_soc_int           (statistic_soc_int        ),
   .io_statistic_soc_commit        (statistic_soc_commit     ),
   .io_statistic_bpu_branch        (statistic_bpu_branch     ),
-  .io_statistic_bpu_failed        (statistic_bpu_failed     )
+  .io_statistic_bpu_failed        (statistic_bpu_failed     ),
+  .io_statistic_bpu_instInfo_inst_valid(statistic_bpu_instInfo_inst_valid),
+  .io_statistic_bpu_instInfo_reg1_ren(statistic_bpu_instInfo_reg1_ren),
+  .io_statistic_bpu_instInfo_reg1_raddr(statistic_bpu_instInfo_reg1_raddr),
+  .io_statistic_bpu_instInfo_reg2_ren(statistic_bpu_instInfo_reg2_ren),
+  .io_statistic_bpu_instInfo_reg2_raddr(statistic_bpu_instInfo_reg2_raddr),
+  .io_statistic_bpu_instInfo_fusel(statistic_bpu_instInfo_fusel),
+  .io_statistic_bpu_instInfo_op(statistic_bpu_instInfo_op),
+  .io_statistic_bpu_instInfo_reg_wen(statistic_bpu_instInfo_reg_wen),
+  .io_statistic_bpu_instInfo_reg_waddr(statistic_bpu_instInfo_reg_waddr),
+  .io_statistic_bpu_instInfo_imm32(statistic_bpu_instInfo_imm32),
+  .io_statistic_bpu_instInfo_cp0_addr(statistic_bpu_instInfo_cp0_addr),
+  .io_statistic_bpu_instInfo_dual_issue(statistic_bpu_instInfo_dual_issue),
+  .io_statistic_bpu_instInfo_whilo(statistic_bpu_instInfo_whilo),
+  .io_statistic_bpu_instInfo_rmem(statistic_bpu_instInfo_rmem),
+  .io_statistic_bpu_instInfo_wmem(statistic_bpu_instInfo_wmem),
+  .io_statistic_bpu_instInfo_mul(statistic_bpu_instInfo_mul),
+  .io_statistic_bpu_instInfo_div(statistic_bpu_instInfo_div),
+  .io_statistic_bpu_instInfo_branch_link(statistic_bpu_instInfo_branch_link),
+  .io_statistic_bpu_instInfo_ifence(statistic_bpu_instInfo_ifence),
+  .io_statistic_bpu_instInfo_dfence(statistic_bpu_instInfo_dfence),
+  .io_statistic_bpu_instInfo_tlbfence(statistic_bpu_instInfo_tlbfence),
+  .io_statistic_bpu_instInfo_mem_addr(statistic_bpu_instInfo_mem_addr),
+  .io_statistic_bpu_instInfo_inst(statistic_bpu_instInfo_inst),
+  .io_statistic_bpu_isBranch(statistic_bpu_isBranch)
 );
+
 
 endmodule

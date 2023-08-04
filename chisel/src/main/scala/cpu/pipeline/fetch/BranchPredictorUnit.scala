@@ -4,9 +4,79 @@ import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
 import cpu.CpuConfig
+import cpu.pipeline.decoder.Src12Read
 
-// TODO add RAS
-class BranchPredictorUnit(
+class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
+  val decoder = new Bundle {
+    val inst     = Input(UInt(INST_WID.W))
+    val op       = Input(UInt(OP_WID.W))
+    val ena      = Input(Bool())
+    val pc       = Input(UInt(DATA_ADDR_WID.W))
+    val pc_plus4 = Input(UInt(DATA_ADDR_WID.W))
+
+    val rs1 = Input(UInt(REG_ADDR_WID.W))
+    val rs2 = Input(UInt(REG_ADDR_WID.W))
+
+    val branch_inst   = Output(Bool())
+    val pred_branch   = Output(Bool())
+    val branch_target = Output(UInt(DATA_ADDR_WID.W))
+  }
+
+  val execute = new Bundle {
+    val pc          = Input(UInt(DATA_ADDR_WID.W))
+    val branch_inst = Input(Bool())
+    val branch      = Input(Bool())
+  }
+
+  val regfile = if (config.branchPredictor == "pesudo") Some(new Src12Read()) else None
+}
+
+class BranchPredictorUnit(implicit config: CpuConfig) extends Module {
+  val io = IO(new BranchPredictorIO())
+
+  if (config.branchPredictor == "adaptive") {
+    val adaptive_predictor = Module(new AdaptiveTwoLevelPredictor())
+    io <> adaptive_predictor.io
+  }
+
+  if (config.branchPredictor == "pesudo") {
+    val pesudo_predictor = Module(new PesudoBranchPredictor())
+    io <> pesudo_predictor.io
+  }
+}
+
+class PesudoBranchPredictor(implicit config: CpuConfig) extends Module {
+  val io = IO(new BranchPredictorIO())
+  io.decoder.branch_inst := VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL)
+    .contains(io.decoder.op)
+  io.decoder.branch_target := io.decoder.pc_plus4 + Cat(
+    Fill(14, io.decoder.inst(15)),
+    io.decoder.inst(15, 0),
+    0.U(2.W),
+  )
+
+  io.regfile.get.src1.raddr := io.decoder.rs1
+  io.regfile.get.src2.raddr := io.decoder.rs2
+  val (src1, src2) = (io.regfile.get.src1.rdata, io.regfile.get.src2.rdata)
+  val pred_branch = MuxLookup(
+    io.decoder.op,
+    false.B,
+    Seq(
+      EXE_BEQ    -> (src1 === src2),
+      EXE_BNE    -> (src1 =/= src2),
+      EXE_BGTZ   -> (!src1(31) && (src1 =/= 0.U)),
+      EXE_BLEZ   -> (src1(31) || src1 === 0.U),
+      EXE_BGEZ   -> (!src1(31)),
+      EXE_BGEZAL -> (!src1(31)),
+      EXE_BLTZ   -> (src1(31)),
+      EXE_BLTZAL -> (src1(31)),
+    ),
+  )
+
+  io.decoder.pred_branch := io.decoder.ena && io.decoder.branch_inst && pred_branch
+}
+
+class AdaptiveTwoLevelPredictor(
     GloblePredictMode: Boolean = true, //  false: 局部预测，true: 全局预测
     PHT_DEPTH: Int = 6,                // 可以记录的历史个数
     BHT_DEPTH: Int = 4,                // 取得PC的宽度
@@ -14,25 +84,7 @@ class BranchPredictorUnit(
 )(implicit
     config: CpuConfig,
 ) extends Module {
-  val io = IO(new Bundle {
-    val decoder = new Bundle {
-      val inst     = Input(UInt(INST_WID.W))
-      val op       = Input(UInt(OP_WID.W))
-      val ena      = Input(Bool())
-      val pc       = Input(UInt(DATA_ADDR_WID.W))
-      val pc_plus4 = Input(UInt(DATA_ADDR_WID.W))
-
-      val branch_inst   = Output(Bool())
-      val pred_take     = Output(Bool())
-      val branch_target = Output(UInt(DATA_ADDR_WID.W))
-    }
-
-    val execute = new Bundle {
-      val pc          = Input(UInt(DATA_ADDR_WID.W))
-      val branch      = Input(Bool())
-      val branch_inst = Input(Bool())
-    }
-  })
+  val io = IO(new BranchPredictorIO())
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
 
@@ -53,7 +105,7 @@ class BranchPredictorUnit(
     val bht_index = io.decoder.pc(1 + BHT_DEPTH, 2)
     val pht_index = bht(bht_index)
 
-    io.decoder.pred_take :=
+    io.decoder.pred_branch :=
       io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(pht_index) === strongly_taken)
     val update_BHT_index = io.execute.pc(1 + BHT_DEPTH, 2)
     val update_PHT_index = bht(update_BHT_index)
@@ -81,10 +133,10 @@ class BranchPredictorUnit(
     val gcp = Seq.fill(2)(RegInit(0.U(GHR_DEPTH.W)))                     // ghr check point
     val pht = RegInit(VecInit(Seq.fill(1 << GHR_DEPTH)(strongly_taken))) // pattern history table
 
-    ghr    := Cat(ghr(GHR_DEPTH - 2, 1), io.decoder.pred_take)
-    gcp(0) := Cat(ghr(GHR_DEPTH - 2, 1), !io.decoder.pred_take)
+    ghr    := Cat(ghr(GHR_DEPTH - 2, 1), io.decoder.pred_branch)
+    gcp(0) := Cat(ghr(GHR_DEPTH - 2, 1), !io.decoder.pred_branch)
     gcp(1) := gcp(0)
-    io.decoder.pred_take :=
+    io.decoder.pred_branch :=
       io.decoder.ena && io.decoder.branch_inst && (pht(ghr) === weakly_taken || pht(ghr) === strongly_taken)
 
     when(io.execute.branch_inst) {

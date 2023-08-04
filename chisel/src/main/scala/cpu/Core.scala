@@ -13,6 +13,7 @@ import pipeline.memory._
 import pipeline.writeback._
 import ctrl._
 import mmu._
+import chisel3.util.experimental.decode.decoder
 
 class Core(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
@@ -71,16 +72,21 @@ class Core(implicit val config: CpuConfig) extends Module {
   io.inst.addr(2)             := fetchUnit.iCache.pc_next + 4.U
   io.inst.addr(3)             := fetchUnit.iCache.pc_next + 8.U
 
-  bpu.decoder.ena               := ctrl.decoderUnit.allow_to_go
-  bpu.decoder.op                := decoderUnit.bpu.decoded_inst0.op
-  bpu.decoder.inst              := decoderUnit.bpu.decoded_inst0.inst
-  bpu.decoder.pc                := decoderUnit.bpu.pc
-  bpu.decoder.pc_plus4          := decoderUnit.bpu.pc + 4.U
-  bpu.execute.pc                := executeUnit.bpu.pc
-  bpu.execute.branch_inst       := executeUnit.bpu.branch_inst
-  bpu.execute.branch            := executeUnit.bpu.branch
+  bpu.decoder.ena         := ctrl.decoderUnit.allow_to_go
+  bpu.decoder.op          := decoderUnit.bpu.decoded_inst0.op
+  bpu.decoder.inst        := decoderUnit.bpu.decoded_inst0.inst
+  bpu.decoder.rs1         := decoderUnit.bpu.decoded_inst0.reg1_raddr
+  bpu.decoder.rs2         := decoderUnit.bpu.decoded_inst0.reg2_raddr
+  bpu.decoder.pc          := decoderUnit.bpu.pc
+  bpu.decoder.pc_plus4    := decoderUnit.bpu.pc + 4.U
+  bpu.execute.pc          := executeUnit.bpu.pc
+  bpu.execute.branch_inst := executeUnit.bpu.branch_inst
+  bpu.execute.branch      := executeUnit.bpu.branch
+  if (config.branchPredictor == "pesudo") {
+    bpu.regfile.get <> regfile.bpu.get
+  }
   decoderUnit.bpu.branch_inst   := bpu.decoder.branch_inst
-  decoderUnit.bpu.pred_branch   := bpu.decoder.pred_take
+  decoderUnit.bpu.pred_branch   := bpu.decoder.pred_branch
   decoderUnit.bpu.branch_target := bpu.decoder.branch_target
 
   instBuffer.do_flush         := ctrl.decoderUnit.do_flush

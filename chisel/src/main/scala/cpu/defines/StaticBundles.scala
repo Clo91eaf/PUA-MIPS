@@ -16,6 +16,9 @@ class SocStatic extends Bundle {
 class BranchPredictorUnitStatic extends Bundle {
   val branch = Output(UInt(32.W))
   val failed = Output(UInt(32.W))
+  val instInfo = Output(new InstInfo())
+  val isBranch = Output(Bool())
+  val success = Output(Bool())
 }
 
 class GlobalStatic extends Bundle {

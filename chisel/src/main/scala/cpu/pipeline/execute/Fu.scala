@@ -108,5 +108,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
     when(branchCtrl.out.pred_fail) { failed_count := failed_count + 1.U }
     io.statistic.get.branch := branch_count
     io.statistic.get.failed := failed_count
+    io.statistic.get.instInfo := io.inst(0).inst_info
+    io.statistic.get.isBranch := io.inst(0).inst_info.fusel === FU_BR
+    io.statistic.get.success := !branchCtrl.out.pred_fail
   }
 }

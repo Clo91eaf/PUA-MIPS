@@ -84,9 +84,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).ex.in      := io.executeStage.inst1.ex
   fu.cp0_rdata          := io.cp0.out.cp0_rdata
   fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
-  if (!config.build) {
-    io.statistic.get <> fu.statistic.get
-  }
+  
 
   io.bpu.pc          := io.executeStage.inst0.pc
   io.bpu.branch      := fu.branch.branch
@@ -148,4 +146,10 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.decoderUnit.forward(1).exe_rmem := io.memoryStage.inst1.inst_info.rmem &&
     io.memoryStage.inst1.inst_info.reg_wen
 
+  // ===----------------------------------------------------------------=== 
+  // statistic
+  // ===----------------------------------------------------------------=== 
+  if (!config.build) {
+    io.statistic.get <> fu.statistic.get
+  }
 }
