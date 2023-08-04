@@ -29,6 +29,7 @@ class BranchPredictorUnit(PHT_DEPTH: Int = 7, BHT_DEPTH: Int = 5)(implicit
     }
   })
 
+  // TODO:下面可以修改成并行
   io.decoder.branch_inst :=
     VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
   io.decoder.branch_target := io.decoder.pc_plus4 + Cat(Fill(14, io.decoder.inst(15)), io.decoder.inst(15, 0), 0.U(2.W))
@@ -47,7 +48,7 @@ class BranchPredictorUnit(PHT_DEPTH: Int = 7, BHT_DEPTH: Int = 5)(implicit
   val update_PHT_index = BHT(update_BHT_index)
 
   when(io.execute.branch_inst) {
-    BHT(update_BHT_index) := Cat(BHT(update_BHT_index)(5, 1), io.execute.branch)
+    BHT(update_BHT_index) := Cat(BHT(update_BHT_index)(PHT_DEPTH - 2, 0), io.execute.branch)
     switch(PHT(update_PHT_index)) {
       is(strongly_not_taken) {
         PHT(update_PHT_index) := Mux(io.execute.branch, weakly_not_taken, strongly_not_taken)
