@@ -11,6 +11,5 @@ case class CpuConfig(
     val mulClockNum: Int = 3,             // 乘法器的时钟周期数
     val divClockNum: Int = 8,             // 除法器的时钟周期数
     val instBufferDepth: Int = 16,        // 指令缓存深度
-    // val branchPredictor: String = "pesudo" // adaptive, pesudo
-    val branchPredictor: String = "adaptive", // adaptive, pesudo
-) {}
+    val branchPredictor: String = "adaptive", // adaptive, pesudo, global
+)

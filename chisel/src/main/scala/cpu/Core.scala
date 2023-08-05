@@ -21,7 +21,7 @@ class Core(implicit val config: CpuConfig) extends Module {
     val inst      = new Cache_ICache()
     val data      = new Cache_DCache()
     val debug     = new DEBUG()
-    val statistic = if (!config.build) Some(new GlobalStatic()) else None
+    val statistic = if (!config.build) Some(new GlobalStatistic()) else None
   })
 
   val ctrl           = Module(new Ctrl()).io

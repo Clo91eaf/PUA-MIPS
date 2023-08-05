@@ -13,7 +13,7 @@ class WriteBackUnit(implicit val config: CpuConfig) extends Module {
     val writeBackStage = Input(new MemoryUnitWriteBackUnit())
     val regfile        = Output(Vec(config.commitNum, new RegWrite()))
     val debug          = new DEBUG()
-    val statistic      = if (!config.build) Some(new SocStatic()) else None
+    val statistic      = if (!config.build) Some(new SocStatistic()) else None
   })
 
   io.regfile(0)

@@ -25,5 +25,21 @@ test:
 	sbt "Test / runMain cpu.testMain"
 	cp ./generated/Core.v ../../PUA/mycpu/0core
 
+define TASK
+	sbt "runMain Elaborate $(1)"
+	mv ./generated/PuaMips.v ./tmp/PuaMips_$(1).v
+endef
+
+tmp/BranchPredictorUnit_$(BHT_DEPTH)_$(PHT_DEPTH).v: src/main/scala/cpu/pipeline/fetch/BranchPredictorConfig.scala
+	@echo 'package cpu.pipeline.fetch' > $<
+	@echo 'case class BranchPredictorConfig(' >> $<
+	@echo 'val bhtDepth: Int = $(BHT_DEPTH),' >> $<
+	@echo 'val phtDepth: Int = $(PHT_DEPTH),' >> $<
+	@echo ')' >> $<
+	sbt 'runMain Elaborate'
+	cp ./generated/BranchPredictorUnit.v $@
+
+loop:tmp/BranchPredictorUnit_$(BHT_DEPTH)_$(PHT_DEPTH).v
+
 # Makefile targets
 .PHONY: get run wave
