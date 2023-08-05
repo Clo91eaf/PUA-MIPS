@@ -30,7 +30,7 @@ class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
 
 class DataForwardToDecoderUnit extends Bundle {
   val exe      = new RegWrite()
-  val exe_rmem = Bool()
+  val mem_wreg = Bool()
   val mem      = new RegWrite()
 }
 
@@ -119,7 +119,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   for (i <- 0 until (config.decoderNum)) {
     decoder(i).io.in.inst      := inst(i)
     issue.decodeInst(i)        := inst_info(i)
-    issue.execute(i).mem_ren   := io.forward(i).exe_rmem
+    issue.execute(i).mem_wreg  := io.forward(i).mem_wreg
     issue.execute(i).reg_waddr := io.forward(i).exe.waddr
   }
 

@@ -27,8 +27,8 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
         Vec(
           config.fuNum,
           new Bundle {
-            val exe      = new RegWrite()
-            val exe_rmem = Bool()
+            val exe          = new RegWrite()
+            val exe_mem_wreg = Bool()
           },
         ),
       )
@@ -42,9 +42,9 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   val fu            = Module(new Fu()).io
   val accessMemCtrl = Module(new ExeAccessMemCtrl()).io
 
-  io.ctrl.inst(0).mem_ren   := io.executeStage.inst0.inst_info.rmem
+  io.ctrl.inst(0).mem_wreg  := io.executeStage.inst0.inst_info.mem_wreg
   io.ctrl.inst(0).reg_waddr := io.executeStage.inst0.inst_info.reg_waddr
-  io.ctrl.inst(1).mem_ren   := io.executeStage.inst1.inst_info.rmem
+  io.ctrl.inst(1).mem_wreg  := io.executeStage.inst1.inst_info.mem_wreg
   io.ctrl.inst(1).reg_waddr := io.executeStage.inst1.inst_info.reg_waddr
   io.ctrl.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)
@@ -84,7 +84,6 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.inst(1).ex.in      := io.executeStage.inst1.ex
   fu.cp0_rdata          := io.cp0.out.cp0_rdata
   fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
-  
 
   io.bpu.pc          := io.executeStage.inst0.pc
   io.bpu.branch      := fu.branch.branch
@@ -134,21 +133,19 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
     fu.inst(1).ex.out,
   )
 
-  io.decoderUnit.forward(0).exe.wen   := io.memoryStage.inst0.inst_info.reg_wen
-  io.decoderUnit.forward(0).exe.waddr := io.memoryStage.inst0.inst_info.reg_waddr
-  io.decoderUnit.forward(0).exe.wdata := io.memoryStage.inst0.rd_info.wdata // TODO:这里可能有问题,是否得使用fu的结果
-  io.decoderUnit.forward(0).exe_rmem := io.memoryStage.inst0.inst_info.rmem &&
-    io.memoryStage.inst0.inst_info.reg_wen
+  io.decoderUnit.forward(0).exe.wen      := io.memoryStage.inst0.inst_info.reg_wen
+  io.decoderUnit.forward(0).exe.waddr    := io.memoryStage.inst0.inst_info.reg_waddr
+  io.decoderUnit.forward(0).exe.wdata    := io.memoryStage.inst0.rd_info.wdata // TODO:这里可能有问题,是否得使用fu的结果
+  io.decoderUnit.forward(0).exe_mem_wreg := io.memoryStage.inst0.inst_info.mem_wreg
 
-  io.decoderUnit.forward(1).exe.wen   := io.memoryStage.inst1.inst_info.reg_wen
-  io.decoderUnit.forward(1).exe.waddr := io.memoryStage.inst1.inst_info.reg_waddr
-  io.decoderUnit.forward(1).exe.wdata := io.memoryStage.inst1.rd_info.wdata
-  io.decoderUnit.forward(1).exe_rmem := io.memoryStage.inst1.inst_info.rmem &&
-    io.memoryStage.inst1.inst_info.reg_wen
+  io.decoderUnit.forward(1).exe.wen      := io.memoryStage.inst1.inst_info.reg_wen
+  io.decoderUnit.forward(1).exe.waddr    := io.memoryStage.inst1.inst_info.reg_waddr
+  io.decoderUnit.forward(1).exe.wdata    := io.memoryStage.inst1.rd_info.wdata
+  io.decoderUnit.forward(1).exe_mem_wreg := io.memoryStage.inst1.inst_info.mem_wreg
 
-  // ===----------------------------------------------------------------=== 
+  // ===----------------------------------------------------------------===
   // statistic
-  // ===----------------------------------------------------------------=== 
+  // ===----------------------------------------------------------------===
   if (!config.build) {
     io.statistic.get <> fu.statistic.get
   }

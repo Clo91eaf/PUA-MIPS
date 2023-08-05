@@ -134,8 +134,10 @@ class Decoder extends Module {
       LWR   -> List(INST_VALID, READ_ENABLE,  READ_ENABLE,  FU_MEM, EXE_LWR, WRITE_ENABLE,  WRA_T2, IMM_N, DUAL_ISSUE),
       SWL   -> List(INST_VALID, READ_ENABLE,  READ_ENABLE,  FU_MEM, EXE_SWL, WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
       SWR   -> List(INST_VALID, READ_ENABLE,  READ_ENABLE,  FU_MEM, EXE_SWR, WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
+      
       LL    -> List(INST_VALID, READ_ENABLE,  READ_DISABLE, FU_MEM, EXE_LL,  WRITE_ENABLE,  WRA_T2, IMM_N, DUAL_ISSUE),
       SC    -> List(INST_VALID, READ_ENABLE,  READ_ENABLE,  FU_MEM, EXE_SC,  WRITE_ENABLE,  WRA_T2, IMM_N, DUAL_ISSUE),
+      
       SYNC  -> List(INST_VALID, READ_DISABLE, READ_DISABLE, FU_EX,  EXE_NOP, WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
       PREF  -> List(INST_VALID, READ_DISABLE, READ_DISABLE, FU_ALU, EXE_NOP, WRITE_ENABLE,  WRA_X,  IMM_N, DUAL_ISSUE),
       PREFX -> List(INST_VALID, READ_DISABLE, READ_DISABLE, FU_ALU, EXE_NOP, WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
@@ -183,7 +185,7 @@ class Decoder extends Module {
   io.out.dual_issue  := dual_issue
   io.out.whilo       := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(fusel)
   io.out.inst        := inst
-  io.out.wmem        := fusel === FU_MEM && !reg_wen.orR
+  io.out.wmem        := fusel === FU_MEM && (!reg_wen.orR || op === EXE_SC)
   io.out.rmem        := fusel === FU_MEM && reg_wen.orR
   io.out.mul         := fusel === FU_MUL
   io.out.div         := fusel === FU_DIV
@@ -192,4 +194,5 @@ class Decoder extends Module {
   io.out.tlbfence    := VecInit(EXE_MTC0, EXE_TLBWI, EXE_TLBWR).contains(op)
   io.out.branch_link := VecInit(EXE_JAL, EXE_JALR, EXE_BGEZAL, EXE_BLTZAL).contains(op)
   io.out.mem_addr    := DontCare
+  io.out.mem_wreg    := VecInit(EXE_LB, EXE_LBU, EXE_LH, EXE_LHU, EXE_LW, EXE_LL, EXE_LWL, EXE_LWR).contains(op)
 }
