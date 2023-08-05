@@ -48,6 +48,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   dataMemoryAccess.memoryUnit.in.ex(0)     := io.memoryStage.inst0.ex
   dataMemoryAccess.memoryUnit.in.ex(1)     := io.memoryStage.inst1.ex
   dataMemoryAccess.dataMemory.in.rdata     := io.dataMemory.in.rdata
+  dataMemoryAccess.memoryUnit.in.llbit     := io.memoryStage.inst0.mem.llbit
   io.dataMemory.out                        := dataMemoryAccess.dataMemory.out
 
   io.decoderUnit(0).wen   := io.writeBackStage.inst0.inst_info.reg_wen

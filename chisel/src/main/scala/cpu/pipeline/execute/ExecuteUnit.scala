@@ -113,6 +113,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   io.memoryStage.inst0.mem.wdata     := accessMemCtrl.mem.out.wdata
   io.memoryStage.inst0.mem.sel       := accessMemCtrl.inst.map(_.mem_sel)
   io.memoryStage.inst0.mem.inst_info := accessMemCtrl.mem.out.inst_info
+  io.memoryStage.inst0.mem.llbit     := fu.llbit
 
   io.memoryStage.inst0.pc            := io.executeStage.inst0.pc
   io.memoryStage.inst0.inst_info     := io.executeStage.inst0.inst_info

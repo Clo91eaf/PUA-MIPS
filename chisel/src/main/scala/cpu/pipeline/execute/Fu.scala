@@ -35,6 +35,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
       val branch      = Output(Bool())
       val pred_fail   = Output(Bool())
     }
+    val llbit = Output(Bool())
 
     val statistic = if (!config.build) Some(new BranchPredictorUnitStatistic()) else None
   })
@@ -44,6 +45,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
   val div        = Module(new Div()).io
   val hilo       = Module(new HiLo()).io
   val branchCtrl = Module(new BranchCtrl()).io
+  val llbit      = Module(new LLbit()).io
 
   branchCtrl.in.inst_info   := io.inst(0).inst_info
   branchCtrl.in.src_info    := io.inst(0).src_info
@@ -59,6 +61,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
     alu(i).io.mul.ready         := mul.ready
     alu(i).io.div.ready         := div.ready
     alu(i).io.div.result        := div.result
+    alu(i).io.cp0_rdata         := io.cp0_rdata(i)
+    alu(i).io.llbit             := llbit.rdata
     io.inst(i).ex.out           := io.inst(i).ex.in
     io.inst(i).ex.out.flush_req := io.inst(i).ex.in.flush_req || alu(i).io.overflow
     io.inst(i).ex.out.excode := MuxCase(
@@ -69,8 +73,6 @@ class Fu(implicit val config: CpuConfig) extends Module {
       ),
     )
   }
-  alu(0).io.cp0_rdata := io.cp0_rdata(0)
-  alu(1).io.cp0_rdata := io.cp0_rdata(1)
 
   mul.src1        := Mux(io.inst(0).mul_en, io.inst(0).src_info.src1_data, io.inst(1).src_info.src1_data)
   mul.src2        := Mux(io.inst(0).mul_en, io.inst(0).src_info.src2_data, io.inst(1).src_info.src2_data)
@@ -98,6 +100,13 @@ class Fu(implicit val config: CpuConfig) extends Module {
     (io.inst(1).hilo_wen && !io.inst(1).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
 
+  // TODO:单发射执行ll、sc
+  llbit.do_flush := io.ctrl.do_flush
+  llbit.wen := io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
+    io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC
+  llbit.wdata := io.inst(0).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_LL
+  io.llbit    := llbit.rdata
+
   // ===----------------------------------------------------------------===
   // statistic
   // ===----------------------------------------------------------------===
@@ -106,10 +115,10 @@ class Fu(implicit val config: CpuConfig) extends Module {
     val failed_count = RegInit(0.U(32.W))
     when(io.inst(0).inst_info.fusel === FU_BR) { branch_count := branch_count + 1.U }
     when(branchCtrl.out.pred_fail) { failed_count := failed_count + 1.U }
-    io.statistic.get.branch := branch_count
-    io.statistic.get.failed := failed_count
+    io.statistic.get.branch   := branch_count
+    io.statistic.get.failed   := failed_count
     io.statistic.get.instInfo := io.inst(0).inst_info
     io.statistic.get.isBranch := io.inst(0).inst_info.fusel === FU_BR
-    io.statistic.get.success := !branchCtrl.out.pred_fail
+    io.statistic.get.success  := !branchCtrl.out.pred_fail
   }
 }

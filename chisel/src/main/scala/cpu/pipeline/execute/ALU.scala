@@ -24,6 +24,7 @@ class Alu extends Module {
     val inst_info = Input(new InstInfo())
     val src_info  = Input(new SrcInfo())
     val cp0_rdata = Input(UInt(DATA_WID.W))
+    val llbit     = Input(Bool())
     val hilo = new Bundle {
       val rdata = Input(UInt(HILO_WID.W))
       val wdata = Output(UInt(HILO_WID.W))
@@ -110,7 +111,7 @@ class Alu extends Module {
       EXE_CLZ -> clz,
       EXE_CLO -> clo,
       // 特殊指令
-      EXE_SC -> 1.U,
+      EXE_SC -> io.llbit,
       // 乘除法
       EXE_MULT  -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
       EXE_MULTU -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),

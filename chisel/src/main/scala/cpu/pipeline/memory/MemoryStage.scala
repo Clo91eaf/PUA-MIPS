@@ -29,6 +29,7 @@ class ExeMemInst0(implicit val config: CpuConfig) extends ExeMemInst1 {
     val addr      = UInt(DATA_ADDR_WID.W)
     val wdata     = UInt(DATA_WID.W)
     val sel       = Vec(config.fuNum, Bool())
+    val llbit     = Bool()
   }
 }
 
