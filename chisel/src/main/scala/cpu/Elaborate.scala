@@ -1,11 +1,10 @@
 import cache._
 import cpu._
-import cpu.pipeline.fetch.BranchPredictorUnit
 import chisel3._
 import chisel3.stage.ChiselStage
 import firrtl.options.TargetDirAnnotation
 
 object Elaborate extends App {
   implicit val config = new CpuConfig(build = false)
-  (new ChiselStage).emitVerilog(new BranchPredictorUnit(), Array("--target-dir", "generated"))
+  (new ChiselStage).emitVerilog(new PuaMips(), Array("--target-dir", "generated"))
 }
