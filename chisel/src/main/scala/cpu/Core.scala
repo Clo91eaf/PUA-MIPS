@@ -180,10 +180,10 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   io.debug <> writeBackUnit.debug
 
-  io.inst.fence        := executeUnit.memoryStage.inst0.inst_info.ifence
-  io.inst.fence_addr   := executeUnit.memoryStage.inst0.rd_info.wdata
-  io.data.fence        := memoryUnit.writeBackStage.inst0.inst_info.dfence
-  io.data.fence_addr   := memoryUnit.writeBackStage.inst0.rd_info.wdata
+  io.inst.fence        := executeUnit.executeStage.inst0.inst_info.ifence
+  io.inst.fence_addr   := executeUnit.executeStage.inst0.inst_info.mem_addr
+  io.data.fence        := memoryUnit.memoryStage.inst0.inst_info.dfence
+  io.data.fence_addr   := memoryUnit.memoryStage.inst0.inst_info.mem_addr
   io.data.execute_addr := executeUnit.memoryStage.inst0.mem.addr
   io.inst.req          := !instBuffer.full
   io.inst.cpu_stall    := !ctrl.fetchUnit.allow_to_go
