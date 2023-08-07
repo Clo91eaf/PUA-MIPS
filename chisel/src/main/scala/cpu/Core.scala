@@ -94,13 +94,13 @@ class Core(implicit val config: CpuConfig) extends Module {
   instBuffer.flush_delay_slot := ctrl.instBuffer.delay_slot_do_flush
   instBuffer.icache_stall     := io.inst.icache_stall
   instBuffer.jump_branch_inst := decoderUnit.instBuffer.jump_branch_inst
-  instBuffer.delay_sel_rst := Mux(
+  instBuffer.delay_sel_flush := Mux(
     ctrl.executeUnit.branch,
     !(executeUnit.memoryStage.inst1.ex.bd || decoderUnit.executeStage.inst0.ex.bd),
     Mux(ctrl.decoderUnit.branch, !decoderUnit.instBuffer.inst(1).ready, false.B),
   )
-  instBuffer.decoder_delay_rst := ctrl.decoderUnit.branch
-  instBuffer.execute_delay_rst := ctrl.executeUnit.branch
+  instBuffer.decoder_delay_flush := ctrl.decoderUnit.branch
+  instBuffer.execute_delay_flush := ctrl.executeUnit.branch
   for (i <- 0 until config.decoderNum) {
     instBuffer.ren(i)                               := decoderUnit.instBuffer.inst(i).ready
     decoderUnit.instBuffer.inst(i).valid            := true.B

@@ -5,6 +5,6 @@ import chisel3.stage.ChiselStage
 import firrtl.options.TargetDirAnnotation
 
 object Elaborate extends App {
-  implicit val config = new CpuConfig(build = false)
+  implicit val config = new CpuConfig()
   (new ChiselStage).emitVerilog(new PuaMips(), Array("--target-dir", "generated"))
 }
