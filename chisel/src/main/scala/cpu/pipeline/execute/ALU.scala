@@ -72,9 +72,9 @@ class Alu extends Module {
     ),
   )
 
-  io.mul.signed := VecInit(EXE_MULT, EXE_MADD, EXE_MSUB).contains(op)
+  io.mul.signed := VecInit(EXE_MULT, EXE_MUL, EXE_MADD, EXE_MSUB).contains(op)
   io.mul.en := Mux(
-    VecInit(EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op),
+    VecInit(EXE_MUL, EXE_MULT, EXE_MULTU, EXE_MADD, EXE_MSUB, EXE_MADDU, EXE_MSUBU).contains(op),
     !io.mul.ready,
     false.B,
   )
@@ -113,6 +113,7 @@ class Alu extends Module {
       // 特殊指令
       EXE_SC -> io.llbit,
       // 乘除法
+      EXE_MUL   -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
       EXE_MULT  -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
       EXE_MULTU -> Mux(io.mul.ready, io.mul.result(31, 0), 0.U),
     ),

@@ -81,7 +81,7 @@ class Decoder extends Module {
       ADDU  -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_ALU, EXE_ADDU,  WRITE_ENABLE,  WRA_T1, IMM_N, DUAL_ISSUE),
       SUB   -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_ALU, EXE_SUB,   WRITE_ENABLE,  WRA_T1, IMM_N, DUAL_ISSUE),
       SUBU  -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_ALU, EXE_SUBU,  WRITE_ENABLE,  WRA_T1, IMM_N, DUAL_ISSUE),
-      MUL   -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_MUL, EXE_MULT,  WRITE_ENABLE,  WRA_T1, IMM_N, DUAL_ISSUE),
+      MUL   -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_MUL, EXE_MUL,   WRITE_ENABLE,  WRA_T1, IMM_N, DUAL_ISSUE),
       MULT  -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_MUL, EXE_MULT,  WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
       MULTU -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_MUL, EXE_MULTU, WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
       MADD  -> List(INST_VALID, READ_ENABLE, READ_ENABLE,  FU_MUL, EXE_MADD,  WRITE_DISABLE, WRA_X,  IMM_N, DUAL_ISSUE),
@@ -183,7 +183,7 @@ class Decoder extends Module {
   )
   io.out.cp0_addr    := Cat(inst(15, 11), inst(2, 0))
   io.out.dual_issue  := dual_issue
-  io.out.whilo       := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(fusel)
+  io.out.whilo       := VecInit(FU_MUL, FU_DIV, FU_MTHILO).contains(fusel) && op =/= EXE_MUL // MUL不写HILO
   io.out.inst        := inst
   io.out.wmem        := fusel === FU_MEM && (!reg_wen.orR || op === EXE_SC)
   io.out.rmem        := fusel === FU_MEM && reg_wen.orR
