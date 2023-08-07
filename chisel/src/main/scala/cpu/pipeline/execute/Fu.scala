@@ -102,8 +102,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
 
   // TODO:单发射执行ll、sc
   llbit.do_flush := io.ctrl.do_flush
-  llbit.wen := io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
-    io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC
+  llbit.wen := (io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
+    io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC) && io.ctrl.allow_to_go
   llbit.wdata := io.inst(0).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_LL
   io.llbit    := llbit.rdata
 
