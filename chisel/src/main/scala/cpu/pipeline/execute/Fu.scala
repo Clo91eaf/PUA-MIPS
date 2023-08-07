@@ -59,7 +59,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
     alu(i).io.div.ready         := div.ready
     alu(i).io.div.result        := div.result
     alu(i).io.cp0_rdata         := io.cp0_rdata(i)
-    alu(i).io.llbit             := llbit.rdata
+    alu(i).io.llbit             := io.llbit
     io.inst(i).ex.out           := io.inst(i).ex.in
     io.inst(i).ex.out.flush_req := io.inst(i).ex.in.flush_req || alu(i).io.overflow
     io.inst(i).ex.out.excode := MuxCase(
@@ -102,7 +102,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
   llbit.wen := (io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
     io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC) && io.ctrl.allow_to_go
   llbit.wdata := io.inst(0).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_LL
-  io.llbit    := llbit.rdata
+  val llbit_rdata = if (config.build) llbit.rdata else true.B
+  io.llbit := llbit_rdata
 
   // ===----------------------------------------------------------------===
   // statistic
