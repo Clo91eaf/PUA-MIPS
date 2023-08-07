@@ -3,8 +3,10 @@ package cpu.defines
 import chisel3._
 import chisel3.util._
 import cpu.defines.Instructions
+import cpu.CpuConfig
 
 trait Constants {
+  val config = new CpuConfig
   // 全局
   val PC_WID  = 32
   val PC_INIT = "hbfc00000".U(PC_WID.W)
@@ -225,7 +227,7 @@ trait Constants {
   val EX_TLB_REFILL_ENTRY = "h_bfc00200".U(32.W)
 
   // TLB MMU
-  val TLB_NUM  = 8 //TODO: for linux 32, other 8
+  val TLB_NUM  = if (config.build) 8 else 32 // for sys 32, other 8
   val PFN_WID  = 20
   val C_WID    = 3
   val ASID_WID = 8

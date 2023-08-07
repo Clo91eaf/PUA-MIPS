@@ -16,6 +16,7 @@ class DataMemoryAccess(implicit val config: CpuConfig) extends Module {
         val mem_addr  = UInt(DATA_ADDR_WID.W)
         val mem_sel   = Vec(config.fuNum, Bool())
         val ex        = Vec(config.fuNum, new ExceptionInfo())
+        val llbit     = Bool()
       })
       val out = Output(new Bundle {
         val rdata = Output(UInt(DATA_WID.W))
@@ -147,7 +148,7 @@ class DataMemoryAccess(implicit val config: CpuConfig) extends Module {
       ),
       EXE_SH -> Mux(mem_addr2(1), "b1100".U, "b0011".U),
       EXE_SW -> "b1111".U,
-      EXE_SC -> "b1111".U,
+      EXE_SC -> Fill(4, io.memoryUnit.in.llbit),
       EXE_SWL -> MuxLookup(
         mem_addr2,
         0.U,

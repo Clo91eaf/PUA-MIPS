@@ -48,6 +48,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   dataMemoryAccess.memoryUnit.in.ex(0)     := io.memoryStage.inst0.ex
   dataMemoryAccess.memoryUnit.in.ex(1)     := io.memoryStage.inst1.ex
   dataMemoryAccess.dataMemory.in.rdata     := io.dataMemory.in.rdata
+  dataMemoryAccess.memoryUnit.in.llbit     := io.memoryStage.inst0.mem.llbit
   io.dataMemory.out                        := dataMemoryAccess.dataMemory.out
 
   io.decoderUnit(0).wen   := io.writeBackStage.inst0.inst_info.reg_wen
@@ -60,9 +61,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.writeBackStage.inst0.pc        := io.memoryStage.inst0.pc
   io.writeBackStage.inst0.inst_info := io.memoryStage.inst0.inst_info
   io.writeBackStage.inst0.rd_info.wdata := Mux(
-    io.writeBackStage.inst0.inst_info.fusel === FU_MEM &&
-      io.memoryStage.inst0.inst_info.reg_wen &&
-      io.writeBackStage.inst0.inst_info.op =/= EXE_SC,
+    io.writeBackStage.inst0.inst_info.mem_wreg,
     dataMemoryAccess.memoryUnit.out.rdata,
     io.memoryStage.inst0.rd_info.wdata,
   )
@@ -86,9 +85,7 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.writeBackStage.inst1.pc        := io.memoryStage.inst1.pc
   io.writeBackStage.inst1.inst_info := io.memoryStage.inst1.inst_info
   io.writeBackStage.inst1.rd_info.wdata := Mux(
-    io.writeBackStage.inst1.inst_info.fusel === FU_MEM &&
-      io.memoryStage.inst1.inst_info.reg_wen &&
-      io.writeBackStage.inst1.inst_info.op =/= EXE_SC,
+    io.writeBackStage.inst1.inst_info.mem_wreg,
     dataMemoryAccess.memoryUnit.out.rdata,
     io.memoryStage.inst1.rd_info.wdata,
   )

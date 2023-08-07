@@ -17,16 +17,16 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
     val writeBackUnit = Flipped(new WriteBackCtrl())
   })
 
-  val inst0_lw_stall = (io.executeUnit.inst(0).mem_ren && io.executeUnit.inst(0).reg_waddr.orR()) &&
+  val inst0_lw_stall = (io.executeUnit.inst(0).mem_wreg && io.executeUnit.inst(0).reg_waddr.orR()) &&
     (io.decoderUnit.inst0.src1.ren && io.decoderUnit.inst0.src1.raddr === io.executeUnit.inst(0).reg_waddr ||
       io.decoderUnit.inst0.src2.ren && io.decoderUnit.inst0.src2.raddr === io.executeUnit.inst(0).reg_waddr)
-  val inst1_lw_stall = (io.executeUnit.inst(1).mem_ren && io.executeUnit.inst(1).reg_waddr.orR()) &&
+  val inst1_lw_stall = (io.executeUnit.inst(1).mem_wreg && io.executeUnit.inst(1).reg_waddr.orR()) &&
     (io.decoderUnit.inst0.src1.ren && io.decoderUnit.inst0.src1.raddr === io.executeUnit.inst(1).reg_waddr ||
       io.decoderUnit.inst0.src2.ren && io.decoderUnit.inst0.src2.raddr === io.executeUnit.inst(1).reg_waddr)
   val lw_stall = inst0_lw_stall || inst1_lw_stall
   val longest_stall =
     io.executeUnit.fu_stall ||
-      io.cacheCtrl.iCache_stall || //TODO:增加在instbuffer里有指令时就不stall && !io.instBuffer.has2insts ||
+      io.cacheCtrl.iCache_stall || // TODO:增加在instbuffer里有指令时就不stall && !io.instBuffer.has2insts ||
       io.cacheCtrl.dCache_stall
 
   // TODO:flush_req这个信号可能不对

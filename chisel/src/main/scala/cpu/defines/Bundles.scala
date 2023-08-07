@@ -56,11 +56,12 @@ class InstInfo extends Bundle {
   val dfence      = Bool()
   val tlbfence    = Bool()
   val mem_addr    = UInt(DATA_ADDR_WID.W)
+  val mem_wreg    = Bool()
   val inst        = UInt(INST_WID.W)
 }
 
 class MemRead extends Bundle {
-  val mem_ren   = Bool()
+  val mem_wreg   = Bool()
   val reg_waddr = UInt(REG_ADDR_WID.W)
 }
 
@@ -162,8 +163,8 @@ class Tlb_DCache extends Bundle {
 }
 
 // cpu to icache
-class Cache_ICache(
-    implicit val config: CpuConfig,
+class Cache_ICache(implicit
+    val config: CpuConfig,
 ) extends Bundle {
   // read inst request from cpu
   val req  = Output(Bool())
@@ -302,7 +303,6 @@ class AXI extends Bundle {
   val w  = Decoupled(new AXI_W())          // write data channel
   val b  = Flipped(Decoupled(new AXI_B())) // write response channel
 }
-
 
 class DEBUG(implicit config: CpuConfig) extends Bundle {
   val wb_pc       = Output(UInt(32.W))
