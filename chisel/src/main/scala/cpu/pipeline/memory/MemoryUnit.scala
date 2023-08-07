@@ -118,5 +118,5 @@ class MemoryUnit(implicit val config: CpuConfig) extends Module {
   io.fetchUnit.flush_pc := Mux(io.cp0.out.flush, io.cp0.out.flush_pc, io.writeBackStage.inst0.pc + 4.U)
 
   io.ctrl.flush_req := io.fetchUnit.flush
-
+  io.ctrl.eret      := io.writeBackStage.inst0.ex.eret
 }

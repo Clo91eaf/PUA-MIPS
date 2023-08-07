@@ -8,10 +8,7 @@ import cpu.CpuConfig
 
 class Fu(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
-    val ctrl = new Bundle {
-      val allow_to_go = Input(Bool())
-      val do_flush    = Input(Bool())
-    }
+    val ctrl = new ExecuteFuCtrl()
     val inst = Vec(
       config.decoderNum,
       new Bundle {
@@ -101,7 +98,7 @@ class Fu(implicit val config: CpuConfig) extends Module {
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
 
   // TODO:单发射执行ll、sc
-  llbit.do_flush := io.ctrl.do_flush
+  llbit.do_flush := io.ctrl.eret
   llbit.wen := (io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
     io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC) && io.ctrl.allow_to_go
   llbit.wdata := io.inst(0).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_LL

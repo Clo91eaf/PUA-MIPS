@@ -61,7 +61,7 @@ class InstInfo extends Bundle {
 }
 
 class MemRead extends Bundle {
-  val mem_wreg   = Bool()
+  val mem_wreg  = Bool()
   val reg_waddr = UInt(REG_ADDR_WID.W)
 }
 
@@ -97,6 +97,12 @@ class DecoderUnitCtrl extends Bundle {
   val do_flush    = Input(Bool())
 }
 
+class ExecuteFuCtrl extends Bundle {
+  val allow_to_go = Input(Bool())
+  val do_flush    = Input(Bool())
+  val eret        = Input(Bool())
+}
+
 class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
   val inst     = Output(Vec(config.fuNum, new MemRead()))
   val fu_stall = Output(Bool())
@@ -105,14 +111,12 @@ class ExecuteCtrl(implicit val config: CpuConfig) extends Bundle {
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())
 
-  val fu = new Bundle {
-    val allow_to_go = Input(Bool())
-    val do_flush    = Input(Bool())
-  }
+  val fu = new ExecuteFuCtrl()
 }
 
 class MemoryCtrl extends Bundle {
   val flush_req = Output(Bool())
+  val eret      = Output(Bool())
 
   val allow_to_go = Input(Bool())
   val do_flush    = Input(Bool())

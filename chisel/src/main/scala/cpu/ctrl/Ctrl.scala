@@ -41,7 +41,9 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
   io.instBuffer.delay_slot_do_flush := io.memoryUnit.flush_req
   io.decoderUnit.do_flush           := io.memoryUnit.flush_req || io.executeUnit.branch || io.decoderUnit.branch
   io.executeUnit.do_flush           := io.memoryUnit.flush_req || io.executeUnit.branch
-  io.executeUnit.fu.do_flush        := io.memoryUnit.do_flush
   io.memoryUnit.do_flush            := io.memoryUnit.flush_req
   io.writeBackUnit.do_flush         := false.B
+
+  io.executeUnit.fu.do_flush := io.memoryUnit.do_flush
+  io.executeUnit.fu.eret     := io.memoryUnit.eret
 }

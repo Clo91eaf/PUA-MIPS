@@ -66,8 +66,7 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   accessMemCtrl.inst(1).ex.in     := io.executeStage.inst1.ex
 
   // input fu
-  fu.ctrl.allow_to_go   := io.ctrl.fu.allow_to_go
-  fu.ctrl.do_flush      := io.ctrl.fu.do_flush
+  fu.ctrl <> io.ctrl.fu
   fu.inst(0).pc         := io.executeStage.inst0.pc
   fu.inst(0).hilo_wen   := io.executeStage.inst0.inst_info.whilo
   fu.inst(0).mul_en     := io.executeStage.inst0.inst_info.mul
