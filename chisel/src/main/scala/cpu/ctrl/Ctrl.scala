@@ -27,21 +27,22 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
   // TODO: 这里的stall信号可能不对
   val longest_stall = io.executeUnit.fu_stall || io.cacheCtrl.iCache_stall || io.cacheCtrl.dCache_stall
 
-  // TODO:flush_req这个信号可能不对
-  io.fetchUnit.allow_to_go      := !io.cacheCtrl.iCache_stall
-  io.decoderUnit.allow_to_go    := !(lw_stall || longest_stall)
-  io.executeUnit.allow_to_go    := !longest_stall
-  io.executeUnit.fu.allow_to_go := io.memoryUnit.allow_to_go
-  io.memoryUnit.allow_to_go     := !longest_stall
-  io.writeBackUnit.allow_to_go  := !longest_stall || io.memoryUnit.flush_req
+  io.fetchUnit.allow_to_go     := !io.cacheCtrl.iCache_stall
+  io.decoderUnit.allow_to_go   := !(lw_stall || longest_stall)
+  io.executeUnit.allow_to_go   := !longest_stall
+  io.memoryUnit.allow_to_go    := !longest_stall
+  io.writeBackUnit.allow_to_go := !longest_stall || io.memoryUnit.flush_req
 
-  io.fetchUnit.do_flush             := false.B
+  io.fetchUnit.do_flush     := false.B
+  io.decoderUnit.do_flush   := io.memoryUnit.flush_req || io.executeUnit.branch || io.decoderUnit.branch
+  io.executeUnit.do_flush   := io.memoryUnit.flush_req || io.executeUnit.branch
+  io.memoryUnit.do_flush    := io.memoryUnit.flush_req
+  io.writeBackUnit.do_flush := false.B
+
   io.instBuffer.delay_slot_do_flush := io.memoryUnit.flush_req
-  io.decoderUnit.do_flush           := io.memoryUnit.flush_req || io.executeUnit.branch || io.decoderUnit.branch
-  io.executeUnit.do_flush           := io.memoryUnit.flush_req || io.executeUnit.branch
-  io.memoryUnit.do_flush            := io.memoryUnit.flush_req
-  io.writeBackUnit.do_flush         := false.B
 
-  io.executeUnit.fu.do_flush := io.memoryUnit.do_flush
-  io.executeUnit.fu.eret     := io.memoryUnit.eret
+  io.executeUnit.fu.do_flush    := io.memoryUnit.do_flush
+  io.executeUnit.fu.eret        := io.memoryUnit.eret
+  io.executeUnit.fu.allow_to_go := io.memoryUnit.allow_to_go
+
 }

@@ -105,16 +105,16 @@ class Core(implicit val config: CpuConfig) extends Module {
     instBuffer.ren(i)                          := decoderUnit.instBuffer.inst(i).allow_to_go
     decoderUnit.instBuffer.inst(i).tlb_refill  := instBuffer.read(i).tlb.refill
     decoderUnit.instBuffer.inst(i).tlb_invalid := instBuffer.read(i).tlb.invalid
-    decoderUnit.instBuffer.inst(i).pc          := instBuffer.read(i).addr
-    decoderUnit.instBuffer.inst(i).inst        := instBuffer.read(i).data
+    decoderUnit.instBuffer.inst(i).pc          := instBuffer.read(i).pc
+    decoderUnit.instBuffer.inst(i).inst        := instBuffer.read(i).inst
   }
 
   for (i <- 0 until config.instFetchNum) {
     instBuffer.wen(i)               := io.inst.inst_valid(i)
     instBuffer.write(i).tlb.refill  := tlbL1I.tlb1.refill
     instBuffer.write(i).tlb.invalid := tlbL1I.tlb1.invalid
-    instBuffer.write(i).addr        := io.inst.addr(0) + (i * 4).U
-    instBuffer.write(i).data        := io.inst.inst(i)
+    instBuffer.write(i).pc          := io.inst.addr(0) + (i * 4).U
+    instBuffer.write(i).inst        := io.inst.inst(i)
   }
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty
