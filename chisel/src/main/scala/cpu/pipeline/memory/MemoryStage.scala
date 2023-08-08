@@ -43,7 +43,7 @@ class MemoryStage(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ctrl = Input(new Bundle {
       val allow_to_go = Bool()
-      val clear       = Vec(config.decoderNum, Bool())
+      val clear       = Bool()
     })
     val executeUnit = Input(new ExecuteUnitMemoryUnit())
     val memoryUnit  = Output(new ExecuteUnitMemoryUnit())
@@ -51,15 +51,11 @@ class MemoryStage(implicit val config: CpuConfig) extends Module {
   val inst0 = RegInit(0.U.asTypeOf(new ExeMemInst0()))
   val inst1 = RegInit(0.U.asTypeOf(new ExeMemInst1()))
 
-  when(io.ctrl.clear(0)) {
+  when(io.ctrl.clear) {
     inst0 := 0.U.asTypeOf(new ExeMemInst0())
-  }.elsewhen(io.ctrl.allow_to_go) {
-    inst0 := io.executeUnit.inst0
-  }
-
-  when(io.ctrl.clear(1)) {
     inst1 := 0.U.asTypeOf(new ExeMemInst1())
   }.elsewhen(io.ctrl.allow_to_go) {
+    inst0 := io.executeUnit.inst0
     inst1 := io.executeUnit.inst1
   }
 

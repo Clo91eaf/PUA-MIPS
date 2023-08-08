@@ -8,16 +8,15 @@ import cpu.CpuConfig
 import cpu.pipeline.execute.DecoderUnitExecuteUnit
 
 class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
-  val inst = Flipped(
-    Vec(
-      config.decoderNum,
-      Decoupled(new Bundle {
-        val pc          = UInt(PC_WID.W)
-        val inst        = UInt(INST_WID.W)
-        val tlb_refill  = Bool()
-        val tlb_invalid = Bool()
-      }),
-    ),
+  val inst = Vec(
+    config.decoderNum,
+    new Bundle {
+      val allow_to_go = Output(Bool())
+      val pc          = Input(UInt(PC_WID.W))
+      val inst        = Input(UInt(INST_WID.W))
+      val tlb_refill  = Input(Bool())
+      val tlb_invalid = Input(Bool())
+    },
   )
   val info = Input(new Bundle {
     val inst0_is_in_delayslot = Bool()
@@ -86,7 +85,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   jumpCtrl.in.allow_to_go   := io.ctrl.allow_to_go
   jumpCtrl.in.decoded_inst0 := decoder(0).io.out
   jumpCtrl.in.forward       := io.forward
-  jumpCtrl.in.pc            := io.instBuffer.inst(0).bits.pc
+  jumpCtrl.in.pc            := io.instBuffer.inst(0).pc
   jumpCtrl.in.reg1_data     := io.regfile(0).src1.rdata
 
   val jump_branch_inst0 = jumpCtrl.out.jump_inst || io.bpu.branch_inst
@@ -95,12 +94,12 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.fetchUnit.branch := inst0_branch
   io.fetchUnit.target := Mux(io.bpu.pred_branch, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
-  io.instBuffer.inst(0).ready    := io.ctrl.allow_to_go
-  io.instBuffer.inst(1).ready    := issue.inst1.allow_to_go
-  io.instBuffer.jump_branch_inst := jump_branch_inst0
+  io.instBuffer.inst(0).allow_to_go := io.ctrl.allow_to_go
+  io.instBuffer.inst(1).allow_to_go := issue.inst1.allow_to_go
+  io.instBuffer.jump_branch_inst    := jump_branch_inst0
 
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
-  io.bpu.pc             := io.instBuffer.inst(0).bits.pc
+  io.bpu.pc             := io.instBuffer.inst(0).pc
   io.bpu.decoded_inst0  := decoder(0).io.out
 
   io.ctrl.inst0.src1.ren   := decoder(0).io.out.reg1_ren
@@ -109,11 +108,11 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.inst0.src2.raddr := decoder(0).io.out.reg2_raddr
   io.ctrl.branch           := inst0_branch
 
-  val pc          = io.instBuffer.inst.map(_.bits.pc)
-  val inst        = io.instBuffer.inst.map(_.bits.inst)
+  val pc          = io.instBuffer.inst.map(_.pc)
+  val inst        = io.instBuffer.inst.map(_.inst)
   val inst_info   = decoder.map(_.io.out)
-  val tlb_refill  = io.instBuffer.inst.map(_.bits.tlb_refill)
-  val tlb_invalid = io.instBuffer.inst.map(_.bits.tlb_invalid)
+  val tlb_refill  = io.instBuffer.inst.map(_.tlb_refill)
+  val tlb_invalid = io.instBuffer.inst.map(_.tlb_invalid)
   val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instBuffer.info.empty
 
   for (i <- 0 until (config.decoderNum)) {
