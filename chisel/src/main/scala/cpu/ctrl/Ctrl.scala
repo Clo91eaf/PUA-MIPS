@@ -26,7 +26,7 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
   val lw_stall = inst0_lw_stall || inst1_lw_stall
   val longest_stall =
     io.executeUnit.fu_stall ||
-      io.cacheCtrl.iCache_stall || // TODO:增加在instbuffer里有指令时就不stall && !io.instBuffer.has2insts ||
+      io.cacheCtrl.iCache_stall || // TODO:增加在instbuffer里有指令时就不stall && !io.instBuffer.empty ||
       io.cacheCtrl.dCache_stall
 
   // TODO:flush_req这个信号可能不对

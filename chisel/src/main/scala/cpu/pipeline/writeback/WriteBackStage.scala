@@ -25,7 +25,7 @@ class WriteBackStage(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ctrl = Input(new Bundle {
       val allow_to_go = Bool()
-      val clear       = Vec(config.decoderNum, Bool())
+      val clear       = Bool()
     })
     val memoryUnit    = Input(new MemoryUnitWriteBackUnit())
     val writeBackUnit = Output(new MemoryUnitWriteBackUnit())
@@ -35,13 +35,9 @@ class WriteBackStage(implicit val config: CpuConfig) extends Module {
 
   when(io.ctrl.clear(0)) {
     inst0 := 0.U.asTypeOf(new MemWbInst0())
-  }.elsewhen(io.ctrl.allow_to_go) {
-    inst0 := io.memoryUnit.inst0
-  }
-
-  when(io.ctrl.clear(1)) {
     inst1 := 0.U.asTypeOf(new MemWbInst1())
   }.elsewhen(io.ctrl.allow_to_go) {
+    inst0 := io.memoryUnit.inst0
     inst1 := io.memoryUnit.inst1
   }
 

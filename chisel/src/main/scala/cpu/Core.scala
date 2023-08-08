@@ -154,8 +154,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   tlbL1D.tlb2.entry  := cp0.tlb(1).info
 
   memoryStage.ctrl.allow_to_go := ctrl.memoryUnit.allow_to_go
-  memoryStage.ctrl.clear(0)    := ctrl.memoryUnit.do_flush
-  memoryStage.ctrl.clear(1)    := ctrl.memoryUnit.do_flush
+  memoryStage.ctrl.clear       := ctrl.memoryUnit.do_flush
 
   memoryUnit.memoryStage <> memoryStage.memoryUnit
   memoryUnit.cp0 <> cp0.memoryUnit
@@ -171,8 +170,7 @@ class Core(implicit val config: CpuConfig) extends Module {
 
   writeBackStage.memoryUnit <> memoryUnit.writeBackStage
   writeBackStage.ctrl.allow_to_go := ctrl.writeBackUnit.allow_to_go
-  writeBackStage.ctrl.clear(0)    := ctrl.writeBackUnit.do_flush
-  writeBackStage.ctrl.clear(1)    := ctrl.writeBackUnit.do_flush
+  writeBackStage.ctrl.clear       := ctrl.writeBackUnit.do_flush
 
   writeBackUnit.writeBackStage <> writeBackStage.writeBackUnit
   writeBackUnit.ctrl <> ctrl.writeBackUnit
