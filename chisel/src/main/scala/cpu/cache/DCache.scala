@@ -32,7 +32,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val tlb_fill = RegInit(false.B)
   // * fsm * //
   val s_idle :: s_uncached :: s_writeback :: s_replace :: s_save :: Nil = Enum(5)
-  val state                                                             = RegInit(s_idle)
+  val state                                                            = RegInit(s_idle)
 
   io.cpu.tlb.fill           := tlb_fill
   io.cpu.tlb.dcache_is_idle := state === s_idle
@@ -55,17 +55,17 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val read_ready_cnt = RegInit(0.U(4.W))
   val read_ready_set = RegInit(0.U(6.W))
 
-  // replace and fence control
-  val replace = RegInit(0.U.asTypeOf(new Bundle {
-    val use        = Bool()
-    val set        = UInt(6.W)
-    val write_addr = UInt(10.W)
-    val wstrb      = Vec(nway, UInt(4.W))
-    val working    = Bool()
-    val writeback  = Bool()
+  // * victim cache * //
+  val victim = RegInit(0.U.asTypeOf(new Bundle {
+    val valid     = Bool()
+    val set       = UInt(6.W)
+    val waddr     = UInt(10.W)
+    val wstrb     = Vec(nway, UInt(4.W))
+    val working   = Bool()
+    val writeback = Bool()
   }))
-  val replace_cnt  = Counter(burstSize)
-  val replace_addr = Cat(replace.set, replace_cnt.value)
+  val victim_cnt  = Counter(burstSize)
+  val victim_addr = Cat(victim.set, victim_cnt.value)
 
   val fset = io.cpu.fence_addr(11, 6)
   val fence = RegInit(0.U.asTypeOf(new Bundle {
@@ -76,12 +76,12 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val ar_handshake = RegInit(false.B)
   val aw_handshake = RegInit(false.B)
 
-  val data_raddr = Mux(replace.use, replace_addr, Mux(should_next_addr, io.cpu.execute_addr(11, 2), io.cpu.addr(11, 2)))
+  val data_raddr = Mux(victim.valid, victim_addr, Mux(should_next_addr, io.cpu.execute_addr(11, 2), io.cpu.addr(11, 2)))
   val data_wstrb = Wire(Vec(nway, UInt(4.W)))
-  val data_waddr = Mux(replace.use, replace.write_addr, io.cpu.addr(11, 2))
+  val data_waddr = Mux(victim.valid, victim.waddr, io.cpu.addr(11, 2))
   val data_wdata = Mux(state === s_replace, io.axi.r.bits.data, io.cpu.wdata)
 
-  val tag_raddr = Mux(replace.use, replace.set, Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
+  val tag_raddr = Mux(victim.valid, victim.set, Mux(should_next_addr, io.cpu.execute_addr(11, 6), io.cpu.addr(11, 6)))
   val tag_wstrb = RegInit(VecInit(Seq.fill(nway)(false.B)))
   val tag_wdata = RegInit(0.U(tagWidth.W))
 
@@ -133,7 +133,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
     tag(i)           := tag_ram.io.rdata
 
     tag_ram.io.wen   := tag_wstrb(i)
-    tag_ram.io.waddr := replace.set
+    tag_ram.io.waddr := victim.set
     tag_ram.io.wdata := tag_wdata
 
     tag_compare_valid(i) := tag(i) === io.cpu.tlb.tag && valid(pset)(i) && io.cpu.tlb.translation_ok
@@ -146,7 +146,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
     data_wstrb(i) := Mux(
       tag_compare_valid(i) && io.cpu.en && io.cpu.wen.orR && !io.cpu.tlb.uncached && state === s_idle && !tlb_fill,
       io.cpu.wen,
-      replace.wstrb(i),
+      victim.wstrb(i),
     )
 
     last_wstrb(i) := Cat(
@@ -248,13 +248,13 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
           when(!cache_hit) {
             state := s_replace
             axi_cnt.reset()
-            replace.set := pset
-            replace_cnt.reset()
-            read_ready_set     := pset
-            read_ready_cnt     := 0.U
-            replace.write_addr := Cat(pset, 0.U(4.W))
-            replace.use        := true.B
-            replace.writeback  := dirty(pset)(lru(pset))
+            victim.set := pset
+            victim_cnt.reset()
+            read_ready_set   := pset
+            read_ready_cnt   := 0.U
+            victim.waddr     := Cat(pset, 0.U(4.W))
+            victim.valid     := true.B
+            victim.writeback := dirty(pset)(lru(pset))
           }.otherwise {
             when(!io.cpu.dcache_stall) {
               // update lru and mark dirty
@@ -274,11 +274,11 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
           when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
             state := s_writeback
             axi_cnt.reset()
-            replace.set := fset
-            replace_cnt.reset()
+            victim.set := fset
+            victim_cnt.reset()
             read_ready_set := fset
             read_ready_cnt := 0.U
-            replace.use    := true.B
+            victim.valid   := true.B
           }
         }.otherwise {
           when(valid(fset).contains(true.B)) {
@@ -300,11 +300,11 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
     }
     is(s_writeback) {
       when(fence.working) {
-        when(replace_cnt.value =/= (burstSize - 1).U) {
-          replace_cnt.inc()
+        when(victim_cnt.value =/= (burstSize - 1).U) {
+          victim_cnt.inc()
         }
-        read_ready_set              := replace.set
-        read_ready_cnt              := replace_cnt.value
+        read_ready_set              := victim.set
+        read_ready_cnt              := victim_cnt.value
         read_buffer(read_ready_cnt) := data(dirty(fset)(1))
         when(!aw_handshake) {
           aw.addr      := Cat(tag(dirty(fset)(1)), fset, 0.U(6.W))
@@ -338,35 +338,35 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
         when(io.axi.b.valid) {
           dirty(fset)(dirty(fset)(1)) := false.B
           fence.working               := false.B
-          replace.use                 := false.B
+          victim.valid                := false.B
           state                       := s_idle
         }
       }.otherwise {
         aw_handshake  := false.B
         fence.working := true.B
-        replace_cnt.inc()
+        victim_cnt.inc()
       }
     }
     is(s_replace) {
       when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
-        when(replace.working) {
-          when(replace.writeback) {
-            when(replace_cnt.value =/= (burstSize - 1).U) {
-              replace_cnt.inc()
+        when(victim.working) {
+          when(victim.writeback) {
+            when(victim_cnt.value =/= (burstSize - 1).U) {
+              victim_cnt.inc()
             }
-            read_ready_set              := replace.set
-            read_ready_cnt              := replace_cnt.value
+            read_ready_set              := victim.set
+            read_ready_cnt              := victim_cnt.value
             read_buffer(read_ready_cnt) := data(lru(pset))
             when(!aw_handshake) {
               aw.addr      := Cat(tag(lru(pset)), pset, 0.U(6.W))
               aw.len       := 15.U
               aw.size      := 2.U(3.W)
               awvalid      := true.B
+              aw_handshake := true.B
               w.data       := data(lru(pset))
               w.strb       := 15.U
               w.last       := false.B
               wvalid       := true.B
-              aw_handshake := true.B
             }
             when(io.axi.aw.fire) {
               awvalid := false.B
@@ -388,20 +388,19 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
             }
             when(io.axi.b.valid) {
               dirty(pset)(lru(pset)) := false.B
-              replace.writeback      := false.B
+              victim.writeback       := false.B
             }
           }
-          // at here, cache line is writeable from axi read.
           when(!ar_handshake) {
-            ar.addr                  := Cat(io.cpu.tlb.pa(31, 6), 0.U(6.W))
-            ar.len                   := 15.U
-            ar.size                  := 2.U(3.W)
-            arvalid                  := true.B
-            rready                   := true.B
-            ar_handshake             := true.B
-            replace.wstrb(lru(pset)) := 15.U
-            tag_wstrb(lru(pset))     := true.B
-            tag_wdata                := io.cpu.tlb.pa(31, 12)
+            ar.addr                 := Cat(io.cpu.tlb.pa(31, 6), 0.U(6.W))
+            ar.len                  := 15.U
+            ar.size                 := 2.U(3.W)
+            arvalid                 := true.B
+            rready                  := true.B
+            ar_handshake            := true.B
+            victim.wstrb(lru(pset)) := 15.U
+            tag_wstrb(lru(pset))    := true.B
+            tag_wdata               := io.cpu.tlb.pa(31, 12)
           }
           when(io.axi.ar.fire) {
             tag_wstrb(lru(pset)) := false.B
@@ -409,27 +408,27 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
           }
           when(io.axi.r.fire) {
             when(io.axi.r.bits.last) {
-              rready                   := false.B
-              replace.wstrb(lru(pset)) := 0.U
+              rready                  := false.B
+              victim.wstrb(lru(pset)) := 0.U
             }.otherwise {
-              replace.write_addr := replace.write_addr + 1.U
+              victim.waddr := victim.waddr + 1.U
             }
           }
           when(
-            (!replace.writeback || io.axi.b.valid) && ((ar_handshake && io.axi.r.valid && io.axi.r.bits.last) || (ar_handshake && !rready)),
+            (!victim.writeback || io.axi.b.valid) && ((ar_handshake && io.axi.r.valid && io.axi.r.bits.last) || (ar_handshake && !rready)),
           ) {
-            replace.use            := 0.U
+            victim.valid           := false.B
             valid(pset)(lru(pset)) := true.B
           }
-          when(!replace.use) {
-            replace.working := false.B
-            state           := s_idle
+          when(!victim.valid) {
+            victim.working := false.B
+            state          := s_idle
           }
         }.otherwise {
-          ar_handshake    := false.B
-          aw_handshake    := false.B
-          replace.working := true.B
-          replace_cnt.inc()
+          ar_handshake   := false.B
+          aw_handshake   := false.B
+          victim.working := true.B
+          victim_cnt.inc()
         }
       }
     }
