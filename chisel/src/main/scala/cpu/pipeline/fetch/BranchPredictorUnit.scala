@@ -3,7 +3,7 @@ package cpu.pipeline.fetch
 import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
-import cpu.CpuConfig
+import cpu._
 import cpu.pipeline.decoder.Src12Read
 
 class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
@@ -146,7 +146,7 @@ class AdaptiveTwoLevelPredictor(
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
 
-  io.decoder.branch_inst := VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
+  io.decoder.branch_inst := (io.decoder.inst(31, 26) === 1.U && io.decoder.inst(19, 17) === 0.U) || io.decoder.inst(31, 28) === 1.U
   io.decoder.branch_target := io.decoder.pc_plus4 + Cat(
     Fill(14, io.decoder.inst(15)),
     io.decoder.inst(15, 0),

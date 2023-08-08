@@ -26,6 +26,7 @@ class PuaMips extends Module {
   // statistic
   // ===----------------------------------------------------------------===
   if (!config.build) {
-    io.statistic.get <> core.io.statistic.get
+    io.statistic.get.cpu <> core.io.statistic.get
+    io.statistic.get.cache <> cache.io.statistic.get
   }
 }

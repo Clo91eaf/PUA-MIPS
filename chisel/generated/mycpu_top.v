@@ -54,15 +54,7 @@ module mycpu_top (
     output [31:0]      debug_wb_pc,
     output [ 3:0]      debug_wb_rf_wen,
     output [ 4:0]      debug_wb_rf_wnum,
-    output [31:0]      debug_wb_rf_wdata,
-    // for soc-simulator
-    output [31:0]      debug_cp0_count,
-    output [31:0]      debug_cp0_random,
-    output [31:0]      debug_cp0_cause,
-    output             debug_int,
-    output             debug_commit,
-    output [31:0]      statistic_bpu_branch,
-    output [31:0]      statistic_bpu_failed
+    output [31:0]      debug_wb_rf_wdata
 );
 
 PuaMips puamips(
@@ -108,14 +100,7 @@ PuaMips puamips(
   .io_debug_wb_pc                 (debug_wb_pc              ),
   .io_debug_wb_rf_wen             (debug_wb_rf_wen          ),
   .io_debug_wb_rf_wnum            (debug_wb_rf_wnum         ),
-  .io_debug_wb_rf_wdata           (debug_wb_rf_wdata        ),
-  .io_statistic_soc_cp0_count     (debug_cp0_count          ),
-  .io_statistic_soc_cp0_random    (debug_cp0_random         ),
-  .io_statistic_soc_cp0_cause     (debug_cp0_cause          ),
-  .io_statistic_soc_int           (debug_int                ),
-  .io_statistic_soc_commit        (debug_commit             ),
-  .io_statistic_bpu_branch        (statistic_bpu_branch     ),
-  .io_statistic_bpu_failed        (statistic_bpu_failed     )
+  .io_debug_wb_rf_wdata           (debug_wb_rf_wdata        )
 );
 
 endmodule

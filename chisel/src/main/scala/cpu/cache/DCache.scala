@@ -24,8 +24,9 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val burstSize: Int     = cacheConfig.burstSize
 
   val io = IO(new Bundle {
-    val cpu = Flipped(new Cache_DCache())
-    val axi = new DCache_AXIInterface()
+    val cpu       = Flipped(new Cache_DCache())
+    val axi       = new DCache_AXIInterface()
+    val statistic = if (!config.build) Some(new DCacheStatistic()) else None
   })
 
   val tlb_fill = RegInit(false.B)
@@ -437,5 +438,21 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
         state := s_idle
       }
     }
+  }
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  val req_cnt = RegInit(0.U(32.W))
+  when(io.cpu.en) {
+    req_cnt := req_cnt + 1.U
+  }
+  val hit_cnt = RegInit(0.U(32.W))
+  when(cache_hit) {
+    hit_cnt := hit_cnt + 1.U
+  }
+  if (!config.build) {
+    io.statistic.get.request := req_cnt
+    io.statistic.get.hit     := hit_cnt
   }
 }

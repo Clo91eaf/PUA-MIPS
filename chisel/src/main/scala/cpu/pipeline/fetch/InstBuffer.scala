@@ -62,9 +62,7 @@ class InstBuffer(implicit val config: CpuConfig) extends Module {
   val delayslot_stall  = RegInit(false.B)
   val delayslot_enable = RegInit(false.B)
   val delayslot_line   = RegInit(0.U.asTypeOf(new BufferUnit()))
-  when(
-    io.do_flush && io.delay_sel_flush && !io.flush_delay_slot && io.icache_stall && (deq_ptr + 1.U === enq_ptr || deq_ptr === enq_ptr),
-  ) {
+  when(io.do_flush && io.delay_sel_flush && !io.flush_delay_slot && io.icache_stall && (io.empty || io.almost_empty)) {
     delayslot_stall := true.B
   }.elsewhen(delayslot_stall && io.wen(0)) {
     delayslot_stall := false.B
@@ -73,14 +71,10 @@ class InstBuffer(implicit val config: CpuConfig) extends Module {
   when(io.do_flush && !io.flush_delay_slot && io.delay_sel_flush) {
     when(io.execute_delay_flush) {
       delayslot_enable := true.B
-      delayslot_line   := Mux(deq_ptr === enq_ptr, io.write(0), buffer(deq_ptr))
+      delayslot_line   := Mux(io.empty, io.write(0), buffer(deq_ptr))
     }.elsewhen(io.decoder_delay_flush) {
       delayslot_enable := true.B
-      delayslot_line := Mux(
-        deq_ptr + 1.U === enq_ptr,
-        io.write(0),
-        buffer(deq_ptr + 1.U),
-      )
+      delayslot_line   := Mux(io.almost_empty, io.write(0), buffer(deq_ptr + 1.U))
     }.otherwise {
       delayslot_enable := false.B
     }
@@ -89,10 +83,7 @@ class InstBuffer(implicit val config: CpuConfig) extends Module {
   }
 
   // * deq * //
-  val read_buffer = WireInit(VecInit(Seq.fill(config.decoderNum)(0.U.asTypeOf(new BufferUnit()))))
-  io.read := read_buffer
-
-  read_buffer(0) := MuxCase(
+  io.read(0) := MuxCase(
     buffer(deq_ptr),
     Seq(
       delayslot_enable -> delayslot_line,
@@ -100,7 +91,7 @@ class InstBuffer(implicit val config: CpuConfig) extends Module {
       io.almost_empty  -> buffer(deq_ptr),
     ),
   )
-  read_buffer(1) := MuxCase(
+  io.read(1) := MuxCase(
     buffer(deq_ptr + 1.U),
     Seq(
       delayslot_enable -> 0.U.asTypeOf(new BufferUnit()),

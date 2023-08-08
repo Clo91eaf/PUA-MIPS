@@ -19,8 +19,9 @@ class ICache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val indexWidth: Int      = cacheConfig.indexWidth
   val offsetWidth: Int     = cacheConfig.offsetWidth
   val io = IO(new Bundle {
-    val cpu = Flipped(new Cache_ICache())
-    val axi = new ICache_AXIInterface()
+    val cpu       = Flipped(new Cache_ICache())
+    val axi       = new ICache_AXIInterface()
+    val statistic = if (!config.build) Some(new ICacheStatistic()) else None
   })
   require(isPow2(ninst), "ninst must be power of 2")
   // * addr organization * //
@@ -225,5 +226,21 @@ class ICache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
         (0 until ninst).foreach(i => saved(i).valid := false.B)
       }
     }
+  }
+
+  // ===----------------------------------------------------------------===
+  // statistic
+  // ===----------------------------------------------------------------===
+  val req_cnt = RegInit(0.U(32.W))
+  when(io.cpu.req) {
+    req_cnt := req_cnt + 1.U
+  }
+  val hit_cnt = RegInit(0.U(32.W))
+  when(io.cpu.req && cache_hit) {
+    hit_cnt := hit_cnt + 1.U
+  }
+  if (!config.build) {
+    io.statistic.get.request := req_cnt
+    io.statistic.get.hit     := hit_cnt
   }
 }
