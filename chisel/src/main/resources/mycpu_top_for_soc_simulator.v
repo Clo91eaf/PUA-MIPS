@@ -62,9 +62,11 @@ module mycpu_top (
     output             statistic_cpu_soc_int,
     output             statistic_cpu_soc_commit,
 
-    output             statistic_cpu_bpu_branch,
-    output             statistic_cpu_bpu_success,
+    // bpu statistic 
+    output [31:0]      statistic_cpu_bpu_branch,
+    output [31:0]      statistic_cpu_bpu_success,
 
+    // cache statistic
     output [31:0]      statistic_cache_icache_request,
     output [31:0]      statistic_cache_icache_hit,
     output [31:0]      statistic_cache_dcache_request,
@@ -121,7 +123,7 @@ PuaMips puamips(
   .io_statistic_cpu_soc_int             (statistic_cpu_soc_int          ),
   .io_statistic_cpu_soc_commit          (statistic_cpu_soc_commit       ),
   .io_statistic_cpu_bpu_success         (statistic_cpu_bpu_success      ),
-  .io_statistic_cpu_bpu_branch        (statistic_cpu_bpu_branch     ),
+  .io_statistic_cpu_bpu_branch          (statistic_cpu_bpu_branch       ),
   .io_statistic_cache_icache_request    (statistic_cache_icache_request ),
   .io_statistic_cache_icache_hit        (statistic_cache_icache_hit     ),
   .io_statistic_cache_dcache_request    (statistic_cache_dcache_request ),
