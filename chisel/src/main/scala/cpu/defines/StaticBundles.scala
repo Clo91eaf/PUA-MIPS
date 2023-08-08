@@ -14,11 +14,8 @@ class SocStatistic extends Bundle {
 }
 
 class BranchPredictorUnitStatistic extends Bundle {
-  val branch   = Output(UInt(32.W))
-  val failed   = Output(UInt(32.W))
-  val instInfo = Output(new InstInfo())
-  val isBranch = Output(Bool())
-  val success  = Output(Bool())
+  val branch  = Output(UInt(32.W))
+  val success = Output(UInt(32.W))
 }
 
 class CPUStatistic extends Bundle {
@@ -33,12 +30,12 @@ class GlobalStatistic extends Bundle {
 
 class ICacheStatistic extends Bundle {
   val request = Output(UInt(32.W))
-  val hit    = Output(UInt(32.W))
+  val hit     = Output(UInt(32.W))
 }
 
 class DCacheStatistic extends Bundle {
   val request = Output(UInt(32.W))
-  val hit    = Output(UInt(32.W))
+  val hit     = Output(UInt(32.W))
 }
 
 class CacheStatistic extends Bundle {

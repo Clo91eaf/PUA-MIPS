@@ -5,6 +5,7 @@ import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
 import cpu.CpuConfig
+import org.scalameta.adt.branch
 
 class Fu(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
@@ -109,14 +110,11 @@ class Fu(implicit val config: CpuConfig) extends Module {
   // statistic
   // ===----------------------------------------------------------------===
   if (!config.build) {
-    val branch_count = RegInit(0.U(32.W))
-    val failed_count = RegInit(0.U(32.W))
-    when(io.inst(0).inst_info.fusel === FU_BR) { branch_count := branch_count + 1.U }
-    when(branchCtrl.out.pred_fail) { failed_count := failed_count + 1.U }
-    io.statistic.get.branch   := branch_count
-    io.statistic.get.failed   := failed_count
-    io.statistic.get.instInfo := io.inst(0).inst_info
-    io.statistic.get.isBranch := io.inst(0).inst_info.fusel === FU_BR
-    io.statistic.get.success  := !branchCtrl.out.pred_fail
+    val branch_cnt = RegInit(0.U(32.W))
+    when(io.inst(0).inst_info.fusel === FU_BR) { branch_cnt := branch_cnt + 1.U }
+    val success_cnt = RegInit(0.U(32.W))
+    when(!branchCtrl.out.pred_fail) { success_cnt := success_cnt + 1.U }
+    io.statistic.get.branch  := branch_cnt
+    io.statistic.get.success := success_cnt
   }
 }
