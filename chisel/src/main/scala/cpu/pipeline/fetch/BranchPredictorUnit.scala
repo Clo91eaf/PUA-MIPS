@@ -93,7 +93,8 @@ class GlobalBranchPredictor(
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
 
-  io.decoder.branch_inst := VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
+  io.decoder.branch_inst := VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL)
+    .contains(io.decoder.op)
   io.decoder.branch_target := io.decoder.pc_plus4 + Cat(
     Fill(14, io.decoder.inst(15)),
     io.decoder.inst(15, 0),
@@ -131,10 +132,6 @@ class GlobalBranchPredictor(
 
 }
 
-// class AdaptiveTwoLevelPredictor(
-//     PHT_DEPTH: Int = 6, // 可以记录的历史个数
-//     BHT_DEPTH: Int = 4, // 取得PC的宽度
-// )(implicit
 class AdaptiveTwoLevelPredictor(
 )(implicit
     config: CpuConfig,
@@ -142,11 +139,12 @@ class AdaptiveTwoLevelPredictor(
   val bpuConfig = new BranchPredictorConfig()
   val PHT_DEPTH = bpuConfig.phtDepth
   val BHT_DEPTH = bpuConfig.bhtDepth
-  val io = IO(new BranchPredictorIO())
+  val io        = IO(new BranchPredictorIO())
 
   val strongly_not_taken :: weakly_not_taken :: weakly_taken :: strongly_taken :: Nil = Enum(4)
 
-  io.decoder.branch_inst := (io.decoder.inst(31, 26) === 1.U && io.decoder.inst(19, 17) === 0.U) || io.decoder.inst(31, 28) === 1.U
+  io.decoder.branch_inst :=
+    VecInit(EXE_BEQ, EXE_BNE, EXE_BGTZ, EXE_BLEZ, EXE_BGEZ, EXE_BGEZAL, EXE_BLTZ, EXE_BLTZAL).contains(io.decoder.op)
   io.decoder.branch_target := io.decoder.pc_plus4 + Cat(
     Fill(14, io.decoder.inst(15)),
     io.decoder.inst(15, 0),
@@ -158,7 +156,9 @@ class AdaptiveTwoLevelPredictor(
   val bht_index = io.decoder.pc(1 + BHT_DEPTH, 2)
   val pht_index = bht(bht_index)
 
-  io.decoder.pred_branch := io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(pht_index) === strongly_taken)
+  io.decoder.pred_branch := io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(
+    pht_index,
+  ) === strongly_taken)
 
   val update_bht_index = io.execute.pc(1 + BHT_DEPTH, 2)
   val update_pht_index = bht(update_bht_index)

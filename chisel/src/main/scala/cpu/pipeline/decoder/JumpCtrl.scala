@@ -24,10 +24,9 @@ class JumpCtrl(implicit val config: CpuConfig) extends Module {
     })
   })
 
-  val jump_inst =
-    !((io.in.decoded_inst0.inst(31, 27) ^ "b00001".U(5.W)).orR)
-  val jump_register_inst =
-    !(io.in.decoded_inst0.inst(31, 26).orR) && !((io.in.decoded_inst0.inst(5, 1) ^ "b00100".U(5.W)).orR)
+  val op                 = io.in.decoded_inst0.op
+  val jump_inst          = VecInit(EXE_J, EXE_JAL).contains(op)
+  val jump_register_inst = VecInit(EXE_JR, EXE_JALR).contains(op)
   io.out.jump_inst := jump_inst || jump_register_inst
   io.out.jump      := io.in.allow_to_go && (jump_inst || jump_register_inst && !io.out.jump_register)
   io.out.jump_register := jump_register_inst &&
