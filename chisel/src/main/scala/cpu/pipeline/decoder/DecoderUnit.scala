@@ -6,18 +6,11 @@ import cpu.defines._
 import cpu.defines.Const._
 import cpu.CpuConfig
 import cpu.pipeline.execute.DecoderUnitExecuteUnit
+import cpu.pipeline.fetch.BufferUnit
 
 class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
-  val inst = Vec(
-    config.decoderNum,
-    new Bundle {
-      val allow_to_go = Output(Bool())
-      val pc          = Input(UInt(PC_WID.W))
-      val inst        = Input(UInt(INST_WID.W))
-      val tlb_refill  = Input(Bool())
-      val tlb_invalid = Input(Bool())
-    },
-  )
+  val allow_to_go = Output(Vec(config.decoderNum, Bool()))
+  val inst        = Input(Vec(config.decoderNum, new BufferUnit()))
   val info = Input(new Bundle {
     val inst0_is_in_delayslot = Bool()
     val empty                 = Bool()
@@ -94,9 +87,9 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.fetchUnit.branch := inst0_branch
   io.fetchUnit.target := Mux(io.bpu.pred_branch, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
-  io.instBuffer.inst(0).allow_to_go := io.ctrl.allow_to_go
-  io.instBuffer.inst(1).allow_to_go := issue.inst1.allow_to_go
-  io.instBuffer.jump_branch_inst    := jump_branch_inst0
+  io.instBuffer.allow_to_go(0)   := io.ctrl.allow_to_go
+  io.instBuffer.allow_to_go(1)   := issue.inst1.allow_to_go
+  io.instBuffer.jump_branch_inst := jump_branch_inst0
 
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
   io.bpu.pc             := io.instBuffer.inst(0).pc
@@ -111,8 +104,8 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val pc          = io.instBuffer.inst.map(_.pc)
   val inst        = io.instBuffer.inst.map(_.inst)
   val inst_info   = decoder.map(_.io.out)
-  val tlb_refill  = io.instBuffer.inst.map(_.tlb_refill)
-  val tlb_invalid = io.instBuffer.inst.map(_.tlb_invalid)
+  val tlb_refill  = io.instBuffer.inst.map(_.tlb.refill)
+  val tlb_invalid = io.instBuffer.inst.map(_.tlb.invalid)
   val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instBuffer.info.empty
 
   for (i <- 0 until (config.decoderNum)) {
