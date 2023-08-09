@@ -46,7 +46,7 @@ class InstBuffer(implicit val config: CpuConfig) extends Module {
 
   // config.instBufferDepth - 1 is the last element, config.instBufferDepth - 2 is the last second element
   // the second last element's valid decide whether the fifo is full
-  io.full         := count >= (config.instBufferDepth - config.instFetchNum).U
+  io.full         := count >= (config.instBufferDepth - config.instFetchNum).U // TODO:这里的等于号还可以优化
   io.empty        := count === 0.U
   io.almost_empty := count === 1.U
 
