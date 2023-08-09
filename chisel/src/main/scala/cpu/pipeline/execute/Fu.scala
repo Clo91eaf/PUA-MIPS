@@ -98,7 +98,6 @@ class Fu(implicit val config: CpuConfig) extends Module {
     (io.inst(1).hilo_wen && !io.inst(1).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
 
-  // TODO:单发射执行ll、sc
   llbit.do_flush := io.ctrl.eret
   llbit.wen := (io.inst(0).inst_info.op === EXE_LL || io.inst(0).inst_info.op === EXE_SC ||
     io.inst(1).inst_info.op === EXE_LL || io.inst(1).inst_info.op === EXE_SC) && io.ctrl.allow_to_go

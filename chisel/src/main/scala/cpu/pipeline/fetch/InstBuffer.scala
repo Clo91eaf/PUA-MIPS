@@ -2,15 +2,17 @@ package cpu.pipeline.fetch
 
 import chisel3._
 import chisel3.util._
-import cpu.CpuConfig
+import cpu.{CpuConfig, BranchPredictorConfig}
 
 class BufferUnit extends Bundle {
+  val bpuConfig = new BranchPredictorConfig()
   val tlb = new Bundle {
     val refill  = Bool()
     val invalid = Bool()
   }
-  val inst = UInt(32.W)
-  val pc   = UInt(32.W)
+  val inst      = UInt(32.W)
+  val pht_index = UInt(bpuConfig.phtDepth.W)
+  val pc        = UInt(32.W)
 }
 
 class InstBuffer(implicit val config: CpuConfig) extends Module {

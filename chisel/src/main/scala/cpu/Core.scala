@@ -80,6 +80,7 @@ class Core(implicit val config: CpuConfig) extends Module {
   bpu.decoder.rs2         := decoderUnit.bpu.decoded_inst0.reg2_raddr
   bpu.decoder.pc          := decoderUnit.bpu.pc
   bpu.decoder.pc_plus4    := decoderUnit.bpu.pc + 4.U
+  bpu.decoder.pht_index   := decoderUnit.bpu.pht_index
   bpu.execute.pc          := executeUnit.bpu.pc
   bpu.execute.branch_inst := executeUnit.bpu.branch_inst
   bpu.execute.branch      := executeUnit.bpu.branch
@@ -110,6 +111,8 @@ class Core(implicit val config: CpuConfig) extends Module {
     instBuffer.write(i).tlb.invalid := tlbL1I.tlb1.invalid
     instBuffer.write(i).pc          := io.inst.addr(0) + (i * 4).U
     instBuffer.write(i).inst        := io.inst.inst(i)
+    instBuffer.write(i).pht_index   := bpu.instBuffer.pht_index(i)
+    bpu.instBuffer.pc(i)            := instBuffer.write(i).pc
   }
 
   decoderUnit.instBuffer.info.empty                 := instBuffer.empty

@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.CpuConfig
+import cpu.{CpuConfig, BranchPredictorConfig}
 import cpu.pipeline.execute.DecoderUnitExecuteUnit
 import cpu.pipeline.fetch.BufferUnit
 
@@ -47,9 +47,11 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       val target = Output(UInt(PC_WID.W))
     }
     val bpu = new Bundle {
+      val bpuConfig      = new BranchPredictorConfig()
       val pc             = Output(UInt(PC_WID.W))
       val decoded_inst0  = Output(new InstInfo())
       val id_allow_to_go = Output(Bool())
+      val pht_index      = Output(UInt(bpuConfig.phtDepth.W))
 
       val branch_inst   = Input(Bool())
       val pred_branch   = Input(Bool())
@@ -94,6 +96,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
   io.bpu.pc             := io.instBuffer.inst(0).pc
   io.bpu.decoded_inst0  := decoder(0).io.out
+  io.bpu.pht_index      := io.instBuffer.inst(0).pht_index
 
   io.ctrl.inst0.src1.ren   := decoder(0).io.out.reg1_ren
   io.ctrl.inst0.src1.raddr := decoder(0).io.out.reg1_raddr
