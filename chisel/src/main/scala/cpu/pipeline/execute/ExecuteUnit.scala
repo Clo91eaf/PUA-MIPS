@@ -7,17 +7,14 @@ import cpu.defines._
 import cpu.defines.Const._
 import cpu.pipeline.decoder.RegWrite
 import cpu.pipeline.memory.{ExecuteUnitMemoryUnit, Cp0Info}
+import cpu.pipeline.fetch.ExecuteUnitBranchPredictor
 
 class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val ctrl         = new ExecuteCtrl()
     val executeStage = Input(new DecoderUnitExecuteUnit())
     val cp0          = Flipped(new Cp0ExecuteUnit())
-    val bpu = Output(new Bundle {
-      val pc          = UInt(PC_WID.W)
-      val branch      = Bool()
-      val branch_inst = Bool()
-    })
+    val bpu          = new ExecuteUnitBranchPredictor()
     val fetchUnit = Output(new Bundle {
       val branch = Bool()
       val target = UInt(PC_WID.W)

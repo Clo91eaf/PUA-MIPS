@@ -6,6 +6,13 @@ import cpu.defines.Const._
 import cpu._
 import cpu.pipeline.decoder.Src12Read
 
+class ExecuteUnitBranchPredictor extends Bundle {
+  val bpuConfig   = new BranchPredictorConfig()
+  val pc          = Output(UInt(DATA_ADDR_WID.W))
+  val branch_inst = Output(Bool())
+  val branch      = Output(Bool())
+}
+
 class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
   val bpuConfig = new BranchPredictorConfig()
   val decoder = new Bundle {
@@ -29,11 +36,7 @@ class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
     val pht_index = Output(Vec(config.instFetchNum, UInt(bpuConfig.phtDepth.W)))
   }
 
-  val execute = new Bundle {
-    val pc          = Input(UInt(DATA_ADDR_WID.W))
-    val branch_inst = Input(Bool())
-    val branch      = Input(Bool())
-  }
+  val execute = Flipped(new ExecuteUnitBranchPredictor())
 
   val regfile = if (config.branchPredictor == "pesudo") Some(new Src12Read()) else None
 }
@@ -158,9 +161,8 @@ class AdaptiveTwoLevelPredictor(
     0.U(2.W),
   )
 
-  val bht = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(PHT_DEPTH.W))))
-  val pht = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_taken)))
-  // val bht_index = io.decoder.pc(1 + BHT_DEPTH, 2)
+  val bht       = RegInit(VecInit(Seq.fill(1 << BHT_DEPTH)(0.U(PHT_DEPTH.W))))
+  val pht       = RegInit(VecInit(Seq.fill(1 << PHT_DEPTH)(strongly_taken)))
   val pht_index = io.decoder.pht_index
 
   for (i <- 0 until config.instFetchNum) {
