@@ -2,7 +2,7 @@ package cache.memory
 
 import chisel3._
 import chisel3.util._
-import cache.CacheConfig
+import cpu.CacheConfig
 
 class ReadOnlyPort[+T <: Data](gen: T)(implicit cacheConfig: CacheConfig) extends Bundle {
   val addr = Input(UInt(log2Ceil(cacheConfig.nset * cacheConfig.nbank).W))

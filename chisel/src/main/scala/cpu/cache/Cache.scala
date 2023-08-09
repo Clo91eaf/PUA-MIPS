@@ -3,6 +3,7 @@ package cache
 import chisel3._
 import chisel3.util._
 import cpu.defines._
+import cpu.CacheConfig
 import cpu.CpuConfig
 
 class Cache(implicit config: CpuConfig) extends Module {

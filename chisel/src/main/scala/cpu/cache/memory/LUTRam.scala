@@ -2,7 +2,7 @@ package cache.memory
 
 import chisel3._
 import chisel3.util._
-import cache.CacheConfig
+import cpu.CacheConfig
 import cpu.CpuConfig
 
 /** LUT ram for XPM, one port for read/write, one port for read

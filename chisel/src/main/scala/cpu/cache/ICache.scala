@@ -4,6 +4,7 @@ package cache
 import chisel3._
 import chisel3.util._
 import memory._
+import cpu.CacheConfig
 import cpu.defines._
 import cpu.CpuConfig
 import cpu.defines.Const._
