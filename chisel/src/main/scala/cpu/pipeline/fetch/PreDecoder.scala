@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import cpu.defines.Const._
 import cpu.CpuConfig
+import cpu.pipeline.fetch.BufferUnit
 
 class BufferEnq extends Bundle {
   val valid            = Bool()
@@ -24,8 +25,8 @@ class PreDecoder(implicit val config: CpuConfig) extends Module {
     val flush = Input(Bool())
 
     val full = new Bundle {
-      val fromInstBuffer = Input(Bool())
-      val toIcache       = Output(Bool())
+      val fromInstFifo = Input(Bool())
+      val toIcache     = Output(Bool())
     }
     val read = Output(Vec(config.instFetchNum, new BufferEnq()))
 
@@ -36,17 +37,17 @@ class PreDecoder(implicit val config: CpuConfig) extends Module {
   val buffer = RegInit(VecInit(Seq.fill(config.instFetchNum)(0.U.asTypeOf(new BufferEnq()))))
 
   for (i <- 0 until config.instFetchNum) {
-    when(io.wen(i) && !io.full.fromInstBuffer) {
+    when(io.wen(i) && !io.full.fromInstFifo) {
       buffer(i).tlb.refill  := io.write(i).tlb.refill
       buffer(i).tlb.invalid := io.write(i).tlb.invalid
       buffer(i).inst        := io.write(i).inst
       buffer(i).pc          := io.write(i).pc
     }
-    when(!io.full.fromInstBuffer) {
+    when(!io.full.fromInstFifo) {
       buffer(i).valid := io.wen(i)
     }
   }
-  io.full.toIcache := io.full.fromInstBuffer
+  io.full.toIcache := io.full.fromInstFifo
 
   for (i <- 0 until config.instFetchNum) {
     val signals: List[UInt] = ListLookup(
