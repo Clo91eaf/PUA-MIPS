@@ -74,14 +74,15 @@ class Core(implicit val config: CpuConfig) extends Module {
     io.inst.addr(i) := fetchUnit.iCache.pc_next + ((i - 1) * 4).U
   }
 
-  bpu.decoder.ena       := ctrl.decoderUnit.allow_to_go
-  bpu.decoder.op        := decoderUnit.bpu.decoded_inst0.op
-  bpu.decoder.inst      := decoderUnit.bpu.decoded_inst0.inst
-  bpu.decoder.rs1       := decoderUnit.bpu.decoded_inst0.reg1_raddr
-  bpu.decoder.rs2       := decoderUnit.bpu.decoded_inst0.reg2_raddr
-  bpu.decoder.pc        := decoderUnit.bpu.pc
-  bpu.decoder.pc_plus4  := decoderUnit.bpu.pc + 4.U
-  bpu.decoder.pht_index := decoderUnit.bpu.pht_index
+  bpu.decoder.ena                  := ctrl.decoderUnit.allow_to_go
+  bpu.decoder.op                   := decoderUnit.bpu.decoded_inst0.op
+  bpu.decoder.inst                 := decoderUnit.bpu.decoded_inst0.inst
+  bpu.decoder.rs1                  := decoderUnit.bpu.decoded_inst0.reg1_raddr
+  bpu.decoder.rs2                  := decoderUnit.bpu.decoded_inst0.reg2_raddr
+  bpu.decoder.pc                   := decoderUnit.bpu.pc
+  bpu.decoder.pc_plus4             := decoderUnit.bpu.pc + 4.U
+  bpu.decoder.pht_index            := decoderUnit.bpu.pht_index
+  decoderUnit.bpu.update_pht_index := bpu.decoder.update_pht_index
   bpu.execute <> executeUnit.bpu
   if (config.branchPredictor == "pesudo") {
     bpu.regfile.get <> regfile.bpu.get

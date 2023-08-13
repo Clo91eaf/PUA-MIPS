@@ -7,10 +7,11 @@ import cpu._
 import cpu.pipeline.decoder.Src12Read
 
 class ExecuteUnitBranchPredictor extends Bundle {
-  val bpuConfig   = new BranchPredictorConfig()
-  val pc          = Output(UInt(DATA_ADDR_WID.W))
-  val branch_inst = Output(Bool())
-  val branch      = Output(Bool())
+  val bpuConfig        = new BranchPredictorConfig()
+  val pc               = Output(UInt(DATA_ADDR_WID.W))
+  val update_pht_index = Output(UInt(bpuConfig.phtDepth.W))
+  val branch_inst      = Output(Bool())
+  val branch           = Output(Bool())
 }
 
 class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
@@ -26,9 +27,10 @@ class BranchPredictorIO(implicit config: CpuConfig) extends Bundle {
     val rs1 = Input(UInt(REG_ADDR_WID.W))
     val rs2 = Input(UInt(REG_ADDR_WID.W))
 
-    val branch_inst   = Output(Bool())
-    val pred_branch   = Output(Bool())
-    val branch_target = Output(UInt(DATA_ADDR_WID.W))
+    val branch_inst      = Output(Bool())
+    val pred_branch      = Output(Bool())
+    val branch_target    = Output(UInt(DATA_ADDR_WID.W))
+    val update_pht_index = Output(UInt(bpuConfig.phtDepth.W))
   }
 
   val instBuffer = new Bundle {
@@ -171,9 +173,10 @@ class AdaptiveTwoLevelPredictor(
 
   io.decoder.pred_branch :=
     io.decoder.ena && io.decoder.branch_inst && (pht(pht_index) === weakly_taken || pht(pht_index) === strongly_taken)
+  io.decoder.update_pht_index := bht(io.decoder.pc(1 + BHT_DEPTH, 2))
 
   val update_bht_index = io.execute.pc(1 + BHT_DEPTH, 2)
-  val update_pht_index = bht(update_bht_index)
+  val update_pht_index = io.execute.update_pht_index
 
   when(io.execute.branch_inst) {
     bht(update_bht_index) := Cat(bht(update_bht_index)(PHT_DEPTH - 2, 0), io.execute.branch)

@@ -81,9 +81,10 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
   fu.cp0_rdata          := io.cp0.out.cp0_rdata
   fu.branch.pred_branch := io.executeStage.inst0.jb_info.pred_branch
 
-  io.bpu.pc          := io.executeStage.inst0.pc
-  io.bpu.branch      := fu.branch.branch
-  io.bpu.branch_inst := io.executeStage.inst0.jb_info.branch_inst
+  io.bpu.pc               := io.executeStage.inst0.pc
+  io.bpu.update_pht_index := io.executeStage.inst0.jb_info.update_pht_index
+  io.bpu.branch           := fu.branch.branch
+  io.bpu.branch_inst      := io.executeStage.inst0.jb_info.branch_inst
 
   io.fetchUnit.branch := io.ctrl.allow_to_go &&
     (io.executeStage.inst0.jb_info.jump_regiser || fu.branch.pred_fail)

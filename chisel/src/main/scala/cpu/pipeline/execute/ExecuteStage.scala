@@ -4,9 +4,10 @@ import chisel3._
 import chisel3.util._
 import cpu.defines._
 import cpu.defines.Const._
-import cpu.CpuConfig
+import cpu.{CpuConfig, BranchPredictorConfig}
 
 class IdExeInst0 extends Bundle {
+  val config    = new BranchPredictorConfig()
   val pc        = UInt(PC_WID.W)
   val inst_info = new InstInfo()
   val src_info  = new SrcInfo()
@@ -15,9 +16,10 @@ class IdExeInst0 extends Bundle {
     // jump ctrl
     val jump_regiser = Bool()
     // bpu
-    val branch_inst   = Bool()
-    val pred_branch   = Bool()
-    val branch_target = UInt(PC_WID.W)
+    val branch_inst      = Bool()
+    val pred_branch      = Bool()
+    val branch_target    = UInt(PC_WID.W)
+    val update_pht_index = UInt(config.phtDepth.W)
   }
 }
 

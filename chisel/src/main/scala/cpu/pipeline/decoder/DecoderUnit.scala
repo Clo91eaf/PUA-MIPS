@@ -53,9 +53,10 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       val id_allow_to_go = Output(Bool())
       val pht_index      = Output(UInt(bpuConfig.phtDepth.W))
 
-      val branch_inst   = Input(Bool())
-      val pred_branch   = Input(Bool())
-      val branch_target = Input(UInt(PC_WID.W))
+      val branch_inst      = Input(Bool())
+      val pred_branch      = Input(Bool())
+      val branch_target    = Input(UInt(PC_WID.W))
+      val update_pht_index = Input(UInt(bpuConfig.phtDepth.W))
     }
     val executeStage = Output(new DecoderUnitExecuteUnit())
     val ctrl         = new DecoderUnitCtrl()
@@ -163,10 +164,11 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
       (inst0_ex_cpu)                                            -> EX_CPU,
     ),
   )
-  io.executeStage.inst0.jb_info.jump_regiser  := jumpCtrl.out.jump_register
-  io.executeStage.inst0.jb_info.branch_inst   := io.bpu.branch_inst
-  io.executeStage.inst0.jb_info.pred_branch   := io.bpu.pred_branch
-  io.executeStage.inst0.jb_info.branch_target := io.bpu.branch_target
+  io.executeStage.inst0.jb_info.jump_regiser     := jumpCtrl.out.jump_register
+  io.executeStage.inst0.jb_info.branch_inst      := io.bpu.branch_inst
+  io.executeStage.inst0.jb_info.pred_branch      := io.bpu.pred_branch
+  io.executeStage.inst0.jb_info.branch_target    := io.bpu.branch_target
+  io.executeStage.inst0.jb_info.update_pht_index := io.bpu.update_pht_index
 
   io.executeStage.inst1.allow_to_go := issue.inst1.allow_to_go
   io.executeStage.inst1.pc          := pc(1)

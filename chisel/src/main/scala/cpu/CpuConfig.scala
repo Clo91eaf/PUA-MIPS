@@ -9,7 +9,7 @@ case class CpuConfig(
     val commitNum: Int = 2,                  // 同时提交的指令数
     val fuNum: Int = 2,                      // 功能单元数
     val instFetchNum: Int = 4,               // iCache取到的指令数量
-    val instFifoDepth: Int = 16,             // 指令缓存深度
+    val instFifoDepth: Int = 8,              // 指令缓存深度
     val writeBufferDepth: Int = 16,          // 写缓存深度
     val mulClockNum: Int = 3,                // 乘法器的时钟周期数
     val divClockNum: Int = 8,                // 除法器的时钟周期数
