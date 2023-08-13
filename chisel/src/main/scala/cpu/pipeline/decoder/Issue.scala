@@ -10,7 +10,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
     val allow_to_go = Input(Bool())
-    val instBuffer = Input(new Bundle {
+    val instFifo = Input(new Bundle {
       val empty        = Bool()
       val almost_empty = Bool()
     })
@@ -27,7 +27,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
   val inst1 = io.decodeInst(1)
 
   // inst buffer是否存有至少2条指令
-  val instBuffer_invalid = io.instBuffer.empty || io.instBuffer.almost_empty
+  val instFifo_invalid = io.instFifo.empty || io.instFifo.almost_empty
 
   // 结构冲突
   val mem_conflict    = inst0.fusel === FU_MEM && inst1.fusel === FU_MEM
@@ -53,7 +53,7 @@ class Issue(implicit val config: CpuConfig) extends Module {
   io.inst1.is_in_delayslot := inst0.fusel === FU_BR && io.inst1.allow_to_go
   // 指令1是否允许执行
   io.inst1.allow_to_go := io.allow_to_go &&
-    !instBuffer_invalid &&
+    !instFifo_invalid &&
     inst0.dual_issue &&
     inst1.dual_issue &&
     !struct_conflict &&

@@ -8,7 +8,7 @@ import cpu.{CpuConfig, BranchPredictorConfig}
 import cpu.pipeline.execute.DecoderUnitExecuteUnit
 import cpu.pipeline.fetch.BufferUnit
 
-class InstBufferDecoderUnit(implicit val config: CpuConfig) extends Bundle {
+class InstFifoDecoderUnit(implicit val config: CpuConfig) extends Bundle {
   val allow_to_go = Output(Vec(config.decoderNum, Bool()))
   val inst        = Input(Vec(config.decoderNum, new BufferUnit()))
   val info = Input(new Bundle {
@@ -37,10 +37,10 @@ class Cp0DecoderUnit extends Bundle {
 class DecoderUnit(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     // 输入
-    val instBuffer = new InstBufferDecoderUnit()
-    val regfile    = Vec(config.decoderNum, new Src12Read())
-    val forward    = Input(Vec(config.fuNum, new DataForwardToDecoderUnit()))
-    val cp0        = Input(new Cp0DecoderUnit())
+    val instFifo = new InstFifoDecoderUnit()
+    val regfile  = Vec(config.decoderNum, new Src12Read())
+    val forward  = Input(Vec(config.fuNum, new DataForwardToDecoderUnit()))
+    val cp0      = Input(new Cp0DecoderUnit())
     // 输出
     val fetchUnit = new Bundle {
       val branch = Output(Bool())
@@ -75,12 +75,12 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   forwardCtrl.in.regfile := io.regfile // TODO:这里的连接可能有问题
 
   issue.allow_to_go := io.ctrl.allow_to_go
-  issue.instBuffer  := io.instBuffer.info
+  issue.instFifo    := io.instFifo.info
 
   jumpCtrl.in.allow_to_go   := io.ctrl.allow_to_go
   jumpCtrl.in.decoded_inst0 := decoder(0).io.out
   jumpCtrl.in.forward       := io.forward
-  jumpCtrl.in.pc            := io.instBuffer.inst(0).pc
+  jumpCtrl.in.pc            := io.instFifo.inst(0).pc
   jumpCtrl.in.reg1_data     := io.regfile(0).src1.rdata
 
   val jump_branch_inst0 = jumpCtrl.out.jump_inst || io.bpu.branch_inst
@@ -89,14 +89,14 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.fetchUnit.branch := inst0_branch
   io.fetchUnit.target := Mux(io.bpu.pred_branch, io.bpu.branch_target, jumpCtrl.out.jump_target)
 
-  io.instBuffer.allow_to_go(0)   := io.ctrl.allow_to_go
-  io.instBuffer.allow_to_go(1)   := issue.inst1.allow_to_go
-  io.instBuffer.jump_branch_inst := jump_branch_inst0
+  io.instFifo.allow_to_go(0)   := io.ctrl.allow_to_go
+  io.instFifo.allow_to_go(1)   := issue.inst1.allow_to_go
+  io.instFifo.jump_branch_inst := jump_branch_inst0
 
   io.bpu.id_allow_to_go := io.ctrl.allow_to_go
-  io.bpu.pc             := io.instBuffer.inst(0).pc
+  io.bpu.pc             := io.instFifo.inst(0).pc
   io.bpu.decoded_inst0  := decoder(0).io.out
-  io.bpu.pht_index      := io.instBuffer.inst(0).pht_index
+  io.bpu.pht_index      := io.instFifo.inst(0).pht_index
 
   io.ctrl.inst0.src1.ren   := decoder(0).io.out.reg1_ren
   io.ctrl.inst0.src1.raddr := decoder(0).io.out.reg1_raddr
@@ -104,12 +104,12 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.ctrl.inst0.src2.raddr := decoder(0).io.out.reg2_raddr
   io.ctrl.branch           := inst0_branch
 
-  val pc          = io.instBuffer.inst.map(_.pc)
-  val inst        = io.instBuffer.inst.map(_.inst)
+  val pc          = io.instFifo.inst.map(_.pc)
+  val inst        = io.instFifo.inst.map(_.inst)
   val inst_info   = decoder.map(_.io.out)
-  val tlb_refill  = io.instBuffer.inst.map(_.tlb.refill)
-  val tlb_invalid = io.instBuffer.inst.map(_.tlb.invalid)
-  val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instBuffer.info.empty
+  val tlb_refill  = io.instFifo.inst.map(_.tlb.refill)
+  val tlb_invalid = io.instFifo.inst.map(_.tlb.invalid)
+  val interrupt   = io.cp0.intterupt_allowed && (io.cp0.cause_ip & io.cp0.status_im).orR() && !io.instFifo.info.empty
 
   for (i <- 0 until (config.decoderNum)) {
     decoder(i).io.in.inst      := inst(i)
@@ -147,7 +147,7 @@ class DecoderUnit(implicit val config: CpuConfig) extends Module {
   io.executeStage.inst0.ex.tlb_refill := tlb_refill(0)
   io.executeStage.inst0.ex.eret       := inst_info(0).op === EXE_ERET
   io.executeStage.inst0.ex.badvaddr   := pc(0)
-  io.executeStage.inst0.ex.bd         := io.instBuffer.info.inst0_is_in_delayslot
+  io.executeStage.inst0.ex.bd         := io.instFifo.info.inst0_is_in_delayslot
   val inst0_ex_cpu =
     !io.cp0.access_allowed && VecInit(EXE_MFC0, EXE_MTC0, EXE_TLBR, EXE_TLBWI, EXE_TLBWR, EXE_TLBP, EXE_ERET, EXE_WAIT)
       .contains(inst_info(0).op)

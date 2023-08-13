@@ -10,7 +10,7 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
   val io = IO(new Bundle {
     val cacheCtrl     = Flipped(new CacheCtrl())
     val fetchUnit     = Flipped(new FetchUnitCtrl())
-    val instBuffer    = Flipped(new InstBufferCtrl())
+    val instFifo      = Flipped(new InstFifoCtrl())
     val decoderUnit   = Flipped(new DecoderUnitCtrl())
     val executeUnit   = Flipped(new ExecuteCtrl())
     val memoryUnit    = Flipped(new MemoryCtrl())
@@ -39,7 +39,7 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
   io.memoryUnit.do_flush    := io.memoryUnit.flush_req
   io.writeBackUnit.do_flush := false.B
 
-  io.instBuffer.delay_slot_do_flush := io.memoryUnit.flush_req
+  io.instFifo.delay_slot_do_flush := io.memoryUnit.flush_req
 
   io.executeUnit.fu.do_flush    := io.memoryUnit.do_flush
   io.executeUnit.fu.eret        := io.memoryUnit.eret

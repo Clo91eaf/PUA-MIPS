@@ -21,7 +21,7 @@ class FetchUnit(implicit
       val branch = Input(Bool())
       val target = Input(UInt(PC_WID.W))
     }
-    val instBuffer = new Bundle {
+    val instFifo = new Bundle {
       val full = Input(Bool())
     }
     val iCache = new Bundle {
@@ -48,10 +48,10 @@ class FetchUnit(implicit
   io.iCache.pc_next := MuxCase(
     pc_next_temp,
     Seq(
-      io.memory.flush    -> io.memory.flush_pc,
-      io.execute.branch  -> io.execute.target,
-      io.decoder.branch  -> io.decoder.target,
-      io.instBuffer.full -> pc,
+      io.memory.flush   -> io.memory.flush_pc,
+      io.execute.branch -> io.execute.target,
+      io.decoder.branch -> io.decoder.target,
+      io.instFifo.full  -> pc,
     ),
   )
 }

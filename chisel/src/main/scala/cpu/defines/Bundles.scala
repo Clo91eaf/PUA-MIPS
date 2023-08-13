@@ -80,7 +80,7 @@ class FetchUnitCtrl extends Bundle {
   val do_flush    = Input(Bool())
 }
 
-class InstBufferCtrl extends Bundle {
+class InstFifoCtrl extends Bundle {
   val delay_slot_do_flush = Input(Bool())
 
   val has2insts = Output(Bool())

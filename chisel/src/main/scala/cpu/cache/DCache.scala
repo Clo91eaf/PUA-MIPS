@@ -46,11 +46,11 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
 
   val should_next_addr = (state === s_idle && !tlb_fill) || (state === s_save)
 
-  val write_buffer = Module(new Queue(new WriteBufferUnit(), 4))
+  val write_fifo = Module(new Queue(new WriteBufferUnit(), 4))
 
-  write_buffer.io.enq.valid := false.B
-  write_buffer.io.enq.bits  := 0.U.asTypeOf(new WriteBufferUnit())
-  write_buffer.io.deq.ready := false.B
+  write_fifo.io.enq.valid := false.B
+  write_fifo.io.enq.bits  := 0.U.asTypeOf(new WriteBufferUnit())
+  write_fifo.io.deq.ready := false.B
 
   val axi_cnt        = Counter(burstSize)
   val read_ready_cnt = RegInit(0.U(4.W))
@@ -93,7 +93,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
   val cache_hit         = tag_compare_valid.contains(true.B)
 
   val mmio_read_stall  = io.cpu.tlb.uncached && !io.cpu.wen.orR
-  val mmio_write_stall = io.cpu.tlb.uncached && io.cpu.wen.orR && !write_buffer.io.enq.ready
+  val mmio_write_stall = io.cpu.tlb.uncached && io.cpu.wen.orR && !write_fifo.io.enq.ready
   val cached_stall     = !io.cpu.tlb.uncached && !cache_hit
 
   val sel = tag_compare_valid(1)
@@ -190,13 +190,13 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
     when(io.axi.b.fire) {
       write_buffer_axi_busy := false.B
     }
-  }.elsewhen(write_buffer.io.deq.valid) {
-    write_buffer.io.deq.ready := write_buffer.io.deq.valid
-    when(write_buffer.io.deq.fire) {
-      aw.addr := write_buffer.io.deq.bits.addr
-      aw.size := Cat(0.U(1.W), write_buffer.io.deq.bits.size)
-      w.data  := write_buffer.io.deq.bits.data
-      w.strb  := write_buffer.io.deq.bits.strb
+  }.elsewhen(write_fifo.io.deq.valid) {
+    write_fifo.io.deq.ready := write_fifo.io.deq.valid
+    when(write_fifo.io.deq.fire) {
+      aw.addr := write_fifo.io.deq.bits.addr
+      aw.size := Cat(0.U(1.W), write_fifo.io.deq.bits.size)
+      w.data  := write_fifo.io.deq.bits.data
+      w.strb  := write_fifo.io.deq.bits.strb
     }
     aw.len                := 0.U
     awvalid               := true.B
@@ -221,23 +221,23 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
           }
         }.elsewhen(io.cpu.tlb.uncached) {
           when(io.cpu.wen.orR) {
-            when(write_buffer.io.enq.ready && !current_mmio_write_saved) {
-              write_buffer.io.enq.valid := true.B
-              write_buffer.io.enq.bits.addr := Mux(
+            when(write_fifo.io.enq.ready && !current_mmio_write_saved) {
+              write_fifo.io.enq.valid := true.B
+              write_fifo.io.enq.bits.addr := Mux(
                 io.cpu.rlen === 2.U,
                 Cat(io.cpu.tlb.pa(31, 2), 0.U(2.W)),
                 io.cpu.tlb.pa,
               )
-              write_buffer.io.enq.bits.size := io.cpu.rlen
-              write_buffer.io.enq.bits.strb := io.cpu.wen
-              write_buffer.io.enq.bits.data := io.cpu.wdata
+              write_fifo.io.enq.bits.size := io.cpu.rlen
+              write_fifo.io.enq.bits.strb := io.cpu.wen
+              write_fifo.io.enq.bits.data := io.cpu.wdata
 
               current_mmio_write_saved := true.B
             }
             when(!io.cpu.dcache_stall && !io.cpu.cpu_stall) {
               current_mmio_write_saved := false.B
             }
-          }.elsewhen(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
+          }.elsewhen(!(write_fifo.io.deq.valid || write_buffer_axi_busy)) {
             ar.addr := Mux(io.cpu.rlen === 2.U, Cat(io.cpu.tlb.pa(31, 2), 0.U(2.W)), io.cpu.tlb.pa)
             ar.len  := 0.U
             ar.size := Cat(0.U(1.W), io.cpu.rlen)
@@ -272,7 +272,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
         }
       }.elsewhen(io.cpu.fence) {
         when(dirty(fset).contains(true.B)) {
-          when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
+          when(!(write_fifo.io.deq.valid || write_buffer_axi_busy)) {
             state := s_writeback
             axi_cnt.reset()
             victim.set := fset
@@ -349,7 +349,7 @@ class DCache(cacheConfig: CacheConfig)(implicit config: CpuConfig) extends Modul
       }
     }
     is(s_replace) {
-      when(!(write_buffer.io.deq.valid || write_buffer_axi_busy)) {
+      when(!(write_fifo.io.deq.valid || write_buffer_axi_busy)) {
         when(victim.working) {
           when(victim.writeback) {
             when(victim_cnt.value =/= (burstSize - 1).U) {

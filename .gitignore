@@ -13,3 +13,4 @@ chisel/target/
 chisel/vivado*
 chisel/.Xil/
 chisel/inst/u-boot.s
+chisel/test_run_dir/
