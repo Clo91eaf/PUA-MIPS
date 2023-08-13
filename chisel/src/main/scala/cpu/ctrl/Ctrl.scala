@@ -17,10 +17,10 @@ class Ctrl(implicit val config: CpuConfig) extends Module {
     val writeBackUnit = Flipped(new WriteBackCtrl())
   })
 
-  val inst0_lw_stall = (io.executeUnit.inst(0).mem_wreg && io.executeUnit.inst(0).reg_waddr.orR()) &&
+  val inst0_lw_stall = (io.executeUnit.inst(0).mem_wreg) &&
     (io.decoderUnit.inst0.src1.ren && io.decoderUnit.inst0.src1.raddr === io.executeUnit.inst(0).reg_waddr ||
       io.decoderUnit.inst0.src2.ren && io.decoderUnit.inst0.src2.raddr === io.executeUnit.inst(0).reg_waddr)
-  val inst1_lw_stall = (io.executeUnit.inst(1).mem_wreg && io.executeUnit.inst(1).reg_waddr.orR()) &&
+  val inst1_lw_stall = (io.executeUnit.inst(1).mem_wreg) &&
     (io.decoderUnit.inst0.src1.ren && io.decoderUnit.inst0.src1.raddr === io.executeUnit.inst(1).reg_waddr ||
       io.decoderUnit.inst0.src2.ren && io.decoderUnit.inst0.src2.raddr === io.executeUnit.inst(1).reg_waddr)
   val lw_stall = inst0_lw_stall || inst1_lw_stall
