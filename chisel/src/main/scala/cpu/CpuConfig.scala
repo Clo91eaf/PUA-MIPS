@@ -3,7 +3,7 @@ package cpu
 import chisel3.util._
 
 case class CpuConfig(
-    val build: Boolean = true,              // 是否为build模式
+    val build: Boolean = false,              // 是否为build模式
     val hasCommitBuffer: Boolean = false,    // 是否有提交缓存
     val decoderNum: Int = 2,                 // 同时访问寄存器的指令数
     val commitNum: Int = 2,                  // 同时提交的指令数

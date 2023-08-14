@@ -94,8 +94,8 @@ class Fu(implicit val config: CpuConfig) extends Module {
   )
   io.inst(1).result := alu(1).io.result
 
-  hilo.wen := ((io.inst(0).hilo_wen && !io.inst.map(_.ex.out.flush_req).reduce(_ || _)) ||
-    (io.inst(1).hilo_wen && !io.inst(1).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
+  hilo.wen := ((io.inst(1).hilo_wen && !io.inst.map(_.ex.out.flush_req).reduce(_ || _)) ||
+    (io.inst(0).hilo_wen && !io.inst(0).ex.out.flush_req)) && io.ctrl.allow_to_go && !io.ctrl.do_flush
   hilo.wdata := Mux(io.inst(1).hilo_wen, alu(1).io.hilo.wdata, alu(0).io.hilo.wdata)
 
   llbit.do_flush := io.ctrl.eret
