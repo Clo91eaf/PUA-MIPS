@@ -64,13 +64,14 @@ class ExecuteUnit(implicit val config: CpuConfig) extends Module {
 
   // input fu
   fu.ctrl <> io.ctrl.fu
-  fu.inst(0).pc         := io.executeStage.inst0.pc
-  fu.inst(0).hilo_wen   := io.executeStage.inst0.inst_info.whilo
-  fu.inst(0).mul_en     := io.executeStage.inst0.inst_info.mul
-  fu.inst(0).div_en     := io.executeStage.inst0.inst_info.div
-  fu.inst(0).inst_info  := io.executeStage.inst0.inst_info
-  fu.inst(0).src_info   := io.executeStage.inst0.src_info
-  fu.inst(0).ex.in      := io.executeStage.inst0.ex
+  fu.inst(0).pc        := io.executeStage.inst0.pc
+  fu.inst(0).hilo_wen  := io.executeStage.inst0.inst_info.whilo
+  fu.inst(0).mul_en    := io.executeStage.inst0.inst_info.mul
+  fu.inst(0).div_en    := io.executeStage.inst0.inst_info.div
+  fu.inst(0).inst_info := io.executeStage.inst0.inst_info
+  fu.inst(0).src_info  := io.executeStage.inst0.src_info
+  fu.inst(0).ex.in :=
+    Mux(io.executeStage.inst0.inst_info.fusel === FU_MEM, accessMemCtrl.inst(0).ex.out, io.executeStage.inst0.ex)
   fu.inst(1).pc         := io.executeStage.inst1.pc
   fu.inst(1).hilo_wen   := io.executeStage.inst1.inst_info.whilo
   fu.inst(1).mul_en     := io.executeStage.inst1.inst_info.mul
