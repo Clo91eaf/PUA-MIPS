@@ -31,7 +31,7 @@ class Mul(implicit val config: CpuConfig) extends Module {
 
   if (config.build) {
     val signedMul = Module(new SignedMul()).io
-    val cnt       = RegInit(0.U(log2Ceil(config.mulClockNum).W))
+    val cnt       = RegInit(0.U(log2Ceil(config.mulClockNum + 1).W))
 
     cnt := MuxCase(
       cnt,
