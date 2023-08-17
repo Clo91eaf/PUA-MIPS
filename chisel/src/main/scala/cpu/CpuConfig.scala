@@ -17,7 +17,7 @@ case class CpuConfig(
 )
 
 case class BranchPredictorConfig(
-    val bhtDepth: Int = 4,
+    val bhtDepth: Int = 5,
     val phtDepth: Int = 6,
 )
 
