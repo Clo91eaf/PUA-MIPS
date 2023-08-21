@@ -314,3 +314,20 @@ class DEBUG(implicit config: CpuConfig) extends Bundle {
   val wb_rf_wnum  = Output(UInt(5.W))
   val wb_rf_wdata = Output(UInt(32.W))
 }
+
+class Ctrl_Sram extends Bundle {
+  val do_flush = Output(Bool())
+}
+
+class Ctrl_Stage extends Bundle {
+  val do_flush = Output(Bool())
+  val after_ex = Output(Bool())
+}
+
+class Sram_Ctrl extends Bundle {
+  val sram_discard = Output(UInt(2.W))
+}
+
+class Pipeline_Ctrl extends Bundle {
+  val ex = Output(Bool())
+}
