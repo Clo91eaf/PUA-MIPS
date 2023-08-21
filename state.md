@@ -1,4 +1,0 @@
-```plantuml
-!theme cerulean-outline
-
-```
