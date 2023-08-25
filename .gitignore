@@ -7,7 +7,7 @@ chisel/.bsp/
 chisel/.metals/
 chisel/.vscode/
 chisel/project/
-chisel/generated/*
+chisel/generated/
 !chisel/generated/mycpu_top.v
 chisel/target/
 chisel/vivado*
