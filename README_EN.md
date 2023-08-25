@@ -1,9 +1,6 @@
 [简体中文](./README.md) | English
 
 # 🚀 PUA (Powerful Ultimate Architecture) MIPS 🏗️
-
-[Competition Summary 📖](https://clo91eaf.github.io/c80a81d32b18/)
-
 ## 🛠️ Environment Setup
 
 This Chisel project is built using sbt.

@@ -1,6 +1,9 @@
 简体中文 | [English](./README_EN.md)
 
-# 🚀 PUA (Powerful Ultimate Architecture) MIPS 🏗️
+NSCSCC 2023 二等奖 🏆
+杭州电子科技大学 PUA队 参赛作品
+
+# 🚀 PUA (Powerful Ultimate Architecture) MIPS
 
 [比赛总结 📖](https://clo91eaf.github.io/c80a81d32b18/)
 
