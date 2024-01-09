@@ -6,7 +6,7 @@ NSCSCC 2023 二等奖 🏆
 
 # 🚀 PUA (Powerful Ultimate Architecture) MIPS
 
-[比赛总结 📖](https://clo91eaf.github.io/c80a81d32b18/)
+[比赛总结 📖](https://clo91eaf.github.io/abafb6045f85/)
 
 ## 🛠️ 环境配置
 
