@@ -1,9 +1,11 @@
 [简体中文](./README.md) | English
 
 # 🚀 PUA (Powerful Ultimate Architecture) MIPS 🏗️
+
 ## 🛠️ Environment Setup
 
 This Chisel project is built using sbt.
+
 - sbt version: 1.8.2
 - scala version: 2.13.8
 - Chisel version: 3.5.4
